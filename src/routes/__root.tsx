@@ -36,8 +36,20 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+  const key = 'theme-preference';
+  const stored = localStorage.getItem(key);
+  const preference = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.classList.toggle('dark', preference === 'dark' || (preference === 'system' && systemDark));
+  document.documentElement.dataset.themePreference = preference;
+})();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased [overflow-wrap:anywhere] selection:bg-primary/20 selection:text-foreground">

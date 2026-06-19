@@ -12,6 +12,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #10172f;
   --card: #ffffff;
@@ -47,6 +48,42 @@
   --hero-copy: rgba(16, 23, 47, 0.64);
 }
 
+.dark {
+  color-scheme: dark;
+  --background: #0c1020;
+  --foreground: #edf3ff;
+  --card: #12182b;
+  --card-foreground: #edf3ff;
+  --popover: #12182b;
+  --popover-foreground: #edf3ff;
+  --primary: #7aa2ff;
+  --primary-foreground: #081126;
+  --secondary: #1b2540;
+  --secondary-foreground: #edf3ff;
+  --muted: #182038;
+  --muted-foreground: #a8b5d5;
+  --accent: #223059;
+  --accent-foreground: #edf3ff;
+  --destructive: #ff6b7d;
+  --border: rgba(237, 243, 255, 0.14);
+  --input: rgba(237, 243, 255, 0.16);
+  --ring: rgba(122, 162, 255, 0.45);
+  --chart-1: #7aa2ff;
+  --chart-2: #59c7d9;
+  --chart-3: #9bd18f;
+  --chart-4: #ffd166;
+  --chart-5: #ff8fa3;
+  --sidebar: #12182b;
+  --sidebar-foreground: #edf3ff;
+  --sidebar-primary: #7aa2ff;
+  --sidebar-primary-foreground: #081126;
+  --sidebar-accent: #1b2540;
+  --sidebar-accent-foreground: #edf3ff;
+  --sidebar-border: rgba(237, 243, 255, 0.14);
+  --sidebar-ring: rgba(122, 162, 255, 0.45);
+  --hero-copy: rgba(237, 243, 255, 0.68);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -64,7 +101,8 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: #ffffff;
+  background: var(--background);
+  color: var(--foreground);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -78,7 +116,7 @@ a {
 code {
   font-size: 0.9em;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.76);
+  background: color-mix(in srgb, var(--card) 76%, transparent);
   border-radius: 7px;
   padding: 2px 7px;
 }
@@ -103,7 +141,7 @@ pre code {
 
 /* The main card is now seamless with the body */
 .main-shell {
-  background: #ffffff;
+  background: var(--background);
   border: none;
   box-shadow: none;
   border-radius: 0;
@@ -118,9 +156,18 @@ pre code {
 /* ── Site header ──────────────────────────────────────────── */
 
 .site-header {
-  border-bottom: 1px solid rgba(16, 23, 47, 0.07);
-  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--background) 92%, transparent);
   backdrop-filter: blur(20px);
+}
+
+.language-menu {
+  background: #ffffff;
+  isolation: isolate;
+}
+
+.dark .language-menu {
+  background: #12182b;
 }
 
 /* ── Typography helpers ───────────────────────────────────── */
@@ -159,16 +206,96 @@ pre code {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+.dark .brand-mark {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
 .hero-chip {
-  border: 1px solid rgba(53, 92, 255, 0.1);
-  background: rgba(237, 242, 255, 0.82);
-  color: rgba(16, 23, 47, 0.72);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  background: color-mix(in srgb, var(--secondary) 82%, transparent);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 
 .section-chip {
-  border: 1px solid rgba(16, 23, 47, 0.09);
-  background: rgba(237, 242, 255, 0.65);
-  color: rgba(16, 23, 47, 0.66);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--secondary) 65%, transparent);
+  color: color-mix(in srgb, var(--foreground) 66%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="outline"] {
+  border-color: color-mix(in srgb, var(--foreground) 34%, transparent);
+  background: color-mix(in srgb, var(--card) 86%, var(--foreground) 4%);
+  color: color-mix(in srgb, var(--foreground) 88%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="outline"]:hover {
+  border-color: color-mix(in srgb, var(--primary) 52%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  color: var(--foreground);
+}
+
+.dark [data-slot="button"][data-variant="ghost"] {
+  color: color-mix(in srgb, var(--foreground) 78%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="ghost"]:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--foreground);
+}
+
+.dark [data-slot="button"] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--foreground) 8%, transparent),
+    0 10px 28px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="default"] {
+  animation: dark-button-glow 2.8s ease-in-out infinite;
+}
+
+.dark [data-slot="button"]:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+    0 14px 36px color-mix(in srgb, var(--primary) 24%, transparent),
+    0 0 24px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="default"]:disabled {
+  animation: none;
+}
+
+.dark [data-slot="button"]:disabled {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.dark .theme-toggle {
+  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
+  background: color-mix(in srgb, var(--card) 82%, var(--foreground) 5%);
+}
+
+.dark .theme-toggle [role="tab"][aria-selected="false"] {
+  color: color-mix(in srgb, var(--foreground) 82%, transparent);
+}
+
+.theme-toggle .theme-tab-active[aria-selected="true"] {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 8px 24px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+.theme-toggle .theme-tab-active[aria-selected="true"]:hover {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.dark .hero-chip,
+.dark .section-chip,
+.dark [data-slot="badge"][data-variant="outline"] {
+  border-color: color-mix(in srgb, var(--foreground) 28%, transparent);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: color-mix(in srgb, var(--foreground) 84%, transparent);
 }
 
 /* ── Portrait blob ────────────────────────────────────────── */
@@ -182,14 +309,14 @@ pre code {
 
 /* Very subtle tint — barely different from white */
 .contact-light {
-  background: #f6f8ff;
-  border-top: 1px solid rgba(53, 92, 255, 0.07);
-  border-bottom: 1px solid rgba(53, 92, 255, 0.07);
+  background: color-mix(in srgb, var(--secondary) 48%, var(--background));
+  border-top: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 .contact-info-card {
-  background: #ffffff;
-  border: 1px solid rgba(16, 23, 47, 0.08);
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 2px 12px rgba(16, 23, 47, 0.05);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
@@ -200,8 +327,8 @@ pre code {
 }
 
 .contact-form-card {
-  background: #ffffff;
-  border: 1px solid rgba(16, 23, 47, 0.07);
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 4px 24px rgba(16, 23, 47, 0.06);
 }
 
@@ -216,7 +343,62 @@ pre code {
   box-shadow: 0 24px 56px rgba(16, 23, 47, 0.12);
 }
 
+.dark .contact-info-card,
+.dark .contact-form-card,
+.dark .project-card,
+.dark .project-card:hover {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24);
+}
+
+.live-status-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.4rem;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.45);
+  animation: live-pulse 1.35s ease-in-out infinite;
+}
+
 /* ── Animations ───────────────────────────────────────────── */
+
+@keyframes dark-button-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--foreground) 8%, transparent),
+      0 10px 28px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent),
+      0 14px 38px color-mix(in srgb, var(--primary) 22%, transparent),
+      0 0 22px color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dark [data-slot="button"][data-variant="default"] {
+    animation: none;
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  }
+
+  50% {
+    opacity: 0.2;
+    transform: scale(0.72);
+    box-shadow: 0 0 0 0.45rem rgba(16, 185, 129, 0);
+  }
+}
 
 @keyframes fade-up {
   from {

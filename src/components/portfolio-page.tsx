@@ -1,11 +1,11 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { Link } from '@tanstack/react-router'
 import {
-  aboutHighlights,
+  defaultLanguage,
   links,
-  navigation,
-  profile,
-  projects,
-  skills,
+  portfolioContent,
+  type Language,
+  type PortfolioContent,
   type Project,
   type ProjectStatus,
 } from '../config/config'
@@ -37,58 +37,117 @@ import { cn } from '#/lib/utils'
 import {
   ArrowRight,
   ArrowUpRight,
+  Check,
+  ChevronDown,
   Github,
+  Languages,
   Mail,
   MapPin,
   Menu,
+  Monitor,
+  Moon,
   Send,
+  Sun,
 } from 'lucide-react'
 
-type FormStatus = 'idle' | 'sending' | 'sent' | 'redirected' | 'error'
-
-const statusLabels: Record<ProjectStatus, string> = {
-  live: 'Live',
-  'coming-soon': 'Soon',
-  placeholder: 'Reserved',
+type FormStatus = 'idle' | 'sending' | 'sent' | 'redirected' | 'error' | 'invalid'
+type ThemePreference = 'light' | 'dark' | 'system'
+type ContactFormErrors = {
+  name?: string
+  email?: string
+  message?: string
 }
 
 const statusClasses: Record<ProjectStatus, string> = {
-  live: 'border-primary/15 bg-primary/10 text-primary',
+  live: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
   'coming-soon': 'border-foreground/10 bg-foreground/[0.04] text-foreground/60',
   placeholder: 'border-foreground/10 bg-background/90 text-foreground/50',
 }
 
+const languageStorageKey = 'portfolio-language'
+const languageOptions: Language[] = ['de', 'en', 'ar']
+const themeStorageKey = 'theme-preference'
+const themeOptions: Array<{
+  value: ThemePreference
+  label: string
+  icon: ReactNode
+}> = [
+  { value: 'light', label: 'Light mode', icon: <Sun /> },
+  { value: 'dark', label: 'Dark mode', icon: <Moon /> },
+  { value: 'system', label: 'Use system theme', icon: <Monitor /> },
+]
+
+function getStoredLanguage(): Language {
+  if (typeof window === 'undefined') return defaultLanguage
+  const stored = window.localStorage.getItem(languageStorageKey)
+  return languageOptions.includes(stored as Language) ? (stored as Language) : defaultLanguage
+}
+
+function getStoredThemePreference(): ThemePreference {
+  if (typeof window === 'undefined') return 'system'
+  const currentPreference = document.documentElement.dataset.themePreference
+  if (
+    currentPreference === 'light' ||
+    currentPreference === 'dark' ||
+    currentPreference === 'system'
+  ) {
+    return currentPreference
+  }
+
+  const stored = window.localStorage.getItem(themeStorageKey)
+  return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
+}
+
+function applyThemePreference(preference: ThemePreference) {
+  if (typeof window === 'undefined') return
+  const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const shouldUseDark = preference === 'dark' || (preference === 'system' && isSystemDark)
+
+  document.documentElement.classList.toggle('dark', shouldUseDark)
+  document.documentElement.dataset.themePreference = preference
+  window.localStorage.setItem(themeStorageKey, preference)
+}
+
 export function PortfolioPage() {
+  const [language, setLanguage] = useState<Language>(getStoredLanguage)
+  const content = portfolioContent[language]
+
+  useEffect(() => {
+    window.localStorage.setItem(languageStorageKey, language)
+    document.documentElement.lang = language
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+  }, [language])
+
   return (
     <>
       {/* Full-width seamless layout — no outer card, no background contrast */}
       <div className="main-shell">
-        <PortfolioHeader />
+        <PortfolioHeader content={content} language={language} onLanguageChange={setLanguage} />
 
         {/* All sections share an inner-wrap to keep content readable on wide screens */}
         <div className="inner-wrap">
-          <HeroSection />
+          <HeroSection content={content} />
           <SectionSeparator />
-          <AboutSection />
+          <AboutSection content={content} />
           <SectionSeparator />
-          <ProjectsSection />
+          <ProjectsSection content={content} />
         </div>
 
         {/* Contact spans full width so its tinted bg goes edge-to-edge */}
-        <ContactSection />
+        <ContactSection content={content} />
       </div>
 
       <footer className="inner-wrap flex flex-col gap-3 px-6 pb-8 pt-5 text-center text-sm text-foreground/38 sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:text-left lg:px-14">
         <p className="m-0">
-          {profile.name} · {profile.location}
+          {content.profile.name} · {content.profile.location}
         </p>
         <Button
           asChild
           variant="ghost"
-          className="mx-auto rounded-full border border-border/50 bg-white px-4 text-foreground/52 hover:bg-primary/5 hover:text-primary sm:mx-0"
+          className="mx-auto rounded-full border border-border/50 bg-card px-4 text-foreground/52 hover:bg-primary/5 hover:text-primary sm:mx-0"
         >
           <a href={links.github} target="_blank" rel="noreferrer">
-            View GitHub
+            {content.ui.viewGitHub}
           </a>
         </Button>
       </footer>
@@ -98,7 +157,17 @@ export function PortfolioPage() {
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 
-function PortfolioHeader() {
+function PortfolioHeader({
+  content,
+  language,
+  onLanguageChange,
+}: {
+  content: PortfolioContent
+  language: Language
+  onLanguageChange: (language: Language) => void
+}) {
+  const { navigation, profile, ui } = content
+
   return (
     <header className="site-header sticky top-0 z-30">
       <div className="inner-wrap flex items-center justify-between gap-3 px-6 py-4 sm:px-10 lg:px-14">
@@ -130,12 +199,15 @@ function PortfolioHeader() {
 
         {/* CTA + mobile menu */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher content={content} language={language} onLanguageChange={onLanguageChange} />
+          <ThemeToggle />
+
           <Button
             asChild
             size="lg"
             className="hidden rounded-full bg-primary px-5 text-primary-foreground shadow-[0_6px_24px_rgba(53,92,255,0.28)] hover:bg-primary/90 sm:inline-flex"
           >
-            <a href="#contact">Let&apos;s Connect</a>
+            <a href="#contact">{ui.connectCta}</a>
           </Button>
 
           <Sheet>
@@ -143,19 +215,19 @@ function PortfolioHeader() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full border-border/60 bg-white md:hidden"
-                aria-label="Open navigation menu"
+                className="rounded-full border-border/60 bg-card md:hidden"
+                aria-label={ui.openNavigationMenu}
               >
                 <Menu />
               </Button>
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="w-[85vw] max-w-xs border-l border-border/30 bg-white px-0"
+              className="w-[85vw] max-w-xs border-l border-border/30 bg-card px-0"
             >
               <SheetHeader className="pb-2">
                 <SheetTitle>{profile.name}</SheetTitle>
-                <SheetDescription>Portfolio navigation</SheetDescription>
+                <SheetDescription>{ui.portfolioNavigation}</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-1 px-4 pb-4">
                 {navigation.map((item) => (
@@ -192,9 +264,159 @@ function PortfolioHeader() {
   )
 }
 
+function LanguageSwitcher({
+  content,
+  language,
+  onLanguageChange,
+}: {
+  content: PortfolioContent
+  language: Language
+  onLanguageChange: (language: Language) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
+
+  return (
+    <div ref={menuRef} className="relative">
+      <Button
+        type="button"
+        variant="outline"
+        aria-label={content.ui.languageLabel}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        onClick={() => setIsOpen((current) => !current)}
+        className="h-11 rounded-full border-border/60 bg-card px-4 text-foreground/72 shadow-sm hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+      >
+        <Languages className="size-4" />
+        <span className="min-w-16 text-sm font-bold">{content.ui.languageOptions[language]}</span>
+        <ChevronDown
+          className={cn('size-4 transition-transform', isOpen && 'rotate-180')}
+          aria-hidden="true"
+        />
+      </Button>
+
+      {isOpen && (
+        <div
+          role="menu"
+          className="language-menu absolute right-0 top-[calc(100%+0.55rem)] z-50 min-w-48 overflow-hidden rounded-2xl border border-border/70 p-1.5 text-foreground shadow-[0_18px_50px_rgba(8,17,38,0.18)] rtl:left-0 rtl:right-auto"
+        >
+          {languageOptions.map((option) => {
+            const isSelected = language === option
+
+            return (
+              <button
+                key={option}
+                type="button"
+                role="menuitemradio"
+                aria-checked={isSelected}
+                onClick={() => {
+                  onLanguageChange(option)
+                  setIsOpen(false)
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-foreground/64 transition-colors hover:bg-primary/8 hover:text-primary rtl:text-right',
+                  isSelected && 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                )}
+              >
+                <span>{content.ui.languageOptions[option]}</span>
+                <Check className={cn('size-4 opacity-0', isSelected && 'opacity-100')} />
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<ThemePreference>('system')
+  const [isThemeReady, setIsThemeReady] = useState(false)
+
+  useEffect(() => {
+    const storedTheme = getStoredThemePreference()
+    setTheme(storedTheme)
+    setIsThemeReady(true)
+    applyThemePreference(storedTheme)
+  }, [])
+
+  useEffect(() => {
+    if (!isThemeReady) return
+
+    applyThemePreference(theme)
+
+    if (theme !== 'system') return
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => applyThemePreference('system')
+    mediaQuery.addEventListener('change', handleChange)
+
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [isThemeReady, theme])
+
+  return (
+    <div
+      className="theme-toggle grid grid-cols-3 rounded-full border border-border/60 bg-muted/45 p-1 shadow-sm"
+      aria-label="Theme preference"
+      role="tablist"
+    >
+      {themeOptions.map((option) => {
+        const isActive = theme === option.value
+
+        return (
+          <Button
+            key={option.value}
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className={cn(
+              'rounded-full text-foreground/58 shadow-none transition-all hover:bg-card/70 hover:text-foreground',
+              '[&_svg]:size-4',
+              isActive && 'theme-tab-active'
+            )}
+            aria-label={option.label}
+            aria-selected={isActive}
+            role="tab"
+            suppressHydrationWarning
+            title={option.label}
+            onClick={() => setTheme(option.value)}
+          >
+            {option.icon}
+          </Button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
-function HeroSection() {
+function HeroSection({ content }: { content: PortfolioContent }) {
+  const { profile, skills, ui } = content
+
   return (
     <section
       id="home"
@@ -232,7 +454,7 @@ function HeroSection() {
               className="rounded-full bg-primary px-7 text-primary-foreground shadow-[0_12px_32px_rgba(53,92,255,0.28)] hover:bg-primary/90"
             >
               <a href="#contact">
-                Let&apos;s Connect
+                {ui.connectCta}
                 <ArrowRight />
               </a>
             </Button>
@@ -240,10 +462,10 @@ function HeroSection() {
               asChild
               size="lg"
               variant="outline"
-              className="rounded-full border-border/60 bg-white px-7 text-foreground hover:bg-primary/5 hover:border-primary/30"
+              className="rounded-full border-border/60 bg-card px-7 text-foreground hover:bg-primary/5 hover:border-primary/30"
             >
               <a href="#projects">
-                See Projects
+                {ui.projectsCta}
                 <ArrowUpRight />
               </a>
             </Button>
@@ -255,7 +477,7 @@ function HeroSection() {
               asChild
               variant="ghost"
               size="icon"
-              className="rounded-full border border-border/60 bg-white text-foreground/70 hover:bg-primary/6 hover:text-primary"
+              className="rounded-full border border-border/60 bg-card text-foreground/70 hover:bg-primary/6 hover:text-primary"
             >
               <a href={links.github} target="_blank" rel="noreferrer" aria-label="Open GitHub">
                 <Github />
@@ -275,7 +497,7 @@ function HeroSection() {
               <Badge
                 key={skill}
                 variant="outline"
-                className="rounded-full border-border/60 bg-white px-3 py-1 text-[0.72rem] font-semibold text-foreground/60"
+                className="rounded-full border-border/60 bg-card px-3 py-1 text-[0.72rem] font-semibold text-foreground/60"
               >
                 {skill}
               </Badge>
@@ -284,13 +506,15 @@ function HeroSection() {
         </div>
 
         {/* Right: portrait blob */}
-        <PortraitPlaceholder />
+        <PortraitPlaceholder content={content} />
       </div>
     </section>
   )
 }
 
-function PortraitPlaceholder() {
+function PortraitPlaceholder({ content }: { content: PortfolioContent }) {
+  const { profile, ui } = content
+
   return (
     <div className="fade-up delay-2 flex items-center justify-center py-4">
       <div className="relative flex w-full max-w-[400px] items-center justify-center">
@@ -300,7 +524,7 @@ function PortraitPlaceholder() {
               {profile.initials}
             </div>
             <span className="rounded-full border border-white/30 bg-white/18 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-sm">
-              Add your photo here
+              {ui.addPhoto}
             </span>
           </div>
         </div>
@@ -312,7 +536,9 @@ function PortraitPlaceholder() {
 
 // ─── About ────────────────────────────────────────────────────────────────────
 
-function AboutSection() {
+function AboutSection({ content }: { content: PortfolioContent }) {
+  const { aboutHighlights, profile, ui } = content
+
   return (
     <section
       id="about"
@@ -320,10 +546,10 @@ function AboutSection() {
     >
       <div className="fade-up">
         <Badge variant="outline" className="section-chip rounded-full px-3 py-1">
-          About
+          {ui.aboutBadge}
         </Badge>
         <h2 className="section-title mt-5 max-w-sm text-4xl text-foreground sm:text-5xl">
-          Simple on the surface, solid underneath.
+          {ui.aboutTitle}
         </h2>
       </div>
 
@@ -342,7 +568,7 @@ function AboutSection() {
             <Card
               key={item.title}
               size="sm"
-              className="rounded-[1.4rem] border-border/50 bg-white py-0 shadow-[0_4px_20px_rgba(16,23,47,0.06)]"
+              className="rounded-[1.4rem] border-border/50 bg-card py-0 shadow-[0_4px_20px_rgba(16,23,47,0.06)]"
             >
               <CardHeader className="pb-2">
                 <CardTitle className="text-base text-foreground">{item.title}</CardTitle>
@@ -360,50 +586,61 @@ function AboutSection() {
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
 
-function ProjectsSection() {
+function ProjectsSection({ content }: { content: PortfolioContent }) {
+  const { projects, ui } = content
+
   return (
     <section id="projects" className="scroll-mt-20 px-6 py-14 sm:px-10 lg:px-14">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="fade-up">
           <Badge variant="outline" className="section-chip rounded-full px-3 py-1">
-            Projects
+            {ui.projectsBadge}
           </Badge>
           <h2 className="section-title mt-5 text-4xl text-foreground sm:text-5xl">
-            Selected builds, kept intentionally focused.
+            {ui.projectsTitle}
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-8 text-foreground/58">
-            A small portfolio reads better when every project has a reason to be here, so this
-            section stays short on purpose.
+            {ui.projectsDescription}
           </p>
         </div>
 
         <Button
           asChild
           variant="outline"
-          className="fade-up shrink-0 rounded-full border-border/60 bg-white px-5 text-foreground/64 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
+          className="fade-up shrink-0 rounded-full border-border/60 bg-card px-5 text-foreground/64 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
         >
           <a href={links.github} target="_blank" rel="noreferrer">
-            See all on GitHub
+            {ui.seeAllGitHub}
             <ArrowUpRight />
           </a>
         </Button>
       </div>
 
-      <div className="mt-10 grid gap-5 lg:grid-cols-3">
+      <div className="mt-10 flex flex-col gap-5 lg:flex-row lg:items-stretch">
         {projects.map((project, index) => (
-          <ProjectCard key={project.title} project={project} index={index} />
+          <ProjectCard key={project.title} project={project} index={index} content={content} />
         ))}
       </div>
     </section>
   )
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  content,
+}: {
+  project: Project
+  index: number
+  content: PortfolioContent
+}) {
   const isLive = project.status === 'live'
+  const websiteHref = project.websiteHref
+  const githubHref = project.githubHref
 
   return (
     <Card
-      className="project-card fade-up flex flex-col rounded-[1.75rem] border-border/50 bg-white py-0 shadow-[0_4px_24px_rgba(16,23,47,0.07)]"
+      className="project-card fade-up flex min-w-0 flex-col rounded-[1.75rem] border-border/50 bg-card py-0 shadow-[0_4px_24px_rgba(16,23,47,0.07)] lg:flex-1"
       style={{ animationDelay: `${index * 90}ms` }}
     >
       {/* ── Header: eyebrow + title + status ── */}
@@ -424,7 +661,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               statusClasses[project.status]
             )}
           >
-            {statusLabels[project.status]}
+            {project.status === 'live' && (
+              <span className="live-status-dot" aria-hidden="true" />
+            )}
+            {content.ui.statusLabels[project.status]}
           </Badge>
         </div>
       </CardHeader>
@@ -448,22 +688,38 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       {/* ── Footer: number + CTA ── */}
       <CardFooter className="justify-between gap-3 rounded-b-[1.75rem] border-t border-border/30 bg-muted/25 px-7 py-5">
         <span className="text-sm font-medium text-foreground/36">0{index + 1}</span>
-        {isLive && project.href ? (
-          <Button
-            asChild
-            className="rounded-full bg-primary px-5 text-primary-foreground shadow-[0_6px_20px_rgba(53,92,255,0.22)] hover:bg-primary/90"
-          >
-            <a href={project.href} target="_blank" rel="noreferrer">
-              {project.ctaLabel}
-              <ArrowUpRight />
-            </a>
-          </Button>
+        {isLive && (websiteHref || githubHref) ? (
+          <div className="flex flex-wrap justify-end gap-2">
+            {websiteHref && (
+              <Button
+                asChild
+                className="rounded-full bg-primary px-4 text-primary-foreground shadow-[0_6px_20px_rgba(53,92,255,0.22)] hover:bg-primary/90"
+              >
+                <Link to={websiteHref} target="_blank" rel="noreferrer">
+                  {content.ui.visitWebsite}
+                  <ArrowUpRight />
+                </Link>
+              </Button>
+            )}
+            {githubHref && (
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full border-border/50 bg-card px-4 text-foreground/68 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
+              >
+                <Link to={githubHref} target="_blank" rel="noreferrer">
+                  {content.ui.viewOnGitHub}
+                  <Github />
+                </Link>
+              </Button>
+            )}
+          </div>
         ) : (
           <Button
             type="button"
             variant="outline"
             disabled
-            className="rounded-full border-border/50 bg-white px-5 text-foreground/38"
+            className="rounded-full border-border/50 bg-card px-5 text-foreground/38"
           >
             {project.ctaLabel}
           </Button>
@@ -475,20 +731,59 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 // ─── Contact ──────────────────────────────────────────────────────────────────
 
-function ContactSection() {
+function ContactSection({ content }: { content: PortfolioContent }) {
   const [status, setStatus] = useState<FormStatus>('idle')
+  const [errors, setErrors] = useState<ContactFormErrors>({})
+  const nameRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const messageRef = useRef<HTMLTextAreaElement>(null)
+  const { profile, ui } = content
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = event.currentTarget
-    const formData = new FormData(form)
-    const name = String(formData.get('name') ?? '').trim()
-    const email = String(formData.get('email') ?? '').trim()
-    const message = String(formData.get('message') ?? '').trim()
+    const name = nameRef.current?.value.trim() ?? ''
+    const email = emailRef.current?.value.trim() ?? ''
+    const message = messageRef.current?.value.trim() ?? ''
+    const nextErrors: ContactFormErrors = {}
+
+    if (name.length < 2) {
+      nextErrors.name = ui.nameError(name.length)
+    }
+
+    if (!email) {
+      nextErrors.email = ui.emailRequiredError
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextErrors.email = ui.emailInvalidError
+    }
+
+    if (message.length < 10) {
+      nextErrors.message = ui.messageError(message.length)
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors)
+      setStatus('invalid')
+      if (nextErrors.name) {
+        nameRef.current?.focus()
+      } else if (nextErrors.email) {
+        emailRef.current?.focus()
+      } else {
+        messageRef.current?.focus()
+      }
+      return
+    }
+
+    setErrors({})
+
+    const formData = new FormData()
+    formData.set('name', name)
+    formData.set('email', email)
+    formData.set('message', message)
 
     if (!links.formEndpoint) {
-      const subject = encodeURIComponent(`Portfolio inquiry from ${name}`)
-      const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)
+      const subject = encodeURIComponent(ui.mailSubject(name))
+      const body = encodeURIComponent(ui.mailBody(name, email, message))
       window.location.href = `mailto:${links.email}?subject=${subject}&body=${body}`
       setStatus('redirected')
       form.reset()
@@ -505,6 +800,7 @@ function ContactSection() {
       if (!response.ok) throw new Error('Request failed')
       setStatus('sent')
       form.reset()
+      setErrors({})
     } catch {
       setStatus('error')
     }
@@ -519,32 +815,31 @@ function ContactSection() {
           {/* ── Left: heading + contact info ── */}
           <div className="fade-up">
             <Badge variant="outline" className="section-chip rounded-full px-3 py-1">
-              Contact
+              {ui.contactBadge}
             </Badge>
             <h2 className="section-title mt-5 text-4xl text-foreground sm:text-5xl">
-              Let&apos;s talk if the work feels right.
+              {ui.contactTitle}
             </h2>
             <p className="mt-4 max-w-md text-base leading-8 text-foreground/58">
-              I&apos;m focused on building my own direction and open to collaborating when the
-              connection is real.
+              {ui.contactDescription}
             </p>
 
-            <div className="mt-8 space-y-3">
+            <div className="mt-8 flex flex-col gap-3">
               <ContactInfoCard
                 icon={<Mail className="size-4 text-primary" />}
-                title="Email"
+                title={ui.contactEmailTitle}
                 value={links.email}
                 href={`mailto:${links.email}`}
               />
               <ContactInfoCard
                 icon={<Github className="size-4 text-primary" />}
-                title="GitHub"
+                title={ui.contactGithubTitle}
                 value="InfiniteWorld123"
                 href={links.github}
               />
               <ContactInfoCard
                 icon={<MapPin className="size-4 text-primary" />}
-                title="Location"
+                title={ui.contactLocationTitle}
                 value={profile.location}
               />
             </div>
@@ -552,65 +847,100 @@ function ContactSection() {
 
           {/* ── Right: form card ── */}
           <div className="fade-up delay-1">
-            <div className="contact-form-card rounded-[1.6rem] p-8 sm:p-10">
-              <h3 className="text-xl font-semibold text-foreground">Send a message</h3>
+            <div className="contact-form-card rounded-[1.6rem] p-8 sm:p-10 h-full">
+              <h3 className="text-xl font-semibold text-foreground">{ui.formTitle}</h3>
               <p className="mt-1 text-sm leading-6 text-foreground/50">
-                No Formspree endpoint yet? Submitting will open your email app with everything
-                prefilled.
+                {ui.formDescription}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-7 space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-foreground/72">
-                      Full name
+                      {ui.nameLabel}
                     </Label>
                     <Input
+                      ref={nameRef}
                       id="name"
                       name="name"
-                      placeholder="Your name"
+                      placeholder={ui.namePlaceholder}
                       required
-                      className="h-12 rounded-xl border-border/60 bg-white px-4 focus:border-primary/40"
+                      aria-invalid={Boolean(errors.name)}
+                      aria-describedby={errors.name ? 'name-error' : undefined}
+                      onChange={() => setErrors((current) => ({ ...current, name: undefined }))}
+                      className={cn(
+                        'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
+                        errors.name && 'border-destructive focus:border-destructive'
+                      )}
                     />
+                    {errors.name && (
+                      <p id="name-error" className="text-sm font-medium text-destructive">
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-foreground/72">
-                      Email
+                      {ui.emailLabel}
                     </Label>
                     <Input
+                      ref={emailRef}
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="name@example.com"
+                      placeholder={ui.emailPlaceholder}
                       required
-                      className="h-12 rounded-xl border-border/60 bg-white px-4 focus:border-primary/40"
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? 'email-error' : undefined}
+                      onChange={() => setErrors((current) => ({ ...current, email: undefined }))}
+                      className={cn(
+                        'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
+                        errors.email && 'border-destructive focus:border-destructive'
+                      )}
                     />
+                    {errors.email && (
+                      <p id="email-error" className="text-sm font-medium text-destructive">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="message" className="text-foreground/72">
-                    Message
+                    {ui.messageLabel}
                   </Label>
                   <Textarea
+                    ref={messageRef}
                     id="message"
                     name="message"
                     rows={5}
-                    placeholder="Tell me a little about what you have in mind."
+                    placeholder={ui.messagePlaceholder}
                     required
-                    className="min-h-[140px] resize-none rounded-xl border-border/60 bg-white px-4 py-3 focus:border-primary/40"
+                    aria-invalid={Boolean(errors.message)}
+                    aria-describedby={errors.message ? 'message-error' : undefined}
+                    onChange={() => setErrors((current) => ({ ...current, message: undefined }))}
+                    className={cn(
+                      'min-h-[140px] resize-none rounded-xl border-border/60 bg-background px-4 py-3 focus:border-primary/40',
+                      errors.message && 'border-destructive focus:border-destructive'
+                    )}
                   />
+                  {errors.message && (
+                    <p id="message-error" className="text-sm font-medium text-destructive">
+                      {errors.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                  <ContactStatusMessage status={status} />
+                  <ContactStatusMessage status={status} content={content} />
                   <Button
                     type="submit"
                     size="lg"
                     disabled={status === 'sending'}
                     className="rounded-full bg-primary px-7 text-primary-foreground shadow-[0_8px_24px_rgba(53,92,255,0.26)] hover:bg-primary/90"
                   >
-                    {status === 'sending' ? 'Sending...' : 'Send message'}
+                    {status === 'sending' ? ui.sending : ui.sendMessage}
                     <Send />
                   </Button>
                 </div>
@@ -624,30 +954,40 @@ function ContactSection() {
   )
 }
 
-function ContactStatusMessage({ status }: { status: FormStatus }) {
+function ContactStatusMessage({
+  status,
+  content,
+}: {
+  status: FormStatus
+  content: PortfolioContent
+}) {
+  const { ui } = content
+
   if (status === 'idle') {
     return (
       <p className="text-sm text-foreground/44">
-        You can also email me directly if that&apos;s easier.
+        {ui.directEmailHint}
       </p>
     )
   }
 
   const message =
     status === 'sent'
-      ? 'Message sent successfully.'
+      ? ui.sentMessage
       : status === 'redirected'
-        ? 'Email app should open with message prefilled.'
+        ? ui.redirectedMessage
         : status === 'error'
-          ? 'Something went wrong. Please try again.'
-          : 'Sending your message...'
+          ? ui.errorMessage
+          : status === 'invalid'
+            ? ui.invalidMessage
+            : ui.sendingMessage
 
   return (
     <Badge
       variant="outline"
       className={cn(
         'h-auto rounded-full px-3 py-2 text-left text-[0.74rem] font-semibold',
-        status === 'error'
+        status === 'error' || status === 'invalid'
           ? 'border-destructive/20 bg-destructive/10 text-destructive'
           : 'border-primary/15 bg-primary/10 text-primary'
       )}
