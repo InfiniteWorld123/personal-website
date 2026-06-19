@@ -21,6 +21,20 @@ interface NavigationItem {
   href: `#${string}`;
 }
 
+export interface Skill {
+  name: string;
+  icon: string;
+  url?: string;
+}
+
+export interface Social {
+  platform: "github" | "email" | "linkedin";
+  label: string;
+  value: string;
+  url: string;
+  icon: string;
+}
+
 export type Language = "de" | "en" | "ar";
 
 export interface PortfolioContent {
@@ -39,7 +53,7 @@ export interface PortfolioContent {
   };
   aboutHighlights: AboutHighlight[];
   projects: Project[];
-  skills: string[];
+  skills: Skill[];
   ui: {
     languageLabel: string;
     languageOptions: Record<Language, string>;
@@ -94,6 +108,23 @@ export const links = {
   email: "yamanwarda06@gmail.com",
   formEndpoint: "/api/contact",
 };
+
+export const socials: Social[] = [
+  {
+    platform: "github",
+    label: "GitHub",
+    value: "InfiniteWorld123",
+    url: "https://github.com/InfiniteWorld123",
+    icon: "github",
+  },
+  {
+    platform: "linkedin",
+    label: "LinkedIn",
+    value: "Yaman Warda",
+    url: "https://linkedin.com/in/yaman-warda",
+    icon: "linkedin",
+  },
+];
 
 export const portfolioContent: Record<Language, PortfolioContent> = {
   de: {
@@ -158,7 +189,15 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["LMS", "Full-Stack", "AI"],
       },
     ],
-    skills: ["React", "TypeScript", "Node.js", "PostgreSQL", "TanStack Start", "Hono.js", "Tailwind CSS"],
+    skills: [
+      { name: "React", icon: "react", url: "https://react.dev" },
+      { name: "TypeScript", icon: "typescript", url: "https://www.typescriptlang.org" },
+      { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
+      { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
+      { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
+      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
+    ],
     ui: {
       languageLabel: "Sprache",
       languageOptions: { de: "Deutsch", en: "English", ar: "العربية" },
@@ -271,7 +310,15 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["LMS", "Full-Stack", "AI"],
       },
     ],
-    skills: ["React", "TypeScript", "Node.js", "PostgreSQL", "TanStack Start", "Hono.js", "Tailwind CSS"],
+    skills: [
+      { name: "React", icon: "react", url: "https://react.dev" },
+      { name: "TypeScript", icon: "typescript", url: "https://www.typescriptlang.org" },
+      { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
+      { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
+      { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
+      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
+    ],
     ui: {
       languageLabel: "Language",
       languageOptions: { de: "Deutsch", en: "English", ar: "العربية" },
@@ -384,7 +431,15 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["LMS", "Full-Stack", "AI"],
       },
     ],
-    skills: ["React", "TypeScript", "Node.js", "PostgreSQL", "TanStack Start", "Hono.js", "Tailwind CSS"],
+    skills: [
+      { name: "React", icon: "react", url: "https://react.dev" },
+      { name: "TypeScript", icon: "typescript", url: "https://www.typescriptlang.org" },
+      { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
+      { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
+      { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
+      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
+    ],
     ui: {
       languageLabel: "اللغة",
       languageOptions: { de: "Deutsch", en: "English", ar: "العربية" },

@@ -141,10 +141,14 @@ pre code {
 
 /* The main card is now seamless with the body */
 .main-shell {
-  background: var(--background);
+  background: color-mix(in srgb, var(--background) 100%, var(--secondary) 0%);
   border: none;
   box-shadow: none;
   border-radius: 0;
+}
+
+.dark .main-shell {
+  background: color-mix(in srgb, var(--background) 100%, var(--secondary) 0%);
 }
 
 /* Inner content width limiter — used inside sections */
@@ -157,8 +161,9 @@ pre code {
 
 .site-header {
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--background) 92%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
   backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(16, 23, 47, 0.05);
 }
 
 .language-menu {
@@ -174,6 +179,18 @@ pre code {
 
 .hero-display {
   text-wrap: balance;
+}
+
+.hero-cursor {
+  display: inline-block;
+  opacity: 1;
+  animation: hero-cursor-blink 0.85s step-end infinite;
+  margin-inline-start: 2px;
+}
+
+@keyframes hero-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 .hero-accent {
@@ -201,13 +218,22 @@ pre code {
   width: 2.25rem;
   align-items: center;
   justify-content: center;
+  font-size: 1rem;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(53, 92, 255, 0.14), rgba(92, 166, 255, 0.28));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
 }
 
 .dark .brand-mark {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* Very small phones (iPhone 5s/4s) */
+@media (max-width: 340px) {
+  .site-header .inner-wrap {
+    gap: 0.5rem;
+  }
 }
 
 .hero-chip {
@@ -298,11 +324,404 @@ pre code {
   color: color-mix(in srgb, var(--foreground) 84%, transparent);
 }
 
-/* ── Portrait blob ────────────────────────────────────────── */
+/* ── Portrait — animated cutout ───────────────────────────── */
 
-.portrait-blob {
-  background: linear-gradient(145deg, #3b6fff 0%, #5a8fff 60%, #82b6ff 100%);
+.portrait-outer {
+  position: relative;
+  width: 380px;
+  height: 560px;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Clips blob animations to prevent them from pushing page layout */
+.portrait-blob-clip {
+  position: absolute;
+  inset: -60px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (min-width: 640px) {
+  .portrait-outer {
+    width: 440px;
+    height: 640px;
+  }
+}
+
+/* Blob sits BEHIND the photo. top values are inside portrait-blob-clip (inset:-60px → add 60px) */
+.portrait-blob-anim {
+  position: absolute;
+  top: 175px;
+  left: 50%;
+  margin-left: -175px;
+  width: 350px;
+  height: 310px;
+  background: linear-gradient(145deg, #2f54f5 0%, #5a8fff 55%, #82b6ff 100%);
   border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%;
+  animation: blob-morph-spin 10s ease-in-out infinite;
+  z-index: 0;
+  box-shadow:
+    0 20px 60px rgba(53, 92, 255, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+@media (min-width: 640px) {
+  .portrait-blob-anim {
+    top: 200px;
+    margin-left: -200px;
+    width: 400px;
+    height: 360px;
+  }
+}
+
+/* Soft glow behind the blob */
+.portrait-blob-glow {
+  position: absolute;
+  top: 145px;
+  left: 50%;
+  margin-left: -210px;
+  width: 420px;
+  height: 450px;
+  background: radial-gradient(ellipse at 50% 42%, rgba(53, 92, 255, 0.65) 0%, transparent 64%);
+  filter: blur(28px);
+  animation: blob-glow-pulse 2.4s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .portrait-blob-glow {
+    top: 165px;
+    margin-left: -240px;
+    width: 480px;
+    height: 520px;
+  }
+}
+
+/* Cutout — in front of blob; sharp fade at bottom so legs cleanly enter the blob */
+.portrait-cutout {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: auto;
+  object-fit: contain;
+  z-index: 2;
+  filter: drop-shadow(0 16px 36px rgba(16, 23, 47, 0.38));
+  -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 80%);
+  mask-image: linear-gradient(to bottom, black 68%, transparent 80%);
+}
+
+/* YW initials badge */
+.portrait-initials {
+  position: absolute;
+  right: 1rem;
+  bottom: 4.5rem;
+  z-index: 3;
+  display: inline-flex;
+  height: 2.8rem;
+  width: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(16, 23, 47, 0.22);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* Unstable organic spin + morph */
+@keyframes blob-morph-spin {
+  0%   { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: rotate(0deg)   scale(1)    translate(0px,  0px); }
+  8%   { border-radius: 68% 32% 42% 58% / 55% 48% 52% 45%; transform: rotate(22deg)  scale(1.04) translate(3px, -2px); }
+  19%  { border-radius: 44% 56% 64% 36% / 72% 36% 64% 28%; transform: rotate(-11deg) scale(0.97) translate(-4px, 1px); }
+  31%  { border-radius: 74% 26% 38% 62% / 52% 68% 32% 48%; transform: rotate(38deg)  scale(1.05) translate(2px, -3px); }
+  45%  { border-radius: 58% 42% 28% 72% / 36% 64% 36% 64%; transform: rotate(16deg)  scale(0.99) translate(-2px, 2px); }
+  54%  { border-radius: 36% 64% 72% 28% / 60% 44% 56% 40%; transform: rotate(-18deg) scale(1.02) translate(4px,  1px); }
+  67%  { border-radius: 66% 34% 52% 48% / 48% 62% 38% 52%; transform: rotate(44deg)  scale(1.03) translate(-3px,-1px); }
+  78%  { border-radius: 52% 48% 36% 64% / 44% 56% 44% 56%; transform: rotate(27deg)  scale(0.98) translate(2px,  2px); }
+  89%  { border-radius: 68% 32% 58% 42% / 56% 72% 28% 44%; transform: rotate(-5deg)  scale(1.01) translate(-2px,-2px); }
+  100% { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: rotate(0deg)   scale(1)    translate(0px,  0px); }
+}
+
+/* Blue light flickers on and off — not perfectly rhythmic */
+@keyframes blob-glow-pulse {
+  0%   { opacity: 0.12; transform: scale(0.92); }
+  22%  { opacity: 0.85; transform: scale(1.06); }
+  38%  { opacity: 0.95; transform: scale(1.12); }
+  52%  { opacity: 0.18; transform: scale(0.94); }
+  65%  { opacity: 0.08; transform: scale(0.90); }
+  78%  { opacity: 0.80; transform: scale(1.08); }
+  90%  { opacity: 0.55; transform: scale(1.04); }
+  100% { opacity: 0.12; transform: scale(0.92); }
+}
+
+.dark .portrait-blob-anim {
+  background: linear-gradient(145deg, #4a6fff 0%, #7aa2ff 55%, #a8c4ff 100%);
+  box-shadow:
+    0 24px 70px rgba(122, 162, 255, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.dark .portrait-blob-glow {
+  background: radial-gradient(ellipse at 50% 42%, rgba(122, 162, 255, 0.7) 0%, transparent 64%);
+}
+
+/* ── Elegant hover system ─────────────────────────────────── */
+
+/*
+ * Primary (filled) buttons: lift 2px + electric-blue glow + diagonal glass shimmer
+ */
+.btn-glow-primary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease !important;
+}
+.btn-glow-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.16) 0%, transparent 52%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+.btn-glow-primary:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 44px rgba(53, 92, 255, 0.4),
+    0 6px 14px rgba(53, 92, 255, 0.22) !important;
+}
+.btn-glow-primary:not(:disabled):hover::after {
+  opacity: 1;
+}
+.btn-glow-primary:not(:disabled):active {
+  transform: translateY(0);
+  transition-duration: 80ms !important;
+}
+.dark .btn-glow-primary:not(:disabled):hover {
+  box-shadow:
+    0 18px 44px rgba(122, 162, 255, 0.38),
+    0 6px 14px rgba(122, 162, 255, 0.22) !important;
+}
+
+/*
+ * Outline buttons: lift 1.5px + glowing blue ring + light fill
+ */
+.btn-glow-outline {
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease !important;
+}
+.btn-glow-outline:hover {
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 0 0 1px rgba(53, 92, 255, 0.28),
+    0 10px 28px rgba(53, 92, 255, 0.12) !important;
+}
+.btn-glow-outline:active {
+  transform: translateY(0);
+  transition-duration: 80ms !important;
+}
+.dark .btn-glow-outline:hover {
+  box-shadow:
+    0 0 0 1px rgba(122, 162, 255, 0.32),
+    0 10px 28px rgba(122, 162, 255, 0.15) !important;
+}
+
+/*
+ * Ghost / nav pill buttons: lift 1px + very subtle blue halo
+ */
+.btn-glow-nav {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    color 160ms ease !important;
+}
+.btn-glow-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(53, 92, 255, 0.1) !important;
+}
+.btn-glow-nav:active {
+  transform: translateY(0);
+  transition-duration: 80ms !important;
+}
+.dark .btn-glow-nav:hover {
+  box-shadow: 0 4px 16px rgba(122, 162, 255, 0.13) !important;
+}
+
+/*
+ * Circular icon buttons: glow ring + lift, no scale
+ */
+.btn-glow-icon {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    border-color 160ms ease !important;
+}
+.btn-glow-icon:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1.5px rgba(53, 92, 255, 0.24),
+    0 6px 20px rgba(53, 92, 255, 0.16) !important;
+}
+.btn-glow-icon:active {
+  transform: translateY(0);
+  transition-duration: 80ms !important;
+}
+.dark .btn-glow-icon:hover {
+  box-shadow:
+    0 0 0 1.5px rgba(122, 162, 255, 0.28),
+    0 6px 20px rgba(122, 162, 255, 0.2) !important;
+}
+
+/*
+ * Mobile menu button (solid blue pill)
+ */
+.btn-glow-menu {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  box-shadow: 0 4px 16px rgba(53, 92, 255, 0.26);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 160ms ease !important;
+}
+.btn-glow-menu:hover {
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(53, 92, 255, 0.42) !important;
+}
+.btn-glow-menu:active {
+  filter: brightness(0.82);
+  transform: translateY(0);
+  transition-duration: 70ms !important;
+}
+.dark .btn-glow-menu {
+  box-shadow: 0 4px 16px rgba(122, 162, 255, 0.22);
+}
+.dark .btn-glow-menu:hover {
+  box-shadow: 0 10px 28px rgba(122, 162, 255, 0.34) !important;
+}
+
+/*
+ * Theme toggle icon buttons: color + brightness, no movement
+ */
+.btn-glow-theme {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease !important;
+}
+
+/*
+ * Brand logo link: gentle lift + brand-mark ring brightens
+ */
+.brand-logo {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.brand-logo:hover {
+  transform: translateY(-1px);
+}
+.brand-logo:hover .brand-mark {
+  box-shadow:
+    0 0 0 2.5px rgba(53, 92, 255, 0.22),
+    0 6px 22px rgba(53, 92, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: box-shadow 220ms ease;
+}
+.dark .brand-logo:hover .brand-mark {
+  box-shadow:
+    0 0 0 2.5px rgba(122, 162, 255, 0.28),
+    0 6px 22px rgba(122, 162, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: box-shadow 220ms ease;
+}
+
+/*
+ * Technology skill pill links: float + blue glow ring + tinted bg
+ */
+.skill-pill {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    border-color 180ms ease,
+    color 160ms ease !important;
+}
+.skill-pill:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(53, 92, 255, 0.24),
+    0 4px 14px rgba(53, 92, 255, 0.12) !important;
+  background-color: color-mix(in srgb, var(--primary) 7%, var(--card)) !important;
+}
+.skill-pill:active {
+  transform: translateY(0);
+  transition-duration: 80ms !important;
+}
+.skill-pill .skill-icon {
+  transition: opacity 200ms ease;
+}
+.skill-pill:hover .skill-icon {
+  opacity: 1 !important;
+}
+.dark .skill-pill:hover {
+  box-shadow:
+    0 0 0 1px rgba(122, 162, 255, 0.28),
+    0 4px 14px rgba(122, 162, 255, 0.15) !important;
+  background-color: color-mix(in srgb, var(--primary) 11%, var(--card)) !important;
+}
+
+/*
+ * Email / text links: sliding gradient underline
+ */
+.link-underline-slide {
+  position: relative;
+  transition: color 180ms ease !important;
+}
+.link-underline-slide::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #59a7ff));
+  transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-underline-slide:hover::after {
+  width: 100%;
+}
+
+/*
+ * Lightbox navigation buttons: brighter bg + white ring, no scale
+ */
+.lightbox-nav-btn {
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease !important;
+}
+.lightbox-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 4px 16px rgba(0, 0, 0, 0.24) !important;
 }
 
 /* ── Contact section ──────────────────────────────────────── */
@@ -323,7 +742,9 @@ pre code {
 
 .contact-info-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(53, 92, 255, 0.1);
+  box-shadow:
+    0 0 0 1px rgba(53, 92, 255, 0.1),
+    0 8px 26px rgba(53, 92, 255, 0.11);
 }
 
 .contact-form-card {
@@ -341,15 +762,29 @@ pre code {
 
 .project-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 24px 56px rgba(16, 23, 47, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(53, 92, 255, 0.09),
+    0 24px 56px rgba(16, 23, 47, 0.13);
 }
 
 .dark .contact-info-card,
 .dark .contact-form-card,
-.dark .project-card,
-.dark .project-card:hover {
+.dark .project-card {
   border-color: color-mix(in srgb, var(--foreground) 24%, transparent) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24);
+}
+
+.dark .project-card:hover {
+  border-color: color-mix(in srgb, var(--foreground) 24%, transparent) !important;
+  box-shadow:
+    0 0 0 1px rgba(122, 162, 255, 0.14),
+    0 24px 56px rgba(0, 0, 0, 0.32);
+}
+
+.dark .contact-info-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(122, 162, 255, 0.12),
+    0 8px 26px rgba(0, 0, 0, 0.3);
 }
 
 .live-status-dot {
@@ -361,6 +796,76 @@ pre code {
   background: #10b981;
   box-shadow: 0 0 0 rgba(16, 185, 129, 0.45);
   animation: live-pulse 1.35s ease-in-out infinite;
+}
+
+/* ── Gallery ──────────────────────────────────────────────── */
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.72) contrast(1.06) brightness(1.02);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.45s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+  filter: saturate(1.08) contrast(1.02) brightness(1);
+}
+
+.gallery-tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(53, 92, 255, 0.22) 0%,
+    rgba(92, 166, 255, 0.1) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+
+.gallery-item:hover .gallery-tint {
+  opacity: 0;
+}
+
+.gallery-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(53, 92, 255, 0.14);
+  transition: box-shadow 0.4s ease;
+  pointer-events: none;
+}
+
+.gallery-item:hover::after {
+  box-shadow: inset 0 0 0 1.5px rgba(53, 92, 255, 0.32);
+}
+
+.dark .gallery-tint {
+  background: linear-gradient(
+    145deg,
+    rgba(122, 162, 255, 0.26) 0%,
+    rgba(122, 162, 255, 0.1) 55%,
+    transparent 100%
+  );
+}
+
+.dark .gallery-item::after {
+  box-shadow: inset 0 0 0 1px rgba(122, 162, 255, 0.18);
+}
+
+.dark .gallery-item:hover::after {
+  box-shadow: inset 0 0 0 1.5px rgba(122, 162, 255, 0.4);
 }
 
 /* ── Animations ───────────────────────────────────────────── */
@@ -424,4 +929,12 @@ pre code {
 
 .delay-2 {
   animation-delay: 0.16s;
+}
+
+.delay-3 {
+  animation-delay: 0.24s;
+}
+
+.delay-4 {
+  animation-delay: 0.32s;
 }

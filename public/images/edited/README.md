@@ -1,0 +1,35 @@
+# Edited image mapping
+
+- photo-01.jpg: WhatsApp Image 2026-06-19 at 12.23.42 (1).jpeg
+- photo-02.jpg: WhatsApp Image 2026-06-19 at 12.23.42 (2).jpeg
+- photo-03.jpg: WhatsApp Image 2026-06-19 at 12.23.42.jpeg
+- photo-04.jpg: WhatsApp Image 2026-06-19 at 12.23.43 (1).jpeg
+- photo-05.jpg: WhatsApp Image 2026-06-19 at 12.23.43.jpeg
+- photo-06.jpg: WhatsApp Image 2026-06-19 at 12.26.41 (1).jpeg
+- photo-07.jpg: WhatsApp Image 2026-06-19 at 12.26.41 (2).jpeg
+- photo-08.jpg: WhatsApp Image 2026-06-19 at 12.26.41 (3).jpeg
+- photo-09.jpg: WhatsApp Image 2026-06-19 at 12.26.41.jpeg
+- photo-10.jpg: WhatsApp Image 2026-06-19 at 12.26.42 (1).jpeg
+- photo-11.jpg: WhatsApp Image 2026-06-19 at 12.26.42 (2).jpeg
+- photo-12.jpg: WhatsApp Image 2026-06-19 at 12.26.42 (3).jpeg
+- photo-13.jpg: WhatsApp Image 2026-06-19 at 12.26.42.jpeg
+- photo-14.jpg: WhatsApp Image 2026-06-19 at 12.26.43 (1).jpeg
+- photo-15.jpg: WhatsApp Image 2026-06-19 at 12.26.43 (2).jpeg
+- photo-16.jpg: WhatsApp Image 2026-06-19 at 12.26.43 (3).jpeg
+- photo-17.jpg: WhatsApp Image 2026-06-19 at 12.26.43 (4).jpeg
+- photo-18.jpg: WhatsApp Image 2026-06-19 at 12.26.43.jpeg
+- photo-19.jpg: WhatsApp Image 2026-06-19 at 12.26.44 (1).jpeg
+- photo-20.jpg: WhatsApp Image 2026-06-19 at 12.26.44 (2).jpeg
+- photo-21.jpg: WhatsApp Image 2026-06-19 at 12.26.44 (3).jpeg
+- photo-22.jpg: WhatsApp Image 2026-06-19 at 12.26.44.jpeg
+- photo-23.jpg: WhatsApp Image 2026-06-19 at 12.26.45 (1).jpeg
+- photo-24.jpg: WhatsApp Image 2026-06-19 at 12.26.45 (2).jpeg
+- photo-25.jpg: WhatsApp Image 2026-06-19 at 12.26.45 (3).jpeg
+- photo-26.jpg: WhatsApp Image 2026-06-19 at 12.26.45 (4).jpeg
+- photo-27.jpg: WhatsApp Image 2026-06-19 at 12.26.45.jpeg
+- photo-28.jpg: WhatsApp Image 2026-06-19 at 12.26.46 (1).jpeg
+- photo-29.jpg: WhatsApp Image 2026-06-19 at 12.26.46 (2).jpeg
+- photo-30.jpg: WhatsApp Image 2026-06-19 at 12.26.46 (3).jpeg
+- photo-31.jpg: WhatsApp Image 2026-06-19 at 12.26.46 (4).jpeg
+- photo-32.jpg: WhatsApp Image 2026-06-19 at 12.26.46 (5).jpeg
+- photo-33.jpg: WhatsApp Image 2026-06-19 at 12.26.46.jpeg
