@@ -380,13 +380,13 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       initials: "YW",
       name: "Yaman Warda",
       greeting: "مرحباً، أنا يامن وردة.",
-      headline: "مطوّر Full-Stack تعلّم ذاتياً",
-      heroLines: ["FULL-STACK", "DEVELOPER"],
+      headline: "مطوّر شامل تعلّم ذاتياً",
+      heroLines: ["", "مطوّر"],
       heroPrefix: "تعلّم ذاتياً",
       location: "إرفورت، ألمانيا",
-      lead: "أبني تطبيقات ويب Full-Stack بواجهات واضحة، وأساس Backend قوي، ومنطق منتج عملي. أركز على فهم طريقة عمل الأشياء بعمق، ثم تحويل الأفكار إلى برامج حقيقية قابلة للاستخدام.",
+      lead: "أبني تطبيقات ويب شاملة بواجهات واضحة، وأساس خلفي قوي، ومنطق منتج عملي. أركز على فهم طريقة عمل الأشياء بعمق، ثم تحويل الأفكار إلى برامج حقيقية قابلة للاستخدام.",
       about: [
-        "أنا مطوّر Full-Stack تعلّمت ذاتياً، وأركز على بناء تطبيقات ويب عملية بواجهات نظيفة وأساس Backend متين.",
+        "أنا مطوّر شامل تعلّمت ذاتياً، وأركز على بناء تطبيقات ويب عملية بواجهات نظيفة وأساس خلفي متين.",
         "أقوى عملي حالياً في React و TypeScript و Node.js و PostgreSQL وأدوات حديثة مثل TanStack و Hono. أحب تحويل أفكار المنتجات الحقيقية إلى أنظمة تعمل: تسجيل دخول، لوحات تحكم، نماذج قواعد بيانات، مدفوعات، وتجارب مستخدم كاملة.",
       ],
       closing:
@@ -414,12 +414,12 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         title: "Tech Store",
         eyebrow: "مشروع مميز",
         description:
-          "تطبيق تجارة إلكترونية Full-Stack مع تسجيل دخول، إدارة منتجات، منطق سلة، Stripe Checkout، طلبات، تقييمات، ولوحة تحكم للمسؤول.",
+          "تطبيق تجارة إلكترونية شامل مع تسجيل دخول، إدارة منتجات، منطق سلة، Stripe Checkout، طلبات، تقييمات، ولوحة تحكم للمسؤول.",
         websiteHref: "https://tech-store.yamanwarda.dev",
         githubHref: "https://github.com/InfiniteWorld123/tech-store",
         status: "live",
         ctaLabel: "فتح GitHub",
-        tags: ["E-commerce", "Full-Stack", "Stripe"],
+        tags: ["تجارة إلكترونية", "تطوير شامل", "Stripe"],
       },
       {
         title: "SkillForge",
@@ -428,7 +428,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
           "منصة تعليم حديثة يستطيع فيها المدرسون نشر الدورات، ويتعلم فيها الطلاب من خلال الدروس والاختبارات وتتبع التقدم.",
         status: "coming-soon",
         ctaLabel: "قريباً",
-        tags: ["LMS", "Full-Stack", "AI"],
+        tags: ["LMS", "تطوير شامل", "AI"],
       },
     ],
     skills: [

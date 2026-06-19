@@ -19,7 +19,7 @@ describe('portfolio content config', () => {
     expect(projects[0]?.githubHref).toBe('https://github.com/InfiniteWorld123/tech-store')
     expect(projects[1]?.title).toBe('SkillForge')
     expect(projects[1]?.status).toBe('coming-soon')
-    expect(skills).toContain('TanStack Start')
+    expect(skills.map((skill) => skill.name)).toContain('TanStack Start')
     expect(portfolioContent.en.profile.location).toBe('Erfurt, Germany')
     expect(portfolioContent.en.navigation.map((item) => item.label)).toEqual([
       'Home',

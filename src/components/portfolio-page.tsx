@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import {
   defaultLanguage,
@@ -48,7 +48,6 @@ import {
   Check,
   ChevronDown,
   Github,
-  Linkedin,
   Languages,
   Mail,
   MapPin,
@@ -460,11 +459,12 @@ function ThemeToggle() {
 const heroWordsByLanguage: Record<Language, string[]> = {
   de: ['FULL-STACK', 'FRONTEND', 'BACKEND'],
   en: ['FULL-STACK', 'FRONTEND', 'BACKEND'],
-  ar: ['FULL-STACK', 'فرونت اند', 'باك اند'],
+  ar: ['شامل', 'واجهات أمامية', 'واجهات خلفية'],
 }
 
 function TypingHeroText({ language }: { language: Language }) {
   const words = heroWordsByLanguage[language]
+  const longestWordLength = Math.max(...words.map((word) => word.length))
   const [wordIndex, setWordIndex] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('typing')
@@ -499,7 +499,10 @@ function TypingHeroText({ language }: { language: Language }) {
   }, [phase, displayed, wordIndex, words])
 
   return (
-    <span className="hero-accent block">
+    <span
+      className="hero-accent hero-typed-word"
+      style={{ '--hero-word-ch': `${longestWordLength}ch` } as CSSProperties}
+    >
       {displayed}
       <span className="hero-cursor" aria-hidden="true">|</span>
     </span>
@@ -530,9 +533,23 @@ function HeroSection({ content, language }: { content: PortfolioContent; languag
             {profile.heroPrefix}
           </p>
 
-          <h1 className="hero-display mt-2 text-[clamp(3.2rem,8vw,5.8rem)] font-black uppercase leading-[0.88] tracking-[-0.07em] text-foreground">
-            <TypingHeroText key={language} language={language} />
-            <span className="block">{profile.heroLines[1]}</span>
+          <h1
+            className={cn(
+              'hero-display mt-3 text-[clamp(2.75rem,8vw,5.45rem)] font-black uppercase leading-[0.96] tracking-normal text-foreground sm:leading-[0.92]',
+              language === 'ar' && 'hero-display-ar text-[clamp(2.45rem,7vw,4.95rem)]',
+            )}
+          >
+            {language === 'ar' ? (
+              <span className="hero-title-arabic">
+                <span>{profile.heroLines[1]}</span>
+                <TypingHeroText key={language} language={language} />
+              </span>
+            ) : (
+              <>
+                <TypingHeroText key={language} language={language} />
+                <span className="hero-static-line block">{profile.heroLines[1]}</span>
+              </>
+            )}
           </h1>
 
           <p className="hero-copy mt-6 max-w-xl text-base leading-8 sm:text-[1.05rem]">
@@ -629,12 +646,14 @@ function PortraitPlaceholder({ content }: { content: PortfolioContent }) {
           <div className="portrait-blob-anim" />
           <div className="portrait-blob-glow" />
         </div>
-        {/* Photo in front (z-index:2) — CSS mask fades legs into blob */}
-        <img
-          src={portraitImageSrc}
-          alt={profile.name}
-          className="portrait-cutout"
-        />
+        {/* Photo in front. The wrapper clips only the bottom of the oversized image. */}
+        <div className="portrait-photo-frame">
+          <img
+            src={portraitImageSrc}
+            alt={profile.name}
+            className="portrait-cutout"
+          />
+        </div>
       </div>
     </div>
   )
@@ -1313,4 +1332,3 @@ function SectionSeparator() {
     <Separator className="mx-6 !w-[calc(100%-3rem)] bg-border/40 sm:mx-10 sm:!w-[calc(100%-5rem)] lg:mx-14 lg:!w-[calc(100%-7rem)]" />
   )
 }
-

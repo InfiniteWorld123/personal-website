@@ -203,6 +203,43 @@ pre code {
   color: var(--hero-copy);
 }
 
+.hero-typed-word {
+  display: block;
+  min-inline-size: min(var(--hero-word-ch), 100%);
+}
+
+.hero-static-line {
+  margin-block-start: 0.08em;
+}
+
+.hero-title-arabic {
+  display: block;
+  direction: rtl;
+  max-width: 100%;
+  line-height: 1.05;
+  text-align: start;
+}
+
+.hero-title-arabic > span {
+  display: inline-block;
+  unicode-bidi: isolate;
+}
+
+.hero-title-arabic > span:first-child {
+  margin-inline-end: 0.18em;
+}
+
+.hero-title-arabic .hero-typed-word {
+  display: inline-block;
+  margin-right: 0.2em;
+  min-inline-size: auto;
+  vertical-align: baseline;
+}
+
+.hero-display-ar {
+  text-transform: none;
+}
+
 .section-title {
   font-family: var(--font-heading);
   line-height: 1;
@@ -328,37 +365,61 @@ pre code {
 
 .portrait-outer {
   position: relative;
-  width: 380px;
-  height: 560px;
+  width: min(88vw, 540px);
+  aspect-ratio: 1;
   display: flex;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(16, 23, 47, 0.06);
+  border-radius: clamp(1.8rem, 4vw, 2.6rem);
+  background: #ffffff;
+  box-shadow:
+    0 22px 70px rgba(16, 23, 47, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Clips blob animations to prevent them from pushing page layout */
+/* The frame clips the bottom cleanly while the blob keeps moving inside it. */
 .portrait-blob-clip {
   position: absolute;
-  inset: -60px;
-  overflow: hidden;
+  inset: 0;
+  overflow: visible;
   pointer-events: none;
   z-index: 1;
 }
 
 @media (min-width: 640px) {
   .portrait-outer {
-    width: 440px;
-    height: 640px;
+    width: min(70vw, 500px);
   }
 }
 
-/* Blob sits BEHIND the photo. top values are inside portrait-blob-clip (inset:-60px → add 60px) */
+@media (min-width: 768px) {
+  .portrait-outer {
+    width: min(42vw, 470px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .portrait-outer {
+    width: min(38vw, 520px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .portrait-outer {
+    width: 540px;
+  }
+}
+
+/* Blob sits behind the photo and keeps moving, but cannot leak outside the frame. */
 .portrait-blob-anim {
   position: absolute;
-  top: 175px;
-  left: 50%;
-  margin-left: -175px;
-  width: 350px;
-  height: 310px;
+  top: 17%;
+  left: 54%;
+  width: 82%;
+  height: 67%;
+  translate: -50% 0;
   background: linear-gradient(145deg, #2f54f5 0%, #5a8fff 55%, #82b6ff 100%);
   border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%;
   animation: blob-morph-spin 10s ease-in-out infinite;
@@ -370,23 +431,23 @@ pre code {
 
 @media (min-width: 640px) {
   .portrait-blob-anim {
-    top: 200px;
-    margin-left: -200px;
-    width: 400px;
-    height: 360px;
+    top: 16%;
+    left: 55%;
+    width: 84%;
+    height: 68%;
   }
 }
 
 /* Soft glow behind the blob */
 .portrait-blob-glow {
   position: absolute;
-  top: 145px;
-  left: 50%;
-  margin-left: -210px;
-  width: 420px;
-  height: 450px;
-  background: radial-gradient(ellipse at 50% 42%, rgba(53, 92, 255, 0.65) 0%, transparent 64%);
-  filter: blur(28px);
+  top: 13%;
+  left: 54%;
+  width: 92%;
+  height: 76%;
+  translate: -50% 0;
+  background: radial-gradient(ellipse at 50% 48%, rgba(53, 92, 255, 0.5) 0%, transparent 66%);
+  filter: blur(24px);
   animation: blob-glow-pulse 2.4s ease-in-out infinite;
   z-index: 0;
   pointer-events: none;
@@ -394,26 +455,45 @@ pre code {
 
 @media (min-width: 640px) {
   .portrait-blob-glow {
-    top: 165px;
-    margin-left: -240px;
-    width: 480px;
-    height: 520px;
+    top: 12%;
+    left: 55%;
+    width: 96%;
+    height: 80%;
   }
 }
 
-/* Cutout — in front of blob; sharp fade at bottom so legs cleanly enter the blob */
+.portrait-photo-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Cutout — positioned from the alpha-heavy PNG so the person is centered. */
 .portrait-cutout {
   position: absolute;
-  top: 0;
+  top: -7%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 140%;
+  transform: translateX(-28%);
+  width: 118%;
   height: auto;
   object-fit: contain;
-  z-index: 2;
   filter: drop-shadow(0 16px 36px rgba(16, 23, 47, 0.38));
-  -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 80%);
-  mask-image: linear-gradient(to bottom, black 68%, transparent 80%);
+}
+
+@media (min-width: 640px) {
+  .portrait-cutout {
+    top: -9%;
+    width: 122%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .portrait-cutout {
+    top: -11.5%;
+    width: 124%;
+  }
 }
 
 /* YW initials badge */
@@ -472,6 +552,15 @@ pre code {
 
 .dark .portrait-blob-glow {
   background: radial-gradient(ellipse at 50% 42%, rgba(122, 162, 255, 0.7) 0%, transparent 64%);
+}
+
+.dark .portrait-outer {
+  border-color: rgba(237, 243, 255, 0.1);
+  background: #ffffff;
+  box-shadow:
+    0 22px 74px rgba(0, 0, 0, 0.28),
+    0 0 48px rgba(122, 162, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* ── Elegant hover system ─────────────────────────────────── */
