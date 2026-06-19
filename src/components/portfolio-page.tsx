@@ -19,6 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
@@ -199,7 +206,11 @@ function PortfolioHeader({
 
         {/* CTA + mobile menu */}
         <div className="flex items-center gap-2">
-          <LanguageSwitcher content={content} language={language} onLanguageChange={onLanguageChange} />
+          <LanguageSwitcher
+            content={content}
+            language={language}
+            onLanguageChange={onLanguageChange}
+          />
           <ThemeToggle />
 
           <Button
@@ -273,83 +284,53 @@ function LanguageSwitcher({
   language: Language
   onLanguageChange: (language: Language) => void
 }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen])
-
   return (
-    <div ref={menuRef} className="relative">
-      <Button
-        type="button"
-        variant="outline"
-        aria-label={content.ui.languageLabel}
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-        onClick={() => setIsOpen((current) => !current)}
-        className="h-11 rounded-full border-border/60 bg-card px-4 text-foreground/72 shadow-sm hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          aria-label={content.ui.languageLabel}
+          className="h-11 rounded-full border-border/60 bg-card px-4 text-foreground/72 shadow-sm hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+        >
+          <Languages className="size-4" />
+          <span className="min-w-16 text-sm font-bold">{content.ui.languageOptions[language]}</span>
+          <ChevronDown
+            className="size-4 transition-transform group-aria-expanded/button:rotate-180"
+            aria-hidden="true"
+          />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={9}
+        className="language-menu min-w-48 overflow-hidden rounded-2xl border border-border/70 p-1.5 text-foreground shadow-[0_18px_50px_rgba(8,17,38,0.18)]"
       >
-        <Languages className="size-4" />
-        <span className="min-w-16 text-sm font-bold">{content.ui.languageOptions[language]}</span>
-        <ChevronDown
-          className={cn('size-4 transition-transform', isOpen && 'rotate-180')}
-          aria-hidden="true"
-        />
-      </Button>
-
-      {isOpen && (
-        <div
-          role="menu"
-          className="language-menu absolute right-0 top-[calc(100%+0.55rem)] z-50 min-w-48 overflow-hidden rounded-2xl border border-border/70 p-1.5 text-foreground shadow-[0_18px_50px_rgba(8,17,38,0.18)] rtl:left-0 rtl:right-auto"
+        <DropdownMenuRadioGroup
+          value={language}
+          onValueChange={(value) => onLanguageChange(value as Language)}
         >
           {languageOptions.map((option) => {
             const isSelected = language === option
 
             return (
-              <button
+              <DropdownMenuRadioItem
                 key={option}
-                type="button"
-                role="menuitemradio"
-                aria-checked={isSelected}
-                onClick={() => {
-                  onLanguageChange(option)
-                  setIsOpen(false)
-                }}
+                value={option}
                 className={cn(
-                  'flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-foreground/64 transition-colors hover:bg-primary/8 hover:text-primary rtl:text-right',
-                  isSelected && 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                  'flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left text-sm font-semibold text-foreground/64 transition-colors focus:bg-primary/8 focus:text-primary rtl:text-right',
+                  isSelected &&
+                    'bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground',
                 )}
               >
                 <span>{content.ui.languageOptions[option]}</span>
                 <Check className={cn('size-4 opacity-0', isSelected && 'opacity-100')} />
-              </button>
+              </DropdownMenuRadioItem>
             )
           })}
-        </div>
-      )}
-    </div>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -395,7 +376,7 @@ function ThemeToggle() {
             className={cn(
               'rounded-full text-foreground/58 shadow-none transition-all hover:bg-card/70 hover:text-foreground',
               '[&_svg]:size-4',
-              isActive && 'theme-tab-active'
+              isActive && 'theme-tab-active',
             )}
             aria-label={option.label}
             aria-selected={isActive}
@@ -658,12 +639,10 @@ function ProjectCard({
             variant="outline"
             className={cn(
               'mt-1 shrink-0 rounded-full border px-3 py-1 text-[0.72rem] font-semibold',
-              statusClasses[project.status]
+              statusClasses[project.status],
             )}
           >
-            {project.status === 'live' && (
-              <span className="live-status-dot" aria-hidden="true" />
-            )}
+            {project.status === 'live' && <span className="live-status-dot" aria-hidden="true" />}
             {content.ui.statusLabels[project.status]}
           </Badge>
         </div>
@@ -811,7 +790,6 @@ function ContactSection({ content }: { content: PortfolioContent }) {
     <section id="contact" className="contact-light scroll-mt-20 py-14">
       <div className="inner-wrap px-6 sm:px-10 lg:px-14">
         <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-12">
-
           {/* ── Left: heading + contact info ── */}
           <div className="fade-up">
             <Badge variant="outline" className="section-chip rounded-full px-3 py-1">
@@ -847,107 +825,121 @@ function ContactSection({ content }: { content: PortfolioContent }) {
 
           {/* ── Right: form card ── */}
           <div className="fade-up delay-1">
-            <div className="contact-form-card rounded-[1.6rem] p-8 sm:p-10 h-full">
-              <h3 className="text-xl font-semibold text-foreground">{ui.formTitle}</h3>
-              <p className="mt-1 text-sm leading-6 text-foreground/50">
-                {ui.formDescription}
-              </p>
+            <Card className="contact-form-card h-full rounded-[1.6rem] p-8 ring-0 sm:p-10">
+              <CardContent className="p-0">
+                <h3 className="text-xl font-semibold text-foreground">{ui.formTitle}</h3>
+                <p className="mt-1 text-sm leading-6 text-foreground/50">{ui.formDescription}</p>
 
-              <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-foreground/72">
+                        {ui.nameLabel}
+                      </Label>
+                      <Input
+                        ref={nameRef}
+                        id="name"
+                        name="name"
+                        placeholder={ui.namePlaceholder}
+                        required
+                        aria-invalid={Boolean(errors.name)}
+                        aria-describedby={errors.name ? 'name-error' : undefined}
+                        onChange={() =>
+                          setErrors((current) => ({
+                            ...current,
+                            name: undefined,
+                          }))
+                        }
+                        className={cn(
+                          'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
+                          errors.name && 'border-destructive focus:border-destructive',
+                        )}
+                      />
+                      {errors.name && (
+                        <p id="name-error" className="text-sm font-medium text-destructive">
+                          {errors.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-foreground/72">
+                        {ui.emailLabel}
+                      </Label>
+                      <Input
+                        ref={emailRef}
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder={ui.emailPlaceholder}
+                        required
+                        aria-invalid={Boolean(errors.email)}
+                        aria-describedby={errors.email ? 'email-error' : undefined}
+                        onChange={() =>
+                          setErrors((current) => ({
+                            ...current,
+                            email: undefined,
+                          }))
+                        }
+                        className={cn(
+                          'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
+                          errors.email && 'border-destructive focus:border-destructive',
+                        )}
+                      />
+                      {errors.email && (
+                        <p id="email-error" className="text-sm font-medium text-destructive">
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-foreground/72">
-                      {ui.nameLabel}
+                    <Label htmlFor="message" className="text-foreground/72">
+                      {ui.messageLabel}
                     </Label>
-                    <Input
-                      ref={nameRef}
-                      id="name"
-                      name="name"
-                      placeholder={ui.namePlaceholder}
+                    <Textarea
+                      ref={messageRef}
+                      id="message"
+                      name="message"
+                      rows={5}
+                      placeholder={ui.messagePlaceholder}
                       required
-                      aria-invalid={Boolean(errors.name)}
-                      aria-describedby={errors.name ? 'name-error' : undefined}
-                      onChange={() => setErrors((current) => ({ ...current, name: undefined }))}
+                      aria-invalid={Boolean(errors.message)}
+                      aria-describedby={errors.message ? 'message-error' : undefined}
+                      onChange={() =>
+                        setErrors((current) => ({
+                          ...current,
+                          message: undefined,
+                        }))
+                      }
                       className={cn(
-                        'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
-                        errors.name && 'border-destructive focus:border-destructive'
+                        'min-h-[140px] resize-none rounded-xl border-border/60 bg-background px-4 py-3 focus:border-primary/40',
+                        errors.message && 'border-destructive focus:border-destructive',
                       )}
                     />
-                    {errors.name && (
-                      <p id="name-error" className="text-sm font-medium text-destructive">
-                        {errors.name}
+                    {errors.message && (
+                      <p id="message-error" className="text-sm font-medium text-destructive">
+                        {errors.message}
                       </p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground/72">
-                      {ui.emailLabel}
-                    </Label>
-                    <Input
-                      ref={emailRef}
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder={ui.emailPlaceholder}
-                      required
-                      aria-invalid={Boolean(errors.email)}
-                      aria-describedby={errors.email ? 'email-error' : undefined}
-                      onChange={() => setErrors((current) => ({ ...current, email: undefined }))}
-                      className={cn(
-                        'h-12 rounded-xl border-border/60 bg-background px-4 focus:border-primary/40',
-                        errors.email && 'border-destructive focus:border-destructive'
-                      )}
-                    />
-                    {errors.email && (
-                      <p id="email-error" className="text-sm font-medium text-destructive">
-                        {errors.email}
-                      </p>
-                    )}
+
+                  <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                    <ContactStatusMessage status={status} content={content} />
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={status === 'sending'}
+                      className="rounded-full bg-primary px-7 text-primary-foreground shadow-[0_8px_24px_rgba(53,92,255,0.26)] hover:bg-primary/90"
+                    >
+                      {status === 'sending' ? ui.sending : ui.sendMessage}
+                      <Send />
+                    </Button>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message" className="text-foreground/72">
-                    {ui.messageLabel}
-                  </Label>
-                  <Textarea
-                    ref={messageRef}
-                    id="message"
-                    name="message"
-                    rows={5}
-                    placeholder={ui.messagePlaceholder}
-                    required
-                    aria-invalid={Boolean(errors.message)}
-                    aria-describedby={errors.message ? 'message-error' : undefined}
-                    onChange={() => setErrors((current) => ({ ...current, message: undefined }))}
-                    className={cn(
-                      'min-h-[140px] resize-none rounded-xl border-border/60 bg-background px-4 py-3 focus:border-primary/40',
-                      errors.message && 'border-destructive focus:border-destructive'
-                    )}
-                  />
-                  {errors.message && (
-                    <p id="message-error" className="text-sm font-medium text-destructive">
-                      {errors.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                  <ContactStatusMessage status={status} content={content} />
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={status === 'sending'}
-                    className="rounded-full bg-primary px-7 text-primary-foreground shadow-[0_8px_24px_rgba(53,92,255,0.26)] hover:bg-primary/90"
-                  >
-                    {status === 'sending' ? ui.sending : ui.sendMessage}
-                    <Send />
-                  </Button>
-                </div>
-              </form>
-            </div>
+                </form>
+              </CardContent>
+            </Card>
           </div>
-
         </div>
       </div>
     </section>
@@ -964,11 +956,7 @@ function ContactStatusMessage({
   const { ui } = content
 
   if (status === 'idle') {
-    return (
-      <p className="text-sm text-foreground/44">
-        {ui.directEmailHint}
-      </p>
-    )
+    return <p className="text-sm text-foreground/44">{ui.directEmailHint}</p>
   }
 
   const message =
@@ -989,7 +977,7 @@ function ContactStatusMessage({
         'h-auto rounded-full px-3 py-2 text-left text-[0.74rem] font-semibold',
         status === 'error' || status === 'invalid'
           ? 'border-destructive/20 bg-destructive/10 text-destructive'
-          : 'border-primary/15 bg-primary/10 text-primary'
+          : 'border-primary/15 bg-primary/10 text-primary',
       )}
     >
       {message}
@@ -1009,17 +997,17 @@ function ContactInfoCard({
   href?: string
 }) {
   const content = (
-    <div className="contact-info-card flex items-center gap-5 rounded-[1.2rem] px-6 py-5">
+    <Card className="contact-info-card flex-row items-center gap-5 rounded-[1.2rem] px-6 py-5 ring-0">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/14 bg-primary/8">
         {icon}
       </div>
-      <div>
+      <CardContent className="p-0">
         <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-foreground/40">
           {title}
         </p>
         <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 
   if (!href) return content
