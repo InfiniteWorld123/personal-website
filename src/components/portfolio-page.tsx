@@ -297,11 +297,10 @@ function PortfolioHeader({
   return (
     <header className="site-header sticky top-0 z-30">
       <div className="inner-wrap relative flex items-center justify-between gap-2 px-3 py-3 min-[360px]:gap-3 sm:px-10 sm:py-4 lg:px-14">
-        {/* Mobile menu - moved to left */}
         <Sheet>
           <SheetTrigger asChild>
             <button
-              className="btn-glow-menu shrink-0 rounded-full lg:hidden h-12 w-12 flex items-center justify-center outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:opacity-50"
+              className="btn-glow-menu flex h-12 w-12 shrink-0 select-none items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:opacity-50"
               aria-label={ui.openNavigationMenu}
               type="button"
             >
@@ -309,10 +308,10 @@ function PortfolioHeader({
             </button>
           </SheetTrigger>
           <SheetContent
-            side="right"
-            className="w-[85vw] max-w-xs border-l border-border/30 bg-card px-0"
+            side={language === 'ar' ? 'left' : 'right'}
+            className="navigation-sheet w-[85vw] max-w-xs border-border/60 px-0"
           >
-            <SheetHeader className="pb-2">
+            <SheetHeader className="pe-14 pb-2">
               <SheetTitle>{profile.name}</SheetTitle>
               <SheetDescription>{ui.portfolioNavigation}</SheetDescription>
             </SheetHeader>
@@ -357,21 +356,6 @@ function PortfolioHeader({
           </span>
         </a>
 
-        {/* Desktop nav — absolutely centered in header */}
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 lg:flex">
-          {navigation.map((item) => (
-            <Button
-              key={item.href}
-              asChild
-              variant="ghost"
-              size="sm"
-              className="btn-glow-nav rounded-full px-4 text-[0.82rem] font-semibold text-foreground/52 hover:bg-primary/7 hover:text-foreground"
-            >
-              <a href={item.href}>{item.label}</a>
-            </Button>
-          ))}
-        </nav>
-
         {/* CTA + settings */}
         <div className="flex items-center gap-1 min-[360px]:gap-2 flex-wrap justify-end">
           <LanguageSwitcher
@@ -381,13 +365,6 @@ function PortfolioHeader({
           />
           <ThemeToggle />
 
-          <Button
-            asChild
-            size="lg"
-            className="btn-glow-primary hidden rounded-full bg-primary px-5 text-primary-foreground shadow-[0_6px_24px_rgba(53,92,255,0.28)] hover:bg-primary/90 lg:inline-flex"
-          >
-            <a href="#contact">{ui.connectCta}</a>
-          </Button>
         </div>
       </div>
     </header>

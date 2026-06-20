@@ -101,7 +101,9 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--background);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--secondary) 34%, var(--background)) 0%, var(--background) 22rem),
+    var(--background);
   color: var(--foreground);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -164,6 +166,36 @@ pre code {
   background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
   backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(16, 23, 47, 0.05);
+}
+
+[data-slot="sheet-overlay"] {
+  background: color-mix(in srgb, var(--foreground) 28%, transparent);
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+.navigation-sheet {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--card) 88%, transparent), color-mix(in srgb, var(--secondary) 56%, var(--card))),
+    var(--card);
+  backdrop-filter: blur(24px) saturate(145%);
+  box-shadow:
+    0 24px 80px color-mix(in srgb, var(--foreground) 24%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.dark [data-slot="sheet-overlay"] {
+  background: rgba(3, 7, 18, 0.58);
+}
+
+.dark .navigation-sheet {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--card) 84%, transparent), color-mix(in srgb, var(--accent) 38%, var(--card))),
+    var(--card);
+  box-shadow:
+    0 24px 90px rgba(0, 0, 0, 0.54),
+    0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .language-menu {
