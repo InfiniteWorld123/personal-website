@@ -1,6 +1,8 @@
 {
-  "short_name": "TanStack App",
-  "name": "Create TanStack App Sample",
+  "short_name": "Yaman Warda",
+  "name": "Yaman Warda | Full-Stack Developer Portfolio",
+  "description": "Portfolio of Yaman Warda, a self-taught full-stack developer building React, TypeScript, Node.js, and PostgreSQL web applications.",
+  "lang": "de",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +20,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#ffffff",
   "background_color": "#ffffff"
 }

@@ -4,6 +4,7 @@ import {
   defaultLanguage,
   links,
   portfolioContent,
+  seoContent,
   socials,
   type Language,
   type PortfolioContent,
@@ -152,6 +153,62 @@ const themeOptions: Array<{
 ]
 const portraitImageSrc = '/images/hero-portrait.png'
 
+function upsertMetaTag(selector: string, attributes: Record<string, string>) {
+  let element = document.head.querySelector<HTMLMetaElement>(selector)
+
+  if (!element) {
+    element = document.createElement('meta')
+    document.head.appendChild(element)
+  }
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    element.setAttribute(name, value)
+  })
+}
+
+function updateSeoMetadata(language: Language) {
+  const seo = seoContent[language]
+  const canonicalUrl = links.siteUrl
+
+  document.title = seo.title
+  upsertMetaTag('meta[name="description"]', {
+    name: 'description',
+    content: seo.description,
+  })
+  upsertMetaTag('meta[name="keywords"]', {
+    name: 'keywords',
+    content: seo.keywords.join(', '),
+  })
+  upsertMetaTag('meta[property="og:title"]', {
+    property: 'og:title',
+    content: seo.title,
+  })
+  upsertMetaTag('meta[property="og:description"]', {
+    property: 'og:description',
+    content: seo.description,
+  })
+  upsertMetaTag('meta[property="og:url"]', {
+    property: 'og:url',
+    content: canonicalUrl,
+  })
+  upsertMetaTag('meta[property="og:image:alt"]', {
+    property: 'og:image:alt',
+    content: seo.imageAlt,
+  })
+  upsertMetaTag('meta[name="twitter:title"]', {
+    name: 'twitter:title',
+    content: seo.title,
+  })
+  upsertMetaTag('meta[name="twitter:description"]', {
+    name: 'twitter:description',
+    content: seo.description,
+  })
+  upsertMetaTag('meta[name="twitter:image:alt"]', {
+    name: 'twitter:image:alt',
+    content: seo.imageAlt,
+  })
+}
+
 function getStoredLanguage(): Language {
   if (typeof window === 'undefined') return defaultLanguage
   const stored = window.localStorage.getItem(languageStorageKey)
@@ -191,6 +248,7 @@ export function PortfolioPage() {
     window.localStorage.setItem(languageStorageKey, language)
     document.documentElement.lang = language
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+    updateSeoMetadata(language)
   }, [language])
 
   return (
@@ -207,7 +265,7 @@ export function PortfolioPage() {
           <SectionSeparator />
           <ProjectsSection content={content} />
           <SectionSeparator />
-          <GallerySection />
+          <GallerySection content={content} />
         </div>
 
         {/* Contact spans full width so its tinted bg goes edge-to-edge */}
@@ -652,7 +710,7 @@ function PortraitPlaceholder({ content }: { content: PortfolioContent }) {
         <div className="portrait-photo-frame">
           <img
             src={portraitImageSrc}
-            alt={profile.name}
+            alt={`${profile.name}, ${profile.headline}`}
             className="portrait-cutout"
           />
         </div>
@@ -1179,14 +1237,26 @@ function ContactInfoCard({
 // ─── Gallery ──────────────────────────────────────────────────────────────────
 
 const galleryPhotos = [
-  { src: '/images/gallery/photo-1.jpg', alt: 'Yaman Warda', pos: '50% 18%' },
-  { src: '/images/gallery/photo-2.jpg', alt: 'Yaman Warda', pos: '50% 40%' },
-  { src: '/images/gallery/photo-3.jpg', alt: 'Yaman Warda', pos: '50% 20%' },
-  { src: '/images/gallery/photo-4.jpg', alt: 'Yaman Warda', pos: '50% 32%' },
-  { src: '/images/gallery/photo-5.jpg', alt: 'Yaman Warda', pos: '50% 28%' },
+  { src: '/images/gallery/photo-1.jpg', pos: '50% 18%' },
+  { src: '/images/gallery/photo-2.jpg', pos: '50% 40%' },
+  { src: '/images/gallery/photo-3.jpg', pos: '50% 20%' },
+  { src: '/images/gallery/photo-4.jpg', pos: '50% 32%' },
+  { src: '/images/gallery/photo-5.jpg', pos: '50% 28%' },
 ]
 
-function Lightbox({ index, onClose, onPrev, onNext }: { index: number; onClose: () => void; onPrev: () => void; onNext: () => void }) {
+function Lightbox({
+  content,
+  index,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  content: PortfolioContent
+  index: number
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+}) {
   const photo = galleryPhotos[index]
 
   useEffect(() => {
@@ -1220,7 +1290,7 @@ function Lightbox({ index, onClose, onPrev, onNext }: { index: number; onClose: 
       >
         <img
           src={photo.src}
-          alt={photo.alt}
+          alt={`${content.profile.name} personal portfolio photo ${index + 1}`}
           className="max-h-[90vh] max-w-[90vw] object-contain"
         />
         {/* Counter */}
@@ -1250,7 +1320,7 @@ function Lightbox({ index, onClose, onPrev, onNext }: { index: number; onClose: 
   )
 }
 
-function GallerySection() {
+function GallerySection({ content }: { content: PortfolioContent }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const openAt = (i: number) => setLightboxIndex(i)
@@ -1287,7 +1357,7 @@ function GallerySection() {
           >
             <img
               src={photo.src}
-              alt={photo.alt}
+              alt={`${content.profile.name} personal portfolio photo ${i + 1}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               style={{ objectPosition: photo.pos }}
             />
@@ -1311,7 +1381,7 @@ function GallerySection() {
           >
             <img
               src={photo.src}
-              alt={photo.alt}
+              alt={`${content.profile.name} personal portfolio photo ${i + 3}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               style={{ objectPosition: photo.pos }}
             />
@@ -1321,7 +1391,13 @@ function GallerySection() {
       </div>
 
       {lightboxIndex !== null && (
-        <Lightbox index={lightboxIndex} onClose={close} onPrev={prev} onNext={next} />
+        <Lightbox
+          content={content}
+          index={lightboxIndex}
+          onClose={close}
+          onPrev={prev}
+          onNext={next}
+        />
       )}
     </section>
   )

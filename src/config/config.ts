@@ -37,6 +37,13 @@ export interface Social {
 
 export type Language = "de" | "en" | "ar";
 
+export interface SeoContent {
+  title: string;
+  description: string;
+  keywords: string[];
+  imageAlt: string;
+}
+
 export interface PortfolioContent {
   navigation: NavigationItem[];
   profile: {
@@ -104,10 +111,64 @@ export interface PortfolioContent {
 }
 
 export const links = {
+  siteUrl: "https://yamanwarda.dev",
   github: "https://github.com/InfiniteWorld123",
   email: "yamanwarda06@gmail.com",
   formEndpoint: "/api/contact",
 };
+
+export const seoContent: Record<Language, SeoContent> = {
+  de: {
+    title: "Yaman Warda | Autodidaktischer Full-Stack-Entwickler in Erfurt",
+    description:
+      "Portfolio von Yaman Warda, einem autodidaktischen Full-Stack-Entwickler aus Erfurt mit Fokus auf React, TypeScript, Node.js, PostgreSQL und moderne Webanwendungen.",
+    keywords: [
+      "Yaman Warda",
+      "Full-Stack-Entwickler",
+      "autodidaktischer Entwickler",
+      "React Entwickler Erfurt",
+      "TypeScript Entwickler",
+      "Node.js Entwickler",
+      "Portfolio",
+    ],
+    imageAlt: "Yaman Warda, autodidaktischer Full-Stack-Entwickler aus Erfurt",
+  },
+  en: {
+    title: "Yaman Warda | Self-Taught Full-Stack Developer in Germany",
+    description:
+      "Portfolio of Yaman Warda, a self-taught full-stack developer in Germany building clean React, TypeScript, Node.js, PostgreSQL, and product-focused web applications.",
+    keywords: [
+      "Yaman Warda",
+      "self-taught developer",
+      "full-stack developer",
+      "React developer",
+      "TypeScript developer",
+      "Node.js developer",
+      "portfolio",
+    ],
+    imageAlt: "Yaman Warda, self-taught full-stack developer in Germany",
+  },
+  ar: {
+    title: "Yaman Warda | مطوّر ويب شامل تعلّم ذاتياً",
+    description:
+      "ملف أعمال يمان وردة، مطوّر ويب شامل تعلّم ذاتياً في ألمانيا ويبني تطبيقات حديثة باستخدام React و TypeScript و Node.js و PostgreSQL.",
+    keywords: [
+      "Yaman Warda",
+      "يمان وردة",
+      "مطوّر ويب شامل",
+      "مطوّر تعلّم ذاتياً",
+      "React",
+      "TypeScript",
+      "Node.js",
+      "Portfolio",
+    ],
+    imageAlt: "يمان وردة، مطوّر ويب شامل تعلّم ذاتياً في ألمانيا",
+  },
+};
+
+export const defaultSeo = seoContent.de;
+export const seoImagePath = "/images/hero-portrait.png";
+export const seoImageUrl = `${links.siteUrl}${seoImagePath}`;
 
 export const socials: Social[] = [
   {
