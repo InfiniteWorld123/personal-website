@@ -541,8 +541,10 @@ function HeroSection({ content, language }: { content: PortfolioContent; languag
           >
             {language === 'ar' ? (
               <span className="hero-title-arabic">
-                <span>{profile.heroLines[1]}</span>
-                <TypingHeroText key={language} language={language} />
+                <span className="hero-arabic-static">{profile.heroLines[1]}</span>
+                <span className="hero-arabic-role">
+                  <TypingHeroText key={language} language={language} />
+                </span>
               </span>
             ) : (
               <>

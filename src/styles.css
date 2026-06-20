@@ -213,27 +213,34 @@ pre code {
 }
 
 .hero-title-arabic {
-  display: block;
+  display: grid;
   direction: rtl;
+  gap: 0.06em;
   max-width: 100%;
-  line-height: 1.05;
   text-align: start;
 }
 
-.hero-title-arabic > span {
-  display: inline-block;
+.hero-arabic-static,
+.hero-arabic-role {
+  display: block;
   unicode-bidi: isolate;
 }
 
-.hero-title-arabic > span:first-child {
-  margin-inline-end: 0.18em;
+.hero-arabic-static {
+  line-height: 0.95;
 }
 
-.hero-title-arabic .hero-typed-word {
-  display: inline-block;
-  margin-right: 0.2em;
-  min-inline-size: auto;
-  vertical-align: baseline;
+.hero-arabic-role {
+  min-block-size: 1.04em;
+  line-height: 0.96;
+}
+
+.hero-arabic-role .hero-typed-word {
+  display: block;
+  min-inline-size: 100%;
+  white-space: nowrap;
+  font-size: clamp(2.1rem, 8.2vw, 4.65rem);
+  line-height: inherit;
 }
 
 .hero-display-ar {

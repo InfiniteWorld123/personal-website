@@ -177,7 +177,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         githubHref: "https://github.com/InfiniteWorld123/tech-store",
         status: "live",
         ctaLabel: "GitHub öffnen",
-        tags: ["E-Commerce", "Full-Stack", "Stripe"],
+        tags: ["E-Commerce", "Full-Stack"],
       },
       {
         title: "SkillForge",
@@ -186,7 +186,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
           "Eine moderne Lernplattform, auf der Lehrende Kurse veröffentlichen und Lernende mit Lektionen, Quizzen und Fortschrittsverfolgung arbeiten.",
         status: "coming-soon",
         ctaLabel: "Kommt bald",
-        tags: ["LMS", "Full-Stack", "AI"],
+        tags: ["LMS", "Full-Stack"],
       },
     ],
     skills: [
@@ -298,7 +298,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         githubHref: "https://github.com/InfiniteWorld123/tech-store",
         status: "live",
         ctaLabel: "Open GitHub",
-        tags: ["E-commerce", "Full-Stack", "Stripe"],
+        tags: ["E-commerce", "Full-Stack"],
       },
       {
         title: "SkillForge",
@@ -307,7 +307,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
           "A modern learning platform where instructors publish courses and students learn through lessons, quizzes, and progress tracking.",
         status: "coming-soon",
         ctaLabel: "Coming Soon",
-        tags: ["LMS", "Full-Stack", "AI"],
+        tags: ["LMS", "Full-Stack"],
       },
     ],
     skills: [
@@ -379,7 +379,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
     profile: {
       initials: "YW",
       name: "Yaman Warda",
-      greeting: "مرحباً، أنا يامن وردة.",
+      greeting: "مرحباً، أنا يمان وردة.",
       headline: "مطوّر شامل تعلّم ذاتياً",
       heroLines: ["", "مطوّر"],
       heroPrefix: "تعلّم ذاتياً",
@@ -419,7 +419,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         githubHref: "https://github.com/InfiniteWorld123/tech-store",
         status: "live",
         ctaLabel: "فتح GitHub",
-        tags: ["تجارة إلكترونية", "تطوير شامل", "Stripe"],
+        tags: ["تجارة إلكترونية", "تطوير شامل"],
       },
       {
         title: "SkillForge",
@@ -428,7 +428,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
           "منصة تعليم حديثة يستطيع فيها المدرسون نشر الدورات، ويتعلم فيها الطلاب من خلال الدروس والاختبارات وتتبع التقدم.",
         status: "coming-soon",
         ctaLabel: "قريباً",
-        tags: ["LMS", "تطوير شامل", "AI"],
+        tags: ["LMS", "تطوير شامل"],
       },
     ],
     skills: [
