@@ -105,11 +105,11 @@ const skillIconMap: Record<string, ReactNode> = {
       <path d="M7 12l3 3 7-7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  hono: (
+  elysia: (
     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2c0 0-7 5-7 11a7 7 0 0 0 14 0c0-6-7-11-7-11z" fill="#FF7043"/>
-      <path d="M12 7c0 0-4 3-4 6a4 4 0 0 0 8 0c0-3-4-6-4-6z" fill="#FF8A65"/>
-      <circle cx="12" cy="15" r="2" fill="#FFD54F"/>
+      <circle cx="12" cy="12" r="10" fill="#1A1A1D"/>
+      <path d="M12 2a10 10 0 0 0 0 20c-3.2-1.1-5-4.6-5-8.5S8.8 3.4 12 2z" fill="#F5F5F5"/>
+      <circle cx="9.3" cy="8.2" r="1.05" fill="#1A1A1D"/>
     </svg>
   ),
   tailwind: (
@@ -264,8 +264,6 @@ export function PortfolioPage() {
           <AboutSection content={content} />
           <SectionSeparator />
           <ProjectsSection content={content} />
-          <SectionSeparator />
-          <GallerySection content={content} />
         </div>
 
         {/* Contact spans full width so its tinted bg goes edge-to-edge */}
@@ -1208,175 +1206,6 @@ function ContactInfoCard({
     <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
       {content}
     </a>
-  )
-}
-
-// ─── Gallery ──────────────────────────────────────────────────────────────────
-
-const galleryPhotos = [
-  { src: '/images/gallery/photo-1.jpg', pos: '50% 18%' },
-  { src: '/images/gallery/photo-2.jpg', pos: '50% 40%' },
-  { src: '/images/gallery/photo-3.jpg', pos: '50% 20%' },
-  { src: '/images/gallery/photo-4.jpg', pos: '50% 32%' },
-  { src: '/images/gallery/photo-5.jpg', pos: '50% 28%' },
-]
-
-function Lightbox({
-  content,
-  index,
-  onClose,
-  onPrev,
-  onNext,
-}: {
-  content: PortfolioContent
-  index: number
-  onClose: () => void
-  onPrev: () => void
-  onNext: () => void
-}) {
-  const photo = galleryPhotos[index]
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft') onPrev()
-      if (e.key === 'ArrowRight') onNext()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, onPrev, onNext])
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      {/* Prev */}
-      <button
-        onClick={e => { e.stopPropagation(); onPrev() }}
-        className="lightbox-nav-btn absolute left-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur"
-        aria-label="Previous photo"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-
-      {/* Image */}
-      <div
-        className="relative mx-16 max-h-[90vh] max-w-[90vw] overflow-hidden rounded-2xl shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        <img
-          src={photo.src}
-          alt={`${content.profile.name} personal portfolio photo ${index + 1}`}
-          className="max-h-[90vh] max-w-[90vw] object-contain"
-        />
-        {/* Counter */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
-          {index + 1} / {galleryPhotos.length}
-        </div>
-      </div>
-
-      {/* Next */}
-      <button
-        onClick={e => { e.stopPropagation(); onNext() }}
-        className="lightbox-nav-btn absolute right-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur"
-        aria-label="Next photo"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
-
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="lightbox-nav-btn absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur"
-        aria-label="Close"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-  )
-}
-
-function GallerySection({ content }: { content: PortfolioContent }) {
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-
-  const openAt = (i: number) => setLightboxIndex(i)
-  const close = () => setLightboxIndex(null)
-  const prev = () => setLightboxIndex(i => (i! - 1 + galleryPhotos.length) % galleryPhotos.length)
-  const next = () => setLightboxIndex(i => (i! + 1) % galleryPhotos.length)
-
-  return (
-    <section className="scroll-mt-20 px-6 py-14 sm:px-10 lg:px-14">
-      <div className="fade-up flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Badge variant="outline" className="section-chip rounded-full px-3 py-1">
-            Life
-          </Badge>
-          <h2 className="section-title mt-5 max-w-sm text-4xl text-foreground sm:text-5xl">
-            Beyond the Code
-          </h2>
-        </div>
-        <p className="fade-up delay-1 max-w-xs text-[0.95rem] leading-7 text-foreground/52">
-          Between commits — guitar, streetwear & exploring the city.
-        </p>
-      </div>
-
-      {/* Row 1: two large editorial shots */}
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {galleryPhotos.slice(0, 2).map((photo, i) => (
-          <div
-            key={photo.src}
-            onClick={() => openAt(i)}
-            className={cn(
-              'gallery-item group fade-up h-[300px] cursor-pointer rounded-[1.6rem] sm:h-[380px]',
-              i === 1 && 'delay-1',
-            )}
-          >
-            <img
-              src={photo.src}
-              alt={`${content.profile.name} personal portfolio photo ${i + 1}`}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              style={{ objectPosition: photo.pos }}
-            />
-            <div className="gallery-tint" aria-hidden="true" />
-          </div>
-        ))}
-      </div>
-
-      {/* Row 2: three smaller shots */}
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {galleryPhotos.slice(2).map((photo, i) => (
-          <div
-            key={photo.src}
-            onClick={() => openAt(i + 2)}
-            className={cn(
-              'gallery-item group fade-up h-[200px] cursor-pointer rounded-[1.6rem] sm:h-[240px]',
-              i === 0 && 'delay-1',
-              i === 1 && 'delay-2',
-              i === 2 && 'col-span-2 sm:col-span-1 delay-3',
-            )}
-          >
-            <img
-              src={photo.src}
-              alt={`${content.profile.name} personal portfolio photo ${i + 3}`}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              style={{ objectPosition: photo.pos }}
-            />
-            <div className="gallery-tint" aria-hidden="true" />
-          </div>
-        ))}
-      </div>
-
-      {lightboxIndex !== null && (
-        <Lightbox
-          content={content}
-          index={lightboxIndex}
-          onClose={close}
-          onPrev={prev}
-          onNext={next}
-        />
-      )}
-    </section>
   )
 }
 

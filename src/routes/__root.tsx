@@ -21,7 +21,7 @@ const personStructuredData = {
     addressCountry: 'DE',
   },
   sameAs: ['https://github.com/InfiniteWorld123', 'https://linkedin.com/in/yaman-warda'],
-  knowsAbout: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'TanStack Start', 'Hono.js'],
+  knowsAbout: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'TanStack Start', 'Elysia.js'],
 }
 
 export const Route = createRootRoute({
@@ -126,10 +126,6 @@ export const Route = createRootRoute({
       {
         rel: 'manifest',
         href: '/manifest.json',
-      },
-      {
-        rel: 'icon',
-        href: '/favicon.ico',
       },
       {
         rel: 'alternate',

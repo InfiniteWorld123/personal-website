@@ -3,23 +3,7 @@
   "name": "Yaman Warda | Full-Stack Developer Portfolio",
   "description": "Portfolio of Yaman Warda, a self-taught full-stack developer building React, TypeScript, Node.js, and PostgreSQL web applications.",
   "lang": "de",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
+  "icons": [],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

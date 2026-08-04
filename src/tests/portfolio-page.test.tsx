@@ -12,13 +12,17 @@ describe('portfolio content config', () => {
       'Projekte',
       'Kontakt',
     ])
-    expect(projects).toHaveLength(2)
+    expect(projects).toHaveLength(3)
     expect(projects[0]?.title).toBe('Tech Store')
     expect(projects[0]?.status).toBe('live')
     expect(projects[0]?.websiteHref).toBe('https://tech-store.yamanwarda.dev')
     expect(projects[0]?.githubHref).toBe('https://github.com/InfiniteWorld123/tech-store')
-    expect(projects[1]?.title).toBe('SkillForge')
-    expect(projects[1]?.status).toBe('coming-soon')
+    expect(projects[1]?.title).toBe('InkNest')
+    expect(projects[1]?.status).toBe('live')
+    expect(projects[1]?.websiteHref).toBe('https://ink-nest.yamanwarda.dev')
+    expect(projects[1]?.githubHref).toBe('https://github.com/InfiniteWorld123/inknest')
+    expect(projects[2]?.title).toBe('Prime Estate')
+    expect(projects[2]?.status).toBe('coming-soon')
     expect(skills.map((skill) => skill.name)).toContain('TanStack Start')
     expect(portfolioContent.en.profile.location).toBe('Erfurt, Germany')
     expect(portfolioContent.en.navigation.map((item) => item.label)).toEqual([

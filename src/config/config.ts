@@ -206,7 +206,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       lead: "Ich entwickle Full-Stack-Webanwendungen mit klaren Oberflächen, soliden Backend-Grundlagen und praktischer Produktlogik. Ich konzentriere mich darauf, Dinge wirklich zu verstehen und Ideen in echte, nutzbare Software zu verwandeln.",
       about: [
         "Ich bin ein autodidaktischer Full-Stack-Entwickler und baue praktische Webanwendungen mit klaren Interfaces und einer stabilen Backend-Basis.",
-        "Meine stärkste Arbeit liegt in React, TypeScript, Node.js, PostgreSQL und modernen Tools wie TanStack und Hono. Ich entwickle gerne echte Produktsysteme: Authentifizierung, Dashboards, Datenbankmodelle, Zahlungen und User Workflows.",
+        "Meine stärkste Arbeit liegt in React, TypeScript, Node.js, PostgreSQL und modernen Tools wie TanStack und Elysia. Ich entwickle gerne echte Produktsysteme: Authentifizierung, Dashboards, Datenbankmodelle, Zahlungen und User Workflows.",
       ],
       closing:
         "Mir ist wichtig, tief zu lernen, echte Projekte zu veröffentlichen und mich durch Feedback weiterzuentwickeln. Außerhalb der Programmierung hilft mir Sport, diszipliniert und konstant zu bleiben. Genauso gehe ich auch an Entwicklung heran.",
@@ -241,13 +241,24 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["E-Commerce", "Full-Stack"],
       },
       {
-        title: "SkillForge",
+        title: "InkNest",
+        eyebrow: "Neuestes Projekt",
+        description:
+          "Eine Full-Stack-Blogging-Plattform mit Authentifizierung, einem Rich-Text-Editor, Bild-Uploads, Kommentaren, Reaktionen und Benachrichtigungen.",
+        websiteHref: "https://ink-nest.yamanwarda.dev",
+        githubHref: "https://github.com/InfiniteWorld123/inknest",
+        status: "live",
+        ctaLabel: "GitHub öffnen",
+        tags: ["Blogging", "Full-Stack"],
+      },
+      {
+        title: "Prime Estate",
         eyebrow: "Nächstes Projekt",
         description:
-          "Eine moderne Lernplattform, auf der Lehrende Kurse veröffentlichen und Lernende mit Lektionen, Quizzen und Fortschrittsverfolgung arbeiten.",
+          "Ein Immobilienverwaltungssystem mit Blogging-System, Lead-Management, Buchungsverwaltung und Immobilienverwaltung.",
         status: "coming-soon",
         ctaLabel: "Kommt bald",
-        tags: ["LMS", "Full-Stack"],
+        tags: ["Real Estate", "Full-Stack"],
       },
     ],
     skills: [
@@ -256,7 +267,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
       { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
       { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
-      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Elysia.js", icon: "elysia", url: "https://elysiajs.com" },
       { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
     ],
     ui: {
@@ -327,7 +338,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       lead: "I build full-stack web applications with clean interfaces, strong backend foundations, and practical product logic. I focus on understanding how things work, then turning ideas into real, usable software.",
       about: [
         "I'm a self-taught full-stack developer focused on building practical web applications with clean interfaces and solid backend foundations.",
-        "My strongest work is in React, TypeScript, Node.js, PostgreSQL, and modern tools like TanStack and Hono. I enjoy turning real product ideas into working systems: authentication, dashboards, database models, payments, and user workflows.",
+        "My strongest work is in React, TypeScript, Node.js, PostgreSQL, and modern tools like TanStack and Elysia. I enjoy turning real product ideas into working systems: authentication, dashboards, database models, payments, and user workflows.",
       ],
       closing:
         "I care about learning deeply, shipping real projects, and improving through feedback. Outside of programming, sport helps me stay disciplined and consistent, which is also how I approach development.",
@@ -362,13 +373,24 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["E-commerce", "Full-Stack"],
       },
       {
-        title: "SkillForge",
+        title: "InkNest",
+        eyebrow: "Latest build",
+        description:
+          "A full-stack blogging platform with authentication, a rich-text editor, image uploads, comments, reactions, and notifications.",
+        websiteHref: "https://ink-nest.yamanwarda.dev",
+        githubHref: "https://github.com/InfiniteWorld123/inknest",
+        status: "live",
+        ctaLabel: "Open GitHub",
+        tags: ["Blogging", "Full-Stack"],
+      },
+      {
+        title: "Prime Estate",
         eyebrow: "Next build",
         description:
-          "A modern learning platform where instructors publish courses and students learn through lessons, quizzes, and progress tracking.",
+          "A real estate management system with a blogging system, lead management, booking management, and property management.",
         status: "coming-soon",
         ctaLabel: "Coming Soon",
-        tags: ["LMS", "Full-Stack"],
+        tags: ["Real Estate", "Full-Stack"],
       },
     ],
     skills: [
@@ -377,7 +399,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
       { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
       { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
-      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Elysia.js", icon: "elysia", url: "https://elysiajs.com" },
       { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
     ],
     ui: {
@@ -448,7 +470,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       lead: "أبني تطبيقات ويب شاملة بواجهات واضحة، وأساس خلفي قوي، ومنطق منتج عملي. أركز على فهم طريقة عمل الأشياء بعمق، ثم تحويل الأفكار إلى برامج حقيقية قابلة للاستخدام.",
       about: [
         "أنا مطوّر شامل تعلّمت ذاتياً، وأركز على بناء تطبيقات ويب عملية بواجهات نظيفة وأساس خلفي متين.",
-        "أقوى عملي حالياً في React و TypeScript و Node.js و PostgreSQL وأدوات حديثة مثل TanStack و Hono. أحب تحويل أفكار المنتجات الحقيقية إلى أنظمة تعمل: تسجيل دخول، لوحات تحكم، نماذج قواعد بيانات، مدفوعات، وتجارب مستخدم كاملة.",
+        "أقوى عملي حالياً في React و TypeScript و Node.js و PostgreSQL وأدوات حديثة مثل TanStack و Elysia. أحب تحويل أفكار المنتجات الحقيقية إلى أنظمة تعمل: تسجيل دخول، لوحات تحكم، نماذج قواعد بيانات، مدفوعات، وتجارب مستخدم كاملة.",
       ],
       closing:
         "أهتم بالتعلّم العميق، ونشر مشاريع حقيقية، والتطور من خلال الملاحظات. خارج البرمجة، يساعدني الرياضة على الانضباط والاستمرارية، وهذا أيضاً أسلوبي في التطوير.",
@@ -483,13 +505,24 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
         tags: ["تجارة إلكترونية", "تطوير شامل"],
       },
       {
-        title: "SkillForge",
+        title: "InkNest",
+        eyebrow: "أحدث مشروع",
+        description:
+          "منصة تدوين شاملة مع تسجيل دخول، محرر نصوص غني، رفع صور، تعليقات، تفاعلات، وإشعارات.",
+        websiteHref: "https://ink-nest.yamanwarda.dev",
+        githubHref: "https://github.com/InfiniteWorld123/inknest",
+        status: "live",
+        ctaLabel: "فتح GitHub",
+        tags: ["تدوين", "تطوير شامل"],
+      },
+      {
+        title: "Prime Estate",
         eyebrow: "المشروع القادم",
         description:
-          "منصة تعليم حديثة يستطيع فيها المدرسون نشر الدورات، ويتعلم فيها الطلاب من خلال الدروس والاختبارات وتتبع التقدم.",
+          "نظام إدارة عقارات يشمل نظام تدوين، إدارة العملاء المحتملين، إدارة الحجوزات، وإدارة العقارات.",
         status: "coming-soon",
         ctaLabel: "قريباً",
-        tags: ["LMS", "تطوير شامل"],
+        tags: ["عقارات", "تطوير شامل"],
       },
     ],
     skills: [
@@ -498,7 +531,7 @@ export const portfolioContent: Record<Language, PortfolioContent> = {
       { name: "Node.js", icon: "nodejs", url: "https://nodejs.org" },
       { name: "PostgreSQL", icon: "postgresql", url: "https://www.postgresql.org" },
       { name: "TanStack Start", icon: "tanstack", url: "https://tanstack.com/start" },
-      { name: "Hono.js", icon: "hono", url: "https://hono.dev" },
+      { name: "Elysia.js", icon: "elysia", url: "https://elysiajs.com" },
       { name: "Tailwind CSS", icon: "tailwind", url: "https://tailwindcss.com" },
     ],
     ui: {
