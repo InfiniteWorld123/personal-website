@@ -16,7 +16,7 @@ const personStructuredData = {
   '@type': 'Person',
   name: site.name,
   url: site.url,
-  image: `${site.url}${site.portrait}`,
+  image: `${site.url}${site.heroPortrait}`,
   email: `mailto:${site.email}`,
   address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: site.country },
   sameAs: [site.github, site.linkedin],

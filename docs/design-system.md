@@ -1,22 +1,22 @@
 # Design System
 
-Visual direction chosen before B3: **quiet and precise**. The buyer is a small
-business owner in Germany deciding whether to trust a stranger with one to
-several thousand euros. Calm typography and one deep colour read as
-competence; loud colour and heavy motion read as a sales funnel.
+The visual identity is the one the owner built and likes: bright blue, big
+uppercase display type with a typed word, the cutout portrait in front of a
+morphing blue blob, rounded cards with soft shadows, glowing buttons. B3 kept
+that identity and put the new page structure underneath it.
 
-The owner's colour is blue. It stays blue, but deep and desaturated rather
-than bright: the blue of a serious office, not of a developer template.
+A quieter, deep-blue alternative was tried on 7 Sep 2026 and rejected by the
+owner. Do not reintroduce it.
 
 ## Where things live
 
 | Concern | Owner |
 | --- | --- |
-| Colour tokens, fonts, type scale, base CSS | `src/frontend/config/styles.css` |
+| Colour tokens, fonts, type scale, helpers | `src/frontend/config/styles.css` |
 | Theme state | `src/frontend/components/theme/` |
 | Language and text direction | `src/frontend/i18n/` |
 | Smooth scroll, GSAP, reduced motion | `src/frontend/motion/` |
-| Public shell: header, footer, container, section | `src/frontend/components/layout/public/` |
+| Public shell: header, footer, container, section, portrait | `src/frontend/components/layout/public/` |
 | Public copy per language | `src/frontend/content/{de,en,ar}.ts` |
 
 ## Colour
@@ -24,33 +24,34 @@ than bright: the blue of a serious office, not of a developer template.
 Tokens are defined on `:root` and redefined under `.dark`. A `@theme inline`
 block bridges every token into Tailwind utilities (`bg-primary`,
 `text-muted-foreground`, `border-border`). Without that block the utilities
-compile to nothing; do not remove it.
+compile to nothing; it was missing until B3 and is why buttons used to render
+without a background. Do not remove it.
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--background` | `#f5f6f8` cool off-white | `#0c111c` |
-| `--foreground` | `#0f1729` ink navy | `#e7ecf5` |
-| `--primary` | `#1b3a6b` deep blue | `#93b4ff` |
-| `--card` / `--paper` | `#ffffff` | `#121a29` |
-| `--muted` | `#eceef3` | `#161f30` |
-| `--border` | 10 % ink | 12 % paper |
+| `--background` | `#ffffff`, with a soft blue wash at the top of the page | `#0c1020` |
+| `--foreground` | `#10172f` | `#edf3ff` |
+| `--primary` | `#355cff` electric blue | `#7aa2ff` |
+| `--secondary` / `--muted` | `#edf2ff` | `#1b2540` / `#182038` |
+| `--border` | 10 % ink | 14 % paper |
 
-One accent, spent on the primary action, prices, and eyebrows. Everything else
-is ink, paper, and hairlines. Components never hardcode a hex value.
+The blue is spent on buttons, the blob, the typed word, prices, and eyebrows.
+Components never hardcode a hex value except inside the blob and glow
+helpers, which are part of the identity.
 
 ## Type
 
-Three families, all self-hosted from `@fontsource` (a Google Fonts request
-would transmit visitor IPs; LG München I, 3 O 17493/20):
+Three families, self-hosted from `@fontsource` (a Google Fonts request would
+transmit visitor IPs; LG München I, 3 O 17493/20):
 
 | Role | Family | Notes |
 | --- | --- | --- |
-| Headlines | **Newsreader** (variable, optical size) | weight 500, `-0.012em` tracking |
-| Body and UI | **IBM Plex Sans** | 400 / 500 / 600 |
-| Arabic, all roles | **IBM Plex Sans Arabic** | drawn to match Plex Sans; headlines at 600, line-height 1.3 |
+| Body, UI, and the hero display line | **Space Grotesk** (variable) | hero at `font-black uppercase` |
+| Section and page titles | **Fraunces** (variable, optical size) | `.section-title`: tight tracking, line-height 1 |
+| Arabic, all roles | **Readex Pro** (variable) | titles at 700, line-height 1.25, no tracking |
 
-`.font-heading` switches to Plex Sans Arabic automatically under
-`html[lang="ar"]`, because Newsreader has no Arabic.
+`.section-title` and `.font-heading` switch to Readex Pro under
+`html[lang="ar"]`, because Fraunces has no Arabic.
 
 Display scale, headlines only, all fluid `clamp()` values:
 
@@ -61,23 +62,34 @@ Display scale, headlines only, all fluid `clamp()` values:
 | `text-display-lg` | Page headings |
 | `text-display-xl` | Home hero only |
 
-Tailwind's own `text-*` scale owns body copy and UI text. Prices and any
-column of digits take `.tabular`.
+`cn()` in `lib/utils.ts` is configured so tailwind-merge knows these are font
+sizes; otherwise it drops them next to a `text-*` colour. Prices and columns
+of digits take `.tabular`.
 
 Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) for
 block rhythm, `ease-out-soft` / `ease-in-out-soft` shared by CSS and GSAP.
 
-## Surfaces
+## Signature elements
 
-Sections alternate between the page ground and `tone="paper"` (white, with a
-hairline top and bottom). Cards are rare: the contact form and the closing
-call-to-action band. Lists separate items with hairlines (`.hairline-y`,
-`divide-y`), not boxes.
+- **Portrait blob** (`PortraitBlob`, `.portrait-*`): the cutout PNG in front
+  of a gradient blob that morphs and a glow that flickers. Used on the home
+  hero and `/about`. Stops under `prefers-reduced-motion`.
+- **Typed word** (`TypingText` in the home hero): the first display line types
+  the offer in and out (`WEB-`, `SHOP-`, `SOFTWARE-` + `ENTWICKLER`), in the
+  `.hero-accent` gradient. Shows the first word, static, under reduced motion.
+- **Glow buttons** (`.btn-glow-primary`, `-outline`, `-icon`, `-nav`,
+  `-menu`): lift on hover with a blue halo. Primary buttons carry the blue
+  drop shadow.
+- **Cards** (`.surface-card`, `.project-card`, `.contact-form-card`):
+  `rounded-[1.75rem]`, soft shadow, hairline border, lift on hover.
+- **Chips** (`.hero-chip`, `.section-chip`): small outlined pills above
+  titles and in the hero.
 
 ## Theme
 
 One source of truth. `THEME_STORAGE_KEY` is read by both the inline script in
 `__root.tsx` (which sets `.dark` before first paint) and by `ThemeProvider`.
+The header offers light / dark / system.
 
 ```tsx
 const { resolvedTheme, preference, setPreference, toggle } = useTheme()
@@ -102,8 +114,8 @@ Arabic renders RTL. Rules:
 - Use **logical properties** (`ms-*`, `pe-*`, `start`, `end`), never `ml-*`,
   `mr-*`, `left`, `right`.
 - Directional icons mirror with `rtl:-scale-x-100`.
-- Letter-spaced uppercase eyebrows reset with `rtl:tracking-normal`; Arabic
-  has no uppercase and does not tolerate tracking.
+- Letter-spaced uppercase labels reset with `rtl:tracking-normal`; Arabic has
+  no uppercase and does not tolerate tracking.
 
 ## Motion
 
@@ -112,14 +124,14 @@ currently off. Two hooks:
 
 - `useGsap(ref, callback)` scopes GSAP work to a ref and reverts on unmount.
 - `useReveal(ref)` animates every `[data-reveal]` descendant once as it
-  scrolls into view: 18 px rise, fade, short stagger.
+  scrolls into view: short rise, fade, small stagger.
 
-The home hero animates `[data-hero]` on load. Nothing else moves on its own.
+The hero uses the CSS `.fade-up` entrance from the original site.
 
 ### Rules
 
 - Motion is progressive enhancement. Under `prefers-reduced-motion` the hooks
-  skip entirely and the page is complete.
+  skip, the blob and cursor stop, and the page is complete.
 - Never park content at `opacity: 0` in CSS. Animate *from* hidden with
   `gsap.from`, so the DOM's resting state is visible.
 - Register GSAP plugins through `registerMotionPlugins()`, never at module top

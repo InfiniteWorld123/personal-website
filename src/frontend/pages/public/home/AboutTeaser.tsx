@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
-import { site } from '#/frontend/content'
+import { Button } from '#/frontend/components/ui/button'
 import type { HomeCopy } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
 import { useReveal } from '#/frontend/motion'
@@ -13,34 +13,29 @@ export function AboutTeaser({ copy, language }: { copy: HomeCopy['about']; langu
   useReveal(ref)
 
   return (
-    <Section ref={ref} tone="paper" className="py-14 lg:py-16">
-      <Container className="flex flex-col gap-8 sm:flex-row sm:items-center sm:gap-12">
-        <img
-          data-reveal
-          src={site.portrait}
-          alt={site.name}
-          width={160}
-          height={160}
-          loading="lazy"
-          className="border-border size-28 shrink-0 rounded-2xl border object-cover sm:size-40"
-        />
-        <div className="flex max-w-2xl flex-col gap-3">
+    <Section ref={ref} className="py-12 lg:py-14">
+      <Container className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-start">
+        <div className="flex flex-col">
           <Eyebrow data-reveal>{copy.eyebrow}</Eyebrow>
-          <h2 data-reveal className="font-heading text-display-sm">
+          <h2 data-reveal className="section-title mt-5 max-w-sm text-display-md text-foreground">
             {copy.title}
           </h2>
-          <p data-reveal className="text-foreground/80 leading-relaxed">
+        </div>
+        <div className="flex flex-col gap-6">
+          <p data-reveal className="m-0 text-base leading-8 text-foreground/62">
             {copy.body}
           </p>
-          <Link
+          <Button
+            asChild
+            variant="outline"
             data-reveal
-            to="/$lang/about"
-            params={{ lang: language }}
-            className="text-primary inline-flex w-fit items-center gap-1.5 text-sm font-medium hover:underline hover:underline-offset-4"
+            className="btn-glow-outline w-fit rounded-full border-border/60 bg-card px-5 text-foreground/70 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
           >
-            {copy.link}
-            <ArrowRight className="size-4 rtl:-scale-x-100" />
-          </Link>
+            <Link to="/$lang/about" params={{ lang: language }}>
+              {copy.link}
+              <ArrowRight className="rtl:-scale-x-100" />
+            </Link>
+          </Button>
         </div>
       </Container>
     </Section>

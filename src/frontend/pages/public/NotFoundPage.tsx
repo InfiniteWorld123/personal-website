@@ -11,9 +11,9 @@ export function NotFoundPage({ language }: { language?: string }) {
   return (
     <section className="py-24">
       <Container className="flex max-w-xl flex-col gap-5">
-        <h1 className="font-heading text-display-lg">{notFound.title}</h1>
+        <h1 className="section-title text-display-lg text-foreground">{notFound.title}</h1>
         <p className="text-muted-foreground text-lg">{notFound.body}</p>
-        <Button asChild className="w-fit rounded-full">
+        <Button asChild className="btn-glow-primary w-fit rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">
           <Link to="/$lang" params={{ lang: resolved }}>
             {notFound.link}
           </Link>

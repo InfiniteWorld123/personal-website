@@ -4,6 +4,7 @@ import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
 import type { HomeCopy } from '#/frontend/content/types'
 import { useReveal } from '#/frontend/motion'
+import { cn } from '#/frontend/lib/utils'
 
 export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
   const ref = useRef<HTMLElement>(null)
@@ -11,17 +12,17 @@ export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
 
   return (
     <Section ref={ref} id="passung">
-      <Container className="flex flex-col gap-12">
+      <Container className="flex flex-col gap-10">
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} />
 
-        <div className="grid gap-10 md:grid-cols-2 md:gap-12">
+        <div className="grid gap-5 md:grid-cols-2">
           <FitList title={copy.forTitle} items={copy.forItems} marker="check" />
           <FitList title={copy.notForTitle} items={copy.notForItems} marker="minus" />
         </div>
 
         <p
           data-reveal
-          className="border-primary/40 text-foreground/85 max-w-2xl border-s-2 ps-5 text-lg leading-relaxed"
+          className="max-w-2xl border-s-[3px] border-primary/50 ps-5 text-base leading-8 text-foreground/70 sm:text-[1.05rem]"
         >
           {copy.honesty}
         </p>
@@ -34,15 +35,19 @@ function FitList({ title, items, marker }: { title: string; items: string[]; mar
   const Icon = marker === 'check' ? Check : Minus
 
   return (
-    <div data-reveal className="flex flex-col gap-4">
-      <h3 className="text-lg font-medium">{title}</h3>
-      <ul className="hairline-y flex flex-col">
+    <div data-reveal className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <ul className="flex flex-col gap-3">
         {items.map((item) => (
-          <li key={item} className="text-foreground/85 flex gap-3 py-3 leading-relaxed">
-            <Icon
-              aria-hidden="true"
-              className={marker === 'check' ? 'text-primary mt-1.5 size-4 shrink-0' : 'text-muted-foreground mt-1.5 size-4 shrink-0'}
-            />
+          <li key={item} className="flex gap-3 text-sm leading-7 text-foreground/62">
+            <span
+              className={cn(
+                'mt-1 inline-flex size-5 shrink-0 items-center justify-center rounded-full',
+                marker === 'check' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground/45',
+              )}
+            >
+              <Icon aria-hidden="true" className="size-3.5" />
+            </span>
             <span>{item}</span>
           </li>
         ))}

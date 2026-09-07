@@ -55,9 +55,9 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
 
   if (status === 'sent') {
     return (
-      <div role="status" className="border-border bg-card flex flex-col gap-2 rounded-2xl border p-8">
-        <p className="font-heading text-display-sm">{copy.sent.title}</p>
-        <p className="text-muted-foreground">{copy.sent.body}</p>
+      <div role="status" className="flex flex-col gap-2 rounded-2xl border border-primary/15 bg-primary/5 p-8">
+        <p className="section-title text-display-sm text-foreground">{copy.sent.title}</p>
+        <p className="m-0 text-base leading-8 text-foreground/62">{copy.sent.body}</p>
       </div>
     )
   }
@@ -99,7 +99,12 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={status === 'sending'} className="h-11 w-fit rounded-full px-6 text-[0.95rem]">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={status === 'sending'}
+        className="btn-glow-primary w-fit rounded-full bg-primary px-7 text-primary-foreground shadow-[0_12px_32px_rgba(53,92,255,0.28)] hover:bg-primary/90"
+      >
         {status === 'sending' ? copy.sending : copy.submit}
       </Button>
     </form>

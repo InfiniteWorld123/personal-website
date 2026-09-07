@@ -20,10 +20,10 @@ export function ServicesSection({
   useReveal(ref)
 
   return (
-    <Section ref={ref} id="leistungen" tone="paper">
-      <Container className="flex flex-col gap-12">
+    <Section ref={ref} id="leistungen">
+      <Container className="flex flex-col gap-10">
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
-        <div className="divide-border grid divide-y md:grid-cols-3 md:divide-x md:divide-y-0">
+        <div className="grid gap-5 md:grid-cols-3">
           {serviceOrder.map((slug) => (
             <ServiceCard
               key={slug}

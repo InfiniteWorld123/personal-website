@@ -29,6 +29,10 @@ export const en: SiteContent = {
     },
     hero: {
       eyebrow: 'Web developer in Erfurt · for small businesses across Germany',
+      greeting: 'Hi, I am Yaman Warda.',
+      prefix: 'Websites · Shopify · Software',
+      typed: ['WEB', 'SHOPIFY', 'SOFTWARE'],
+      staticLine: 'DEVELOPER',
       headline: 'Websites, Shopify stores, and custom systems — built, maintained, and grown with you.',
       sub: 'For small businesses that need a technical partner, not a one-off vendor. Fixed price, clear scope, one person to talk to: me.',
       cta: 'Request a call',
@@ -290,6 +294,7 @@ export const en: SiteContent = {
     status: { live: 'Live', building: 'In progress' },
     visit: 'Open website',
     source: 'Source code',
+    detailLabel: 'View project',
     back: 'All projects',
     detail: {
       problem: 'Starting point',

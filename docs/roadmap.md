@@ -35,8 +35,8 @@ Landing (offer-first, per `positioning.md`), `/about`, `/services` from
 `docs/services/`, `/work` + `/work/$slug` case studies, `/contact`, SEO,
 sitemap, OG images. Ends with the cutover: merge `platform` → `main`.
 
-Done (7 Sep 2026): visual direction (quiet, deep blue; see
-`design-system.md`), language in the URL (`/de`, `/en`, `/ar`) with
+Done (7 Sep 2026): the original visual identity kept and formalised (see
+`design-system.md`; a quieter redesign was tried and rejected), language in the URL (`/de`, `/en`, `/ar`) with
 server-rendered `lang`/`dir`, public shell, all six pages in three languages,
 per-page SEO head with hreflang, `sitemap.xml`, qualifying contact form on
 the legacy email endpoint.

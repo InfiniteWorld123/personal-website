@@ -20,10 +20,10 @@ export function ServicesPage() {
       <section ref={headerRef} className="pt-16 pb-6 sm:pt-24">
         <Container className="flex max-w-3xl flex-col gap-5">
           <Eyebrow data-reveal>{services.eyebrow}</Eyebrow>
-          <h1 data-reveal className="font-heading text-display-lg">
+          <h1 data-reveal className="section-title mt-5 text-display-lg text-foreground">
             {services.title}
           </h1>
-          <p data-reveal className="text-muted-foreground text-lg leading-relaxed">
+          <p data-reveal className="hero-copy text-base leading-8 sm:text-[1.05rem]">
             {services.intro}
           </p>
         </Container>
@@ -36,7 +36,7 @@ export function ServicesPage() {
           copy={services.items[slug]}
           language={language}
           fromLabel={services.from}
-          tone={index % 2 === 0 ? 'paper' : 'page'}
+          tone={index % 2 === 0 ? 'tint' : 'page'}
         />
       ))}
 
@@ -58,7 +58,7 @@ function ServiceDetail({
   copy: ServiceCopy
   language: Language
   fromLabel: string
-  tone: 'paper' | 'page'
+  tone: 'tint' | 'page'
 }) {
   const ref = useRef<HTMLElement>(null)
   useReveal(ref)
@@ -67,7 +67,7 @@ function ServiceDetail({
     <Section ref={ref} id={slug} tone={tone} className="scroll-mt-20">
       <Container className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
         <div className="flex flex-col gap-3 lg:sticky lg:top-24 lg:self-start">
-          <h2 data-reveal className="font-heading text-display-md">
+          <h2 data-reveal className="section-title text-display-md text-foreground">
             {copy.name}
           </h2>
           <p data-reveal className="text-primary tabular text-lg font-medium">
@@ -90,7 +90,7 @@ function ServiceDetail({
 
           <div data-reveal className="border-border flex flex-col gap-2 border-t pt-6">
             <h3 className="text-base font-medium">{copy.priceTitle}</h3>
-            <p className="font-heading tabular text-2xl">{copy.price}</p>
+            <p className="section-title tabular text-2xl text-primary">{copy.price}</p>
             <p className="text-muted-foreground text-sm leading-relaxed">{copy.priceNote}</p>
           </div>
 
@@ -124,9 +124,9 @@ function SharedRules({ copy }: { copy: ReturnType<typeof getContent>['services']
   useReveal(ref)
 
   return (
-    <Section ref={ref} tone="paper">
+    <Section ref={ref}>
       <Container className="flex flex-col gap-10">
-        <h2 data-reveal className="font-heading text-display-md max-w-2xl">
+        <h2 data-reveal className="section-title max-w-2xl text-display-md text-foreground">
           {copy.title}
         </h2>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

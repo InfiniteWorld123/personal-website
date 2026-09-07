@@ -40,15 +40,15 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
               <Eyebrow>{copy.kind}</Eyebrow>
               <ProjectStatusPill status={facts.status} labels={work.status} />
             </div>
-            <h1 data-reveal className="font-heading text-display-lg">
+            <h1 data-reveal className="section-title mt-5 text-display-lg text-foreground">
               {copy.name}
             </h1>
-            <p data-reveal className="text-muted-foreground text-lg leading-relaxed">
+            <p data-reveal className="hero-copy text-base leading-8 sm:text-[1.05rem]">
               {copy.summary}
             </p>
             <div data-reveal className="flex flex-wrap gap-3 pt-2">
               {facts.website ? (
-                <Button asChild className="rounded-full">
+                <Button asChild className="btn-glow-primary rounded-full bg-primary px-5 text-primary-foreground shadow-[0_10px_28px_rgba(53,92,255,0.26)] hover:bg-primary/90">
                   <a href={facts.website} target="_blank" rel="noreferrer">
                     {work.visit}
                     <ArrowUpRight className="size-4 rtl:-scale-x-100" />
@@ -56,7 +56,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
                 </Button>
               ) : null}
               {facts.source ? (
-                <Button asChild variant="outline" className="rounded-full">
+                <Button asChild variant="outline" className="btn-glow-outline rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
                   <a href={facts.source} target="_blank" rel="noreferrer">
                     <Github className="size-4" />
                     {work.source}
@@ -72,7 +72,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
         </Container>
       </section>
 
-      <Section ref={bodyRef} tone="paper">
+      <Section ref={bodyRef} tone="tint">
         <Container className="grid gap-12 lg:grid-cols-[2fr_1fr] lg:gap-16">
           <div className="flex max-w-2xl flex-col gap-10">
             <Block title={work.detail.problem} body={copy.problem} />
@@ -99,7 +99,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
               </h2>
               <ul className="flex flex-wrap gap-2">
                 {facts.stack.map((item) => (
-                  <li key={item} className="border-border rounded-full border px-2.5 py-0.5 text-xs" dir="ltr">
+                  <li key={item} className="rounded-full bg-secondary px-3 py-1 text-[0.72rem] font-semibold text-foreground/62" dir="ltr">
                     {item}
                   </li>
                 ))}
@@ -117,7 +117,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
 function Block({ title, body }: { title: string; body: string }) {
   return (
     <div data-reveal className="flex flex-col gap-3">
-      <h2 className="font-heading text-display-sm">{title}</h2>
+      <h2 className="section-title text-display-sm text-foreground">{title}</h2>
       <p className="text-foreground/85 text-lg leading-relaxed">{body}</p>
     </div>
   )

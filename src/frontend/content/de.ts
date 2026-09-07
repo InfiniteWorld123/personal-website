@@ -29,6 +29,10 @@ export const de: SiteContent = {
     },
     hero: {
       eyebrow: 'Webentwickler in Erfurt · für kleine Unternehmen in ganz Deutschland',
+      greeting: 'Hi, ich bin Yaman Warda.',
+      prefix: 'Websites · Shopify · Software',
+      typed: ['WEB-', 'SHOP-', 'SOFTWARE-'],
+      staticLine: 'ENTWICKLER',
       headline:
         'Websites, Shopify-Shops und maßgeschneiderte Systeme — gebaut, betreut, weiterentwickelt.',
       sub: 'Für kleine Unternehmen, die einen technischen Partner brauchen und keinen Lieferanten. Fester Preis, klarer Umfang, ein Ansprechpartner: ich.',
@@ -291,6 +295,7 @@ export const de: SiteContent = {
     status: { live: 'Live', building: 'Im Bau' },
     visit: 'Website öffnen',
     source: 'Quellcode',
+    detailLabel: 'Projekt ansehen',
     back: 'Alle Projekte',
     detail: {
       problem: 'Ausgangslage',

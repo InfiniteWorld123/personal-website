@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
+import { Button } from '#/frontend/components/ui/button'
 import { projectOrder } from '#/frontend/content'
 import type { HomeCopy, WorkCopy } from '#/frontend/content/types'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
@@ -23,27 +24,31 @@ export function WorkSection({
 
   return (
     <Section ref={ref} id="arbeiten">
-      <Container className="flex flex-col gap-12">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <Container className="flex flex-col gap-10">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
-          <Link
+          <Button
+            asChild
+            variant="outline"
             data-reveal
-            to="/$lang/work"
-            params={{ lang: language }}
-            className="text-primary inline-flex shrink-0 items-center gap-1.5 text-sm font-medium hover:underline hover:underline-offset-4"
+            className="btn-glow-outline shrink-0 rounded-full border-border/60 bg-card px-5 text-foreground/64 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
           >
-            {copy.all}
-            <ArrowRight className="size-4 rtl:-scale-x-100" />
-          </Link>
+            <Link to="/$lang/work" params={{ lang: language }}>
+              {copy.all}
+              <ArrowUpRight className="rtl:-scale-x-100" />
+            </Link>
+          </Button>
         </div>
-        <div className="grid gap-10 md:grid-cols-3 md:gap-8">
-          {projectOrder.map((slug) => (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {projectOrder.map((slug, index) => (
             <ProjectCard
               key={slug}
               slug={slug}
+              index={index}
               copy={work.items[slug]}
               language={language}
               statusLabels={work.status}
+              labels={{ visit: work.visit, source: work.source, detail: work.detailLabel }}
             />
           ))}
         </div>

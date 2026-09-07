@@ -31,6 +31,11 @@ export type HomeCopy = {
   meta: PageMeta
   hero: {
     eyebrow: string
+    greeting: string
+    prefix: string
+    /** Words that type in and out before `staticLine`. */
+    typed: string[]
+    staticLine: string
     headline: string
     sub: string
     cta: string
@@ -137,6 +142,7 @@ export type WorkCopy = {
   status: { live: string; building: string }
   visit: string
   source: string
+  detailLabel: string
   back: string
   detail: {
     problem: string

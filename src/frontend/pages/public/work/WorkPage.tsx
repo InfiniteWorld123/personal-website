@@ -20,24 +20,26 @@ export function WorkPage() {
       <section ref={headerRef} className="pt-16 pb-6 sm:pt-24">
         <Container className="flex max-w-3xl flex-col gap-5">
           <Eyebrow data-reveal>{work.eyebrow}</Eyebrow>
-          <h1 data-reveal className="font-heading text-display-lg">
+          <h1 data-reveal className="section-title mt-5 text-display-lg text-foreground">
             {work.title}
           </h1>
-          <p data-reveal className="text-muted-foreground text-lg leading-relaxed">
+          <p data-reveal className="hero-copy text-base leading-8 sm:text-[1.05rem]">
             {work.intro}
           </p>
         </Container>
       </section>
 
       <Section ref={listRef} className="pt-10">
-        <Container className="grid gap-12 md:grid-cols-2 md:gap-x-8 md:gap-y-14">
-          {projectOrder.map((slug) => (
+        <Container className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {projectOrder.map((slug, index) => (
             <ProjectCard
               key={slug}
               slug={slug}
+              index={index}
               copy={work.items[slug]}
               language={language}
               statusLabels={work.status}
+              labels={{ visit: work.visit, source: work.source, detail: work.detailLabel }}
             />
           ))}
         </Container>
