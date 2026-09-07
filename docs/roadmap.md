@@ -29,11 +29,21 @@ Better Auth with one ADMIN, a guarded `/admin`, and the admin shell
 Type scale, palette, tokens, dark mode, RTL. GSAP + ScrollTrigger + Lenis motion
 layer with `prefers-reduced-motion` respected throughout.
 
-## [ ] B3 — Public site
+## [~] B3 — Public site
 *Model: Opus 5 · high*
 Landing (offer-first, per `positioning.md`), `/about`, `/services` from
 `docs/services/`, `/work` + `/work/$slug` case studies, `/contact`, SEO,
 sitemap, OG images. Ends with the cutover: merge `platform` → `main`.
+
+Done (7 Sep 2026): visual direction (quiet, deep blue; see
+`design-system.md`), language in the URL (`/de`, `/en`, `/ar`) with
+server-rendered `lang`/`dir`, public shell, all six pages in three languages,
+per-page SEO head with hreflang, `sitemap.xml`, qualifying contact form on
+the legacy email endpoint.
+
+Open before cutover: real project screenshots (frames are placeholders),
+an OG image, Impressum and Datenschutz pages (legally required in Germany;
+text must come from the owner), and the `platform` → `main` merge.
 
 ## [ ] B4 — Leads and inbox
 *Model: Sonnet 5 · medium*

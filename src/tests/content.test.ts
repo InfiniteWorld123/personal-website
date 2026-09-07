@@ -1,0 +1,57 @@
+import { describe, expect, it } from 'vitest'
+import { content, projectOrder, projects, serviceOrder, servicePrices } from '#/frontend/content'
+import { languages, languageFromAcceptLanguage, languageFromPathname, withLanguage } from '#/frontend/i18n/language'
+import { formatEuro } from '#/frontend/lib/format'
+
+describe('site content', () => {
+  it('ships every language with the same navigation, services, and projects', () => {
+    for (const language of languages) {
+      const copy = content[language]
+
+      expect(copy.shell.nav.map((item) => item.to)).toEqual([
+        '/$lang/services',
+        '/$lang/work',
+        '/$lang/about',
+        '/$lang/contact',
+      ])
+      expect(Object.keys(copy.services.items).sort()).toEqual([...serviceOrder].sort())
+      expect(Object.keys(copy.work.items).sort()).toEqual([...projectOrder].sort())
+      expect(copy.home.process.steps).toHaveLength(4)
+    }
+  })
+
+  it('states the published starting prices from docs/services', () => {
+    expect(servicePrices).toEqual({ websites: 990, shopify: 2490, software: 2990 })
+    expect(content.de.services.items.websites.price).toBe('ab 990 €')
+    expect(content.en.services.items.shopify.price).toBe('from €2,490')
+    expect(content.ar.services.items.software.price).toBe('من 2.990 €')
+  })
+
+  it('keeps live projects pointing at their public URLs', () => {
+    expect(projects['tech-store'].website).toBe('https://tech-store.yamanwarda.dev')
+    expect(projects.inknest.website).toBe('https://ink-nest.yamanwarda.dev')
+    expect(projects['prime-estate'].status).toBe('building')
+  })
+})
+
+describe('language helpers', () => {
+  it('reads and swaps the language segment of public paths', () => {
+    expect(languageFromPathname('/ar/services')).toBe('ar')
+    expect(languageFromPathname('/admin')).toBeNull()
+    expect(withLanguage('/de/work/inknest', 'en')).toBe('/en/work/inknest')
+    expect(withLanguage('/', 'ar')).toBe('/ar')
+  })
+
+  it('picks the best supported language from Accept-Language', () => {
+    expect(languageFromAcceptLanguage('ar-SY,ar;q=0.9,en;q=0.8')).toBe('ar')
+    expect(languageFromAcceptLanguage('fr-FR,fr;q=0.9,en-US;q=0.8')).toBe('en')
+    expect(languageFromAcceptLanguage('fr')).toBe('de')
+    expect(languageFromAcceptLanguage(null)).toBe('de')
+  })
+
+  it('formats euro amounts the way each language writes them', () => {
+    expect(formatEuro(990, 'de')).toBe('990\u00a0€')
+    expect(formatEuro(2490, 'en')).toBe('€2,490')
+    expect(formatEuro(2990, 'ar')).toBe('2.990\u00a0€')
+  })
+})

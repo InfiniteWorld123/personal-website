@@ -1,69 +1,68 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from '@tanstack/react-router'
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
-  LANGUAGE_STORAGE_KEY,
+  LANGUAGE_COOKIE,
   type Language,
   defaultLanguage,
   directionFor,
-  isLanguage,
+  languageFromPathname,
+  withLanguage,
 } from './language'
 
 type LanguageContextValue = {
   language: Language
   direction: 'rtl' | 'ltr'
   isRtl: boolean
+  /** Navigates to the same page in another language and remembers the choice. */
   setLanguage: (language: Language) => void
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null)
 
-const readStoredLanguage = (): Language => {
+const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
+
+const rememberLanguage = (language: Language) => {
   try {
-    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
-    return isLanguage(stored) ? stored : defaultLanguage
+    document.cookie = `${LANGUAGE_COOKIE}=${language}; Max-Age=${ONE_YEAR_SECONDS}; Path=/; SameSite=Lax`
   } catch {
-    return defaultLanguage
+    // Cookie blocked; the URL still carries the language.
   }
 }
 
 /**
- * Single source of truth for language and text direction. The document's
- * `lang` and `dir` are set here so no page component has to manage them.
+ * The URL is the single source of truth for language: `/de/...`, `/en/...`,
+ * `/ar/...`. That makes every page shareable and indexable in each language
+ * and lets the server render the right `lang` and `dir` on the first byte.
  *
- * The initial paint is handled by the inline script in `__root.tsx`, which
- * reads the same storage key. This effect only keeps React in sync.
+ * Routes without a language segment (admin, api) fall back to German.
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(defaultLanguage)
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    setLanguageState(readStoredLanguage())
-  }, [])
+  const language = languageFromPathname(pathname) ?? defaultLanguage
+  const direction = directionFor(language)
 
   useEffect(() => {
     document.documentElement.lang = language
-    document.documentElement.dir = directionFor(language)
-  }, [language])
+    document.documentElement.dir = direction
+  }, [language, direction])
 
-  const setLanguage = useCallback((next: Language) => {
-    setLanguageState(next)
-
-    try {
-      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next)
-    } catch {
-      // Preference is not persisted; the session still works.
-    }
-  }, [])
-
-  const direction = directionFor(language)
-
-  return (
-    <LanguageContext.Provider
-      value={{ language, direction, isRtl: direction === 'rtl', setLanguage }}
-    >
-      {children}
-    </LanguageContext.Provider>
+  const setLanguage = useCallback(
+    (next: Language) => {
+      rememberLanguage(next)
+      void navigate({ to: withLanguage(pathname, next), replace: true })
+    },
+    [navigate, pathname],
   )
+
+  const value = useMemo(
+    () => ({ language, direction, isRtl: direction === 'rtl', setLanguage }),
+    [language, direction, setLanguage],
+  )
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }
 
 export function useLanguage() {

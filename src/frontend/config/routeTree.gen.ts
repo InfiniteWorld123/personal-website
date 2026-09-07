@@ -10,21 +10,59 @@
 
 import { Route as rootRouteImport } from './../routes/__root'
 import { Route as IndexRouteImport } from './../routes/index'
+import { Route as LangRouteImport } from './../routes/$lang'
 import { Route as AdminRouteImport } from './../routes/admin'
+import { Route as SitemapDotxmlRouteImport } from './../routes/sitemap[.]xml'
+import { Route as LangIndexRouteImport } from './../routes/$lang.index'
+import { Route as LangAboutRouteImport } from './../routes/$lang.about'
+import { Route as LangContactRouteImport } from './../routes/$lang.contact'
+import { Route as LangServicesRouteImport } from './../routes/$lang.services'
 import { Route as AdminIndexRouteImport } from './../routes/admin.index'
 import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
+import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
+import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LangRoute = LangRouteImport.update({
+  id: '/$lang',
+  path: '/$lang',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangIndexRoute = LangIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangAboutRoute = LangAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangContactRoute = LangContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangServicesRoute = LangServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => LangRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -46,50 +84,118 @@ const ApiContactRoute = ApiContactRouteImport.update({
   path: '/api/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LangWorkIndexRoute = LangWorkIndexRouteImport.update({
+  id: '/work/',
+  path: '/work/',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangWorkSlugRoute = LangWorkSlugRouteImport.update({
+  id: '/work/$slug',
+  path: '/work/$slug',
+  getParentRoute: () => LangRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$lang': typeof LangRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/$lang/about': typeof LangAboutRoute
+  '/$lang/contact': typeof LangContactRoute
+  '/$lang/services': typeof LangServicesRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/$lang/work/': typeof LangWorkIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/$lang/about': typeof LangAboutRoute
+  '/$lang/contact': typeof LangContactRoute
+  '/$lang/services': typeof LangServicesRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/$lang': typeof LangIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/$lang/work': typeof LangWorkIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$lang': typeof LangRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/$lang/about': typeof LangAboutRoute
+  '/$lang/contact': typeof LangContactRoute
+  '/$lang/services': typeof LangServicesRoute
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/$lang/work/': typeof LangWorkIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/admin/login' | '/api/$' | '/api/contact' | '/admin/'
+    | '/'
+    | '/$lang'
+    | '/admin'
+    | '/sitemap.xml'
+    | '/$lang/about'
+    | '/$lang/contact'
+    | '/$lang/services'
+    | '/admin/login'
+    | '/api/$'
+    | '/api/contact'
+    | '/$lang/'
+    | '/admin/'
+    | '/$lang/work/$slug'
+    | '/$lang/work/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin/login' | '/api/$' | '/api/contact' | '/admin'
+  to:
+    | '/'
+    | '/sitemap.xml'
+    | '/$lang/about'
+    | '/$lang/contact'
+    | '/$lang/services'
+    | '/admin/login'
+    | '/api/$'
+    | '/api/contact'
+    | '/$lang'
+    | '/admin'
+    | '/$lang/work/$slug'
+    | '/$lang/work'
   id:
     | '__root__'
     | '/'
+    | '/$lang'
     | '/admin'
+    | '/sitemap.xml'
+    | '/$lang/about'
+    | '/$lang/contact'
+    | '/$lang/services'
     | '/admin_/login'
     | '/api/$'
     | '/api/contact'
+    | '/$lang/'
     | '/admin/'
+    | '/$lang/work/$slug'
+    | '/$lang/work/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LangRoute: typeof LangRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiContactRoute: typeof ApiContactRoute
@@ -104,12 +210,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$lang': {
+      id: '/$lang'
+      path: '/$lang'
+      fullPath: '/$lang'
+      preLoaderRoute: typeof LangRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/': {
+      id: '/$lang/'
+      path: '/'
+      fullPath: '/$lang/'
+      preLoaderRoute: typeof LangIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/about': {
+      id: '/$lang/about'
+      path: '/about'
+      fullPath: '/$lang/about'
+      preLoaderRoute: typeof LangAboutRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/contact': {
+      id: '/$lang/contact'
+      path: '/contact'
+      fullPath: '/$lang/contact'
+      preLoaderRoute: typeof LangContactRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/services': {
+      id: '/$lang/services'
+      path: '/services'
+      fullPath: '/$lang/services'
+      preLoaderRoute: typeof LangServicesRouteImport
+      parentRoute: typeof LangRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -139,8 +287,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$lang/work/': {
+      id: '/$lang/work/'
+      path: '/work'
+      fullPath: '/$lang/work/'
+      preLoaderRoute: typeof LangWorkIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/work/$slug': {
+      id: '/$lang/work/$slug'
+      path: '/work/$slug'
+      fullPath: '/$lang/work/$slug'
+      preLoaderRoute: typeof LangWorkSlugRouteImport
+      parentRoute: typeof LangRoute
+    }
   }
 }
+
+interface LangRouteChildren {
+  LangAboutRoute: typeof LangAboutRoute
+  LangContactRoute: typeof LangContactRoute
+  LangServicesRoute: typeof LangServicesRoute
+  LangIndexRoute: typeof LangIndexRoute
+  LangWorkSlugRoute: typeof LangWorkSlugRoute
+  LangWorkIndexRoute: typeof LangWorkIndexRoute
+}
+
+const LangRouteChildren: LangRouteChildren = {
+  LangAboutRoute: LangAboutRoute,
+  LangContactRoute: LangContactRoute,
+  LangServicesRoute: LangServicesRoute,
+  LangIndexRoute: LangIndexRoute,
+  LangWorkSlugRoute: LangWorkSlugRoute,
+  LangWorkIndexRoute: LangWorkIndexRoute,
+}
+
+const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
@@ -154,7 +336,9 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LangRoute: LangRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiContactRoute: ApiContactRoute,
