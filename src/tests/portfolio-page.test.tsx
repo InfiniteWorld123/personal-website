@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { links, navigation, portfolioContent, profile, projects, skills } from '../config/config'
+import { links, navigation, portfolioContent, profile, projects, skills } from '#/frontend/config/content'
 
 describe('portfolio content config', () => {
   it('keeps the launch content aligned with the portfolio brief', () => {

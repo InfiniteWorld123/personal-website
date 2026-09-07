@@ -14,7 +14,13 @@ const config = defineConfig({
     nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        entry: 'frontend/config/router.tsx',
+        routesDirectory: 'frontend/routes',
+        generatedRouteTree: 'frontend/config/routeTree.gen.ts',
+      },
+    }),
     viteReact(),
   ],
 })

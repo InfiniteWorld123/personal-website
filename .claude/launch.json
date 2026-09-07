@@ -2,10 +2,11 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "portfolio-dev",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" && nvm use 22 && pnpm dev --port 3000"],
-      "port": 3000
+      "name": "platform-dev",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev", "--port", "3100"],
+      "port": 3100,
+      "autoPort": false
     }
   ]
 }
