@@ -43,8 +43,11 @@ labels onto blue buttons.
 | `--secondary` / `--muted` | `#edf2ff` | `#1b2540` / `#182038` |
 | `--border` | 10 % ink | 14 % paper |
 
-Primary buttons are `#355cff` with white text in both themes; in dark mode
-they also carry the original site's thin ring and slow glow pulse. The first
+Primary buttons are white on a blue gradient (`#2b4ffa → #4d7bff → #59a7ff`)
+in both themes; in dark mode they also carry the original site's thin ring and
+slow glow pulse. Cards rest on a shadow made of the brand blue rather than
+neutral grey — `--shadow-card`, `--shadow-card-hover`, `--shadow-card-lit`,
+defined per theme (`decisions.md` D18). The first
 visit follows the system theme, as the original site did; a saved preference
 wins. Switching themes cross-fades the page through the View Transitions API
 (instant under reduced motion or where unsupported).
@@ -84,12 +87,19 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
   `SOFTWARE-` + `ENTWICKLER` in the `.hero-accent` gradient, cursor blinking.
   Reduced motion shows the first word, static. Arabic stacks the static word
   above the typed one.
-- **Buttons**: every `default` button is blue with white text, lifts 2 px and
-  glows on hover, with a diagonal glass shimmer. `outline` buttons lift 1.5 px
-  and gain a blue ring. Styled globally on `[data-slot="button"]`; components
-  add only shape (`rounded-full`) and size.
-- **Cards** (`.work-card`, `.surface-card`, service cards): `1.75rem` radius,
-  hairline border, soft shadow, lift on hover.
+- **Buttons**: every `default` button carries the blue gradient with white
+  text, lifts 2 px and glows on hover, with a diagonal glass shimmer.
+  `outline` buttons lift 1.5 px and gain a blue ring. Styled globally on
+  `[data-slot="button"]`; components add only shape (`rounded-full`) and size.
+- **Cards** (`.work-card`, `.surface-card`, `.step`, service cards):
+  `1.75rem` radius, a gradient hairline drawn on `::before` in place of the
+  grey border, a blue shadow, lift on hover. The hairline does not change
+  under the pointer: the owner asked for no edge that appears on hover, so
+  what a card gains is lift and shadow only.
+- **Hero ground**: a three-pool mesh on `.hero-section::before`, the dot grid
+  on `::after` above it, content above both.
+- **Film grain**: one fixed layer on `body::after`, 4.5 % light / 7 % dark,
+  under the header and under any dialog.
 - **Chips** (`.hero-chip`, `.section-chip`): outlined pills above titles.
 
 ## Home page structure
@@ -169,6 +179,17 @@ transition delays.
   diagram, so they do not react to the pointer at all.
 - Pointer effects are gated on `(min-width: 1024px) and (pointer: fine)`; a
   tilt that never resets would leave a card crooked on a touch screen.
+- A card is usually both a reveal target and a tilt target, and both want its
+  `transform`. `html.motion .is-in [data-reveal]` sets `transform: none` at
+  0,3,1 and outranks `html.motion [data-tilt]` at 0,2,1, so the rotation has
+  to be stated a second time under `.is-in [data-tilt]` or it silently never
+  applies. It did not, for a while: only the portrait tilted, because it is
+  the one tilt target without `data-reveal`. The stagger belongs on the fade
+  alone there — held on the transform, a card answers the pointer only after
+  its own index has elapsed.
+- Fourteen degrees against a 620 px perspective. Nine against 900 px, the
+  first setting, rotates a wide card almost in its own plane; the owner could
+  not see it. The portrait stays under the cards, at nine.
 - A parent's ref is not available inside its own child's layout effect, which
   is why `ProcessConnector` measures `parentElement` instead of taking a ref
   prop. The line was silently missing until that was fixed.
