@@ -8,7 +8,7 @@ export const en: SiteContent = {
       { label: 'About', to: '/$lang/about' },
       { label: 'Contact', to: '/$lang/contact' },
     ],
-    cta: 'Discuss your project',
+    cta: 'Request a call',
     menu: { open: 'Open menu', close: 'Close menu', navigation: 'Main navigation' },
     language: { label: 'Language', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Light theme', dark: 'Dark theme', system: 'System theme', label: 'Theme' },
@@ -35,7 +35,7 @@ export const en: SiteContent = {
       staticLine: 'DEVELOPER',
       headline: "Your idea. Built together.",
       sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product — thoughtfully built around your business.",
-      cta: 'Discuss your project',
+      cta: 'Request a call',
       secondary: 'See my work',
     },
     story: {
@@ -142,7 +142,7 @@ export const en: SiteContent = {
     cta: {
       title: 'Tell me about your project.',
       body: 'Write a few lines about what you have in mind. You get an honest assessment, even if it says: you do not need this.',
-      button: 'Discuss your project',
+      button: 'Request a call',
       alt: 'Or email directly',
     },
   },

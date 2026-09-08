@@ -10,7 +10,7 @@ Elysia API are served from the same origin. One PostgreSQL database.
 
 ```text
 Browser
-  |  React · TanStack Router · React Query · TanStack Form · GSAP
+  |  React · TanStack Router · React Query · TanStack Form
   v
 TanStack Start / Nitro
   |  /api/*  (forwarded by the /api/$ route)
@@ -48,9 +48,8 @@ src/
 │   ├── components/           # ui · layout · shared
 │   ├── features/             # reusable domain components + hooks
 │   ├── pages/                # public/ and admin/
-│   ├── hooks/
+│   ├── hooks/                # shared React hooks (reduced motion)
 │   ├── i18n/                 # de · en · ar + RTL
-│   ├── motion/               # GSAP + Lenis + reduced-motion layer
 │   └── lib/
 ├── routes/                   # thin TanStack routes, no markup
 └── shared/                   # env, types, Valibot schemas used by both sides

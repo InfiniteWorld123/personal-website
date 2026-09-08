@@ -1,10 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Mail } from 'lucide-react'
-import { useRef } from 'react'
 import { Button } from '#/frontend/components/ui/button'
 import { site } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { useReveal } from '#/frontend/motion'
 import { Container } from './Container'
 
 /**
@@ -23,18 +21,16 @@ export function CtaBand({
   alt?: string
 }) {
   const { language } = useLanguage()
-  const ref = useRef<HTMLElement>(null)
-  useReveal(ref)
 
   return (
-    <section ref={ref} className="contact-light py-section lg:py-section-lg">
+    <section className="contact-light py-section lg:py-section-lg">
       <Container className="closing-cta">
         <div className="flex max-w-2xl flex-col gap-4">
-          <h2 data-reveal className="section-title text-display-md text-foreground">
+          <h2 className="section-title text-display-md text-foreground">
             {title}
           </h2>
           {body ? (
-            <p data-reveal className="text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
+            <p className="text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
               {body}
             </p>
           ) : null}

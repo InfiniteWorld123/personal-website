@@ -120,6 +120,9 @@ regardless.
 
 ### D9 — GSAP first; WebGL only where it earns its place
 
+Status: **Superseded by D15** for the motion layer. The WebGL boundary below
+still applies.
+
 GSAP + ScrollTrigger + Lenis for the motion layer. GSAP's plugins are now free.
 
 **Why:** Three.js costs bundle size, LCP, and mobile battery, and complicates
@@ -191,3 +194,26 @@ free, and the integration already exists in `prime-estate` and can be ported.
 
 **Data boundary:** project screenshots and blog images are not personal data.
 Client records, leads, and invoices never leave the German server.
+
+---
+
+### D15 — Motion layer removed; CSS-only baseline
+
+The GSAP + ScrollTrigger + Lenis layer from B2 was removed on 8 Sep 2026.
+The public site keeps only its CSS animations (hero fade-up, blob morph and
+glow, typed cursor, live dot, dark-mode button glow, theme cross-fade) and one
+`usePrefersReducedMotion` hook for the typed line and the carousel.
+
+**Why:** the layer had caused a crash on every client-side navigation away
+from the home page (ScrollTrigger's pin reverted after React removed the
+node), pinned and scrubbed a story section the owner had not approved, and
+put scroll reveals on every section before any animation direction had been
+chosen. Removing it leaves a clean baseline the owner can react to.
+
+**What comes next:** a dedicated session decides the animation direction from
+the owner's references (21st.dev, Dribbble): scroll reveals, hover
+micro-interactions, page transitions, hero choreography, and whatever else
+the references suggest. The tool (CSS, Motion, or GSAP again) is chosen after
+that, deliberately. Until then no scroll-driven library ships.
+
+**Still valid from D9:** WebGL stays out unless one moment earns it.

@@ -27,7 +27,8 @@ Better Auth with one ADMIN, a guarded `/admin`, and the admin shell
 ## [x] B2 — Design system and motion
 *Model: Opus 5 · high*
 Type scale, palette, tokens, dark mode, RTL. GSAP + ScrollTrigger + Lenis motion
-layer with `prefers-reduced-motion` respected throughout.
+layer with `prefers-reduced-motion` respected throughout (motion layer later
+removed, D15).
 
 ## [~] B3 — Public site
 *Model: Opus 5 · high*
@@ -40,13 +41,19 @@ Done (8 Sep 2026): the owner's original identity kept and formalised (see
 the URL (`/de`, `/en`, `/ar`) with server-rendered `lang`/`dir`, public shell,
 all six pages in three languages in `du`-form German, per-page SEO head with
 hreflang, `sitemap.xml`, qualifying contact form on the legacy email endpoint,
-building story, project carousel and load-more, home-only desktop Lenis.
-Fixed: the "node to be removed is not a child" crash on every client-side
-navigation away from the home page (GSAP pin reverted too late).
+building story as a static section in normal flow, project carousel and
+load-more, one primary CTA label everywhere ("Gespräch anfragen" / "Request a
+call" / "اطلب مكالمة"). The GSAP/Lenis motion layer, which had crashed every
+client-side navigation away from the home page, was removed on 8 Sep 2026; the
+site is a CSS-only baseline (D15).
 
 Open before cutover: real project screenshots, an OG image, Impressum and
 Datenschutz pages (legally required in Germany; text must come from the
 owner), and the `platform` → `main` merge.
+
+Open: animation direction session (the owner brings 21st.dev / Dribbble
+references; decide reveals, hover, page transitions, hero choreography, then
+the tool), and a review of the story section's copy and illustration.
 
 ## [ ] B4 — Leads and inbox
 *Model: Sonnet 5 · medium*

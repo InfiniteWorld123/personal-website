@@ -8,7 +8,7 @@ export const ar: SiteContent = {
       { label: 'من أنا', to: '/$lang/about' },
       { label: 'تواصل', to: '/$lang/contact' },
     ],
-    cta: 'ناقش مشروعك',
+    cta: 'اطلب مكالمة',
     menu: { open: 'فتح القائمة', close: 'إغلاق القائمة', navigation: 'القائمة الرئيسية' },
     language: { label: 'اللغة', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'الوضع الفاتح', dark: 'الوضع الداكن', system: 'وضع النظام', label: 'المظهر' },
@@ -35,7 +35,7 @@ export const ar: SiteContent = {
       staticLine: 'مطوّر',
       headline: "فكرتك. نبنيها معًا.",
       sub: "شريكك التقني المباشر لبناء البرمجيات المخصّصة والمواقع. من أول حديث إلى المنتج المكتمل، نبني شيئًا يناسب عملك وطريقتك.",
-      cta: 'ناقش مشروعك',
+      cta: 'اطلب مكالمة',
       secondary: 'شاهد مشاريعي',
     },
     story: {
@@ -142,7 +142,7 @@ export const ar: SiteContent = {
     cta: {
       title: 'أخبرني عن مشروعك.',
       body: 'اكتب بضعة أسطر عمّا تفكر فيه. ستحصل على تقييم صادق، حتى لو كان: لا تحتاج هذا الآن.',
-      button: 'ناقش مشروعك',
+      button: 'اطلب مكالمة',
       alt: 'أو راسلني مباشرة',
     },
   },

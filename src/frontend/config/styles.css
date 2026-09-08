@@ -165,10 +165,6 @@ html {
   scroll-behavior: smooth;
 }
 
-html.lenis {
-  scroll-behavior: auto;
-}
-
 html,
 body,
 #app {
@@ -678,7 +674,6 @@ html[lang="ar"] .font-heading {
 
 /* ── Buttons: electric blue, lift and glow on hover ────────── */
 [data-slot="button"] {
-  min-height: 2.75rem;
   transition:
     transform 240ms var(--ease-out-soft),
     box-shadow 240ms var(--ease-out-soft),
@@ -1314,27 +1309,6 @@ html[lang="ar"] .build-step-label {
   font-size: 0.72rem;
   color: var(--muted-foreground);
   margin-top: 1.7rem;
-}
-
-.is-pinned-story {
-  padding-block: 3rem;
-  min-height: calc(100svh - 80px);
-  display: flex;
-  align-items: center;
-}
-
-.is-pinned-story .build-story-header {
-  margin-bottom: 1.75rem;
-}
-
-.is-pinned-story .build-panels {
-  position: relative;
-  height: 360px;
-}
-
-.is-pinned-story .build-panel {
-  position: absolute;
-  inset: 0;
 }
 
 html[lang="ar"] .build-story h2,

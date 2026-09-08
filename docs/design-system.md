@@ -4,7 +4,8 @@ The visual identity is the one on yamanwarda.dev, the owner's own design:
 electric blue on white, a huge uppercase display line whose first word types
 itself, a serif for section titles, rounded cards with soft shadows, buttons
 that lift and glow, and the portrait inside a morphing blue blob. B3 keeps
-that identity and puts the new page structure, copy, and motion underneath.
+that identity and puts the new page structure and copy underneath; motion is a
+CSS-only baseline until the animation direction is chosen (`decisions.md` D15).
 
 Two other directions were tried and rejected on 7 Sep 2026: a quiet deep-blue
 serif identity, and a flattened "calm" variant without the blob, the serif,
@@ -18,7 +19,7 @@ showing a rendered mockup and getting an explicit yes.
 | Colour tokens, fonts, type scale, all page CSS | `src/frontend/config/styles.css` |
 | Theme preference | `src/frontend/components/theme/` |
 | Language and text direction | `src/frontend/i18n/` |
-| GSAP context, scroll reveal, Lenis | `src/frontend/motion/` |
+| Reduced-motion hook | `src/frontend/hooks/` |
 | Public shell: header, footer, container, section, portrait | `src/frontend/components/layout/public/` |
 | Public copy per language | `src/frontend/content/{de,en,ar}.ts` |
 | Project registry (slugs, order, links, optional images) | `src/frontend/content/site.ts` |
@@ -65,7 +66,7 @@ Display scale, headlines only, fluid `clamp()` values: `text-display-sm`
 them next to a `text-*` colour. Digits in columns take `.tabular`.
 
 Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
-`ease-out-soft` / `ease-in-out-soft` shared by CSS and GSAP.
+`ease-out-soft` / `ease-in-out-soft` shared by CSS.
 
 ## Signature elements
 
@@ -92,10 +93,12 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
 ## Home page structure
 
 Hero (typed line, headline sentence, sub, contact and work buttons, email,
-three service pills, portrait) → building story (three labelled stages, pinned
-and scrubbed on desktop) → projects (carousel that shows all three on desktop)
-→ services (no prices on the home page; they live on `/services`) → process →
-fit → about teaser → closing call to action. Copy is `du`-form German.
+three service pills, portrait) → services (three cards, no prices on the home
+page; they live on `/services`) → projects (carousel that shows all three on
+desktop) → building story (three labelled stages in normal flow; copy and
+illustration still to be reviewed with the owner) → process → fit → about
+teaser → closing call to action. The primary button reads "Gespräch anfragen"
+/ "Request a call" / "اطلب مكالمة" everywhere. Copy is `du`-form German.
 
 ## Theme
 
@@ -117,27 +120,36 @@ labels reset with `rtl:tracking-normal`.
 
 ## Motion
 
-- `useGsap(ref, callback)` scopes GSAP work to a ref and reverts it in a
-  **layout-effect** cleanup. React removes a component's DOM nodes before
-  passive-effect cleanups run but after layout-effect cleanups; ScrollTrigger's
-  `pin` wraps the pinned element in a spacer, so a passive cleanup came too
-  late and every client-side navigation away from the home page threw "The
-  node to be removed is not a child of this node". Keep it a layout effect.
-- `useReveal(ref)` animates every `[data-reveal]` descendant once as it scrolls
-  into view.
-- The hero uses the CSS `.fade-up` entrance; the portrait gets a 14 px scroll
-  parallax on desktop fine-pointer devices.
-- Lenis smooth scrolling runs only on the home page, at ≥1024 px with a fine
-  pointer and no reduced-motion preference. It owns one ticker subscription and
-  is destroyed on route, locale, or eligibility changes.
+The motion layer is CSS only (`decisions.md` D15). GSAP, ScrollTrigger, and
+Lenis were removed on 8 Sep 2026; a new animation approach is chosen in a
+dedicated session with the owner's references before any library returns.
+
+What animates today, all in `styles.css`:
+
+| Animation | Where |
+| --- | --- |
+| `fade-up` entrance (`.fade-up`, `.delay-*`) | home hero, `/about` intro |
+| `blob-morph-spin`, `blob-glow-pulse` | portrait blob |
+| `hero-cursor-blink` | typed display line |
+| `live-pulse` | live status dot on project cards |
+| `dark-button-glow` | primary buttons in dark mode |
+| View Transitions cross-fade (`.theme-switching`) | theme switch |
+| Hover transitions | buttons, cards, pills, links |
+
+The typed hero line and the carousel's smooth scroll are the only motion
+driven from React. Both read `usePrefersReducedMotion()` from
+`src/frontend/hooks/use-prefers-reduced-motion.ts`, which starts `true` so the
+server and the first client render agree, then follows the media query.
 
 ### Rules
 
-- Motion is progressive enhancement. Under `prefers-reduced-motion` the hooks
-  skip, the blob, cursor, and live dot stop, and the page is complete.
-- Never park content at `opacity: 0` in CSS; animate *from* hidden with GSAP.
-- Register GSAP plugins through `registerMotionPlugins()`, never at module top
-  level.
+- Motion is progressive enhancement. Under `prefers-reduced-motion` the
+  keyframes and transitions above stop, the typed line shows its first word
+  static, the carousel scrolls instantly, and the page is complete.
+- Never park content at `opacity: 0` in CSS. Entrances animate *from* hidden
+  to the resting state; the resting state is always the finished page.
+- No scroll-driven pinning, reveals, or smooth-scroll library until the
+  animation direction is decided.
 - WebGL stays out unless a specific moment earns it. See `decisions.md` D9.
 
 ## Verification

@@ -22,7 +22,6 @@ export function ServiceCard({
 }) {
   return (
     <Card
-      data-reveal
       className="surface-card surface-card-hover flex min-w-0 flex-col rounded-[1.75rem] border-border/50 bg-card py-0"
     >
       <CardHeader className="gap-2 px-7 pt-7 pb-3">

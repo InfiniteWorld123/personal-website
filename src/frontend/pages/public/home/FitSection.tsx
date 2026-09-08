@@ -1,17 +1,12 @@
 import { Check, Minus } from 'lucide-react'
-import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
 import type { HomeCopy } from '#/frontend/content/types'
-import { useReveal } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
 
 export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
-  const ref = useRef<HTMLElement>(null)
-  useReveal(ref)
-
   return (
-    <Section ref={ref} id="passung">
+    <Section id="passung">
       <Container className="flex flex-col gap-10">
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} />
 
@@ -21,7 +16,6 @@ export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
         </div>
 
         <p
-          data-reveal
           className="max-w-2xl border-s-[3px] border-primary/50 ps-5 text-base leading-8 text-foreground/70 sm:text-[1.05rem]"
         >
           {copy.honesty}
@@ -35,7 +29,7 @@ function FitList({ title, items, marker }: { title: string; items: string[]; mar
   const Icon = marker === 'check' ? Check : Minus
 
   return (
-    <div data-reveal className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
+    <div className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (

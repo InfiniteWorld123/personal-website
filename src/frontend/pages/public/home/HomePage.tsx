@@ -10,8 +10,9 @@ import { StorySection } from './StorySection'
 import { WorkSection } from './WorkSection'
 
 /**
- * Section order follows `docs/positioning.md`: person and offer, building story, proof, process,
- * qualification, a short word about the person, then the call to action.
+ * Section order follows `docs/positioning.md`: person and offer, the three
+ * service lines, proof, the building story, process, qualification, a short
+ * word about the person, then the call to action.
  */
 export function HomePage() {
   const { language } = useLanguage()
@@ -20,9 +21,9 @@ export function HomePage() {
   return (
     <>
       <HeroSection copy={home.hero} />
-      <StorySection copy={home.story} />
-      <WorkSection copy={home.work} work={work} language={language} />
       <ServicesSection copy={home.services} services={services.items} language={language} />
+      <WorkSection copy={home.work} work={work} language={language} />
+      <StorySection copy={home.story} />
       <ProcessSection copy={home.process} />
       <FitSection copy={home.fit} />
       <AboutTeaser copy={home.about} language={language} />

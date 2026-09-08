@@ -1,5 +1,4 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
@@ -8,22 +7,19 @@ import { getContent } from '#/frontend/content'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
 import { getProjectBatch, getProjectEntries } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { useReveal } from '#/frontend/motion'
 
 export function WorkPage() {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
   const { page } = useSearch({ from: '/$lang/work/' })
   const navigate = useNavigate()
-  const header = useRef<HTMLElement>(null)
-  useReveal(header)
   const entries = getProjectEntries(language)
   const batch = getProjectBatch(entries, page)
   return <>
-    <section ref={header} className="public-page-intro">
+    <section className="public-page-intro">
       <Container>
         <Eyebrow>{work.eyebrow}</Eyebrow>
-        <h1 data-reveal className="section-title mt-5 text-display-lg text-foreground">{work.title}</h1>
+        <h1 className="section-title mt-5 text-display-lg text-foreground">{work.title}</h1>
         <p className="page-intro-copy">{work.intro}</p>
       </Container>
     </section>

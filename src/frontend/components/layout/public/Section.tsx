@@ -29,12 +29,12 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn('flex max-w-2xl flex-col', className)}>
-      {eyebrow ? <Eyebrow data-reveal>{eyebrow}</Eyebrow> : null}
-      <h2 data-reveal className="section-title mt-5 text-display-md text-foreground">
+      {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
+      <h2 className="section-title mt-5 text-display-md text-foreground">
         {title}
       </h2>
       {sub ? (
-        <p data-reveal className="mt-4 text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
+        <p className="mt-4 text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
           {sub}
         </p>
       ) : null}

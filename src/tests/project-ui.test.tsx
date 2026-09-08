@@ -10,7 +10,7 @@ import { ContactForm } from '#/frontend/features/contact/ContactForm'
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, params, children, ...props }: any) => <a href={to.replace('$lang', params.lang).replace('$slug', params.slug ?? '')} {...props}>{children}</a>,
 }))
-vi.mock('#/frontend/motion', () => ({ useMotion: () => ({ reducedMotion: true, lenis: null }) }))
+vi.mock('#/frontend/hooks/use-prefers-reduced-motion', () => ({ usePrefersReducedMotion: () => true }))
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 const work = getContent('en').work

@@ -8,7 +8,6 @@ import { THEME_STORAGE_KEY } from '#/frontend/components/theme/theme'
 import { site } from '#/frontend/content/site'
 import { LanguageProvider } from '#/frontend/i18n/language-provider'
 import { defaultLanguage, directionFor, languageFromPathname } from '#/frontend/i18n/language'
-import { MotionProvider } from '#/frontend/motion'
 import { NotFoundPage } from '#/frontend/pages/public/NotFoundPage'
 
 const personStructuredData = {
@@ -66,7 +65,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen">
         <ThemeProvider>
           <LanguageProvider>
-            <MotionProvider smoothScroll={/^\/(de|en|ar)\/?$/.test(pathname)} key={language}>{children}</MotionProvider>
+            {children}
           </LanguageProvider>
         </ThemeProvider>
         {import.meta.env.DEV ? (

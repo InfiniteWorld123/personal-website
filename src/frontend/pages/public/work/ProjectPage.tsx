@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, ArrowUpRight, Github } from 'lucide-react'
-import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
@@ -10,24 +9,18 @@ import type { ProjectSlug } from '#/frontend/content/types'
 import { ProjectStatusPill } from '#/frontend/features/work/ProjectCard'
 import type { ProjectFacts } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { useReveal } from '#/frontend/motion'
 
 export function ProjectPage({ slug }: { slug: ProjectSlug }) {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
   const copy = work.items[slug]
   const facts: ProjectFacts = projects[slug]
-  const headerRef = useRef<HTMLElement>(null)
-  const bodyRef = useRef<HTMLElement>(null)
-  useReveal(headerRef)
-  useReveal(bodyRef)
 
   return (
     <>
-      <section ref={headerRef} className="pt-12 pb-10 sm:pt-16">
+      <section className="pt-12 pb-10 sm:pt-16">
         <Container className="flex flex-col gap-10">
           <Link
-            data-reveal
             to="/$lang/work"
             params={{ lang: language }}
             className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1.5 text-sm"
@@ -37,17 +30,17 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
           </Link>
 
           <div className="flex max-w-3xl flex-col gap-5">
-            <div data-reveal className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Eyebrow>{copy.kind}</Eyebrow>
               <ProjectStatusPill status={facts.status} labels={work.status} />
             </div>
-            <h1 data-reveal className="section-title mt-5 text-display-lg text-foreground">
+            <h1 className="section-title mt-5 text-display-lg text-foreground">
               {copy.name}
             </h1>
-            <p data-reveal className="hero-copy text-base leading-8 sm:text-[1.05rem]">
+            <p className="hero-copy text-base leading-8 sm:text-[1.05rem]">
               {copy.summary}
             </p>
-            <div data-reveal className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-2">
               {facts.website ? (
                 <Button asChild className="rounded-full bg-primary px-5 text-primary-foreground">
                   <a href={facts.website} target="_blank" rel="noreferrer">
@@ -71,7 +64,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
         </Container>
       </section>
 
-      <Section ref={bodyRef} tone="tint">
+      <Section tone="tint">
         <Container className="grid gap-12 lg:grid-cols-[2fr_1fr] lg:gap-16">
           <div className="flex max-w-2xl flex-col gap-10">
             <Block title={work.detail.problem} body={copy.problem} />
@@ -80,7 +73,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
           </div>
 
           <aside className="flex flex-col gap-10 lg:sticky lg:top-24 lg:self-start">
-            <div data-reveal className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
                 {work.detail.features}
               </h2>
@@ -92,7 +85,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
                 ))}
               </ul>
             </div>
-            <div data-reveal className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
                 {work.detail.stack}
               </h2>
@@ -115,7 +108,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
 
 function Block({ title, body }: { title: string; body: string }) {
   return (
-    <div data-reveal className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <h2 className="section-title text-display-sm text-foreground">{title}</h2>
       <p className="text-foreground/85 text-lg leading-relaxed">{body}</p>
     </div>

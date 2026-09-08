@@ -132,13 +132,16 @@ buries the offer.
 
 Ordered by what a cold visitor needs, in order:
 
-1. **Hero** — concrete deliverables, the person, and a primary contact CTA
-2. **Story moment** — requirements notes → wireframe → a working request/booking interface.
-   Clearly labeled as a process illustration, not a client project.
+1. **Hero** — concrete deliverables, the person, and the primary CTA
+   ("Gespräch anfragen" / "Request a call" / "اطلب مكالمة", the same label on
+   every page)
+2. **What I build** — the three service lines, without prices on the home page
 3. **Work** — up to six projects in content order, with equal visual treatment.
    Prime Estate, Tech Store, then InkNest initially. No premium labels or
    oversized featured project; no fake screenshot placeholders.
-4. **What I build** — the three service lines, without prices on the home page
+4. **Story moment** — requirements notes → wireframe → a working request/booking interface.
+   Clearly labeled as a process illustration, not a client project. A plain
+   vertical section; copy and illustration still to be reviewed.
 5. **How it works** — the process in three or four steps. Removes the fear of
    hiring a stranger, which is the actual objection at this deal size
 6. **Who this is for** — plain qualification, including who it is *not* for.

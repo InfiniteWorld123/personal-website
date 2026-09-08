@@ -1,19 +1,13 @@
-import { useRef } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { getContent } from '#/frontend/content'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { useReveal } from '#/frontend/motion'
 
 export function AboutPage() {
   const { language } = useLanguage()
   const { about } = getContent(language)
-  const storyRef = useRef<HTMLElement>(null)
-  const methodRef = useRef<HTMLElement>(null)
-  useReveal(storyRef)
-  useReveal(methodRef)
 
   return (
     <>
@@ -28,14 +22,14 @@ export function AboutPage() {
         </Container>
       </section>
 
-      <Section ref={storyRef} className="pt-4">
+      <Section className="pt-4">
         <Container className="grid gap-8 md:grid-cols-[0.9fr_1.1fr]">
-          <h2 data-reveal className="section-title max-w-sm text-display-md text-foreground">
+          <h2 className="section-title max-w-sm text-display-md text-foreground">
             {about.story.title}
           </h2>
           <div className="flex flex-col gap-5">
             {about.story.paragraphs.map((paragraph) => (
-              <p key={paragraph} data-reveal className="m-0 text-base leading-8 text-foreground/62">
+              <p key={paragraph} className="m-0 text-base leading-8 text-foreground/62">
                 {paragraph}
               </p>
             ))}
@@ -43,14 +37,14 @@ export function AboutPage() {
         </Container>
       </Section>
 
-      <Section ref={methodRef} className="pt-4">
+      <Section className="pt-4">
         <Container className="flex flex-col gap-10">
-          <h2 data-reveal className="section-title text-display-md text-foreground">
+          <h2 className="section-title text-display-md text-foreground">
             {about.method.title}
           </h2>
           <div className="grid gap-5 sm:grid-cols-2">
             {about.method.items.map((item) => (
-              <div key={item.title} data-reveal className="surface-card flex flex-col gap-2 rounded-[1.5rem] px-6 py-6">
+              <div key={item.title} className="surface-card flex flex-col gap-2 rounded-[1.5rem] px-6 py-6">
                 <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
                 <p className="m-0 text-sm leading-7 text-foreground/58">{item.body}</p>
               </div>
@@ -58,7 +52,6 @@ export function AboutPage() {
           </div>
 
           <div
-            data-reveal
             className="flex max-w-3xl flex-col gap-3 rounded-[1.75rem] border border-primary/15 bg-primary/5 p-7 sm:p-9"
           >
             <h3 className="section-title text-display-sm text-foreground">{about.platform.title}</h3>

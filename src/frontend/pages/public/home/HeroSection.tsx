@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight, Github, MapPin } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
@@ -8,8 +8,8 @@ import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent, serviceOrder, site } from '#/frontend/content'
 import type { HomeCopy } from '#/frontend/content/types'
+import { usePrefersReducedMotion } from '#/frontend/hooks/use-prefers-reduced-motion'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { gsap, useGsap, useMotion } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
 
 /**
@@ -21,29 +21,9 @@ import { cn } from '#/frontend/lib/utils'
 export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
   const { language, isRtl } = useLanguage()
   const { services, shell } = getContent(language)
-  const ref = useRef<HTMLElement>(null)
-
-  useGsap(
-    ref,
-    () => {
-      const mm = gsap.matchMedia()
-      mm.add('(min-width: 1024px) and (pointer: fine)', () => {
-        gsap.fromTo(
-          '[data-hero-portrait]',
-          { y: 0 },
-          {
-            y: -14,
-            ease: 'none',
-            scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: 0.5 },
-          },
-        )
-      })
-    },
-    [language],
-  )
 
   return (
-    <section ref={ref} className="hero-section">
+    <section className="hero-section">
       <Container>
         <div className="hero-layout">
           <div className="hero-content fade-up">
@@ -134,7 +114,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </div>
           </div>
 
-          <div data-hero-portrait className="hero-portrait-stage fade-up delay-2">
+          <div className="hero-portrait-stage fade-up delay-2">
             <PortraitBlob alt={site.name} />
           </div>
         </div>
@@ -148,7 +128,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
  * reduced motion the first word is shown complete and nothing moves.
  */
 function TypingText({ words }: { words: string[] }) {
-  const { reducedMotion } = useMotion()
+  const reducedMotion = usePrefersReducedMotion()
   const [wordIndex, setWordIndex] = useState(0)
   const [displayed, setDisplayed] = useState(words[0] ?? '')
   const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('pausing')

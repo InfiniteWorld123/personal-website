@@ -8,7 +8,7 @@ export const de: SiteContent = {
       { label: 'Über mich', to: '/$lang/about' },
       { label: 'Kontakt', to: '/$lang/contact' },
     ],
-    cta: 'Projekt besprechen',
+    cta: 'Gespräch anfragen',
     menu: { open: 'Menü öffnen', close: 'Menü schließen', navigation: 'Hauptnavigation' },
     language: { label: 'Sprache', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Helles Design', dark: 'Dunkles Design', system: 'Systemdesign', label: 'Design' },
@@ -35,7 +35,7 @@ export const de: SiteContent = {
       staticLine: 'ENTWICKLER',
       headline: "Deine Idee. Gemeinsam umgesetzt.",
       sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt: durchdacht, persönlich und passend zu deinem Unternehmen.",
-      cta: 'Projekt besprechen',
+      cta: 'Gespräch anfragen',
       secondary: 'Projekte ansehen',
     },
     story: {
@@ -142,7 +142,7 @@ export const de: SiteContent = {
     cta: {
       title: 'Erzähl mir von deinem Vorhaben.',
       body: 'Schreib kurz, worum es geht. Du bekommst eine ehrliche Einschätzung, auch wenn sie lautet: Das brauchst du gerade nicht.',
-      button: 'Projekt besprechen',
+      button: 'Gespräch anfragen',
       alt: 'Oder direkt per E-Mail',
     },
   },
@@ -317,7 +317,7 @@ export const de: SiteContent = {
       body: 'Du siehst gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
     },
     portraitAlt: 'Yaman Warda',
-    cta: { title: 'Lass uns über dein Projekt sprechen.', button: 'Projekt besprechen' },
+    cta: { title: 'Lass uns über dein Projekt sprechen.', button: 'Gespräch anfragen' },
   },
 
   work: {

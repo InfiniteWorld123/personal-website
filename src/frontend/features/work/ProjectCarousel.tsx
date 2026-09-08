@@ -3,14 +3,14 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import type { WorkCopy } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
-import { useMotion } from '#/frontend/motion'
+import { usePrefersReducedMotion } from '#/frontend/hooks/use-prefers-reduced-motion'
 import { ProjectCard } from './ProjectCard'
 import type { ProjectEntry } from './project-list'
 
 export function ProjectCarousel({ entries, work, language }: { entries: ProjectEntry[]; work: WorkCopy; language: Language }) {
   const track = useRef<HTMLDivElement>(null)
   const [nav, setNav] = useState({ overflow: false, previous: false, next: false })
-  const { reducedMotion } = useMotion()
+  const reducedMotion = usePrefersReducedMotion()
   useEffect(() => {
     const el = track.current
     if (!el) return
