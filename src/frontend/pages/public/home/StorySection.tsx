@@ -1,6 +1,7 @@
 import { ArrowUpRight, CalendarDays, Check, CheckCheck, Circle, LayoutDashboard, MessageSquare, MousePointer2 } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
+import { SplitWords, useReveal } from '#/frontend/motion'
 import type { HomeCopy } from '#/frontend/content/types'
 
 function StoryVisual({ step, copy }: { step: number; copy: HomeCopy['story']['demo'] }) {
@@ -25,14 +26,15 @@ function StoryVisual({ step, copy }: { step: number; copy: HomeCopy['story']['de
 }
 
 export function StorySection({ copy }: { copy: HomeCopy['story'] }) {
-  return <section className="build-story contact-light" id="system">
+  const ref = useReveal<HTMLElement>()
+  return <section ref={ref} data-reveal-scope="" className="build-story contact-light" id="system">
     <Container>
       <header className="build-story-header">
-        <div className="flex flex-col"><Eyebrow>{copy.eyebrow}</Eyebrow><h2 className="section-title mt-5 text-display-md text-foreground">{copy.title}</h2></div>
-        <p>{copy.sub}</p>
+        <div className="flex flex-col"><Eyebrow data-reveal>{copy.eyebrow}</Eyebrow><h2 className="section-title mt-5 text-display-md text-foreground"><SplitWords text={copy.title} /></h2></div>
+        <p data-reveal>{copy.sub}</p>
       </header>
       <div className="build-panels">
-        {copy.steps.map((step, i) => <article className="build-panel" key={step.label}>
+        {copy.steps.map((step, i) => <article className="build-panel" data-reveal key={step.label}>
           <div className="build-panel-copy">
             <div className="build-progress" aria-hidden="true">{copy.steps.map((_, j) => <span key={j} className={j === i ? 'active' : ''} />)}</div>
             <p className="build-step-label">{'0' + (i + 1)} / {step.label}</p>

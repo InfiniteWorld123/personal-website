@@ -4,6 +4,7 @@ import { Button } from '#/frontend/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '#/frontend/components/ui/card'
 import type { ServiceCopy, ServiceSlug } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
+import { useTilt } from '#/frontend/motion'
 
 /**
  * One service line as it appears on the home page. Pricing intentionally stays
@@ -20,8 +21,13 @@ export function ServiceCard({
   language: Language
   moreLabel: string
 }) {
+  const tilt = useTilt<HTMLDivElement>()
+
   return (
     <Card
+      data-reveal
+      data-tilt
+      ref={tilt}
       className="surface-card surface-card-hover flex min-w-0 flex-col rounded-[1.75rem] border-border/50 bg-card py-0"
     >
       <CardHeader className="gap-2 px-7 pt-7 pb-3">

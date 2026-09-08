@@ -16,6 +16,7 @@ export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
         </div>
 
         <p
+          data-reveal
           className="max-w-2xl border-s-[3px] border-primary/50 ps-5 text-base leading-8 text-foreground/70 sm:text-[1.05rem]"
         >
           {copy.honesty}
@@ -29,7 +30,7 @@ function FitList({ title, items, marker }: { title: string; items: string[]; mar
   const Icon = marker === 'check' ? Check : Minus
 
   return (
-    <div className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
+    <div data-reveal className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (

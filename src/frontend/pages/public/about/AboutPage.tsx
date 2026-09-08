@@ -4,6 +4,7 @@ import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { getContent } from '#/frontend/content'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { SplitWords, useTilt } from '#/frontend/motion'
 
 export function AboutPage() {
   const { language } = useLanguage()
@@ -25,11 +26,11 @@ export function AboutPage() {
       <Section className="pt-4">
         <Container className="grid gap-8 md:grid-cols-[0.9fr_1.1fr]">
           <h2 className="section-title max-w-sm text-display-md text-foreground">
-            {about.story.title}
+            <SplitWords text={about.story.title} />
           </h2>
           <div className="flex flex-col gap-5">
             {about.story.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="m-0 text-base leading-8 text-foreground/62">
+              <p key={paragraph} data-reveal className="m-0 text-base leading-8 text-foreground/62">
                 {paragraph}
               </p>
             ))}
@@ -40,18 +41,16 @@ export function AboutPage() {
       <Section className="pt-4">
         <Container className="flex flex-col gap-10">
           <h2 className="section-title text-display-md text-foreground">
-            {about.method.title}
+            <SplitWords text={about.method.title} />
           </h2>
           <div className="grid gap-5 sm:grid-cols-2">
             {about.method.items.map((item) => (
-              <div key={item.title} className="surface-card flex flex-col gap-2 rounded-[1.5rem] px-6 py-6">
-                <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
-                <p className="m-0 text-sm leading-7 text-foreground/58">{item.body}</p>
-              </div>
+              <MethodCard key={item.title} title={item.title} body={item.body} />
             ))}
           </div>
 
           <div
+            data-reveal
             className="flex max-w-3xl flex-col gap-3 rounded-[1.75rem] border border-primary/15 bg-primary/5 p-7 sm:p-9"
           >
             <h3 className="section-title text-display-sm text-foreground">{about.platform.title}</h3>
@@ -62,5 +61,22 @@ export function AboutPage() {
 
       <CtaBand title={about.cta.title} button={about.cta.button} />
     </>
+  )
+}
+
+/** One working principle, as a card that leans towards the pointer. */
+function MethodCard({ title, body }: { title: string; body: string }) {
+  const tilt = useTilt<HTMLDivElement>()
+
+  return (
+    <div
+      data-reveal
+      data-tilt
+      ref={tilt}
+      className="surface-card surface-card-hover flex flex-col gap-2 rounded-[1.5rem] px-6 py-6"
+    >
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="m-0 text-sm leading-7 text-foreground/58">{body}</p>
+    </div>
   )
 }

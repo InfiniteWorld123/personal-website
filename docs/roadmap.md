@@ -45,15 +45,16 @@ building story as a static section in normal flow, project carousel and
 load-more, one primary CTA label everywhere ("Gespräch anfragen" / "Request a
 call" / "اطلب مكالمة"). The GSAP/Lenis motion layer, which had crashed every
 client-side navigation away from the home page, was removed on 8 Sep 2026; the
-site is a CSS-only baseline (D15).
+site was a CSS-only baseline for a day (D15); on the same day the owner chose
+the animation direction from a live prototype and it was built without any
+animation library (D16).
 
 Open before cutover: real project screenshots, an OG image, Impressum and
 Datenschutz pages (legally required in Germany; text must come from the
 owner), and the `platform` → `main` merge.
 
-Open: animation direction session (the owner brings 21st.dev / Dribbble
-references; decide reveals, hover, page transitions, hero choreography, then
-the tool), and a review of the story section's copy and illustration.
+Open: a new logo or brand mark (the owner asked for one that lasts), and a
+review of the story section's copy and illustration.
 
 ## [ ] B4 — Leads and inbox
 *Model: Sonnet 5 · medium*

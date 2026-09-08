@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import { Badge } from '#/frontend/components/ui/badge'
+import { SplitWords, useReveal } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
 
 type SectionProps = ComponentProps<'section'> & {
@@ -7,11 +8,19 @@ type SectionProps = ComponentProps<'section'> & {
   tone?: 'page' | 'tint'
 }
 
+/**
+ * Every section is also a reveal scope: its `[data-reveal]` descendants rise
+ * in sequence the first time the section scrolls into view.
+ */
 export function Section({ className, tone = 'page', ...props }: SectionProps) {
+  const ref = useReveal<HTMLElement>()
+
   return (
     <section
       className={cn('py-section lg:py-section-lg', tone === 'tint' && 'contact-light', className)}
+      data-reveal-scope=""
       {...props}
+      ref={ref}
     />
   )
 }
@@ -29,12 +38,12 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn('flex max-w-2xl flex-col', className)}>
-      {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
+      {eyebrow ? <Eyebrow data-reveal>{eyebrow}</Eyebrow> : null}
       <h2 className="section-title mt-5 text-display-md text-foreground">
-        {title}
+        <SplitWords text={title} />
       </h2>
       {sub ? (
-        <p className="mt-4 text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
+        <p data-reveal className="mt-4 text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
           {sub}
         </p>
       ) : null}

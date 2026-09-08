@@ -4,8 +4,9 @@ The visual identity is the one on yamanwarda.dev, the owner's own design:
 electric blue on white, a huge uppercase display line whose first word types
 itself, a serif for section titles, rounded cards with soft shadows, buttons
 that lift and glow, and the portrait inside a morphing blue blob. B3 keeps
-that identity and puts the new page structure and copy underneath; motion is a
-CSS-only baseline until the animation direction is chosen (`decisions.md` D15).
+that identity and puts the new page structure, copy, and motion underneath.
+The motion direction was chosen on 8 Sep 2026 from the owner's references and
+is built without an animation library (`decisions.md` D16).
 
 Two other directions were tried and rejected on 7 Sep 2026: a quiet deep-blue
 serif identity, and a flattened "calm" variant without the blob, the serif,
@@ -19,6 +20,7 @@ showing a rendered mockup and getting an explicit yes.
 | Colour tokens, fonts, type scale, all page CSS | `src/frontend/config/styles.css` |
 | Theme preference | `src/frontend/components/theme/` |
 | Language and text direction | `src/frontend/i18n/` |
+| Motion layer: reveal, tilt, magnetic buttons, word split | `src/frontend/motion/` |
 | Reduced-motion hook | `src/frontend/hooks/` |
 | Public shell: header, footer, container, section, portrait | `src/frontend/components/layout/public/` |
 | Public copy per language | `src/frontend/content/{de,en,ar}.ts` |
@@ -120,36 +122,51 @@ labels reset with `rtl:tracking-normal`.
 
 ## Motion
 
-The motion layer is CSS only (`decisions.md` D15). GSAP, ScrollTrigger, and
-Lenis were removed on 8 Sep 2026; a new animation approach is chosen in a
-dedicated session with the owner's references before any library returns.
+No animation library. CSS owns every transition and keyframe; JavaScript only
+answers two questions — has this section entered the viewport, and where is the
+pointer. See `decisions.md` D16 for why, and D15 for what came before.
 
-What animates today, all in `styles.css`:
+`html.motion` is the single switch. The inline script in `__root.tsx` adds it
+before first paint, but only when the visitor has not asked for reduced motion,
+and removes it again after 2.5 s if the motion module never signals that it is
+alive. Nothing is hidden without that class, so a failed script, an old
+browser, or a reduced-motion setting all leave the finished page.
 
-| Animation | Where |
-| --- | --- |
-| `fade-up` entrance (`.fade-up`, `.delay-*`) | home hero, `/about` intro |
-| `blob-morph-spin`, `blob-glow-pulse` | portrait blob |
-| `hero-cursor-blink` | typed display line |
-| `live-pulse` | live status dot on project cards |
-| `dark-button-glow` | primary buttons in dark mode |
-| View Transitions cross-fade (`.theme-switching`) | theme switch |
-| Hover transitions | buttons, cards, pills, links |
+| What moves | How | Where |
+| --- | --- | --- |
+| Hero entrance: chip, greeting, headline, buttons, pills in sequence | `[data-hero-item]` + `--hero-i` | CSS only |
+| Display lines rising from behind their own edge | `.hero-line` mask + `--line-i` | CSS only |
+| Portrait fading and settling into place | `.hero-portrait-stage` | CSS only |
+| Section titles arriving word by word | `<SplitWords>` + `--word-i` | `motion/SplitWords.tsx` |
+| Cards, lists, and paragraphs rising in sequence | `[data-reveal]` + `--reveal-i` | `useReveal` |
+| Cards and the portrait leaning towards the pointer, lit by a blue light | `[data-tilt]`, `--tilt-*`, `--spot-*` | `useTilt` |
+| Blue buttons leaning towards the pointer and springing back | `--magnet-x/y` | `useMagneticButtons` |
+| The line drawn between the four `Ablauf` cards | measured SVG + `--len`, `--delay` | `ProcessConnector` |
+| Page change: the page fades in, a line runs under the header | `.route-fade`, `.route-progress` | keyed on the pathname |
+| Blob morph and glow, typed cursor, live dot, dark-mode button glow | keyframes | CSS only |
+| Theme change cross-fade | View Transitions API | `theme-provider.tsx` |
 
-The typed hero line and the carousel's smooth scroll are the only motion
-driven from React. Both read `usePrefersReducedMotion()` from
-`src/frontend/hooks/use-prefers-reduced-motion.ts`, which starts `true` so the
-server and the first client render agree, then follows the media query.
+`useReveal` returns a ref for a scope. The scope carries `data-reveal-scope` in
+its own JSX, not from JavaScript, so the hidden state exists on the first
+painted frame instead of flashing the finished layout first. Its
+`[data-reveal]` descendants are numbered on mount, and the numbers become
+transition delays.
 
 ### Rules
 
-- Motion is progressive enhancement. Under `prefers-reduced-motion` the
-  keyframes and transitions above stop, the typed line shows its first word
-  static, the carousel scrolls instantly, and the page is complete.
-- Never park content at `opacity: 0` in CSS. Entrances animate *from* hidden
-  to the resting state; the resting state is always the finished page.
-- No scroll-driven pinning, reveals, or smooth-scroll library until the
-  animation direction is decided.
+- Motion is progressive enhancement. Under `prefers-reduced-motion` nothing
+  moves, and the page is complete: the `Ablauf` cards keep their tilt and the
+  line between them is simply already drawn, because both are the resting
+  design rather than an animation.
+- Never park content at `opacity: 0` outside `html.motion [data-reveal-scope]`.
+  Anything hidden must be inside a scope that will reveal it.
+- Hover effects are for things a visitor can act on. The `Ablauf` cards are a
+  diagram, so they do not react to the pointer at all.
+- Pointer effects are gated on `(min-width: 1024px) and (pointer: fine)`; a
+  tilt that never resets would leave a card crooked on a touch screen.
+- A parent's ref is not available inside its own child's layout effect, which
+  is why `ProcessConnector` measures `parentElement` instead of taking a ref
+  prop. The line was silently missing until that was fixed.
 - WebGL stays out unless a specific moment earns it. See `decisions.md` D9.
 
 ## Verification

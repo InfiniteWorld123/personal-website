@@ -199,6 +199,9 @@ Client records, leads, and invoices never leave the German server.
 
 ### D15 — Motion layer removed; CSS-only baseline
 
+Status: **Superseded by D16.** The removal happened and was the right call; the
+replacement it asked for is now decided.
+
 The GSAP + ScrollTrigger + Lenis layer from B2 was removed on 8 Sep 2026.
 The public site keeps only its CSS animations (hero fade-up, blob morph and
 glow, typed cursor, live dot, dark-mode button glow, theme cross-fade) and one
@@ -217,3 +220,36 @@ the references suggest. The tool (CSS, Motion, or GSAP again) is chosen after
 that, deliberately. Until then no scroll-driven library ships.
 
 **Still valid from D9:** WebGL stays out unless one moment earns it.
+
+---
+
+### D16 — The motion layer returns, without an animation library
+
+The animation direction was chosen with the owner on 8 Sep 2026 from a live
+prototype and their own references (three Dribbble portfolio shots and the JS
+Mastery GSAP course). What ships: a choreographed hero entrance, section titles
+that arrive word by word, cards and lists that rise in sequence once, four
+tilted `Ablauf` cards joined by a line that draws itself, a 3D tilt with a blue
+pointer light on cards and on the portrait, magnetic primary buttons, and a
+soft page transition with a line under the header.
+
+Built with CSS plus `IntersectionObserver`, `ResizeObserver`, and pointer
+events. No GSAP, no Lenis, no library at all.
+
+**Why no library:** every effect on the list is reachable with a transition and
+a class, so a library would have bought easing sugar for roughly thirty-five
+kilobytes on every visit. The owner chose this deliberately after being shown
+both options; they had a standing reason to want GSAP, which is the library in
+the course they follow.
+
+**Explicitly rejected**, after the owner tried each one in the prototype: a
+preloader, a custom cursor, smooth scrolling, pinned and scrubbed sections,
+horizontal scroll, a marquee, and counting numbers. The last one has no honest
+input — there are three projects and one person, and animating those figures
+would draw attention to how small they are.
+
+**What keeps it safe:** `html.motion` gates every hidden state, is set before
+first paint only for visitors who accept motion, and removes itself if the
+motion module never reports in. Hover and tilt need a fine pointer. The
+`Ablauf` tilt and its line survive reduced motion because they are layout, not
+motion.

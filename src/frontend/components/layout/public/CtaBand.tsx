@@ -3,6 +3,7 @@ import { ArrowRight, Mail } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { site } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { SplitWords, useReveal } from '#/frontend/motion'
 import { Container } from './Container'
 
 /**
@@ -21,21 +22,22 @@ export function CtaBand({
   alt?: string
 }) {
   const { language } = useLanguage()
+  const ref = useReveal<HTMLElement>()
 
   return (
-    <section className="contact-light py-section lg:py-section-lg">
+    <section ref={ref} data-reveal-scope="" className="contact-light py-section lg:py-section-lg">
       <Container className="closing-cta">
         <div className="flex max-w-2xl flex-col gap-4">
           <h2 className="section-title text-display-md text-foreground">
-            {title}
+            <SplitWords text={title} />
           </h2>
           {body ? (
-            <p className="text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
+            <p data-reveal className="text-base leading-8 text-foreground/58 sm:text-[1.05rem]">
               {body}
             </p>
           ) : null}
         </div>
-        <div className="closing-cta-actions">
+        <div className="closing-cta-actions" data-reveal>
           <Button
             asChild
             size="lg"

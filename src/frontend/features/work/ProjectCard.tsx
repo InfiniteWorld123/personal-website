@@ -4,6 +4,7 @@ import { Button } from '#/frontend/components/ui/button'
 import type { ProjectCopy, WorkCopy } from '#/frontend/content/types'
 import type { ProjectFacts } from '#/frontend/content/site'
 import type { Language } from '#/frontend/i18n/language'
+import { useTilt } from '#/frontend/motion'
 
 export function ProjectStatusPill({ status, labels }: {
   status: ProjectFacts['status']; labels: WorkCopy['status']
@@ -19,8 +20,10 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
   labels: { visit: string; source: string; detail: string }
   showTech?: boolean
 }) {
+  const tilt = useTilt<HTMLElement>()
+
   return (
-    <article className="work-card">
+    <article className="work-card" data-reveal data-tilt ref={tilt}>
       <div className="work-card-heading">
         <h3><Link to="/$lang/work/$slug" params={{ lang: language, slug: facts.slug }}>{copy.name}</Link></h3>
         <p className="work-card-kind">{copy.kind}</p>

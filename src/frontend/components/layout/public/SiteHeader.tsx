@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { ArrowRight, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/frontend/components/ui/button'
@@ -22,6 +22,7 @@ import { ThemeToggle } from './ThemeToggle'
 export function SiteHeader({ copy }: { copy: ShellCopy }) {
   const { language, isRtl } = useLanguage()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
 
   return (
     <header className="site-header sticky top-0 z-30">
@@ -79,6 +80,10 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
           </Button>
         </div>
       </Container>
+
+      {/* Replays on every page change: the line under the header is the only
+          thing that says "the page changed" once the new page has arrived. */}
+      <span key={pathname} className="route-progress" aria-hidden="true" />
 
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <SheetContent side={isRtl ? 'left' : 'right'} className="navigation-sheet w-[85vw] max-w-xs border-border/60 px-0">

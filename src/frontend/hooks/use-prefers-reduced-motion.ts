@@ -11,6 +11,8 @@ export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(true)
 
   useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+
     const media = window.matchMedia(query)
     const sync = () => setReduced(media.matches)
 

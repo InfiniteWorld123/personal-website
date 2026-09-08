@@ -4,19 +4,21 @@ import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { getContent, site } from '#/frontend/content'
 import { ContactForm } from '#/frontend/features/contact/ContactForm'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { SplitWords, useReveal } from '#/frontend/motion'
 
 export function ContactPage() {
   const { language } = useLanguage()
   const { contact } = getContent(language)
+  const ref = useReveal<HTMLElement>()
 
   return (
-    <section className="contact-page">
+    <section ref={ref} data-reveal-scope="" className="contact-page">
       <Container className="contact-layout">
         <div className="contact-intro flex flex-col gap-8">
           <div className="flex flex-col">
-            <Eyebrow>{contact.eyebrow}</Eyebrow>
-            <h1 className="section-title mt-5 text-display-lg text-foreground">{contact.title}</h1>
-            <p className="hero-copy mt-5 text-base leading-8 sm:text-[1.05rem]">{contact.intro}</p>
+            <Eyebrow data-reveal>{contact.eyebrow}</Eyebrow>
+            <h1 className="section-title mt-5 text-display-lg text-foreground"><SplitWords text={contact.title} /></h1>
+            <p data-reveal className="hero-copy mt-5 text-base leading-8 sm:text-[1.05rem]">{contact.intro}</p>
           </div>
 
           <div className="flex flex-col gap-3">

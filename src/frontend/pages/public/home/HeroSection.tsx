@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight, Github, MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Badge } from '#/frontend/components/ui/badge'
@@ -17,24 +17,35 @@ import { cn } from '#/frontend/lib/utils'
  * display line where the first word types itself in and out, and the
  * portrait in front of the morphing blue blob. The typed words name the
  * offer; the bold sentence under them is the positioning headline.
+ *
+ * The entrance is one sequence, not eight separate fades: the small lines
+ * arrive first, the display line rises from behind its own edge, the portrait
+ * settles last. Order comes from `--hero-i`; the CSS owns the timing.
  */
 export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
   const { language, isRtl } = useLanguage()
   const { services, shell } = getContent(language)
 
+  const item = (index: number) => ({ 'data-hero-item': '', style: { '--hero-i': index } as CSSProperties })
+
   return (
     <section className="hero-section">
       <Container>
         <div className="hero-layout">
-          <div className="hero-content fade-up">
-            <Badge className="hero-chip rounded-full px-3 py-1 text-[0.76rem]">
+          <div className="hero-content">
+            <Badge {...item(0)} className="hero-chip rounded-full px-3 py-1 text-[0.76rem]">
               <MapPin className="size-3.5" />
               {shell.footer.location}
             </Badge>
 
-            <p className="mt-7 text-lg font-semibold tracking-tight text-foreground sm:text-xl">{copy.greeting}</p>
+            <p {...item(1)} className="mt-7 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              {copy.greeting}
+            </p>
 
-            <p className="mt-4 text-[0.72rem] font-bold uppercase tracking-[0.36em] text-primary/70 rtl:tracking-normal">
+            <p
+              {...item(2)}
+              className="mt-4 text-[0.72rem] font-bold uppercase tracking-[0.36em] text-primary/70 rtl:tracking-normal"
+            >
               {copy.prefix}
             </p>
 
@@ -46,23 +57,35 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             >
               {isRtl ? (
                 <span className="hero-title-arabic">
-                  <span className="hero-arabic-static">{copy.staticLine}</span>
-                  <span className="hero-arabic-role">
-                    <TypingText key={language} words={copy.typed} />
-                  </span>
+                  <HeroLine index={0}>
+                    <span className="hero-arabic-static">{copy.staticLine}</span>
+                  </HeroLine>
+                  <HeroLine index={1}>
+                    <span className="hero-arabic-role">
+                      <TypingText key={language} words={copy.typed} />
+                    </span>
+                  </HeroLine>
                 </span>
               ) : (
                 <>
-                  <TypingText key={language} words={copy.typed} />
-                  <span className="hero-static-line block">{copy.staticLine}</span>
+                  <HeroLine index={0}>
+                    <TypingText key={language} words={copy.typed} />
+                  </HeroLine>
+                  <HeroLine index={1}>
+                    <span className="hero-static-line">{copy.staticLine}</span>
+                  </HeroLine>
                 </>
               )}
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg font-semibold leading-8 text-foreground sm:text-xl">{copy.headline}</p>
-            <p className="hero-copy mt-3 max-w-xl text-base leading-8 sm:text-[1.05rem]">{copy.sub}</p>
+            <p {...item(7)} className="mt-6 max-w-xl text-lg font-semibold leading-8 text-foreground sm:text-xl">
+              {copy.headline}
+            </p>
+            <p {...item(8)} className="hero-copy mt-3 max-w-xl text-base leading-8 sm:text-[1.05rem]">
+              {copy.sub}
+            </p>
 
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div {...item(9)} className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-full px-7">
                 <Link to="/$lang/contact" params={{ lang: language }}>
                   {copy.cta}
@@ -77,7 +100,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               </Button>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div {...item(10)} className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 asChild
                 variant="ghost"
@@ -98,7 +121,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </div>
 
             {/* The three service lines as pills, each a shortcut into its detail. */}
-            <div className="mt-7 flex flex-wrap gap-2">
+            <div {...item(11)} className="mt-7 flex flex-wrap gap-2">
               {serviceOrder.map((slug) => (
                 <Link
                   key={slug}
@@ -114,12 +137,21 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </div>
           </div>
 
-          <div className="hero-portrait-stage fade-up delay-2">
+          <div className="hero-portrait-stage">
             <PortraitBlob alt={site.name} />
           </div>
         </div>
       </Container>
     </section>
+  )
+}
+
+/** One display line, masked so it can rise from behind its own edge. */
+function HeroLine({ index, children }: { index: number; children: ReactNode }) {
+  return (
+    <span className="hero-line" style={{ '--line-i': index } as CSSProperties}>
+      <span className="hero-line-inner">{children}</span>
+    </span>
   )
 }
 

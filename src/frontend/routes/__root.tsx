@@ -8,6 +8,7 @@ import { THEME_STORAGE_KEY } from '#/frontend/components/theme/theme'
 import { site } from '#/frontend/content/site'
 import { LanguageProvider } from '#/frontend/i18n/language-provider'
 import { defaultLanguage, directionFor, languageFromPathname } from '#/frontend/i18n/language'
+import { MOTION_BOOT_SCRIPT, useMotionPreference } from '#/frontend/motion'
 import { NotFoundPage } from '#/frontend/pages/public/NotFoundPage'
 
 const personStructuredData = {
@@ -56,10 +57,13 @@ function RootDocument({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const language = languageFromPathname(pathname) ?? defaultLanguage
 
+  useMotionPreference()
+
   return (
     <html lang={language} dir={directionFor(language)} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
       <body className="min-h-screen">

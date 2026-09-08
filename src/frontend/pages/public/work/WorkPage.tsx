@@ -7,23 +7,26 @@ import { getContent } from '#/frontend/content'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
 import { getProjectBatch, getProjectEntries } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { SplitWords, useReveal } from '#/frontend/motion'
 
 export function WorkPage() {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
   const { page } = useSearch({ from: '/$lang/work/' })
   const navigate = useNavigate()
+  const header = useReveal<HTMLElement>()
+  const grid = useReveal<HTMLElement>()
   const entries = getProjectEntries(language)
   const batch = getProjectBatch(entries, page)
   return <>
-    <section className="public-page-intro">
+    <section ref={header} data-reveal-scope="" className="public-page-intro">
       <Container>
-        <Eyebrow>{work.eyebrow}</Eyebrow>
-        <h1 className="section-title mt-5 text-display-lg text-foreground">{work.title}</h1>
-        <p className="page-intro-copy">{work.intro}</p>
+        <Eyebrow data-reveal>{work.eyebrow}</Eyebrow>
+        <h1 className="section-title mt-5 text-display-lg text-foreground"><SplitWords text={work.title} /></h1>
+        <p data-reveal className="page-intro-copy">{work.intro}</p>
       </Container>
     </section>
-    <section className="pb-section" aria-label={work.eyebrow}>
+    <section ref={grid} data-reveal-scope="" className="pb-section" aria-label={work.eyebrow}>
       <Container>
         {batch.visible.length ? <div className="work-grid">
           {batch.visible.map(({ facts, copy }) => <ProjectCard key={facts.slug} facts={facts} copy={copy} language={language} statusLabels={work.status} showTech labels={{ visit: work.visit, source: work.source, detail: work.detailLabel }} />)}

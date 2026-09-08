@@ -50,6 +50,7 @@ src/
 │   ├── pages/                # public/ and admin/
 │   ├── hooks/                # shared React hooks (reduced motion)
 │   ├── i18n/                 # de · en · ar + RTL
+│   ├── motion/               # reveal · tilt · magnetic · word split (no library)
 │   └── lib/
 ├── routes/                   # thin TanStack routes, no markup
 └── shared/                   # env, types, Valibot schemas used by both sides
