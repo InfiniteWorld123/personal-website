@@ -59,7 +59,7 @@ export function AboutPage() {
         </Container>
       </Section>
 
-      <CtaBand title={about.cta.title} button={about.cta.button} />
+      <CtaBand title={about.cta.title} body={about.cta.body} button={about.cta.button} alt={about.cta.alt} />
     </>
   )
 }

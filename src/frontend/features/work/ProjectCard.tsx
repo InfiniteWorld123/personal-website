@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowUpRight, Github } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Github } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import type { ProjectCopy, WorkCopy } from '#/frontend/content/types'
 import type { ProjectFacts } from '#/frontend/content/site'
@@ -34,7 +34,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
       {showTech ? <p className="work-card-tech" dir="ltr">{facts.stack.slice(0, 3).join(' · ')}</p> : null}
       <div className="work-card-actions">
         <Button asChild className="project-detail-link">
-          <Link to="/$lang/work/$slug" params={{ lang: language, slug: facts.slug }}>{labels.detail}<ArrowUpRight className="rtl:-scale-x-100" /></Link>
+          <Link to="/$lang/work/$slug" params={{ lang: language, slug: facts.slug }}>{labels.detail}<ArrowRight className="rtl:-scale-x-100" /></Link>
         </Button>
         {facts.website ? <Button asChild variant="outline" size="icon" aria-label={labels.visit + ': ' + copy.name} title={labels.visit}>
           <a href={facts.website} target="_blank" rel="noreferrer"><ArrowUpRight /></a>

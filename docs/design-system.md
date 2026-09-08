@@ -92,12 +92,12 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
   `outline` buttons lift 1.5 px and gain a blue ring. Styled globally on
   `[data-slot="button"]`; components add only shape (`rounded-full`) and size.
 - **Cards** (`.work-card`, `.surface-card`, `.step`, service cards):
-  `1.75rem` radius, a gradient hairline drawn on `::before` in place of the
-  grey border, a blue shadow, lift on hover. The hairline does not change
-  under the pointer: the owner asked for no edge that appears on hover, so
-  what a card gains is lift and shadow only.
-- **Hero ground**: a three-pool mesh on `.hero-section::before`, the dot grid
-  on `::after` above it, content above both.
+  `1.75rem` radius, a neutral 1 px border, a blue shadow, lift on hover. The
+  border does not change under the pointer: the owner asked for no edge that
+  appears on hover, so what a card gains is lift and shadow only. The gradient
+  hairline D18 drew on `::before` was removed in D19.
+- **Hero ground**: the dot grid on `.hero-section::after`, content above it.
+  The three-pool mesh D18 put on `::before` was removed in D19.
 - **Film grain**: one fixed layer on `body::after`, 4.5 % light / 7 % dark,
   under the header and under any dialog.
 - **Chips** (`.hero-chip`, `.section-chip`): outlined pills above titles.
@@ -156,6 +156,7 @@ browser, or a reduced-motion setting all leave the finished page.
 | Last word of a multi-word title, in the serif's italic cut and in blue | `.split-word:last-child:not(:first-child)` | CSS only |
 | Header giving up height after the first scroll | `.is-scrolled` | `useScrolled` |
 | The arrow riding in a white disc that turns on hover | `[data-variant="default"] > svg` | CSS only |
+| The same turn on a button with no disc | `.btn-arrow` | CSS only |
 | Dot grid dissolving downwards behind the hero | `.hero-section::after` | CSS only |
 | Availability badge floating on the portrait | `.hero-availability` | CSS only |
 | Blob morph and glow, typed cursor, live dot, dark-mode button glow | keyframes | CSS only |

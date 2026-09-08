@@ -140,7 +140,7 @@ export type AboutCopy = {
   method: { title: string; items: Array<{ title: string; body: string }> }
   platform: { title: string; body: string }
   portraitAlt: string
-  cta: { title: string; button: string }
+  cta: { title: string; body: string; button: string; alt: string }
 }
 
 export type ProjectCopy = {

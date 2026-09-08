@@ -381,3 +381,40 @@ under the pointer; what a card gains on hover is lift and shadow, not an edge.
 **Also tilting now:** the two `Passung` lists and the two contact info cards.
 The `Ablauf` steps stay still — the owner chose no hover reaction there in D16,
 and the drawn connector is measured from their corners.
+
+---
+
+### D19 — Two D18 layers taken back out, and one arrow gesture everywhere
+
+Living with D18 for a day, the owner asked for two of its seven options to go:
+the three-pool mesh behind the hero and the gradient hairline around the cards.
+Both are deleted, not switched off. The hero keeps its dot grid, the cards fall
+back to the neutral 1 px border they had before, and everything else D18 landed
+— the button gradient, the icon tiles, the blue card shadows, the grain, the
+glassier header, and the 3D tilt — stays exactly as it is.
+
+**Why:** the mesh competed with the portrait's own blue blob for the same
+corner of the screen, and the hairline read as a blue outline on every card at
+once, which is a lot of edge for a page whose accent is supposed to be rare.
+
+**One arrow, one gesture.** A trailing arrow now rests at `→` and turns to `↗`
+under the pointer, everywhere it appears on a button: the two work-section
+buttons and the contact form's submit joined the primary buttons that already
+did it. `.btn-arrow` carries the turn on buttons that have no white disc.
+An icon-only button linking to another site keeps a fixed `↗`, because there
+the diagonal is not decoration — it says the link opens a new tab.
+
+The turn goes the other way in Arabic. The icon is mirrored there, so the
+shared `-45deg` would have sent the arrow downwards instead of outwards.
+
+**Contact form.** The `Wie erreiche ich dich am liebsten?` question sat right on
+top of its three pills: a `legend` is not laid out as a flex item, so the
+fieldset's `gap` never reached it. The distance is stated on the legend itself
+now. The rest of the form was re-spaced at the same time — more air between
+blocks than inside a row, so the eye can tell a new question from a second
+field of the same one.
+
+**About.** Its closing call to action was a bare title and one button. It now
+carries the same supporting line and second, email button as the one on the
+home page — the page ends on someone who has just read a personal story, and
+mail is the lower-stakes of the two ways to answer.

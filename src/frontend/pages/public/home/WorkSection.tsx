@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
@@ -13,7 +13,7 @@ export function WorkSection({ copy, work, language }: { copy: HomeCopy['work']; 
     <Container className="flex flex-col gap-10">
       <div className="section-heading-row">
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
-        <Button asChild variant="outline" className="rounded-full px-5"><Link to="/$lang/work" params={{ lang: language }}>{copy.all}<ArrowUpRight className="rtl:-scale-x-100" /></Link></Button>
+        <Button asChild variant="outline" className="rounded-full px-5"><Link to="/$lang/work" params={{ lang: language }}>{copy.all}<ArrowRight className="btn-arrow rtl:-scale-x-100" /></Link></Button>
       </div>
       <ProjectCarousel entries={getProjectEntries(language).slice(0, 6)} work={work} language={language} />
     </Container>

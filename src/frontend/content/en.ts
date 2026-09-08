@@ -318,7 +318,12 @@ export const en: SiteContent = {
       body: 'You are looking at a system I built entirely myself: the public site in three languages and, behind it, an admin for enquiries, content, clients, and invoices. No site builder, no third-party CMS. That is the kind of work I offer.',
     },
     portraitAlt: 'Yaman Warda',
-    cta: { title: 'Let us talk about your project.', button: 'Request a call' },
+    cta: {
+      title: 'Let us talk about your project.',
+      body: 'Tell me what you are working on. You get an honest assessment back — including when the answer is that you need something else.',
+      button: 'Request a call',
+      alt: 'Write me an email',
+    },
   },
 
   work: {

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent, ReactNode } from 'react'
-import { Paperclip, X } from 'lucide-react'
+import { ArrowRight, Paperclip, X } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
@@ -104,8 +104,8 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="contact-form flex flex-col gap-6">
-      <div className="grid gap-6 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} noValidate className="contact-form flex flex-col gap-7">
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
         <Field label={copy.name} htmlFor="name" error={errors.name}>
           <Input id="name" name="name" autoComplete="name" required aria-invalid={Boolean(errors.name)} />
         </Field>
@@ -114,7 +114,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         </Field>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
         <Field label={copy.company} htmlFor="company" hint={copy.companyOptional}>
           <Input id="company" name="company" autoComplete="organization" />
         </Field>
@@ -125,7 +125,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
 
       <ChannelChoice label={copy.preferred} options={copy.preferredOptions} />
 
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-3">
         <Field label={copy.projectType} htmlFor="projectType">
           <Select id="projectType" name="projectType" options={copy.projectTypes} />
         </Field>
@@ -187,9 +187,10 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         type="submit"
         size="lg"
         disabled={status === 'sending'}
-        className="w-fit rounded-full bg-primary px-7 text-primary-foreground"
+        className="mt-1 w-fit rounded-full bg-primary px-7 text-primary-foreground"
       >
         {status === 'sending' ? copy.sending : copy.submit}
+        <ArrowRight className="rtl:-scale-x-100" />
       </Button>
     </form>
   )
@@ -239,8 +240,8 @@ function ChannelChoice({
   options: Array<{ value: string; label: string }>
 }) {
   return (
-    <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="text-sm font-medium leading-none">{label}</legend>
+    <fieldset className="contact-channel-group border-0 p-0">
+      <legend className="contact-channel-legend text-sm font-medium leading-none">{label}</legend>
       <div className="contact-channels flex flex-wrap gap-2">
         {options.map((option, index) => (
           <label key={option.value} className="contact-channel cursor-pointer rounded-full px-4 py-2 text-sm font-semibold">

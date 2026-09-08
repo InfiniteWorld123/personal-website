@@ -318,7 +318,12 @@ export const de: SiteContent = {
       body: 'Du siehst gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
     },
     portraitAlt: 'Yaman Warda',
-    cta: { title: 'Lass uns über dein Projekt sprechen.', button: 'Gespräch anfragen' },
+    cta: {
+      title: 'Lass uns über dein Projekt sprechen.',
+      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn sie lautet: Du brauchst etwas anderes.',
+      button: 'Gespräch anfragen',
+      alt: 'Schreib mir eine E-Mail',
+    },
   },
 
   work: {

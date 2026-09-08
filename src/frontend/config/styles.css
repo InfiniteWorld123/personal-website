@@ -1530,10 +1530,16 @@ html[lang="ar"] .work-card-kind {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--input) transparent;
-  padding: 0.5rem 0.25rem 1.25rem;
+  /* No scrollbar under the cards: the two arrows are the control, and the
+     bar drew a grey line across the section. The bottom padding is what the
+     card shadow and its hover lift need, not room for a bar. */
+  scrollbar-width: none;
+  padding: 0.5rem 0.25rem 0.75rem;
   margin-inline: -0.25rem;
+}
+
+.project-track::-webkit-scrollbar {
+  display: none;
 }
 
 .project-track > * {
@@ -1637,6 +1643,18 @@ html[lang="ar"] .work-card-kind {
    A radio group that reads as three pills. `:has()` keeps the state on the
    label, so the native radio stays the thing the keyboard and the screen
    reader operate. */
+/* A `legend` is not laid out as a flex item, so a gap on the fieldset never
+   reached the pills below it. The distance is stated on the legend itself. */
+.contact-channel-group {
+  display: block;
+}
+
+.contact-channel-legend {
+  display: block;
+  margin-bottom: 0.85rem;
+  padding: 0;
+}
+
 .contact-channel {
   border: 1px solid var(--border);
   background: var(--card);
@@ -2137,8 +2155,23 @@ html.motion .site-header {
   padding-inline-end: 0.5rem;
 }
 
-[data-slot="button"][data-variant="default"]:not(:disabled):not([data-size^="icon"]):hover > svg {
+/* The same gesture on buttons that carry no disc: the arrow rests at → and
+   turns to ↗ on hover. Icon-only links to another site keep a fixed ↗,
+   because there the diagonal means "opens in a new tab". */
+.btn-arrow {
+  transition: rotate 300ms var(--ease-out-soft);
+}
+
+[data-slot="button"][data-variant="default"]:not(:disabled):not([data-size^="icon"]):hover > svg,
+[data-slot="button"]:not(:disabled):hover .btn-arrow {
   rotate: -45deg;
+}
+
+/* The icon is mirrored in Arabic, so the turn has to go the other way for the
+   arrow to end up pointing outwards rather than down. */
+html[dir="rtl"] [data-slot="button"][data-variant="default"]:not(:disabled):not([data-size^="icon"]):hover > svg,
+html[dir="rtl"] [data-slot="button"]:not(:disabled):hover .btn-arrow {
+  rotate: 45deg;
 }
 
 /* ── Hero: a dot grid that dissolves downwards ───────────────── */
@@ -2357,69 +2390,12 @@ html.motion .route-progress {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
 }
 
-/* ── A soft mesh behind the hero ─────────────────────────────
-   Three blurred pools instead of one flat wash. It sits under the dot grid
-   and under the content, which both already own their layers. */
-.hero-section::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: min(720px, 130%);
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(8px);
-  background:
-    radial-gradient(46% 54% at 12% 4%, rgba(53, 92, 255, 0.26), transparent 68%),
-    radial-gradient(50% 46% at 82% 0%, rgba(122, 190, 255, 0.24), transparent 66%),
-    radial-gradient(40% 44% at 52% 34%, rgba(160, 130, 255, 0.18), transparent 70%);
-}
-
-.dark .hero-section::before {
-  background:
-    radial-gradient(46% 54% at 12% 4%, rgba(53, 92, 255, 0.34), transparent 68%),
-    radial-gradient(50% 46% at 82% 0%, rgba(80, 150, 255, 0.22), transparent 66%),
-    radial-gradient(40% 44% at 52% 34%, rgba(130, 100, 255, 0.2), transparent 70%);
-}
-
-/* ── A gradient hairline around the cards ────────────────────
-   It replaces the grey border rather than joining it, and it does not change
-   on hover: the owner asked for no border that appears under the pointer. */
-.surface-card,
-.work-card,
-.step,
-.dark .surface-card,
-.dark .work-card,
-.dark .step {
-  border-color: transparent;
-}
-
+/* Cards keep their own neutral hairline; the gradient edge that D18 drew here
+   was removed at the owner's request. The blue shadow and the tilt stay. */
 .surface-card,
 .work-card,
 .step {
   position: relative;
-}
-
-.surface-card::before,
-.work-card::before,
-.step::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    140deg,
-    color-mix(in srgb, var(--primary) 55%, transparent),
-    color-mix(in srgb, var(--primary) 34%, transparent) 42%,
-    transparent 78%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
 }
 
 /* ── Gradient tile behind the service icons ──────────────────── */
