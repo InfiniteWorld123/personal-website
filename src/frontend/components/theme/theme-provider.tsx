@@ -40,10 +40,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(defaultThemePreference)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
 
-  const apply = useCallback((next: ThemePreference) => {
+  const apply = useCallback((next: ThemePreference, animate = false) => {
     const resolved = resolve(next)
-    document.documentElement.classList.toggle('dark', resolved === 'dark')
-    document.documentElement.dataset.themePreference = next
+    const root = document.documentElement
+
+    const commit = () => {
+      root.classList.toggle('dark', resolved === 'dark')
+      root.dataset.themePreference = next
+    }
+
+    // Cross-fade the whole page between themes instead of snapping. The View
+    // Transitions API does it in one frame capture; browsers without it, and
+    // visitors who prefer reduced motion, switch instantly.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const canAnimate =
+      animate && !reduced && !document.hidden && typeof document.startViewTransition === 'function'
+
+    if (canAnimate) {
+      root.classList.add('theme-switching')
+      const transition = document.startViewTransition(commit)
+      const done = () => root.classList.remove('theme-switching')
+      // Every promise on the transition rejects when the browser skips it
+      // (hidden tab, a second switch mid-fade, unsupported embedding). The
+      // theme is applied either way, so none of those rejections matter.
+      const ignore = () => undefined
+      transition.ready.catch(ignore)
+      transition.updateCallbackDone.catch(ignore)
+      transition.finished.then(done, done)
+    } else {
+      commit()
+    }
+
     setResolvedTheme(resolved)
   }, [])
 
@@ -66,7 +93,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setPreference = useCallback(
     (next: ThemePreference) => {
       setPreferenceState(next)
-      apply(next)
+      apply(next, true)
 
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, next)

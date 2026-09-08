@@ -383,67 +383,117 @@ html[lang="ar"] .font-heading {
   .portrait-outer { width: 540px; }
 }
 
+/* The frame clips the bottom cleanly while the blob keeps moving inside it. */
+.portrait-blob-clip {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Blob sits behind the photo and keeps moving, but cannot leak outside the frame. */
+.portrait-blob-anim {
+  position: absolute;
+  top: 21%;
+  left: 54%;
+  width: 82%;
+  height: 65%;
+  translate: -50% 0;
+  background: linear-gradient(145deg, #2f54f5 0%, #5a8fff 55%, #82b6ff 100%);
+  border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%;
+  animation: blob-morph-spin 10s ease-in-out infinite;
+  z-index: 0;
+  box-shadow:
+    0 20px 60px rgba(53, 92, 255, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+@media (min-width: 640px) {
+  .portrait-blob-anim {
+    top: 20%;
+    left: 55%;
+    width: 84%;
+    height: 66%;
+  }
+}
+
 /* Soft blue light behind the blob. Flickers, not perfectly rhythmic. */
 .portrait-blob-glow {
   position: absolute;
-  top: 8%;
-  left: 50%;
-  width: 98%;
-  height: 84%;
+  top: 13%;
+  left: 54%;
+  width: 92%;
+  height: 76%;
   translate: -50% 0;
-  background: radial-gradient(ellipse at 50% 46%, rgba(53, 92, 255, 0.5) 0%, transparent 66%);
-  filter: blur(26px);
-  animation: blob-glow-pulse 2.6s ease-in-out infinite;
+  background: radial-gradient(ellipse at 50% 48%, rgba(53, 92, 255, 0.5) 0%, transparent 66%);
+  filter: blur(24px);
+  animation: blob-glow-pulse 2.4s ease-in-out infinite;
   z-index: 0;
   pointer-events: none;
 }
 
-/* The photograph itself is the blob: a solid-blue studio portrait clipped
-   by a border-radius that keeps morphing. No rotation, so the face stays
-   upright. */
-.portrait-blob-photo {
+@media (min-width: 640px) {
+  .portrait-blob-glow {
+    top: 12%;
+    left: 55%;
+    width: 96%;
+    height: 80%;
+  }
+}
+
+.portrait-photo-frame {
   position: absolute;
-  top: 11%;
-  left: 50%;
-  width: 82%;
-  height: 78%;
-  translate: -50% 0;
+  inset: 0;
+  z-index: 3;
   overflow: hidden;
-  background: #355cff;
-  border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%;
-  animation: blob-morph-photo 14s ease-in-out infinite;
-  box-shadow:
-    0 20px 60px rgba(53, 92, 255, 0.32),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-  z-index: 1;
+  pointer-events: none;
 }
 
-.portrait-blob-photo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 32%;
+/* Cutout in front of the blob. The straight cut at the chest meets the
+   frame's bottom edge, so the person appears to stand in the frame. */
+.portrait-cutout {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: 97%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 36px rgba(16, 23, 47, 0.38));
 }
 
-@keyframes blob-morph-photo {
-  0%   { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: scale(1); }
-  20%  { border-radius: 52% 48% 62% 38% / 66% 40% 60% 34%; transform: scale(1.015); }
-  40%  { border-radius: 44% 56% 54% 46% / 54% 62% 38% 46%; transform: scale(0.99); }
-  60%  { border-radius: 58% 42% 38% 62% / 44% 56% 44% 56%; transform: scale(1.02); }
-  80%  { border-radius: 66% 34% 50% 50% / 56% 48% 52% 44%; transform: scale(1.005); }
-  100% { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: scale(1); }
+/* Unstable organic spin + morph */
+@keyframes blob-morph-spin {
+  0%   { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: rotate(0deg)   scale(1)    translate(0px,  0px); }
+  8%   { border-radius: 68% 32% 42% 58% / 55% 48% 52% 45%; transform: rotate(22deg)  scale(1.04) translate(3px, -2px); }
+  19%  { border-radius: 44% 56% 64% 36% / 72% 36% 64% 28%; transform: rotate(-11deg) scale(0.97) translate(-4px, 1px); }
+  31%  { border-radius: 74% 26% 38% 62% / 52% 68% 32% 48%; transform: rotate(38deg)  scale(1.05) translate(2px, -3px); }
+  45%  { border-radius: 58% 42% 28% 72% / 36% 64% 36% 64%; transform: rotate(16deg)  scale(0.99) translate(-2px, 2px); }
+  54%  { border-radius: 36% 64% 72% 28% / 60% 44% 56% 40%; transform: rotate(-18deg) scale(1.02) translate(4px,  1px); }
+  67%  { border-radius: 66% 34% 52% 48% / 48% 62% 38% 52%; transform: rotate(44deg)  scale(1.03) translate(-3px,-1px); }
+  78%  { border-radius: 52% 48% 36% 64% / 44% 56% 44% 56%; transform: rotate(27deg)  scale(0.98) translate(2px,  2px); }
+  89%  { border-radius: 68% 32% 58% 42% / 56% 72% 28% 44%; transform: rotate(-5deg)  scale(1.01) translate(-2px,-2px); }
+  100% { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; transform: rotate(0deg)   scale(1)    translate(0px,  0px); }
 }
 
+/* Blue light flickers on and off — not perfectly rhythmic */
 @keyframes blob-glow-pulse {
-  0%   { opacity: 0.18; transform: scale(0.94); }
-  22%  { opacity: 0.85; transform: scale(1.05); }
-  38%  { opacity: 0.95; transform: scale(1.1); }
-  52%  { opacity: 0.22; transform: scale(0.95); }
-  65%  { opacity: 0.12; transform: scale(0.9); }
-  78%  { opacity: 0.8; transform: scale(1.06); }
-  90%  { opacity: 0.55; transform: scale(1.03); }
-  100% { opacity: 0.18; transform: scale(0.94); }
+  0%   { opacity: 0.12; transform: scale(0.92); }
+  22%  { opacity: 0.85; transform: scale(1.06); }
+  38%  { opacity: 0.95; transform: scale(1.12); }
+  52%  { opacity: 0.18; transform: scale(0.94); }
+  65%  { opacity: 0.08; transform: scale(0.90); }
+  78%  { opacity: 0.80; transform: scale(1.08); }
+  90%  { opacity: 0.55; transform: scale(1.04); }
+  100% { opacity: 0.12; transform: scale(0.92); }
+}
+
+.dark .portrait-blob-anim {
+  background: linear-gradient(145deg, #4a6fff 0%, #7aa2ff 55%, #a8c4ff 100%);
+  box-shadow:
+    0 24px 70px rgba(122, 162, 255, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
 .dark .portrait-outer {
@@ -707,6 +757,67 @@ html[lang="ar"] .font-heading {
   box-shadow: none;
 }
 
+/* Dark mode keeps the old site's glowing ring and slow pulse on primary buttons. */
+.dark [data-slot="button"] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--foreground) 8%, transparent),
+    0 10px 28px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="default"] {
+  animation: dark-button-glow 2.8s ease-in-out infinite;
+}
+
+.dark [data-slot="button"][data-variant="outline"] {
+  border-color: color-mix(in srgb, var(--foreground) 34%, transparent);
+  background: color-mix(in srgb, var(--card) 86%, var(--foreground) 4%);
+  color: color-mix(in srgb, var(--foreground) 88%, transparent);
+}
+
+.dark [data-slot="button"][data-variant="outline"]:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--primary) 52%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  color: var(--foreground);
+}
+
+.dark [data-slot="button"][data-variant="ghost"] {
+  color: color-mix(in srgb, var(--foreground) 78%, transparent);
+}
+
+.dark [data-slot="button"]:not(:disabled):hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+    0 14px 36px color-mix(in srgb, var(--primary) 24%, transparent),
+    0 0 24px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.dark [data-slot="button"]:disabled {
+  animation: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+@keyframes dark-button-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--foreground) 8%, transparent),
+      0 10px 28px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent),
+      0 14px 38px color-mix(in srgb, var(--primary) 22%, transparent),
+      0 0 22px color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+}
+
+/* Theme change: the View Transitions cross-fade, slightly slower than the
+   browser default so it reads as a dissolve rather than a blink. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-in-out-soft);
+}
+
 /* Mobile menu button: a solid blue pill */
 .btn-glow-menu {
   background-color: #355cff;
@@ -770,9 +881,11 @@ html[lang="ar"] .font-heading {
 
 .theme-toggle .theme-tab-active[aria-selected="true"],
 .theme-toggle .theme-tab-active[aria-selected="true"]:hover {
-  background: #355cff !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 18px var(--glow) !important;
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 8px 24px color-mix(in srgb, var(--primary) 28%, transparent) !important;
 }
 
 .dark .theme-toggle {
@@ -1551,9 +1664,10 @@ html[lang="ar"] .work-card-kind {
 
   .fade-up,
   .hero-cursor,
-  .portrait-blob-photo,
+  .portrait-blob-anim,
   .portrait-blob-glow,
-  .status-dot.is-live {
+  .status-dot.is-live,
+  [data-slot="button"] {
     animation: none !important;
   }
 

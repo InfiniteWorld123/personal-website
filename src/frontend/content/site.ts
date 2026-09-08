@@ -9,8 +9,9 @@ export const site = {
   country: 'DE',
   github: 'https://github.com/InfiniteWorld123',
   linkedin: 'https://linkedin.com/in/yaman-warda',
-  heroPortrait: '/images/yaman-hero-blue-v3.png',
-  ogImage: '/images/hero-portrait.png',
+  /** Transparent cutout of the studio portrait; shown in front of the blob. */
+  heroPortrait: '/images/yaman-cutout.png',
+  ogImage: '/images/yaman-hero-blue-v3.png',
   contactEndpoint: '/api/contact',
 } as const
 

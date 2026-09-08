@@ -30,7 +30,7 @@ const themeBootScript = `(() => {
   try {
     const root = document.documentElement;
     const stored = localStorage.getItem('${THEME_STORAGE_KEY}');
-    const preference = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'light';
+    const preference = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     root.classList.toggle('dark', preference === 'dark' || (preference === 'system' && systemDark));
     root.dataset.themePreference = preference;

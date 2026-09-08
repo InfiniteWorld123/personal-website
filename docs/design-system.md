@@ -40,8 +40,11 @@ labels onto blue buttons.
 | `--secondary` / `--muted` | `#edf2ff` | `#1b2540` / `#182038` |
 | `--border` | 10 % ink | 14 % paper |
 
-Primary buttons are `#355cff` with white text in **both** themes. The first
-visit defaults to light; a saved light/dark/system preference wins.
+Primary buttons are `#355cff` with white text in both themes; in dark mode
+they also carry the original site's thin ring and slow glow pulse. The first
+visit follows the system theme, as the original site did; a saved preference
+wins. Switching themes cross-fades the page through the View Transitions API
+(instant under reduced motion or where unsupported).
 
 ## Type
 
@@ -66,11 +69,14 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
 
 ## Signature elements
 
-- **Portrait blob** (`PortraitBlob`, `.portrait-*`): the studio portrait on
-  electric blue (`public/images/yaman-hero-blue-v3.png`) clipped by a
-  border-radius that morphs slowly, with a flickering blue glow behind it, on
-  a white rounded card. The blob never rotates, so the face stays upright.
-  Used on the home hero and `/about`. Stops under `prefers-reduced-motion`.
+- **Portrait blob** (`PortraitBlob`, `.portrait-*`): exactly the original
+  composition. A white rounded frame; inside it a gradient blue blob
+  (`#2f54f5 → #5a8fff → #82b6ff`, lighter in dark mode) that morphs and slowly
+  turns, a flickering blue glow behind it, and the cutout portrait standing in
+  front, cut at the chest by the frame's bottom edge. The cutout
+  (`public/images/yaman-cutout.png`) is keyed from the grey-studio retouch
+  `yaman-hero-retouched-v2.png`; the blue version stays as the OG image. Used
+  on the home hero and `/about`. Stops under `prefers-reduced-motion`.
 - **Typed display line** (`TypingText` in the home hero): `WEB-` / `SHOP-` /
   `SOFTWARE-` + `ENTWICKLER` in the `.hero-accent` gradient, cursor blinking.
   Reduced motion shows the first word, static. Arabic stacks the static word
