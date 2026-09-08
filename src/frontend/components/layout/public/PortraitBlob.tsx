@@ -13,7 +13,7 @@ import { cn } from '#/frontend/lib/utils'
  * tolerates far less perspective than a rectangle before it looks wrong.
  */
 export function PortraitBlob({ alt, className }: { alt: string; className?: string }) {
-  const tilt = useTilt<HTMLDivElement>({ max: 6, spot: 0.34 })
+  const tilt = useTilt<HTMLDivElement>({ max: 9, spot: 0.34 })
 
   return (
     <div className={cn('portrait-outer', className)} data-tilt ref={tilt}>

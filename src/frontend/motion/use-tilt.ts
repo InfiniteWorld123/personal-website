@@ -9,6 +9,13 @@ type TiltOptions = {
 }
 
 /**
+ * Fourteen degrees against a 620px perspective (`styles.css`). The first
+ * version used nine against 900px and the owner could barely see it: with the
+ * vanishing point that far away, a wide card rotates almost in its own plane.
+ */
+const DEFAULT_MAX = 14
+
+/**
  * Tilts an element towards the pointer and moves a blue light across it.
  *
  * Everything is written as custom properties; `styles.css` decides what to do
@@ -16,7 +23,7 @@ type TiltOptions = {
  * Touch and coarse pointers are excluded: there is no hover there, and a
  * tilt that never resets would leave the card crooked.
  */
-export function useTilt<T extends HTMLElement = HTMLElement>({ max = 9, spot = 0.16 }: TiltOptions = {}) {
+export function useTilt<T extends HTMLElement = HTMLElement>({ max = DEFAULT_MAX, spot = 0.16 }: TiltOptions = {}) {
   const ref = useRef<T>(null)
 
   useEffect(() => {
@@ -31,6 +38,7 @@ export function useTilt<T extends HTMLElement = HTMLElement>({ max = 9, spot = 0
       element.style.setProperty('--tilt-x', '0deg')
       element.style.setProperty('--tilt-y', '0deg')
       element.style.setProperty('--spot-a', '0')
+      element.style.removeProperty('--tilt-scale')
     }
 
     const onMove = (event: PointerEvent) => {

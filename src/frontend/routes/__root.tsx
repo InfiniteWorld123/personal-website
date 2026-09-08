@@ -46,7 +46,11 @@ export const Route = createRootRoute({
       { name: 'theme-color', content: '#f5f6f8', media: '(prefers-color-scheme: light)' },
       { name: 'theme-color', content: '#0c111c', media: '(prefers-color-scheme: dark)' },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'manifest', href: '/manifest.json' },
+    ],
     scripts: [{ type: 'application/ld+json', children: JSON.stringify(personStructuredData) }],
   }),
   shellComponent: RootDocument,

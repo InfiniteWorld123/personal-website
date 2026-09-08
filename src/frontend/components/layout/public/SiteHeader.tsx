@@ -17,6 +17,7 @@ import { site } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { useScrolled } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
+import { BrandMark } from './BrandMark'
 import { Container } from './Container'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ThemeToggle } from './ThemeToggle'
@@ -46,7 +47,7 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
           params={{ lang: language }}
           className="brand-logo inline-flex min-w-0 flex-1 items-center gap-2.5 text-foreground lg:flex-none"
         >
-          <span className="brand-mark text-sm font-black">YW</span>
+          <BrandMark size={30} />
           <span className="hidden truncate text-[0.8rem] font-bold uppercase tracking-widest sm:inline">
             {site.name}
           </span>

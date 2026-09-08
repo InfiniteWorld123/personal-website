@@ -4,12 +4,14 @@ import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { getContent, site } from '#/frontend/content'
 import { ContactForm } from '#/frontend/features/contact/ContactForm'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { SplitWords, useReveal } from '#/frontend/motion'
+import { SplitWords, useReveal, useTilt } from '#/frontend/motion'
 
 export function ContactPage() {
   const { language } = useLanguage()
   const { contact } = getContent(language)
   const ref = useReveal<HTMLElement>()
+  const mailTilt = useTilt<HTMLAnchorElement>()
+  const placeTilt = useTilt<HTMLDivElement>()
 
   return (
     <section ref={ref} data-reveal-scope="" className="contact-page">
@@ -29,6 +31,8 @@ export function ContactPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <a
               href={`mailto:${site.email}`}
+              data-tilt
+              ref={mailTilt}
               className="contact-info-card flex items-center gap-4 rounded-[1.4rem] px-5 py-4"
             >
               <span className="brand-mark text-primary">
@@ -43,7 +47,7 @@ export function ContactPage() {
                 </span>
               </span>
             </a>
-            <div className="contact-info-card flex items-center gap-4 rounded-[1.4rem] px-5 py-4">
+            <div data-tilt ref={placeTilt} className="contact-info-card flex items-center gap-4 rounded-[1.4rem] px-5 py-4">
               <span className="brand-mark text-primary">
                 <MapPin className="size-4" />
               </span>

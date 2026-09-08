@@ -289,3 +289,95 @@ which are still open and which they have to supply.
 **Open:** `CONTACT_TO_EMAIL` was missing from the local `.env`, so every
 submission answered "Contact email is not configured." It is set locally now
 and must be set wherever the site is deployed.
+
+---
+
+### D17 — The brand mark: a Y whose stem carries the caret
+
+The header and footer had no logo, only a placeholder: the letters `YW` set in
+black inside a soft blue disc. The owner asked for a real mark on 8 Sep 2026
+and answered the brief himself: an abstract mark plus the name, one logo for
+all three languages, personality and meaning delegated.
+
+Eight candidates were drawn and shown in a Logo Lab — each on white, blue and
+dark, inside a mock of the real header, and at 16–40 px. He shortlisted two,
+both from the same family, and a second round narrowed them to one.
+
+**What ships:** a Y drawn in three strokes on a 48 grid at weight 5, where the
+lower half of the stem is `--primary`. It reads as the initial of the name and
+as a caret resting at the end of a line.
+
+**Why not the runner-up:** the rejected variant put the caret beside the Y as a
+separate vertical bar. Below roughly 24 px the gap between the two closes and
+the mark reads as two letters, `YI`; the bar is also the first thing lost in a
+single-colour print or an engraving. The shipped mark is one connected letter,
+so the accent is a colour inside the glyph rather than a second object, and the
+mark survives with the colour removed.
+
+**Weight 5, not 4.5:** the owner chose to show the mark alone on small screens,
+with no wordmark beside it to carry the weight.
+
+**The wordmark stays** on `sm` and wider, which was Claude's recommendation and
+the owner's decision: the site is a personal brand, so a visitor should not
+have to leave the header to learn the name. Below `sm` the mark stands alone.
+
+**Motion:** the arms draw, the stem drops in, the caret blinks twice and
+settles — once per full page load, since the header survives client-side
+navigation. Hover and keyboard focus restart the blink. Every moving part is
+gated by `html.motion` and neutralised under `prefers-reduced-motion`, and the
+resting state is the finished letter, so a visitor who declines motion never
+sees a half-drawn stroke. Consistent with D16: no animation library.
+
+**Icons:** `public/favicon.svg` uses a tighter viewBox so the letter fills the
+tile, and switches its ink colour on `prefers-color-scheme`.
+`public/app-icon.svg` is the maskable version — full-bleed blue, mark inside
+the safe zone. Both are linked from the root route, along with the manifest,
+which had shipped with an empty `icons` array.
+
+**Still owed:** `apple-touch-icon.png`. iOS does not accept SVG there, and this
+machine has no rasteriser (no sharp, no rsvg, no ImageMagick), so it needs a
+one-off export from `app-icon.svg` at 180×180.
+
+### D18 — Seven visual options from the Design Lab; the tilt actually tilts
+
+The owner asked what could be done with gradients, and asked to try the ideas
+rather than read about them. Eleven visual options went into a second lab, one
+switch each, the same way the motion set was decided in D16. He took seven:
+
+Gradient fill on the blue buttons; a three-pool mesh behind the hero instead of
+one flat wash; a gradient hairline around cards in place of the grey border; a
+gradient tile behind the service icons; card shadows made of the brand blue
+rather than neutral grey; a film-grain layer at 4.5% (7% in dark); and a
+glassier header — more transparent, with a saturation boost so the blue passing
+underneath does not go grey.
+
+**Not taken, and deliberately absent:** the whole display line in a gradient (it
+would cancel the contrast the one typed accent word carries), hairline grid
+columns, a growing line under the nav links, and a ghost number behind each
+`Ablauf` step.
+
+**The tilt bug this turned up.** The owner reported that only the portrait leans
+towards the pointer; every other card showed the blue light and nothing else. He
+was right, and it was a specificity collision. Cards carry both `data-reveal`
+and `data-tilt`, and `html.motion .is-in [data-reveal] { transform: none }`
+(0,3,1) outranks `html.motion [data-tilt]` (0,2,1). Once a section had arrived,
+`none` stuck and the rotation never applied. The portrait was the only tilt
+target without `data-reveal`, which is exactly why it was the only one working.
+
+The rotation is now stated a second time at the reveal's own weight. The
+stagger moves onto the fade alone: kept on the transform, a card would answer
+the pointer only after its own index had elapsed.
+
+The tilt was also too shy to see. Nine degrees against a 900px perspective
+barely rotates a wide card; it is fourteen degrees against 620px now, with a
+1.5% scale while the pointer is on it. The portrait went from six degrees to
+nine, still under the cards.
+
+**Removed at the owner's request:** the blue 1px ring that appeared around a
+card on hover — on `.surface-card`, `.work-card`, `.contact-info-card`, and on
+the lit tilt state. The gradient hairline replaces it, and it does not change
+under the pointer; what a card gains on hover is lift and shadow, not an edge.
+
+**Also tilting now:** the two `Passung` lists and the two contact info cards.
+The `Ablauf` steps stay still — the owner chose no hover reaction there in D16,
+and the drawn connector is measured from their corners.

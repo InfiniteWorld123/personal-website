@@ -3,7 +3,19 @@
   "name": "Yaman Warda · Websites, Shopify-Shops und individuelle Software",
   "description": "Websites, Shopify Onlineshops und individuelle Software für kleine Unternehmen. Erfurt, Deutschland.",
   "lang": "de",
-  "icons": [],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/app-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

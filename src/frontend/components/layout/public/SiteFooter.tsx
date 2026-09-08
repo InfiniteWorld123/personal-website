@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { ShellCopy } from '#/frontend/content/types'
 import { site } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { BrandMark } from './BrandMark'
 import { Container } from './Container'
 
 export function SiteFooter({ copy }: { copy: ShellCopy }) {
@@ -12,7 +13,7 @@ export function SiteFooter({ copy }: { copy: ShellCopy }) {
     <footer className="border-border border-t">
       <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
         <div className="flex flex-col gap-3">
-          <p className="inline-flex items-center gap-2.5 text-[0.8rem] font-bold uppercase tracking-widest text-foreground"><span className="brand-mark text-sm font-black">YW</span>{site.name}</p>
+          <p className="inline-flex items-center gap-2.5 text-[0.8rem] font-bold uppercase tracking-widest text-foreground"><BrandMark size={26} />{site.name}</p>
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">{copy.footer.tagline}</p>
           <p className="text-muted-foreground text-sm">{copy.footer.location}</p>
         </div>

@@ -2,6 +2,7 @@ import { Check, Minus } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
 import type { HomeCopy } from '#/frontend/content/types'
+import { useTilt } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
 
 export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
@@ -28,9 +29,15 @@ export function FitSection({ copy }: { copy: HomeCopy['fit'] }) {
 
 function FitList({ title, items, marker }: { title: string; items: string[]; marker: 'check' | 'minus' }) {
   const Icon = marker === 'check' ? Check : Minus
+  const tilt = useTilt<HTMLDivElement>()
 
   return (
-    <div data-reveal className="surface-card flex flex-col gap-4 rounded-[1.75rem] px-7 py-7">
+    <div
+      data-reveal
+      data-tilt
+      ref={tilt}
+      className="surface-card surface-card-hover flex flex-col gap-4 rounded-[1.75rem] px-7 py-7"
+    >
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
