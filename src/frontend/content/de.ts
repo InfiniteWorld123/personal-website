@@ -425,6 +425,14 @@ export const de: SiteContent = {
       email: 'E-Mail',
       company: 'Unternehmen',
       companyOptional: 'optional',
+      phone: 'Telefon',
+      phoneOptional: 'optional',
+      preferred: 'Wie erreiche ich dich am liebsten?',
+      preferredOptions: [
+        { value: 'email', label: 'E-Mail' },
+        { value: 'call', label: 'Anruf' },
+        { value: 'whatsapp', label: 'WhatsApp' },
+      ],
       projectType: 'Worum geht es?',
       projectTypes: [
         { value: 'website', label: 'Website' },
@@ -448,6 +456,11 @@ export const de: SiteContent = {
       ],
       message: 'Dein Vorhaben',
       messageHint: 'Was soll entstehen? Was hast du schon: Domain, Texte, einen alten Auftritt?',
+      attachment: 'Anhang',
+      attachmentHint: 'PDF, PNG oder JPG, bis 5 MB',
+      attachmentChoose: 'Datei wählen',
+      attachmentEmpty: 'Keine Datei gewählt',
+      attachmentRemove: 'Entfernen',
       submit: 'Anfrage senden',
       sending: 'Wird gesendet …',
       sent: {
@@ -459,6 +472,7 @@ export const de: SiteContent = {
         name: 'Bitte gib deinen Namen an.',
         email: 'Bitte gib eine gültige E-Mail-Adresse an.',
         message: 'Bitte beschreib kurz dein Vorhaben.',
+        attachment: 'Bitte wähl eine PDF-, PNG- oder JPG-Datei bis 5 MB.',
       },
     },
     aside: {

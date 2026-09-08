@@ -261,3 +261,31 @@ first paint only for visitors who accept motion, and removes itself if the
 motion module never reports in. Hover and tilt need a fine pointer. The
 `Ablauf` tilt and its line survive reduced motion because they are layout, not
 motion.
+
+### D17 — Three optional fields on the contact form: phone, channel, one file
+
+The owner asked for a contact form on 8 Sep 2026, not knowing the qualifying
+form from D13 was already on `/kontakt`. Shown the existing form, they kept it
+where it is and added three fields: a phone number, the channel they should be
+reached on, and one attachment.
+
+All three are optional. The form's job is to start a conversation, and a
+visitor who only wants to write two sentences must still be able to. The
+channel is a radio group rather than a select, because the answer changes what
+the visitor expects to happen next and a closed list makes that look like
+paperwork.
+
+The attachment is a single file, at most 5 MB, PDF or PNG/JPG/WEBP, forwarded
+as a Resend attachment on the notification mail. Both limits are enforced twice:
+in the browser so the visitor learns immediately, and again in the handler,
+because a form post is whatever the sender chooses to send. The filename is
+stripped of its directory parts before it reaches a mail client. When browsers
+report no MIME type — Safari does this for PDFs — the extension decides.
+
+**Declined for now:** a Datenschutz consent checkbox. It was offered and the
+owner did not take it. It belongs with the Impressum and Datenschutz texts,
+which are still open and which they have to supply.
+
+**Open:** `CONTACT_TO_EMAIL` was missing from the local `.env`, so every
+submission answered "Contact email is not configured." It is set locally now
+and must be set wherever the site is deployed.

@@ -425,6 +425,14 @@ export const ar: SiteContent = {
       email: 'البريد الإلكتروني',
       company: 'الشركة',
       companyOptional: 'اختياري',
+      phone: 'الهاتف',
+      phoneOptional: 'اختياري',
+      preferred: 'كيف تفضّل أن أتواصل معك؟',
+      preferredOptions: [
+        { value: 'email', label: 'البريد الإلكتروني' },
+        { value: 'call', label: 'مكالمة' },
+        { value: 'whatsapp', label: 'واتساب' },
+      ],
       projectType: 'ما موضوع المشروع؟',
       projectTypes: [
         { value: 'website', label: 'موقع' },
@@ -448,6 +456,11 @@ export const ar: SiteContent = {
       ],
       message: 'مشروعك',
       messageHint: 'ما الذي يجب بناؤه؟ ما الذي تملكه الآن: نطاق، نصوص، موقع قديم؟',
+      attachment: 'مرفق',
+      attachmentHint: 'PDF أو PNG أو JPG، حتى 5 ميغابايت',
+      attachmentChoose: 'اختر ملفاً',
+      attachmentEmpty: 'لم تختر ملفاً',
+      attachmentRemove: 'إزالة',
       submit: 'إرسال الطلب',
       sending: 'جارٍ الإرسال …',
       sent: {
@@ -459,6 +472,7 @@ export const ar: SiteContent = {
         name: 'الرجاء إدخال اسمك.',
         email: 'الرجاء إدخال بريد إلكتروني صالح.',
         message: 'الرجاء وصف مشروعك باختصار.',
+        attachment: 'الرجاء اختيار ملف PDF أو PNG أو JPG بحجم لا يتجاوز 5 ميغابايت.',
       },
     },
     aside: {

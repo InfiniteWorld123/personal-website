@@ -188,6 +188,10 @@ export type ContactCopy = {
     email: string
     company: string
     companyOptional: string
+    phone: string
+    phoneOptional: string
+    preferred: string
+    preferredOptions: Array<{ value: string; label: string }>
     projectType: string
     projectTypes: Array<{ value: string; label: string }>
     budget: string
@@ -196,11 +200,16 @@ export type ContactCopy = {
     timelines: Array<{ value: string; label: string }>
     message: string
     messageHint: string
+    attachment: string
+    attachmentHint: string
+    attachmentChoose: string
+    attachmentEmpty: string
+    attachmentRemove: string
     submit: string
     sending: string
     sent: { title: string; body: string }
     error: string
-    errors: { name: string; email: string; message: string }
+    errors: { name: string; email: string; message: string; attachment: string }
   }
   aside: {
     title: string

@@ -1583,6 +1583,96 @@ html[lang="ar"] .work-card-kind {
   flex-basis: 100%;
 }
 
+/* ── Preferred channel ─────────────────────────────────────────
+   A radio group that reads as three pills. `:has()` keeps the state on the
+   label, so the native radio stays the thing the keyboard and the screen
+   reader operate. */
+.contact-channel {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: color-mix(in srgb, var(--foreground) 62%, transparent);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.contact-channel:hover {
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  color: var(--primary);
+}
+
+.contact-channel:has(input:checked) {
+  background: var(--primary);
+  border-color: transparent;
+  color: var(--primary-foreground);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.contact-channel:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ── Attachment row ────────────────────────────────────────────
+   Dashed, because the field is empty by default and a dashed edge says
+   "drop something here" without a drop zone's promise. */
+.contact-file {
+  border: 1px dashed color-mix(in srgb, var(--border) 90%, var(--primary));
+  background: color-mix(in srgb, var(--secondary) 32%, transparent);
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.contact-file:has(input:focus-visible) {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.contact-file:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.contact-file-button {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  transition: border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.contact-file-button:hover {
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.contact-file-remove {
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: color-mix(in srgb, var(--foreground) 62%, transparent);
+  cursor: pointer;
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.contact-file-remove:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  color: var(--destructive);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-channel,
+  .contact-file,
+  .contact-file-button,
+  .contact-file-remove {
+    transition: none;
+  }
+
+  .contact-file-button:hover {
+    transform: none;
+  }
+}
+
 /* ── Entrance ──────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(22px); }

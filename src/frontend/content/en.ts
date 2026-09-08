@@ -425,6 +425,14 @@ export const en: SiteContent = {
       email: 'Email',
       company: 'Company',
       companyOptional: 'optional',
+      phone: 'Phone',
+      phoneOptional: 'optional',
+      preferred: 'How should I reach you?',
+      preferredOptions: [
+        { value: 'email', label: 'Email' },
+        { value: 'call', label: 'Call' },
+        { value: 'whatsapp', label: 'WhatsApp' },
+      ],
       projectType: 'What is it about?',
       projectTypes: [
         { value: 'website', label: 'Website' },
@@ -448,6 +456,11 @@ export const en: SiteContent = {
       ],
       message: 'Your project',
       messageHint: 'What should be built? What do you already have: a domain, texts, an old site?',
+      attachment: 'Attachment',
+      attachmentHint: 'PDF, PNG or JPG, up to 5 MB',
+      attachmentChoose: 'Choose file',
+      attachmentEmpty: 'No file chosen',
+      attachmentRemove: 'Remove',
       submit: 'Send request',
       sending: 'Sending …',
       sent: {
@@ -459,6 +472,7 @@ export const en: SiteContent = {
         name: 'Please enter your name.',
         email: 'Please enter a valid email address.',
         message: 'Please describe your project briefly.',
+        attachment: 'Please choose a PDF, PNG or JPG file up to 5 MB.',
       },
     },
     aside: {
