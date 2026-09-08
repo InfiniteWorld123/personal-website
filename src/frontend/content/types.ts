@@ -6,7 +6,7 @@
 
 export type ServiceSlug = 'websites' | 'shopify' | 'software'
 
-export type ProjectSlug = 'tech-store' | 'inknest' | 'prime-estate'
+export type ProjectSlug = keyof typeof import('./site').projects
 
 export type Link = { label: string; to: string }
 
@@ -32,20 +32,37 @@ export type HomeCopy = {
   hero: {
     eyebrow: string
     greeting: string
+    /** Small uppercase line above the display words. */
     prefix: string
     /** Words that type in and out before `staticLine`. */
     typed: string[]
     staticLine: string
+    /** One bold sentence under the display line. */
     headline: string
     sub: string
     cta: string
     secondary: string
   }
+  story: {
+    eyebrow: string
+    title: string
+    sub: string
+    steps: Array<{ label: string; title: string; body: string }>
+    demo: {
+      caption: string
+      project: string
+      notes: string[]
+      navigation: string[]
+      request: string
+      appointment: string
+      confirmed: string
+      action: string
+    }
+  }
   services: {
     eyebrow: string
     title: string
     sub: string
-    from: string
     more: string
   }
   work: {
@@ -143,6 +160,11 @@ export type WorkCopy = {
   visit: string
   source: string
   detailLabel: string
+  previous: string
+  next: string
+  loadMore: string
+  empty: string
+  shown: string
   back: string
   detail: {
     problem: string

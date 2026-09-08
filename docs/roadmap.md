@@ -35,15 +35,18 @@ Landing (offer-first, per `positioning.md`), `/about`, `/services` from
 `docs/services/`, `/work` + `/work/$slug` case studies, `/contact`, SEO,
 sitemap, OG images. Ends with the cutover: merge `platform` → `main`.
 
-Done (7 Sep 2026): the original visual identity kept and formalised (see
-`design-system.md`; a quieter redesign was tried and rejected), language in the URL (`/de`, `/en`, `/ar`) with
-server-rendered `lang`/`dir`, public shell, all six pages in three languages,
-per-page SEO head with hreflang, `sitemap.xml`, qualifying contact form on
-the legacy email endpoint.
+Done (8 Sep 2026): the owner's original identity kept and formalised (see
+`design-system.md`; two quieter redesigns were tried and rejected), language in
+the URL (`/de`, `/en`, `/ar`) with server-rendered `lang`/`dir`, public shell,
+all six pages in three languages in `du`-form German, per-page SEO head with
+hreflang, `sitemap.xml`, qualifying contact form on the legacy email endpoint,
+building story, project carousel and load-more, home-only desktop Lenis.
+Fixed: the "node to be removed is not a child" crash on every client-side
+navigation away from the home page (GSAP pin reverted too late).
 
-Open before cutover: real project screenshots (frames are placeholders),
-an OG image, Impressum and Datenschutz pages (legally required in Germany;
-text must come from the owner), and the `platform` → `main` merge.
+Open before cutover: real project screenshots, an OG image, Impressum and
+Datenschutz pages (legally required in Germany; text must come from the
+owner), and the `platform` → `main` merge.
 
 ## [ ] B4 — Leads and inbox
 *Model: Sonnet 5 · medium*

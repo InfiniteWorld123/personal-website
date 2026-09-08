@@ -30,7 +30,7 @@ const themeBootScript = `(() => {
   try {
     const root = document.documentElement;
     const stored = localStorage.getItem('${THEME_STORAGE_KEY}');
-    const preference = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+    const preference = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'light';
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     root.classList.toggle('dark', preference === 'dark' || (preference === 'system' && systemDark));
     root.dataset.themePreference = preference;
@@ -66,7 +66,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="min-h-screen">
         <ThemeProvider>
           <LanguageProvider>
-            <MotionProvider>{children}</MotionProvider>
+            <MotionProvider smoothScroll={/^\/(de|en|ar)\/?$/.test(pathname)} key={language}>{children}</MotionProvider>
           </LanguageProvider>
         </ThemeProvider>
         {import.meta.env.DEV ? (

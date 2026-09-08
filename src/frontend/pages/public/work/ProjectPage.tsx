@@ -7,7 +7,8 @@ import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent, projects } from '#/frontend/content'
 import type { ProjectSlug } from '#/frontend/content/types'
-import { ProjectFrame, ProjectStatusPill } from '#/frontend/features/work/ProjectCard'
+import { ProjectStatusPill } from '#/frontend/features/work/ProjectCard'
+import type { ProjectFacts } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { useReveal } from '#/frontend/motion'
 
@@ -15,7 +16,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
   const copy = work.items[slug]
-  const facts = projects[slug]
+  const facts: ProjectFacts = projects[slug]
   const headerRef = useRef<HTMLElement>(null)
   const bodyRef = useRef<HTMLElement>(null)
   useReveal(headerRef)
@@ -48,7 +49,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
             </p>
             <div data-reveal className="flex flex-wrap gap-3 pt-2">
               {facts.website ? (
-                <Button asChild className="btn-glow-primary rounded-full bg-primary px-5 text-primary-foreground shadow-[0_10px_28px_rgba(53,92,255,0.26)] hover:bg-primary/90">
+                <Button asChild className="rounded-full bg-primary px-5 text-primary-foreground">
                   <a href={facts.website} target="_blank" rel="noreferrer">
                     {work.visit}
                     <ArrowUpRight className="size-4 rtl:-scale-x-100" />
@@ -56,7 +57,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
                 </Button>
               ) : null}
               {facts.source ? (
-                <Button asChild variant="outline" className="btn-glow-outline rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
+                <Button asChild variant="outline" className="rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
                   <a href={facts.source} target="_blank" rel="noreferrer">
                     <Github className="size-4" />
                     {work.source}
@@ -66,9 +67,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
             </div>
           </div>
 
-          <div data-reveal>
-            <ProjectFrame name={copy.name} />
-          </div>
+          {facts.image ? <img className="project-page-image" src={facts.image.src} width={facts.image.width} height={facts.image.height} alt={facts.image.alt[language]} /> : null}
         </Container>
       </section>
 

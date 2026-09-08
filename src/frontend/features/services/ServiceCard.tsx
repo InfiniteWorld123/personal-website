@@ -1,27 +1,23 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, AppWindow, Globe2, ShoppingBag } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '#/frontend/components/ui/card'
 import type { ServiceCopy, ServiceSlug } from '#/frontend/content/types'
-import { servicePrices } from '#/frontend/content/site'
 import type { Language } from '#/frontend/i18n/language'
-import { formatEuro } from '#/frontend/lib/format'
 
 /**
- * One service line as it appears on the home page: name, entry price, one
- * sentence, and a link into the detail on `/services`.
+ * One service line as it appears on the home page. Pricing intentionally stays
+ * on `/services`, after the visitor has understood the offer and seen proof.
  */
 export function ServiceCard({
   slug,
   copy,
   language,
-  fromLabel,
   moreLabel,
 }: {
   slug: ServiceSlug
   copy: Pick<ServiceCopy, 'name' | 'short'>
   language: Language
-  fromLabel: string
   moreLabel: string
 }) {
   return (
@@ -30,8 +26,8 @@ export function ServiceCard({
       className="surface-card surface-card-hover flex min-w-0 flex-col rounded-[1.75rem] border-border/50 bg-card py-0"
     >
       <CardHeader className="gap-2 px-7 pt-7 pb-3">
-        <CardDescription className="tabular text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-primary/70 rtl:tracking-normal">
-          {fromLabel} {formatEuro(servicePrices[slug], language)}
+        <CardDescription className="service-symbol" aria-hidden="true">
+          {slug === 'software' ? <AppWindow /> : slug === 'websites' ? <Globe2 /> : <ShoppingBag />}
         </CardDescription>
         <CardTitle className="mt-2 text-[1.45rem] leading-snug text-foreground">{copy.name}</CardTitle>
       </CardHeader>
@@ -42,7 +38,7 @@ export function ServiceCard({
         <Button
           asChild
           variant="outline"
-          className="btn-glow-outline rounded-full border-border/50 bg-card px-4 text-foreground/68 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className="rounded-full border-border/50 bg-card px-4 text-foreground/68 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
         >
           <Link to="/$lang/services" params={{ lang: language }} hash={slug}>
             {moreLabel}

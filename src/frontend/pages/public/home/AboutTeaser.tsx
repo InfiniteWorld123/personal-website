@@ -29,7 +29,7 @@ export function AboutTeaser({ copy, language }: { copy: HomeCopy['about']; langu
             asChild
             variant="outline"
             data-reveal
-            className="btn-glow-outline w-fit rounded-full border-border/60 bg-card px-5 text-foreground/70 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="w-fit rounded-full border-border/60 bg-card px-5 text-foreground/70 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
           >
             <Link to="/$lang/about" params={{ lang: language }}>
               {copy.link}

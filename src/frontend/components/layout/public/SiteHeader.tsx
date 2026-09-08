@@ -70,7 +70,7 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
           <ThemeToggle labels={copy.theme} />
           <Button
             asChild
-            className="btn-glow-primary hidden h-10 rounded-full bg-primary px-5 text-primary-foreground shadow-[0_10px_28px_rgba(53,92,255,0.26)] hover:bg-primary/90 md:inline-flex"
+            className="hidden h-10 rounded-full bg-primary px-5 text-primary-foreground md:inline-flex"
           >
             <Link to="/$lang/contact" params={{ lang: language }}>
               {copy.cta}
@@ -110,7 +110,7 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
             <SheetClose asChild>
               <Button
                 asChild
-                className="btn-glow-primary w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                className="w-full rounded-full"
               >
                 <Link to="/$lang/contact" params={{ lang: language }}>
                   {copy.cta}

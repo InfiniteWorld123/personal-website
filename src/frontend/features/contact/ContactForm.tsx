@@ -63,7 +63,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} noValidate className="contact-form flex flex-col gap-6">
       <div className="grid gap-6 sm:grid-cols-2">
         <Field label={copy.name} htmlFor="name" error={errors.name}>
           <Input id="name" name="name" autoComplete="name" required aria-invalid={Boolean(errors.name)} />
@@ -89,8 +89,8 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         </Field>
       </div>
 
-      <Field label={copy.message} htmlFor="message" hint={copy.messageHint} error={errors.message}>
-        <Textarea id="message" name="message" rows={6} required aria-invalid={Boolean(errors.message)} />
+      <Field label={copy.message} htmlFor="message" hint={copy.messageHint} error={errors.message} className="message-field">
+        <Textarea id="message" name="message" className="contact-message" rows={8} required aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? 'message-error' : 'message-hint'} />
       </Field>
 
       {status === 'error' ? (
@@ -103,7 +103,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         type="submit"
         size="lg"
         disabled={status === 'sending'}
-        className="btn-glow-primary w-fit rounded-full bg-primary px-7 text-primary-foreground shadow-[0_12px_32px_rgba(53,92,255,0.28)] hover:bg-primary/90"
+        className="w-fit rounded-full bg-primary px-7 text-primary-foreground"
       >
         {status === 'sending' ? copy.sending : copy.submit}
       </Button>
@@ -117,18 +117,20 @@ function Field({
   hint,
   error,
   children,
+  className,
 }: {
   label: string
   htmlFor: string
   hint?: string
   error?: string
   children: ReactNode
+  className?: string
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={htmlFor} className="flex items-baseline gap-2">
+    <div className={cn('flex flex-col gap-2', className)}>
+      <Label htmlFor={htmlFor} className="flex flex-wrap items-baseline gap-2">
         {label}
-        {hint && !error ? <span className="text-muted-foreground text-xs font-normal">{hint}</span> : null}
+        {hint && !error ? <span id={`${htmlFor}-hint`} className="text-muted-foreground text-xs font-normal">{hint}</span> : null}
       </Label>
       {children}
       {error ? (

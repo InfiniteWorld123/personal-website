@@ -31,6 +31,24 @@ export function MotionProvider({
 }) {
   const [reducedMotion, setReducedMotion] = useState(true)
   const [lenis, setLenis] = useState<Lenis | null>(null)
+  const [desktopPointer, setDesktopPointer] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px) and (pointer: fine)')
+    const sync = () => setDesktopPointer(media.matches)
+    sync()
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    registerMotionPlugins()
+    void document.fonts?.ready.then(() => {
+      if (active) ScrollTrigger.refresh()
+    })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -45,21 +63,20 @@ export function MotionProvider({
   useEffect(() => {
     registerMotionPlugins()
 
-    if (reducedMotion || !smoothScroll) {
+    if (reducedMotion || !smoothScroll || !desktopPointer) {
       // Native scrolling; `scroll-behavior: smooth` in the stylesheet is
       // disabled for these visitors by the reduced-motion media query.
       setLenis(null)
       return
     }
 
-    const instance = new Lenis({ duration: 1.05, smoothWheel: true })
+    const instance = new Lenis({ duration: 0.8, smoothWheel: true, anchors: true })
 
     const onScroll = () => ScrollTrigger.update()
     instance.on('scroll', onScroll)
 
     const tick = (time: number) => instance.raf(time * 1000)
     gsap.ticker.add(tick)
-    gsap.ticker.lagSmoothing(0)
 
     setLenis(instance)
 
@@ -69,7 +86,7 @@ export function MotionProvider({
       instance.destroy()
       setLenis(null)
     }
-  }, [reducedMotion, smoothScroll])
+  }, [reducedMotion, smoothScroll, desktopPointer])
 
   const value = useMemo(() => ({ reducedMotion, lenis }), [reducedMotion, lenis])
 

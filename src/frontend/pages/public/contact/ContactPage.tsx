@@ -10,9 +10,9 @@ export function ContactPage() {
   const { contact } = getContent(language)
 
   return (
-    <section className="py-12 sm:py-16">
-      <Container className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-        <div className="fade-up flex flex-col gap-8">
+    <section className="contact-page">
+      <Container className="contact-layout">
+        <div className="contact-intro flex flex-col gap-8">
           <div className="flex flex-col">
             <Eyebrow>{contact.eyebrow}</Eyebrow>
             <h1 className="section-title mt-5 text-display-lg text-foreground">{contact.title}</h1>
@@ -55,7 +55,7 @@ export function ContactPage() {
           </div>
         </div>
 
-        <div className="contact-form-card fade-up delay-1 rounded-[1.75rem] p-6 sm:p-9">
+        <div className="contact-form-card rounded-[1.75rem] p-6 sm:p-9">
           <ContactForm copy={contact.form} />
         </div>
       </Container>

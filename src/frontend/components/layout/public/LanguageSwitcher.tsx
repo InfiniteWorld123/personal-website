@@ -30,7 +30,7 @@ export function LanguageSwitcher({
           variant="outline"
           aria-label={label}
           className={cn(
-            'btn-glow-outline h-10 rounded-full border-border/60 bg-card px-3.5 text-foreground/72 shadow-sm hover:border-primary/30 hover:bg-primary/5 hover:text-primary',
+            'h-10 rounded-full border-border/60 bg-card px-3.5 text-foreground/72 shadow-sm hover:border-primary/30 hover:bg-primary/5 hover:text-primary',
             className,
           )}
         >

@@ -1,7 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { DependencyList, RefObject } from 'react'
 import { gsap, registerMotionPlugins } from './motion'
 import { useMotion } from './motion-provider'
+
+/**
+ * Layout effect in the browser, plain effect on the server (where layout
+ * effects only warn). The distinction matters for cleanup order: React runs
+ * layout-effect cleanups *before* it removes a component's DOM nodes, but
+ * passive-effect cleanups *after*. ScrollTrigger's `pin` wraps the pinned
+ * element in a spacer, so reverting it after React has already tried to
+ * remove the element throws "The node to be removed is not a child of this
+ * node" on every client-side navigation away from the page.
+ */
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 /**
  * Runs GSAP work inside a scoped context that is reverted on cleanup, so
@@ -27,7 +38,7 @@ export function useGsap<T extends HTMLElement>(
     callbackRef.current = callback
   })
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (reducedMotion || !scope.current) return
 
     registerMotionPlugins()

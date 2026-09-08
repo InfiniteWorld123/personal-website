@@ -30,7 +30,6 @@ export function ServicesSection({
               slug={slug}
               copy={services[slug]}
               language={language}
-              fromLabel={copy.from}
               moreLabel={copy.more}
             />
           ))}

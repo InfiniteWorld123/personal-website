@@ -1,32 +1,52 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight, Github, MapPin } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
-import { getContent, serviceOrder, servicePrices, site } from '#/frontend/content'
+import { getContent, serviceOrder, site } from '#/frontend/content'
 import type { HomeCopy } from '#/frontend/content/types'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { useMotion } from '#/frontend/motion'
-import { formatEuro } from '#/frontend/lib/format'
+import { gsap, useGsap, useMotion } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
 
 /**
  * The hero keeps the site's original character: a greeting, a huge uppercase
- * display line where the first word types itself in and out, the portrait in
- * front of the morphing blue blob. What changed is the words: the typed line
- * now names the offer.
+ * display line where the first word types itself in and out, and the
+ * portrait in front of the morphing blue blob. The typed words name the
+ * offer; the bold sentence under them is the positioning headline.
  */
 export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
   const { language, isRtl } = useLanguage()
-  const { services, home, shell } = getContent(language)
+  const { services, shell } = getContent(language)
+  const ref = useRef<HTMLElement>(null)
+
+  useGsap(
+    ref,
+    () => {
+      const mm = gsap.matchMedia()
+      mm.add('(min-width: 1024px) and (pointer: fine)', () => {
+        gsap.fromTo(
+          '[data-hero-portrait]',
+          { y: 0 },
+          {
+            y: -14,
+            ease: 'none',
+            scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: 0.5 },
+          },
+        )
+      })
+    },
+    [language],
+  )
 
   return (
-    <section className="pt-10 pb-16 sm:pt-14 sm:pb-20 lg:pt-16">
+    <section ref={ref} className="hero-section">
       <Container>
-        <div className="grid gap-12 md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.85fr)] md:items-center lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)]">
-          <div className="fade-up max-w-2xl">
+        <div className="hero-layout">
+          <div className="hero-content fade-up">
             <Badge className="hero-chip rounded-full px-3 py-1 text-[0.76rem]">
               <MapPin className="size-3.5" />
               {shell.footer.location}
@@ -63,23 +83,14 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             <p className="hero-copy mt-3 max-w-xl text-base leading-8 sm:text-[1.05rem]">{copy.sub}</p>
 
             <div className="mt-9 flex flex-wrap gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="btn-glow-primary rounded-full bg-primary px-7 text-primary-foreground shadow-[0_12px_32px_rgba(53,92,255,0.28)] hover:bg-primary/90"
-              >
+              <Button asChild size="lg" className="rounded-full px-7">
                 <Link to="/$lang/contact" params={{ lang: language }}>
                   {copy.cta}
                   <ArrowRight className="rtl:-scale-x-100" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="btn-glow-outline rounded-full border-border/60 bg-card px-7 text-foreground hover:border-primary/30 hover:bg-primary/5"
-              >
-                <Link to="/$lang/services" params={{ lang: language }}>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-7">
+                <Link to="/$lang/work" params={{ lang: language }}>
                   {copy.secondary}
                   <ArrowUpRight className="rtl:-scale-x-100" />
                 </Link>
@@ -91,7 +102,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
                 asChild
                 variant="ghost"
                 size="icon"
-                className="btn-glow-icon rounded-full border border-border/60 bg-card text-foreground/70 hover:bg-primary/6 hover:text-primary"
+                className="btn-glow-icon rounded-full border border-border/60 bg-card text-foreground/70 hover:text-primary"
               >
                 <a href={site.github} target="_blank" rel="noreferrer" aria-label="GitHub">
                   <Github />
@@ -106,7 +117,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               </a>
             </div>
 
-            {/* The offer at a glance: three pills, three entry prices. */}
+            {/* The three service lines as pills, each a shortcut into its detail. */}
             <div className="mt-7 flex flex-wrap gap-2">
               {serviceOrder.map((slug) => (
                 <Link
@@ -114,18 +125,18 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
                   to="/$lang/services"
                   params={{ lang: language }}
                   hash={slug}
-                  className="skill-pill inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-[0.76rem] font-semibold text-foreground/62 hover:border-primary/30 hover:text-primary"
+                  className="skill-pill inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-[0.76rem] font-semibold text-foreground/62 hover:border-primary/30 hover:text-primary"
                 >
+                  <span className="size-1.5 rounded-full bg-primary/70" aria-hidden="true" />
                   {services.items[slug].name}
-                  <span className="tabular text-primary/80">
-                    {home.services.from} {formatEuro(servicePrices[slug], language)}
-                  </span>
                 </Link>
               ))}
             </div>
           </div>
 
-          <PortraitBlob alt={site.name} className="fade-up delay-2" />
+          <div data-hero-portrait className="hero-portrait-stage fade-up delay-2">
+            <PortraitBlob alt={site.name} />
+          </div>
         </div>
       </Container>
     </section>
@@ -173,7 +184,7 @@ function TypingText({ words }: { words: string[] }) {
   return (
     <span
       className="hero-typed-word"
-      style={{ '--hero-word-ch': `${longest + 1}ch` } as React.CSSProperties}
+      style={{ '--hero-word-ch': `${longest + 1}ch` } as CSSProperties}
       aria-label={words.join(', ')}
     >
       <span className="hero-accent">{displayed}</span>

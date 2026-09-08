@@ -28,7 +28,7 @@ export function CtaBand({
 
   return (
     <section ref={ref} className="contact-light py-section lg:py-section-lg">
-      <Container className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+      <Container className="closing-cta">
         <div className="flex max-w-2xl flex-col gap-4">
           <h2 data-reveal className="section-title text-display-md text-foreground">
             {title}
@@ -39,11 +39,11 @@ export function CtaBand({
             </p>
           ) : null}
         </div>
-        <div data-reveal className="flex flex-wrap items-center gap-3">
+        <div className="closing-cta-actions">
           <Button
             asChild
             size="lg"
-            className="btn-glow-primary rounded-full bg-primary px-7 text-primary-foreground shadow-[0_12px_32px_rgba(53,92,255,0.28)] hover:bg-primary/90"
+            className="rounded-full bg-primary px-7 text-primary-foreground"
           >
             <Link to="/$lang/contact" params={{ lang: language }}>
               {button}
@@ -55,7 +55,7 @@ export function CtaBand({
               asChild
               size="lg"
               variant="outline"
-              className="btn-glow-outline rounded-full border-border/60 bg-card px-6 text-foreground hover:border-primary/30 hover:bg-primary/5"
+              className="rounded-full border-border/60 bg-card px-6 text-foreground hover:border-primary/30 hover:bg-primary/5"
             >
               <a href={`mailto:${site.email}`}>
                 <Mail />

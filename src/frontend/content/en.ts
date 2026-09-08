@@ -8,12 +8,12 @@ export const en: SiteContent = {
       { label: 'About', to: '/$lang/about' },
       { label: 'Contact', to: '/$lang/contact' },
     ],
-    cta: 'Request a call',
+    cta: 'Discuss your project',
     menu: { open: 'Open menu', close: 'Close menu', navigation: 'Main navigation' },
     language: { label: 'Language', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Light theme', dark: 'Dark theme', system: 'System theme', label: 'Theme' },
     footer: {
-      tagline: 'Websites, Shopify stores, and custom software for small businesses.',
+      tagline: 'Websites, online stores, and custom software for small businesses.',
       location: 'Erfurt, Germany',
       email: 'Email',
       links: 'Pages',
@@ -23,31 +23,70 @@ export const en: SiteContent = {
 
   home: {
     meta: {
-      title: 'Yaman Warda · Websites, Shopify stores, and custom software from Erfurt',
+      title: 'Yaman Warda · Websites, online stores, and custom software from Erfurt',
       description:
-        'I build the systems small businesses run on: websites from €990, Shopify stores from €2,490, custom software from €2,990. Fixed price, one person to talk to.',
+        'Websites, online stores, and custom software for small businesses — planned and developed directly by Yaman Warda in Erfurt.',
     },
     hero: {
-      eyebrow: 'Web developer in Erfurt · for small businesses across Germany',
+      eyebrow: 'Independent web and software developer from Erfurt',
       greeting: 'Hi, I am Yaman Warda.',
-      prefix: 'Websites · Shopify · Software',
-      typed: ['WEB', 'SHOPIFY', 'SOFTWARE'],
+      prefix: 'Websites · Online stores · Software',
+      typed: ['WEB', 'SHOP', 'SOFTWARE'],
       staticLine: 'DEVELOPER',
-      headline: 'Websites, Shopify stores, and custom systems — built, maintained, and grown with you.',
-      sub: 'For small businesses that need a technical partner, not a one-off vendor. Fixed price, clear scope, one person to talk to: me.',
-      cta: 'Request a call',
-      secondary: 'See services',
+      headline: "Your idea. Built together.",
+      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product — thoughtfully built around your business.",
+      cta: 'Discuss your project',
+      secondary: 'See my work',
     },
+    story: {
+  "eyebrow": "Understand",
+  "title": "An idea becomes something that works.",
+  "sub": "A small look at how a thought becomes a digital tool for your everyday work.",
+  "steps": [
+    {
+      "label": "Understand",
+      "title": "What should become easier?",
+      "body": "We look at your workflow: who sends the request, what information is missing, and what needs to happen next?"
+    },
+    {
+      "label": "Shape",
+      "title": "The idea takes shape.",
+      "body": "Requirements become clear paths and early screens. You see how your product will work before we build it."
+    },
+    {
+      "label": "Build",
+      "title": "Everything comes together.",
+      "body": "Interface, logic, and data become one system. We test the real workflow together before it goes live."
+    }
+  ],
+  "demo": {
+    "caption": "Workflow illustration · not a client project",
+    "project": "Requests & appointments",
+    "notes": [
+      "Requests in one place",
+      "A clear appointment schedule",
+      "Always know the next step"
+    ],
+    "navigation": [
+      "Overview",
+      "Requests",
+      "Appointments"
+    ],
+    "request": "New request",
+    "appointment": "Choose an appointment",
+    "confirmed": "Appointment confirmed",
+    "action": "View request"
+  }
+},
     services: {
       eyebrow: 'Services',
       title: 'What I build',
-      sub: 'Three services, three different outcomes. The price is an entry point for a small, clearly defined scope.',
-      from: 'from',
+      sub: 'Three paths, depending on whether you need to be seen, sell online, or digitise a workflow.',
       more: 'See details',
     },
     work: {
       eyebrow: 'Work',
-      title: 'Selected projects',
+      title: "Projects from my workspace",
       sub: 'My own projects, shown because they demonstrate how I build. Client case studies follow once they are live.',
       all: 'All projects',
     },
@@ -103,16 +142,16 @@ export const en: SiteContent = {
     cta: {
       title: 'Tell me about your project.',
       body: 'Write a few lines about what you have in mind. You get an honest assessment, even if it says: you do not need this.',
-      button: 'Request a call',
+      button: 'Discuss your project',
       alt: 'Or email directly',
     },
   },
 
   services: {
     meta: {
-      title: 'Services · Websites, Shopify stores, custom software',
+      title: 'Services · Websites, online stores, custom software',
       description:
-        'Websites from €990, Shopify stores from €2,490, custom software from €2,990. What is included, who it fits, and what the price means.',
+        'Websites from €990, online stores — usually with Shopify — from €2,490, and custom software from €2,990. Scope, fit, and pricing in detail.',
     },
     eyebrow: 'Services',
     title: 'Three services. Three different outcomes.',
@@ -150,10 +189,10 @@ export const en: SiteContent = {
           'No guaranteed number of customers, no guaranteed Google ranking. I guarantee the agreed scope, the technical quality, and a clear process.',
       },
       shopify: {
-        name: 'Shopify stores',
+        name: 'Online stores',
         short: 'A store handed over ready to sell, which you run yourself afterwards.',
         promise:
-          'I build a clear, operational store on Shopify: the foundation, the buying experience, and the handover, not just an installed theme.',
+          'I build a clear, operational online store — usually with Shopify: the foundation, the buying experience, and the handover, not just an installed theme.',
         audienceTitle: 'Who it is for',
         audience: [
           'A business launching its first store with clear products and data.',
@@ -295,6 +334,11 @@ export const en: SiteContent = {
     visit: 'Open website',
     source: 'Source code',
     detailLabel: 'View project',
+    previous: "Previous projects",
+    next: "Next projects",
+    loadMore: "Load more projects",
+    empty: "New projects will appear here.",
+    shown: "{visible} of {total} projects",
     back: 'All projects',
     detail: {
       problem: 'Starting point',
@@ -383,7 +427,7 @@ export const en: SiteContent = {
       projectType: 'What is it about?',
       projectTypes: [
         { value: 'website', label: 'Website' },
-        { value: 'shopify', label: 'Shopify store' },
+        { value: 'shopify', label: 'Online store' },
         { value: 'software', label: 'Custom software' },
         { value: 'unsure', label: 'Not sure yet' },
       ],

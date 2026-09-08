@@ -8,12 +8,12 @@ export const de: SiteContent = {
       { label: 'Über mich', to: '/$lang/about' },
       { label: 'Kontakt', to: '/$lang/contact' },
     ],
-    cta: 'Gespräch anfragen',
+    cta: 'Projekt besprechen',
     menu: { open: 'Menü öffnen', close: 'Menü schließen', navigation: 'Hauptnavigation' },
     language: { label: 'Sprache', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Helles Design', dark: 'Dunkles Design', system: 'Systemdesign', label: 'Design' },
     footer: {
-      tagline: 'Websites, Shopify-Shops und individuelle Software für kleine Unternehmen.',
+      tagline: 'Websites, Online-Shops und individuelle Software für kleine Unternehmen.',
       location: 'Erfurt, Deutschland',
       email: 'E-Mail',
       links: 'Seiten',
@@ -23,51 +23,89 @@ export const de: SiteContent = {
 
   home: {
     meta: {
-      title: 'Yaman Warda · Websites, Shopify-Shops und individuelle Software aus Erfurt',
+      title: 'Yaman Warda · Websites, Online-Shops und individuelle Software aus Erfurt',
       description:
-        'Ich baue die Systeme, mit denen kleine Unternehmen täglich arbeiten: Websites ab 990 €, Shopify Onlineshops ab 2.490 €, individuelle Software ab 2.990 €. Fester Preis, ein Ansprechpartner.',
+        'Websites, Online-Shops und individuelle Software für kleine Unternehmen — direkt geplant und entwickelt von Yaman Warda in Erfurt.',
     },
     hero: {
-      eyebrow: 'Webentwickler in Erfurt · für kleine Unternehmen in ganz Deutschland',
+      eyebrow: 'Selbstständiger Web- und Softwareentwickler aus Erfurt',
       greeting: 'Hi, ich bin Yaman Warda.',
-      prefix: 'Websites · Shopify · Software',
+      prefix: 'Websites · Online-Shops · Software',
       typed: ['WEB-', 'SHOP-', 'SOFTWARE-'],
       staticLine: 'ENTWICKLER',
-      headline:
-        'Websites, Shopify-Shops und maßgeschneiderte Systeme — gebaut, betreut, weiterentwickelt.',
-      sub: 'Für kleine Unternehmen, die einen technischen Partner brauchen und keinen Lieferanten. Fester Preis, klarer Umfang, ein Ansprechpartner: ich.',
-      cta: 'Gespräch anfragen',
-      secondary: 'Leistungen ansehen',
+      headline: "Deine Idee. Gemeinsam umgesetzt.",
+      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt: durchdacht, persönlich und passend zu deinem Unternehmen.",
+      cta: 'Projekt besprechen',
+      secondary: 'Projekte ansehen',
     },
+    story: {
+  "eyebrow": "Verstehen",
+  "title": "Aus einer Idee wird etwas, das funktioniert.",
+  "sub": "So entsteht aus einem Gedanken ein digitales Werkzeug für deinen Alltag.",
+  "steps": [
+    {
+      "label": "Verstehen",
+      "title": "Was soll einfacher werden?",
+      "body": "Wir schauen auf deinen Ablauf: Wer stellt die Anfrage, welche Informationen fehlen, und was passiert danach?"
+    },
+    {
+      "label": "Ordnen",
+      "title": "Die Idee bekommt eine Form.",
+      "body": "Aus den Anforderungen werden klare Wege und erste Ansichten. Du siehst früh, wie dein Produkt funktionieren wird."
+    },
+    {
+      "label": "Umsetzen",
+      "title": "Jetzt greift alles ineinander.",
+      "body": "Oberfläche, Logik und Daten werden ein System. Gemeinsam prüfen wir die Abläufe, bevor es live geht."
+    }
+  ],
+  "demo": {
+    "caption": "Illustration des Ablaufs · kein Kundenprojekt",
+    "project": "Anfragen & Termine",
+    "notes": [
+      "Anfragen an einem Ort",
+      "Termine übersichtlich planen",
+      "Den nächsten Schritt kennen"
+    ],
+    "navigation": [
+      "Übersicht",
+      "Anfragen",
+      "Termine"
+    ],
+    "request": "Neue Anfrage",
+    "appointment": "Termin auswählen",
+    "confirmed": "Termin bestätigt",
+    "action": "Anfrage ansehen"
+  }
+},
     services: {
       eyebrow: 'Leistungen',
       title: 'Was ich baue',
-      sub: 'Drei Leistungen, drei verschiedene Ergebnisse. Der Preis ist ein Einstieg für einen kleinen, klar umrissenen Umfang.',
-      from: 'ab',
+      sub: 'Drei Wege, je nachdem ob du sichtbar werden, online verkaufen oder einen eigenen Ablauf digitalisieren willst.',
       more: 'Details ansehen',
     },
     work: {
       eyebrow: 'Arbeiten',
-      title: 'Ausgewählte Projekte',
+      title: "Projekte aus meiner Werkstatt",
       sub: 'Eigene Projekte, die zeigen, wie ich baue. Fallstudien mit Kundenprojekten folgen, sobald sie live sind.',
       all: 'Alle Projekte',
     },
     process: {
       eyebrow: 'Ablauf',
       title: 'So läuft ein Projekt',
-      sub: 'Vier Schritte, keine Überraschungen. Sie wissen jederzeit, wo das Projekt steht und was es kostet.',
+      sub: 'Vier Schritte, keine Überraschungen. Du weißt jederzeit, wo das Projekt steht und was es kostet.',
       steps: [
         {
           title: 'Gespräch',
-          body: 'Wir klären, was Sie brauchen, was Sie schon haben und was das Projekt leisten soll. Kostenlos und ohne Verkaufsdruck.',
+          body: 'Wir klären, was du brauchst, was du schon hast und was das Projekt leisten soll. Kostenlos und ohne Verkaufsdruck.',
         },
         {
           title: 'Angebot mit festem Preis',
-          body: 'Sie bekommen ein schriftliches Angebot: was drin ist, was nicht, was es kostet. Keine offenen Enden.',
+          body: 'Du bekommst ein schriftliches Angebot: was drin ist, was nicht und was es kostet. Keine offenen Enden.',
         },
         {
           title: 'Umsetzung mit Zwischenständen',
-          body: 'Sie sehen die Designrichtung, bevor das Ganze gebaut wird, und geben in zwei Runden Feedback.',
+          body: 'Du siehst die Designrichtung, bevor das Ganze gebaut wird, und gibst in zwei Runden Feedback.',
         },
         {
           title: 'Launch und 30 Tage Fehlerbehebung',
@@ -78,22 +116,22 @@ export const de: SiteContent = {
     fit: {
       eyebrow: 'Passung',
       title: 'Für wen das passt',
-      forTitle: 'Gut passt es, wenn Sie',
+      forTitle: 'Gut passt es, wenn du',
       forItems: [
         'ein neues Unternehmen führen und einen seriösen Auftritt brauchen.',
         'einen lokalen Betrieb haben, dessen Kunden über Google und Empfehlungen kommen, und einen klaren Ort für alle Informationen wollen.',
-        'eine Website haben, die Ihr heutiges Niveau nicht mehr zeigt.',
-        'online verkaufen wollen und einen Shop brauchen, den Sie danach selbst führen können.',
+        'eine Website haben, die dein heutiges Niveau nicht mehr zeigt.',
+        'online verkaufen wollen und einen Shop brauchen, den du danach selbst führen kannst.',
         'einen Ablauf, der heute in E-Mails und Tabellen lebt, in ein System bringen wollen.',
       ],
-      notForTitle: 'Weniger gut passt es, wenn Sie',
+      notForTitle: 'Weniger gut passt es, wenn du',
       notForItems: [
         'garantierte Google-Platzierungen oder Umsatzversprechen suchen. Die gebe ich nicht.',
         'eine Marketing-Agentur brauchen. Ich baue, ich vermarkte nicht.',
         'nur den günstigsten Anbieter suchen.',
       ],
       honesty:
-        'Wenn Ihre bestehende Website schnell ist, auf dem Handy funktioniert und ihren Zweck erfüllt, sage ich Ihnen das. Dann brauchen Sie mich gerade nicht.',
+        'Wenn deine bestehende Website schnell ist, auf dem Handy funktioniert und ihren Zweck erfüllt, sage ich dir das. Dann brauchst du mich gerade nicht.',
     },
     about: {
       eyebrow: 'Über mich',
@@ -102,30 +140,30 @@ export const de: SiteContent = {
       link: 'Mehr über mich',
     },
     cta: {
-      title: 'Erzählen Sie mir von Ihrem Vorhaben.',
-      body: 'Schreiben Sie kurz, worum es geht. Sie bekommen eine ehrliche Einschätzung, auch wenn sie lautet: Das brauchen Sie nicht.',
-      button: 'Gespräch anfragen',
+      title: 'Erzähl mir von deinem Vorhaben.',
+      body: 'Schreib kurz, worum es geht. Du bekommst eine ehrliche Einschätzung, auch wenn sie lautet: Das brauchst du gerade nicht.',
+      button: 'Projekt besprechen',
       alt: 'Oder direkt per E-Mail',
     },
   },
 
   services: {
     meta: {
-      title: 'Leistungen · Websites, Shopify Onlineshops, Individuelle Software',
+      title: 'Leistungen · Websites, Online-Shops, individuelle Software',
       description:
-        'Websites ab 990 €, Shopify Onlineshops ab 2.490 €, individuelle Software ab 2.990 €. Was drin ist, für wen es passt und was der Preis bedeutet.',
+        'Websites ab 990 €, Online-Shops — meistens mit Shopify — ab 2.490 €, individuelle Software ab 2.990 €. Umfang, Passung und Preise im Detail.',
     },
     eyebrow: 'Leistungen',
     title: 'Drei Leistungen. Drei verschiedene Ergebnisse.',
     intro:
-      'Ob Website, Shop oder Software entscheidet nicht die Größe, sondern das Ziel: Ihr Unternehmen zeigen, Produkte verkaufen oder einen Ablauf betreiben. Umfang und Komplexität bestimmen dann den Preis innerhalb der Leistung.',
+      'Ob Website, Shop oder Software entscheidet nicht die Größe, sondern das Ziel: dein Unternehmen zeigen, Produkte verkaufen oder einen Ablauf betreiben. Umfang und Komplexität bestimmen dann den Preis innerhalb der Leistung.',
     from: 'ab',
     items: {
       websites: {
         name: 'Websites',
-        short: 'Eine schnelle, klare Website, die Ihr Unternehmen erklärt und Besucher zum Anruf, zur Anfrage oder zur Buchung führt.',
+        short: 'Eine schnelle, klare Website, die dein Unternehmen erklärt und Besucher zum Anruf, zur Anfrage oder zur Buchung führt.',
         promise:
-          'Sie bekommen eine professionelle, schnelle Website, die Ihr Unternehmen erklärt, Informationen klar zeigt und es Besuchern leicht macht, den nächsten Schritt zu gehen. Design, Veröffentlichung und Hosting nehme ich Ihnen ab.',
+          'Du bekommst eine professionelle, schnelle Website, die dein Unternehmen erklärt, Informationen klar zeigt und es Besuchern leicht macht, den nächsten Schritt zu gehen. Design, Veröffentlichung und Hosting nehme ich dir ab.',
         audienceTitle: 'Für wen',
         audience: [
           'Ein neues Unternehmen, das einen offiziellen Auftritt braucht.',
@@ -145,16 +183,16 @@ export const de: SiteContent = {
         priceTitle: 'Was es kostet',
         price: 'ab 990 €',
         priceNote:
-          'Der Einstiegspreis gilt für eine Einseiten-Website auf Basis eines erprobten Designsystems. Mehr Seiten, eigenes Design, Sprachen und Funktionen erhöhen den Preis. Ein individuell gestalteter Auftritt beginnt bei 1.990 €. Auf Wunsch auch als monatliche Rate mit Übergang in Ihr Eigentum.',
+          'Der Einstiegspreis gilt für eine Einseiten-Website auf Basis eines erprobten Designsystems. Mehr Seiten, eigenes Design, Sprachen und Funktionen erhöhen den Preis. Ein individuell gestalteter Auftritt beginnt bei 1.990 €. Auf Wunsch auch als monatliche Rate mit Übergang in dein Eigentum.',
         boundaryTitle: 'Was ich nicht verspreche',
         boundary:
           'Keine garantierte Anzahl an Kunden, keine garantierte Google-Platzierung. Ich garantiere den vereinbarten Umfang, die technische Qualität und einen klaren Ablauf.',
       },
       shopify: {
-        name: 'Shopify Onlineshops',
-        short: 'Ein Shop, der verkaufsbereit übergeben wird und den Sie danach selbst führen.',
+        name: 'Online-Shops',
+        short: 'Ein Shop, der verkaufsbereit übergeben wird und den du danach selbst führen kannst.',
         promise:
-          'Ich baue einen klaren, betriebsbereiten Shop auf Shopify: Grundstruktur, Kauferlebnis und Übergabe, nicht nur ein installiertes Theme.',
+          'Ich baue einen klaren, betriebsbereiten Online-Shop — meistens mit Shopify: Grundstruktur, Kauferlebnis und Übergabe, nicht nur ein installiertes Theme.',
         audienceTitle: 'Für wen',
         audience: [
           'Ein Unternehmen, das seinen ersten Shop mit klaren Produkten und Daten starten will.',
@@ -164,9 +202,9 @@ export const de: SiteContent = {
         ],
         includesTitle: 'Was drin ist',
         includes: [
-          'Shopify-Einrichtung und ein passendes Theme, angepasst an Ihre Marke.',
+          'Shopify-Einrichtung und ein passendes Theme, angepasst an deine Marke.',
           'Navigation, Kollektionen und die wichtigen Shop-Seiten.',
-          'Zahlung, Versand und Steuern technisch eingerichtet nach Ihren Vorgaben.',
+          'Zahlung, Versand und Steuern technisch eingerichtet nach deinen Vorgaben.',
           'Produktvorlagen und Varianten, mit bis zu zehn Produkten als Startbestand.',
           'Domain, notwendige Analytics und eine Testbestellung.',
           'Einweisung, Übergabe und 30 Tage Fehlerbehebung.',
@@ -174,16 +212,16 @@ export const de: SiteContent = {
         priceTitle: 'Was es kostet',
         price: 'ab 2.490 €',
         priceNote:
-          'Der Einstiegspreis gilt für einen neuen, überschaubaren Shop mit fertigen Daten und einem Standard-Theme. Datenaufbereitung, Designtiefe, Sprachen, Umzug und Integrationen kommen als klar benannte Posten dazu. Shopify-Abo, Domain, Apps und Zahlungsgebühren zahlen Sie direkt an die Anbieter.',
+          'Der Einstiegspreis gilt für einen neuen, überschaubaren Shop mit fertigen Daten und einem Standard-Theme. Datenaufbereitung, Designtiefe, Sprachen, Umzug und Integrationen kommen als klar benannte Posten dazu. Shopify-Abo, Domain, Apps und Zahlungsgebühren zahlst du direkt an die Anbieter.',
         boundaryTitle: 'Was ich nicht verspreche',
         boundary:
-          'Keine Umsatz- oder Conversion-Versprechen, keine Rechts- oder Steuerberatung. Rechtstexte kommen von Ihnen oder einem Anbieter dafür.',
+          'Keine Umsatz- oder Conversion-Versprechen, keine Rechts- oder Steuerberatung. Rechtstexte kommen von dir oder einem Anbieter dafür.',
       },
       software: {
         name: 'Individuelle Software',
-        short: 'Buchungssysteme, interne Tools, Kundenportale, Dashboards: die kleinste Version, die Ihren Ablauf wirklich trägt.',
+        short: 'Buchungssysteme, interne Tools, Kundenportale, Dashboards: die kleinste Version, die deinen Ablauf wirklich trägt.',
         promise:
-          'Ich verstehe den Ablauf, den Sie verbessern wollen, und baue die kleinste Web-Anwendung, die ihn klar abbildet: Oberfläche, Backend, Datenbank und Betrieb passend zum vereinbarten Umfang.',
+          'Ich verstehe den Ablauf, den du verbessern willst, und baue die kleinste Web-Anwendung, die ihn klar abbildet: Oberfläche, Backend, Datenbank und Betrieb passend zum vereinbarten Umfang.',
         audienceTitle: 'Für wen',
         audience: [
           'Ein Unternehmen, dessen Abläufe heute in Dateien, E-Mails und Handarbeit stecken.',
@@ -219,8 +257,8 @@ export const de: SiteContent = {
           body: 'Wenn etwas nicht wie vereinbart funktioniert, ist das ein Fehler und wird 30 Tage nach dem Start behoben. Neue Seiten, Rollen oder Integrationen sind neue Arbeit.',
         },
         {
-          title: 'Ihre Daten, Ihre Konten',
-          body: 'Domain, Shopify, Hosting-Konten laufen auf Ihren Namen. Nach vollständiger Zahlung bekommen Sie den vereinbarten Stand und die Nutzungsrechte.',
+          title: 'Deine Daten, deine Konten',
+          body: 'Domain, Shopify und Hosting-Konten laufen auf deinen Namen. Nach vollständiger Zahlung bekommst du den vereinbarten Stand und die Nutzungsrechte.',
         },
         {
           title: 'Preise sind Einstiege',
@@ -230,7 +268,7 @@ export const de: SiteContent = {
     },
     cta: {
       title: 'Nicht sicher, welche Leistung passt?',
-      body: 'Das ist normal. Beschreiben Sie, was Sie erreichen wollen, und ich sage Ihnen, was Sie brauchen. Oder dass Sie es nicht brauchen.',
+      body: 'Das ist normal. Beschreib, was du erreichen willst, und ich sage dir, was du brauchst. Oder dass du es nicht brauchst.',
       button: 'Gespräch anfragen',
     },
   },
@@ -244,7 +282,7 @@ export const de: SiteContent = {
     eyebrow: 'Über mich',
     title: 'Ich baue Dinge, die danach jemand täglich benutzt.',
     intro:
-      'Ich bin Yaman Warda, Entwickler in Erfurt. Ich arbeite allein, direkt mit Ihnen, und baue vollständige Systeme statt einzelner Teile.',
+      'Ich bin Yaman Warda, Entwickler in Erfurt. Ich arbeite allein, direkt mit dir, und baue vollständige Systeme statt einzelner Teile.',
     story: {
       title: 'Wie ich hierher gekommen bin',
       paragraphs: [
@@ -258,7 +296,7 @@ export const de: SiteContent = {
       items: [
         {
           title: 'Erst verstehen, dann bauen',
-          body: 'Ich will wissen, wie Ihr Ablauf heute funktioniert und wo er hakt, bevor ich eine Lösung vorschlage.',
+          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er hakt, bevor ich eine Lösung vorschlage.',
         },
         {
           title: 'Klein anfangen, sauber liefern',
@@ -266,20 +304,20 @@ export const de: SiteContent = {
         },
         {
           title: 'Grundlagen statt Tricks',
-          body: 'Ich baue mit Werkzeugen, die ich verstehe, damit ich Fehler finden und Ihnen erklären kann, was passiert.',
+          body: 'Ich baue mit Werkzeugen, die ich verstehe, damit ich Fehler finden und dir erklären kann, was passiert.',
         },
         {
           title: 'Ehrlich, auch wenn es Umsatz kostet',
-          body: 'Wenn Ihre Website gut genug ist oder ein fertiges Werkzeug reicht, sage ich das.',
+          body: 'Wenn deine Website gut genug ist oder ein fertiges Werkzeug reicht, sage ich das.',
         },
       ],
     },
     platform: {
       title: 'Diese Website ist ein Beispiel',
-      body: 'Sie sehen gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
+      body: 'Du siehst gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
     },
     portraitAlt: 'Yaman Warda',
-    cta: { title: 'Lassen Sie uns über Ihr Projekt sprechen.', button: 'Gespräch anfragen' },
+    cta: { title: 'Lass uns über dein Projekt sprechen.', button: 'Projekt besprechen' },
   },
 
   work: {
@@ -296,6 +334,11 @@ export const de: SiteContent = {
     visit: 'Website öffnen',
     source: 'Quellcode',
     detailLabel: 'Projekt ansehen',
+    previous: "Vorherige Projekte",
+    next: "Weitere Projekte",
+    loadMore: "Mehr Projekte laden",
+    empty: "Neue Projekte folgen hier.",
+    shown: "{visible} von {total} Projekten",
     back: 'Alle Projekte',
     detail: {
       problem: 'Ausgangslage',
@@ -370,10 +413,10 @@ export const de: SiteContent = {
     meta: {
       title: 'Kontakt · Gespräch anfragen',
       description:
-        'Beschreiben Sie kurz Ihr Vorhaben. Sie bekommen eine ehrliche Einschätzung, ob und wie ich helfen kann.',
+        'Beschreib kurz dein Vorhaben. Du bekommst eine ehrliche Einschätzung, ob und wie ich helfen kann.',
     },
     eyebrow: 'Kontakt',
-    title: 'Erzählen Sie mir von Ihrem Vorhaben.',
+    title: 'Erzähl mir von deinem Vorhaben.',
     intro:
       'Ein paar Fragen vorab, damit unser Gespräch nicht bei null anfängt. Ich melde mich mit einer ehrlichen Einschätzung.',
     form: {
@@ -384,7 +427,7 @@ export const de: SiteContent = {
       projectType: 'Worum geht es?',
       projectTypes: [
         { value: 'website', label: 'Website' },
-        { value: 'shopify', label: 'Shopify Onlineshop' },
+        { value: 'shopify', label: 'Onlineshop' },
         { value: 'software', label: 'Individuelle Software' },
         { value: 'unsure', label: 'Noch unklar' },
       ],
@@ -402,19 +445,19 @@ export const de: SiteContent = {
         { value: '1-3', label: 'In den nächsten 1 bis 3 Monaten' },
         { value: 'later', label: 'Später, ich orientiere mich' },
       ],
-      message: 'Ihr Vorhaben',
-      messageHint: 'Was soll entstehen? Was haben Sie schon: Domain, Texte, einen alten Auftritt?',
+      message: 'Dein Vorhaben',
+      messageHint: 'Was soll entstehen? Was hast du schon: Domain, Texte, einen alten Auftritt?',
       submit: 'Anfrage senden',
       sending: 'Wird gesendet …',
       sent: {
         title: 'Danke, die Anfrage ist da.',
-        body: 'Ich melde mich per E-Mail. Falls es eilt, schreiben Sie mir direkt.',
+        body: 'Ich melde mich per E-Mail. Falls es eilt, schreib mir direkt.',
       },
-      error: 'Das hat nicht geklappt. Bitte versuchen Sie es noch einmal oder schreiben Sie mir direkt per E-Mail.',
+      error: 'Das hat nicht geklappt. Bitte versuch es noch einmal oder schreib mir direkt per E-Mail.',
       errors: {
-        name: 'Bitte geben Sie Ihren Namen an.',
-        email: 'Bitte geben Sie eine gültige E-Mail-Adresse an.',
-        message: 'Bitte beschreiben Sie kurz Ihr Vorhaben.',
+        name: 'Bitte gib deinen Namen an.',
+        email: 'Bitte gib eine gültige E-Mail-Adresse an.',
+        message: 'Bitte beschreib kurz dein Vorhaben.',
       },
     },
     aside: {

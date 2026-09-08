@@ -3,7 +3,8 @@
 ## What this is
 
 A personal platform for one person: Yaman Warda, a solo developer in Erfurt,
-Germany, selling websites, Shopify stores, and custom business systems.
+Germany, selling websites, online stores (usually built with Shopify), and
+custom business systems.
 
 It has two halves that share one codebase, one origin, and one database:
 

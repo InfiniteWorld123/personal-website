@@ -1,4 +1,4 @@
-import type { ProjectSlug, ServiceSlug } from './types'
+import type { ServiceSlug } from './types'
 
 /** Language-independent facts about the site and its owner. */
 export const site = {
@@ -9,7 +9,7 @@ export const site = {
   country: 'DE',
   github: 'https://github.com/InfiniteWorld123',
   linkedin: 'https://linkedin.com/in/yaman-warda',
-  heroPortrait: '/images/hero-portrait.png',
+  heroPortrait: '/images/yaman-hero-blue-v3.png',
   ogImage: '/images/hero-portrait.png',
   contactEndpoint: '/api/contact',
 } as const
@@ -18,7 +18,7 @@ export const site = {
  * Published starting prices. Owned by `docs/services/README.md`; every
  * language renders these same numbers.
  */
-export const serviceOrder: ServiceSlug[] = ['websites', 'shopify', 'software']
+export const serviceOrder: ServiceSlug[] = ['software', 'websites', 'shopify']
 
 export const servicePrices: Record<ServiceSlug, number> = {
   websites: 990,
@@ -29,16 +29,20 @@ export const servicePrices: Record<ServiceSlug, number> = {
 export type ProjectStatus = 'live' | 'building'
 
 export type ProjectFacts = {
-  slug: ProjectSlug
+  slug: string
   status: ProjectStatus
   website?: string
   source?: string
   stack: string[]
+  image?: { src: string; width: number; height: number; alt: Record<'de' | 'en' | 'ar', string> }
 }
 
-export const projectOrder: ProjectSlug[] = ['tech-store', 'inknest', 'prime-estate']
-
-export const projects: Record<ProjectSlug, ProjectFacts> = {
+export const projects = {
+  'prime-estate': {
+    slug: 'prime-estate',
+    status: 'building',
+    stack: ['TanStack Start', 'Elysia', 'PostgreSQL', 'TypeScript'],
+  },
   'tech-store': {
     slug: 'tech-store',
     status: 'live',
@@ -53,9 +57,9 @@ export const projects: Record<ProjectSlug, ProjectFacts> = {
     source: 'https://github.com/InfiniteWorld123/inknest',
     stack: ['React', 'TypeScript', 'Node.js', 'PostgreSQL'],
   },
-  'prime-estate': {
-    slug: 'prime-estate',
-    status: 'building',
-    stack: ['TanStack Start', 'Elysia', 'PostgreSQL', 'TypeScript'],
-  },
-}
+} satisfies Record<string, ProjectFacts>
+
+export const projectOrder = Object.keys(projects) as Array<keyof typeof projects>
+
+export const isProjectSlug = (value: string): value is keyof typeof projects =>
+  Object.hasOwn(projects, value)

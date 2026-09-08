@@ -6,10 +6,11 @@ import { FitSection } from './FitSection'
 import { HeroSection } from './HeroSection'
 import { ProcessSection } from './ProcessSection'
 import { ServicesSection } from './ServicesSection'
+import { StorySection } from './StorySection'
 import { WorkSection } from './WorkSection'
 
 /**
- * Section order follows `docs/positioning.md`: offer first, proof, process,
+ * Section order follows `docs/positioning.md`: person and offer, building story, proof, process,
  * qualification, a short word about the person, then the call to action.
  */
 export function HomePage() {
@@ -19,8 +20,9 @@ export function HomePage() {
   return (
     <>
       <HeroSection copy={home.hero} />
-      <ServicesSection copy={home.services} services={services.items} language={language} />
+      <StorySection copy={home.story} />
       <WorkSection copy={home.work} work={work} language={language} />
+      <ServicesSection copy={home.services} services={services.items} language={language} />
       <ProcessSection copy={home.process} />
       <FitSection copy={home.fit} />
       <AboutTeaser copy={home.about} language={language} />

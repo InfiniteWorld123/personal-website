@@ -33,7 +33,7 @@ reads as inexperience.
 
 **Umbrella:** *I build the systems small businesses run on.*
 
-Concrete deliverables (websites, Shopify stores, custom business systems),
+Concrete deliverables (custom business systems, websites, online stores),
 a named audience (small businesses, primarily in Germany), and no unprovable
 claim. It also covers all three service lines in `docs/services/` without
 splitting the message.
@@ -42,7 +42,21 @@ splitting the message.
 what makes retainers and subscriptions (phase 5) a natural continuation of the
 sale rather than an upsell.
 
-### Headline candidates
+### Current direction — B3 as built
+
+The identity is a friendly, independent technical partner: professional
+clarity with the owner's own energetic look (see `design-system.md`). Custom
+software and websites lead; online stores remain available without positioning
+Yaman as Shopify-only.
+
+The hero opens with the greeting, then the typed display line `WEB-` /
+`SHOP-` / `SOFTWARE-` + `ENTWICKLER` (`WEB` / `SHOP` / `SOFTWARE` +
+`DEVELOPER`; Arabic `مطوّر` + `مواقع` / `متاجر` / `برمجيات`), then the
+headline sentence “Deine Idee. Gemeinsam umgesetzt.” / “Your idea. Built
+together.” / “فكرتك. نبنيها معًا.” and a supporting sentence that names custom
+software and websites. Personal location is Erfurt.
+
+### Earlier headline candidates
 
 | | |
 | --- | --- |
@@ -54,8 +68,8 @@ Alternative, more service-forward:
 
 | | |
 | --- | --- |
-| **DE** | Websites, Shopify-Shops und maßgeschneiderte Systeme — gebaut, betreut, weiterentwickelt. |
-| **EN** | Websites, Shopify stores, and custom systems — built, maintained, and grown with you. |
+| **DE** | Websites, Online-Shops und individuelle Software für kleine Unternehmen. |
+| **EN** | Websites, online stores, and custom software for small businesses. |
 | **AR** | مواقع ومتاجر وأنظمة مخصّصة — أبنيها، وأتابعها، وأطوّرها معك. |
 
 ### Rejected directions
@@ -65,6 +79,19 @@ Alternative, more service-forward:
 - **Single-niche positioning** (Shopify only, one industry only) — strongest
   conversion of all, but it contradicts three documented service lines. Revisit
   only if one line starts producing most of the income.
+
+### Online stores first, Shopify second
+
+The public offer is **Online-Shops / online stores / متاجر إلكترونية**. Shopify
+is the preferred implementation for most store projects and appears in the
+service detail, case studies, and search copy where platform expertise helps.
+The home page sells the outcome without presenting the business as Shopify-only.
+
+### Address and identity
+
+German client-facing copy uses **du**: direct and friendly, but still precise.
+The owner is described as a **selbstständiger Web- und Softwareentwickler aus
+Erfurt**. The public site always uses first person singular, never agency "we".
 
 ---
 
@@ -105,15 +132,23 @@ buries the offer.
 
 Ordered by what a cold visitor needs, in order:
 
-1. **Hero** — the headline above, one supporting line, primary CTA "Book a call"
-2. **What I build** — three service lines, one sentence each
-3. **Selected work** — three case studies with real screenshots
-4. **How it works** — the process in three or four steps. Removes the fear of
+1. **Hero** — concrete deliverables, the person, and a primary contact CTA
+2. **Story moment** — requirements notes → wireframe → a working request/booking interface.
+   Clearly labeled as a process illustration, not a client project.
+3. **Work** — up to six projects in content order, with equal visual treatment.
+   Prime Estate, Tech Store, then InkNest initially. No premium labels or
+   oversized featured project; no fake screenshot placeholders.
+4. **What I build** — the three service lines, without prices on the home page
+5. **How it works** — the process in three or four steps. Removes the fear of
    hiring a stranger, which is the actual objection at this deal size
-5. **Who this is for** — plain qualification, including who it is *not* for.
+6. **Who this is for** — plain qualification, including who it is *not* for.
    Filtering out bad fits raises the quality of every booking
-6. **About, briefly** — two sentences and a link to `/about`
-7. **CTA** — book a call, with the contact form offered underneath
+7. **About, briefly** — two sentences and a link to `/about`
+8. **CTA** — title, explanation, then contact and email actions together.
+   The contact form is available now; booking is implemented in B5.
+
+Prices live on `/services`, after the visitor has understood the offer and seen
+proof. They do not appear in the hero or home-page service cards.
 
 ## Voice
 
@@ -126,10 +161,18 @@ Ordered by what a cold visitor needs, in order:
 
 ## Editable content keys
 
-Copy that changes without a deploy, per D12. Structure stays in code.
+Copy intended to change without a deploy in B6, per D12. B3 still reads typed
+local content, not an API. Structure stays in code; this is not a page builder.
+The project registry owns valid slugs and order. Adding a project requires its
+facts and translations, not a component or route whitelist change. Optional
+images carry dimensions and translated alternative text.
 
 ```text
 home.hero.headline           home.hero.sub            home.hero.cta
+home.story.title             home.story.sub            home.story.steps
+home.story.demo              home.hero.lines
+work.previous               work.next                 work.loadMore
+work.empty                  work.shown
 home.services.*.title        home.services.*.body
 home.process.*.title         home.process.*.body
 home.audience.for            home.audience.not_for
