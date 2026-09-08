@@ -37,6 +37,7 @@ export const en: SiteContent = {
       sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product — thoughtfully built around your business.",
       cta: 'Request a call',
       secondary: 'See my work',
+      availability: 'Available for new projects',
     },
     story: {
   "eyebrow": "Understand",

@@ -9,6 +9,7 @@ export {
 } from './motion'
 export { useMotionPreference } from './use-motion-preference'
 export { useReveal } from './use-reveal'
+export { useScrolled } from './use-scrolled'
 export { useTilt } from './use-tilt'
 export { useMagneticButtons } from './use-magnetic-buttons'
 export { SplitWords } from './SplitWords'

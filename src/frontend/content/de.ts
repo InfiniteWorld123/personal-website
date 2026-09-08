@@ -37,6 +37,7 @@ export const de: SiteContent = {
       sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt: durchdacht, persönlich und passend zu deinem Unternehmen.",
       cta: 'Gespräch anfragen',
       secondary: 'Projekte ansehen',
+      availability: 'Verfügbar für neue Projekte',
     },
     story: {
   "eyebrow": "Verstehen",

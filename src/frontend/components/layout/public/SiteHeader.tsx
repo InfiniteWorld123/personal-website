@@ -15,6 +15,8 @@ import {
 import type { ShellCopy } from '#/frontend/content/types'
 import { site } from '#/frontend/content/site'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { useScrolled } from '#/frontend/motion'
+import { cn } from '#/frontend/lib/utils'
 import { Container } from './Container'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ThemeToggle } from './ThemeToggle'
@@ -23,10 +25,11 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
   const { language, isRtl } = useLanguage()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const scrolled = useScrolled()
 
   return (
-    <header className="site-header sticky top-0 z-30">
-      <Container className="flex h-[4.25rem] items-center gap-2 sm:gap-3">
+    <header className={cn('site-header sticky top-0 z-30', scrolled && 'is-scrolled')}>
+      <Container className="site-header-inner flex items-center gap-2 sm:gap-3">
         {/* Mobile menu: solid blue pill */}
         <button
           type="button"

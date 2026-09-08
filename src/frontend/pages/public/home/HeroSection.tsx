@@ -138,7 +138,17 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
           </div>
 
           <div className="hero-portrait-stage">
-            <PortraitBlob alt={site.name} />
+            <div className="hero-portrait-frame">
+              <PortraitBlob alt={site.name} />
+              {/* Only ever rendered while the sentence is true; the copy is a
+                  content key so it can be emptied without a deploy. */}
+              {copy.availability ? (
+                <span className="hero-availability">
+                  <span className="status-dot is-live" aria-hidden="true" />
+                  {copy.availability}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       </Container>

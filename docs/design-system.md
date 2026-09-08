@@ -143,6 +143,11 @@ browser, or a reduced-motion setting all leave the finished page.
 | Blue buttons leaning towards the pointer and springing back | `--magnet-x/y` | `useMagneticButtons` |
 | The line drawn between the four `Ablauf` cards | measured SVG + `--len`, `--delay` | `ProcessConnector` |
 | Page change: the page fades in, a line runs under the header | `.route-fade`, `.route-progress` | keyed on the pathname |
+| Last word of a multi-word title, in the serif's italic cut and in blue | `.split-word:last-child:not(:first-child)` | CSS only |
+| Header giving up height after the first scroll | `.is-scrolled` | `useScrolled` |
+| The arrow riding in a white disc that turns on hover | `[data-variant="default"] > svg` | CSS only |
+| Dot grid dissolving downwards behind the hero | `.hero-section::after` | CSS only |
+| Availability badge floating on the portrait | `.hero-availability` | CSS only |
 | Blob morph and glow, typed cursor, live dot, dark-mode button glow | keyframes | CSS only |
 | Theme change cross-fade | View Transitions API | `theme-provider.tsx` |
 
@@ -167,6 +172,16 @@ transition delays.
 - A parent's ref is not available inside its own child's layout effect, which
   is why `ProcessConnector` measures `parentElement` instead of taking a ref
   prop. The line was silently missing until that was fixed.
+- A single-word title keeps its plain form. Italicising the whole heading
+  reads as a mistake rather than an accent, so the rule needs a word to lean
+  against: `:last-child:not(:first-child)`.
+- Arabic keeps the blue accent and drops the italic. Readex Pro has no italic
+  cut, and Arabic letterforms do not slant.
+- The availability badge is a claim about the owner, so it is a content key
+  per language. Empty the key and the badge disappears.
+- Heights that a state needs to change belong in this stylesheet, not in a
+  utility class on the element. The header's compact state was written twice
+  before that was true.
 - WebGL stays out unless a specific moment earns it. See `decisions.md` D9.
 
 ## Verification

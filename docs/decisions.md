@@ -248,6 +248,14 @@ horizontal scroll, a marquee, and counting numbers. The last one has no honest
 input — there are three projects and one person, and animating those figures
 would draw attention to how small they are.
 
+**Five smaller refinements** were offered in the same prototype and all
+accepted on the same day: the last word of a multi-word title set in the
+serif's italic cut and in blue, a header that gives up height after the first
+scroll, the arrow riding in a white disc that turns on hover, a dot grid
+dissolving downwards behind the hero, and an availability badge on the
+portrait. The badge is a claim about the owner rather than decoration, so it
+lives in the content keys per language and disappears when the key is emptied.
+
 **What keeps it safe:** `html.motion` gates every hidden state, is set before
 first paint only for visitors who accept motion, and removes itself if the
 motion module never reports in. Hover and tilt need a fine pointer. The

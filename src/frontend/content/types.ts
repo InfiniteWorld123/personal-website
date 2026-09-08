@@ -42,6 +42,8 @@ export type HomeCopy = {
     sub: string
     cta: string
     secondary: string
+    /** Shown on the portrait. Only ever set while it is actually true. */
+    availability: string
   }
   story: {
     eyebrow: string
