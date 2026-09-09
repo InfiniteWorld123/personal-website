@@ -1,12 +1,24 @@
 {
   "short_name": "Yaman Warda",
-  "name": "Yaman Warda | Full-Stack Developer Portfolio",
-  "description": "Portfolio of Yaman Warda, a self-taught full-stack developer building React, TypeScript, Node.js, and PostgreSQL web applications.",
+  "name": "Yaman Warda · Websites, Shopify-Shops und individuelle Software",
+  "description": "Websites, Shopify Onlineshops und individuelle Software für kleine Unternehmen. Erfurt, Deutschland.",
   "lang": "de",
-  "icons": [],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/app-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  "theme_color": "#f5f6f8",
+  "background_color": "#f5f6f8"
 }

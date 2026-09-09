@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Maskable: full-bleed blue, mark held inside the 80% safe zone so a
+       circular or squircle mask never clips a stroke. -->
+  <rect width="512" height="512" fill="#355cff"/>
+  <g transform="translate(256 256) scale(6.2) translate(-24 -26)"
+     fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="#ffffff" d="M10 10 L24 27 L38 10"/>
+    <path stroke="#ffffff" d="M24 27 V33"/>
+    <path stroke="#ffffff" opacity="0.62" d="M24 34 V42"/>
+  </g>
+</svg>
