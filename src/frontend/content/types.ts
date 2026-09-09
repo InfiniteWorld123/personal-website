@@ -246,6 +246,31 @@ export type FaqCopy = {
   }>
 }
 
+/**
+ * The hiring audience, kept apart from every selling page. Architecture and
+ * trade-offs here; outcomes and prices there. A buyer reading this leaves,
+ * and so does a hiring manager reading service packages.
+ */
+export type StackCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  platform: {
+    title: string
+    body: string
+    layers: Array<{ label: string; value: string }>
+  }
+  decisions: {
+    title: string
+    intro: string
+    /** Each decision names the alternative it beat and the price it charged. */
+    items: Array<{ title: string; body: string; costLabel: string; cost: string }>
+  }
+  built: { title: string; body: string; link: string }
+  links: { title: string; email: string }
+}
+
 export type SiteContent = {
   shell: ShellCopy
   home: HomeCopy
@@ -254,5 +279,6 @@ export type SiteContent = {
   work: WorkCopy
   contact: ContactCopy
   faq: FaqCopy
+  stack: StackCopy
   notFound: { title: string; body: string; link: string }
 }

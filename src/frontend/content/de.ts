@@ -18,7 +18,10 @@ export const de: SiteContent = {
       email: 'E-Mail',
       links: 'Seiten',
       builtWith: 'Diese Website und die Verwaltung dahinter sind selbst gebaut.',
-      more: [{ label: 'FAQ', to: '/$lang/faq' }],
+      more: [
+        { label: 'FAQ', to: '/$lang/faq' },
+        { label: 'Stack', to: '/$lang/stack' },
+      ],
     },
   },
 
@@ -603,6 +606,71 @@ export const de: SiteContent = {
         ],
       },
     ],
+  },
+
+  stack: {
+    meta: {
+      title: 'Stack · Wie Yaman Warda baut',
+      description:
+        'Für Unternehmen, die mich technisch einschätzen wollen: die Architektur hinter dieser Plattform, vier Entscheidungen und ihr Preis, und die Systeme, die ich ausgeliefert habe.',
+    },
+    eyebrow: 'Stack',
+    title: 'Die technische Fassung.',
+    intro:
+      'Diese Seite ist für Unternehmen, nicht für Kunden. Keine Pakete, keine Preise — die Architektur, die Entscheidungen, die ich gegen eine plausible Alternative getroffen habe, und was jede davon gekostet hat. Ich programmiere seit 2021, habe es mir selbst beigebracht und arbeite allein über den gesamten Stack.',
+    platform: {
+      title: 'Du stehst auf dem Beispiel',
+      body: 'Diese Seite ist kein Portfolio fremder Arbeit. Die öffentlichen Seiten in drei Sprachen, die API, die Datenbank und die Verwaltung dahinter sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, nirgends.',
+      layers: [
+        { label: 'Framework', value: 'TanStack Start, React 19, dateibasierte Routen' },
+        { label: 'API', value: 'Elysia unter /api, Eden Treaty als typisierter Client' },
+        { label: 'Daten', value: 'PostgreSQL über pg, rohes parametrisiertes SQL, kein ORM' },
+        { label: 'Validierung', value: 'Valibot an der Grenze, geteilt zwischen Client und Server' },
+        { label: 'State und Formulare', value: 'React Query für Serverdaten, TanStack Form für Eingaben' },
+        { label: 'Motion', value: 'CSS mit IntersectionObserver und Pointer-Events, ohne Bibliothek' },
+        { label: 'Hosting', value: 'Hetzner in Deutschland, Coolify, PostgreSQL im Docker auf demselben Host' },
+      ],
+    },
+    decisions: {
+      title: 'Vier Entscheidungen und ihr Preis',
+      intro:
+        'Jede davon wurde gegen etwas Vernünftiges getroffen. Die interessante Hälfte ist nicht, wofür ich mich entschieden habe, sondern was die Entscheidung gekostet hat — also steht das auch hier.',
+      items: [
+        {
+          title: 'Rohes parametrisiertes SQL statt ORM',
+          body: 'Eine Anwendung, eine Datenbank, ein Betreiber. Ein ORM schöbe eine Mapping-Schicht und einen Migrationsdialekt zwischen mich und eine Abfrage, die ich ohnehin lesen kann. In dieser Größe sind das bewegliche Teile ohne Gewinn.',
+          costLabel: 'Was es kostet',
+          cost: 'Mehr Tipparbeit und keine geschenkten Schema-Refactorings. Ich schreibe die Migrationen von Hand und halte die Abfragen nah an den Tabellen.',
+        },
+        {
+          title: 'Eigene Verwaltung statt fremdem CMS',
+          body: 'Anfragen, Seitentexte, Kunden und Rechnungen liegen in einem System mit einem Inhaltsmodell, nicht aufgeteilt zwischen einem Anbieter und einer Datenbank. Dass die Plattform vollständig selbst gebaut ist, ist außerdem der Punkt des Portfolios.',
+          costLabel: 'Was es kostet',
+          cost: 'Ich baue den Editor selbst, statt einen zu installieren. Bis er fertig ist, liegen die Texte in typisierten Dateien — ehrlich statt bequem.',
+        },
+        {
+          title: 'Ein deutscher Server, den ich selbst administriere',
+          body: 'Kundendaten, Leads und Rechnungen liegen auf einer Hetzner-Maschine in Deutschland, was die DSGVO-Geschichte kurz macht. Cron und Hintergrundjobs laufen nativ, und die Datenbank ist lokal, also gibt es kein Serverless-Pooling-Problem.',
+          costLabel: 'Was es kostet',
+          cost: 'Backups und Sicherheitsupdates gehören mir. Snapshots, ein nächtlicher pg_dump, unattended upgrades und ein Restore, den ich tatsächlich getestet habe — nicht einer, von dem ich annehme, dass er funktioniert.',
+        },
+        {
+          title: 'Eine Motion-Schicht ohne Animationsbibliothek',
+          body: 'Der erste Versuch lief mit GSAP, ScrollTrigger und Lenis. Er stürzte bei jeder clientseitigen Navigation weg von der Startseite ab und animierte Abschnitte, die niemand freigegeben hatte. Ich habe ihn gelöscht und alles neu gebaut, auf CSS-Transitions, IntersectionObserver, ResizeObserver und Pointer-Events.',
+          costLabel: 'Was es gekostet hat',
+          cost: 'Eine weggeworfene Arbeitswoche und Easing-Kurven, die ich jetzt von Hand schreibe. Dafür liefert die Seite gar keine Animations-Laufzeit aus, und bei Navigation bricht nichts.',
+        },
+      ],
+    },
+    built: {
+      title: 'Was ich ausgeliefert habe',
+      body: 'Einen Onlineshop mit gefiltertem 500-Produkte-Katalog, Stripe-Checkout, Bestellungen und den Pflichtseiten, die ein deutscher Shop braucht. Eine Schreibplattform mit Editor, Uploads, Kommentaren, Reaktionen und Benachrichtigungen. Ein Immobilien-Verwaltungssystem, noch im Bau, auf dessen Architektur diese Seite läuft.',
+      link: 'Projekte ansehen',
+    },
+    links: {
+      title: 'Wenn du sprechen willst',
+      email: 'Schreib mir eine E-Mail',
+    },
   },
 
   notFound: {

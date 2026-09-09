@@ -43,11 +43,16 @@ describe('site content', () => {
     }
   })
 
-  it('keeps the FAQ in the footer and out of the header nav', () => {
+  it('keeps the footer-only pages out of the header nav', () => {
     for (const language of languages) {
       const { nav, footer } = content[language].shell
-      expect(nav.map((item) => item.to)).not.toContain('/$lang/faq')
-      expect(footer.more.map((item) => item.to)).toContain('/$lang/faq')
+      const navPaths = nav.map((item) => item.to)
+      const morePaths = footer.more.map((item) => item.to)
+
+      for (const path of ['/$lang/faq', '/$lang/stack']) {
+        expect(navPaths).not.toContain(path)
+        expect(morePaths).toContain(path)
+      }
     }
   })
 

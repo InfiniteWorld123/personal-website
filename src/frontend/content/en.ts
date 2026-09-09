@@ -18,7 +18,10 @@ export const en: SiteContent = {
       email: 'Email',
       links: 'Pages',
       builtWith: 'This website and the admin behind it are self-built.',
-      more: [{ label: 'FAQ', to: '/$lang/faq' }],
+      more: [
+        { label: 'FAQ', to: '/$lang/faq' },
+        { label: 'Stack', to: '/$lang/stack' },
+      ],
     },
   },
 
@@ -603,6 +606,71 @@ export const en: SiteContent = {
         ],
       },
     ],
+  },
+
+  stack: {
+    meta: {
+      title: 'Stack · How Yaman Warda builds',
+      description:
+        'For companies looking at me technically: the architecture behind this platform, four decisions and what each one cost, and the systems I have shipped.',
+    },
+    eyebrow: 'Stack',
+    title: 'The technical version.',
+    intro:
+      'This page is for companies rather than clients. No packages, no prices — the architecture, the decisions I made against a plausible alternative, and what each of them cost me. I have been programming since 2021, taught myself, and work alone across the whole stack.',
+    platform: {
+      title: 'You are standing on the example',
+      body: 'This site is not a portfolio of someone else’s work. The public pages in three languages, the API, the database, and the admin behind it are one application I wrote and run. There is no site builder and no third-party CMS anywhere in it.',
+      layers: [
+        { label: 'Framework', value: 'TanStack Start, React 19, file-based routes' },
+        { label: 'API', value: 'Elysia mounted at /api, Eden Treaty for a typed client' },
+        { label: 'Data', value: 'PostgreSQL through pg, raw parameterised SQL, no ORM' },
+        { label: 'Validation', value: 'Valibot on the boundary, shared between client and server' },
+        { label: 'State and forms', value: 'React Query for server state, TanStack Form for input' },
+        { label: 'Motion', value: 'CSS with IntersectionObserver and pointer events, no library' },
+        { label: 'Hosting', value: 'Hetzner in Germany, Coolify, PostgreSQL in Docker on the same host' },
+      ],
+    },
+    decisions: {
+      title: 'Four decisions and their price',
+      intro:
+        'Every one of these was chosen against something reasonable. The interesting half is not what I picked — it is what picking it cost, so that is written down too.',
+      items: [
+        {
+          title: 'Raw parameterised SQL instead of an ORM',
+          body: 'One app, one database, one operator. An ORM would add a mapping layer and a migration dialect between me and a query I can already read. At this scale that is moving parts without a benefit.',
+          costLabel: 'What it costs',
+          cost: 'More typing, and no free schema refactors. I write the migrations by hand and I keep the queries close to the tables.',
+        },
+        {
+          title: 'My own admin, not an external CMS',
+          body: 'Contact enquiries, page copy, clients, and invoices live in one system with one content model, not split across a vendor and a database. The platform being entirely self-built is also the point of the portfolio.',
+          costLabel: 'What it costs',
+          cost: 'I build the editor myself instead of installing one. The copy still lives in typed files until that editor is finished, which is honest rather than convenient.',
+        },
+        {
+          title: 'A German server I administer, not serverless',
+          body: 'Client data, leads, and invoices sit on a Hetzner box in Germany, which makes the GDPR story short. Cron and background jobs work natively, and the database is local, so there is no serverless connection-pooling problem.',
+          costLabel: 'What it costs',
+          cost: 'Backups and security updates are mine. Snapshots, a nightly pg_dump, unattended upgrades, and a restore I have actually tested — not one I assume works.',
+        },
+        {
+          title: 'A motion layer with no animation library',
+          body: 'The first attempt used GSAP with ScrollTrigger and Lenis. It crashed on every client-side navigation away from the home page, and it animated sections nobody had approved. I deleted it and rebuilt the whole thing on CSS transitions, IntersectionObserver, ResizeObserver, and pointer events.',
+          costLabel: 'What it cost',
+          cost: 'A week of work thrown away, and easing curves I now write by hand. In return the page ships no animation runtime at all and nothing breaks on navigation.',
+        },
+      ],
+    },
+    built: {
+      title: 'What I have shipped',
+      body: 'An online store with a filtered 500-product catalogue, Stripe checkout, orders, and the German support pages a shop legally needs. A writing platform with an editor, uploads, comments, reactions, and notifications. A property management system, in progress, whose architecture this site is built on.',
+      link: 'See the projects',
+    },
+    links: {
+      title: 'If you want to talk',
+      email: 'Email me',
+    },
   },
 
   notFound: {
