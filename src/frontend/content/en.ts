@@ -364,14 +364,16 @@ export const en: SiteContent = {
         problem:
           'A store is the hardest test for a web system: accounts, money, stock, and order status have to agree, or the operator loses money or trust.',
         approach:
-          'I built the entire purchase path, from the product catalogue through the cart to payment with Stripe and the order overview for customer and operator. The admin area manages products, orders, and reviews.',
+          'I built the whole purchase path: a catalogue of 500 products across ten categories, narrowed by search and by filters for category, colour, storage, memory, and screen size, then the cart, the Stripe checkout, and the order view for customer and operator alike. It also carries the pages a German store owes its customers — right of withdrawal, returns, shipping — because a store you cannot legally sell from is not finished.',
         shows:
-          'That I can build a complete purchase process with payment, permissions, and administration end to end, not just the storefront.',
+          'That I can carry a purchase from a filtered catalogue through payment to an order both sides can follow, and that I know what a German store has to answer for beyond the checkout button.',
         features: [
           'Registration, login, and customer account',
           'Product management with variants',
+          'Search, filters, and sorting across the catalogue',
           'Cart and Stripe checkout',
           'Orders with status',
+          'Withdrawal, returns, and shipping pages',
           'Reviews',
           'Admin dashboard',
         ],
@@ -384,13 +386,14 @@ export const en: SiteContent = {
         problem:
           'Publishing content sounds simple until the editor, images, comments, and notifications have to work together.',
         approach:
-          'I built a rich-text editor with image uploads, comment threads, reactions, and a notification system, all behind an account system.',
+          'I built a rich-text editor with image uploads, comment threads, reactions, and notifications, all behind accounts. The discover page searches everything published and narrows it by category, by any of 25 tags, by sort order, and by page size, so a growing archive stays findable.',
         shows:
-          'That I can build content and community features of the kind portals, blogs, and internal knowledge bases need.',
+          'That I can build the half of a product that is content rather than transactions — writing, publishing, discussion, and finding things again — which is what portals, blogs, and internal knowledge bases actually run on.',
         features: [
           'Accounts and profiles',
           'Rich-text editor',
           'Image uploads',
+          'Search, tags, and filtered discovery',
           'Comments and reactions',
           'Notifications',
         ],

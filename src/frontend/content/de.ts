@@ -364,14 +364,16 @@ export const de: SiteContent = {
         problem:
           'Ein Shop ist der härteste Test für ein Web-System: Konten, Geld, Lagerbestand und Bestellstatus müssen zusammen stimmen, sonst verliert der Betreiber Geld oder Vertrauen.',
         approach:
-          'Ich habe den gesamten Kaufweg gebaut, vom Produktkatalog über den Warenkorb bis zur Zahlung mit Stripe und der Bestellübersicht für Kunde und Betreiber. Der Admin-Bereich verwaltet Produkte, Bestellungen und Bewertungen.',
+          'Ich habe den gesamten Kaufweg gebaut: einen Katalog mit 500 Produkten in zehn Kategorien, eingegrenzt über Suche und Filter für Kategorie, Farbe, Speicher, Arbeitsspeicher und Bildschirmgröße, dann Warenkorb, Stripe-Checkout und die Bestellübersicht für Kunde und Betreiber. Dazu die Seiten, die ein deutscher Shop seinen Kunden schuldet — Widerruf, Rücksendung, Versand — denn ein Shop, aus dem man rechtlich nicht verkaufen darf, ist nicht fertig.',
         shows:
-          'Dass ich einen kompletten Kaufprozess mit Zahlung, Rechten und Verwaltung durchgängig bauen kann, nicht nur die Schaufensterseite.',
+          'Dass ich einen Kauf vom gefilterten Katalog über die Zahlung bis zur Bestellung tragen kann, die beide Seiten verfolgen können — und dass ich weiß, wofür ein deutscher Shop jenseits des Kaufen-Buttons geradestehen muss.',
         features: [
           'Registrierung, Login und Kundenkonto',
           'Produktverwaltung mit Varianten',
+          'Suche, Filter und Sortierung im Katalog',
           'Warenkorb und Stripe Checkout',
           'Bestellungen mit Status',
+          'Widerruf-, Rücksende- und Versandseiten',
           'Bewertungen',
           'Admin-Dashboard',
         ],
@@ -384,13 +386,14 @@ export const de: SiteContent = {
         problem:
           'Inhalte zu veröffentlichen klingt einfach, bis Editor, Bilder, Kommentare und Benachrichtigungen zusammenspielen müssen.',
         approach:
-          'Ich habe einen Rich-Text-Editor mit Bild-Uploads, Kommentar-Threads, Reaktionen und ein Benachrichtigungssystem gebaut, alles hinter einem Konto-System.',
+          'Ich habe einen Rich-Text-Editor mit Bild-Uploads, Kommentar-Threads, Reaktionen und Benachrichtigungen gebaut, alles hinter einem Konto-System. Die Entdecken-Seite durchsucht alles Veröffentlichte und grenzt es nach Kategorie, nach einem von 25 Schlagwörtern, nach Sortierung und nach Seitengröße ein, damit ein wachsendes Archiv auffindbar bleibt.',
         shows:
-          'Dass ich Inhalts- und Community-Funktionen bauen kann, wie sie in Portalen, Blogs und internen Wissensdatenbanken gebraucht werden.',
+          'Dass ich die Hälfte eines Produkts bauen kann, die aus Inhalten statt aus Transaktionen besteht — schreiben, veröffentlichen, diskutieren und Dinge wiederfinden — also genau das, worauf Portale, Blogs und interne Wissensdatenbanken laufen.',
         features: [
           'Konto und Profile',
           'Rich-Text-Editor',
           'Bild-Uploads',
+          'Suche, Schlagwörter und gefiltertes Entdecken',
           'Kommentare und Reaktionen',
           'Benachrichtigungen',
         ],
