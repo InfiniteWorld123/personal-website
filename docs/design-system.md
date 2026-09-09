@@ -91,13 +91,49 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
   text, lifts 2 px and glows on hover, with a diagonal glass shimmer.
   `outline` buttons lift 1.5 px and gain a blue ring. Styled globally on
   `[data-slot="button"]`; components add only shape (`rounded-full`) and size.
-- **Cards** (`.work-card`, `.surface-card`, `.step`, service cards):
-  `1.75rem` radius, a neutral 1 px border, a blue shadow, lift on hover. The
+- **Cards** (`.work-card`, `.surface-card`, `.step`, service cards,
+  `.contact-info-card`, `.contact-form-card`): `1.75rem` radius, a neutral
+  1 px border at the full `--border`, a blue shadow, lift on hover. The
   border does not change under the pointer: the owner asked for no edge that
   appears on hover, so what a card gains is lift and shadow only. The gradient
   hairline D18 drew on `::before` was removed in D19.
+- **Card shadow** (`--shadow-card`, `-hover`, `-lit`): two layers, not one
+  (D21) — a tight neutral contact shadow plus a wide, very faint blue one.
+  A single wide blue shadow read as a tinted panel behind the card: on the
+  white sections a white card has no edge of its own, so the shadow became
+  the only visible boundary. At its strongest it reached `#F0F3FF`, stronger
+  than the tinted band itself (`#F6F9FF`), and every card looked like it sat
+  in a container. It is now `#F8F9FF` at the card edge — lighter than the
+  band, so the band reads as a surface and the shadow reads as depth.
+  Three card types also carried the border at `color-mix(--border 70%)` while
+  two carried the full value; all six now use `var(--border)`, which is what
+  gives the card an edge of its own. Dark mode never had the problem — the
+  card (`#12182b`) and the page (`#0c1020`) differ — so its blue spread is
+  unchanged and only the contact layer was added.
+- **A scroll container clips its cards' shadows.** `.project-track` scrolls,
+  so `overflow-x: auto` (which forces `overflow-y` to `auto` too) cuts
+  everything outside its padding box — even at widths where nothing needs to
+  scroll. Its 4 px of side padding was well short of the shadow's 12 px reach
+  at rest and 20 px on hover, so the shadow was sliced along a straight line
+  and that cut, not the shadow, was what read as a container drawn around
+  each card. The padding now clears the hover shadow (`1rem 1.5rem 2.5rem`),
+  a negative margin gives the space back so the 3-up column width and the
+  spacing around the carousel are untouched, and `scroll-padding-inline`
+  keeps a snapped card from sitting flush against the edge and clipping
+  itself again. The sections that never clip — the fit cards, the steps, the
+  `.work-grid` on `/work` — never showed this. Any future scrolling row of
+  cards needs the same padding.
 - **Hero ground**: the dot grid on `.hero-section::after`, content above it.
   The three-pool mesh D18 put on `::before` was removed in D19.
+- **Tinted band** (`.contact-light`, `<Section tone="tint">`, `CtaBand`): the
+  soft blue wash that marks the services blocks and the closing call to
+  action. It has no edges — the tint rises out of the page and sinks back
+  into it over `min(120px, 22%)` at each end. The 1 px blue rules that closed
+  it top and bottom were removed in D20: four bands stack on `/services`, and
+  the rules made the page read as a list of boxes. The 22 % cap keeps a solid
+  core in a short band (the closing CTA is only ~400 px). Where two bands are
+  adjacent — the project pages run two — the touching ends drop their fade
+  (`:has(+ .contact-light)` / `+ .contact-light`) so the pair reads as one.
 - **Film grain**: one fixed layer on `body::after`, 4.5 % light / 7 % dark,
   under the header and under any dialog.
 - **Chips** (`.hero-chip`, `.section-chip`): outlined pills above titles.
