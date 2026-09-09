@@ -1578,20 +1578,31 @@ html[lang="ar"] .work-card-kind {
      bar drew a grey line across the section. */
   scrollbar-width: none;
   /* This track scrolls, so it clips: anything outside its padding box is cut
-     off. The card shadow reaches 12px at rest and 20px on hover, and the
-     hover lift raises the card another 4px — all well past the 4px of side
-     padding this had, so the shadow was sliced along a straight line on
-     every side. That cut is what read as a container drawn around each card
-     (D21); the sections that never clip — the fit cards, the steps, the work
-     grid on /work — never showed it. The padding now clears the shadow and
-     the negative margin gives the space back, so both the 3-up column width
-     and the spacing around the carousel are unchanged. */
-  padding: 1rem 1.5rem 2.5rem;
-  margin-inline: -1.5rem;
-  margin-block: -0.5rem -1.75rem;
+     off. That cut is a straight line across every card at once, which is
+     exactly what read as a container drawn around the whole row (D21, D22);
+     the sections that never clip — the fit cards, the steps, the work grid
+     on /work — never showed it.
+
+     D21 sized this padding against the hover shadow alone and left it short.
+     What the pointer actually raises is bigger:
+       · --shadow-card-lit ends in a 52px blur with no offset, so the glow
+         reaches 26px on all four sides, top included;
+       · .is-lit scales the card 1.015, roughly 3px more per side;
+       · the 14deg tilt swings the near corner further out still;
+       · --lift raises the card 4px.
+     The bottom is set by dark rather than by the glow: dark's hover shadow
+     is 0 26px 60px, so it falls 56px below the card, deeper than the 26px
+     the glow reaches. Light needs only 36px there.
+     The padding now clears all of that with room to spare, and the negative
+     margins hand the space straight back, so the 3-up column width and the
+     spacing around the carousel are both unchanged: the top and bottom
+     margins keep the same 0.5rem/0.75rem of visible air D21 left. */
+  padding: 2.75rem 3.5rem 5rem;
+  margin-inline: -3.5rem;
+  margin-block: -2.25rem -4.25rem;
   /* Snapping measures from the padding box, so without this the first card
-     would snap flush to the edge and clip its own shadow again. */
-  scroll-padding-inline: 1.5rem;
+     would snap flush to the edge and clip its own glow again. */
+  scroll-padding-inline: 3.5rem;
 }
 
 .project-track::-webkit-scrollbar {
