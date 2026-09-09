@@ -22,7 +22,7 @@ export function SiteFooter({ copy }: { copy: ShellCopy }) {
           <p className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
             {copy.footer.links}
           </p>
-          {copy.nav.map((item) => (
+          {[...copy.nav, ...copy.footer.more].map((item) => (
             <Link
               key={item.to}
               to={item.to}

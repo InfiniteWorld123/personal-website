@@ -18,6 +18,7 @@ export const en: SiteContent = {
       email: 'Email',
       links: 'Pages',
       builtWith: 'This website and the admin behind it are self-built.',
+      more: [{ label: 'FAQ', to: '/$lang/faq' }],
     },
   },
 
@@ -266,6 +267,7 @@ export const en: SiteContent = {
           body: '"From" means a small, clearly defined scope. Whether net or gross is stated in the proposal, depending on the tax situation at the time.',
         },
       ],
+      faqLink: 'More on process, pricing, and ownership',
     },
     cta: {
       title: 'Not sure which service fits?',
@@ -489,6 +491,115 @@ export const en: SiteContent = {
       languagesLabel: 'Languages',
       languages: 'German, English, Arabic',
     },
+  },
+
+  faq: {
+    meta: {
+      title: 'FAQ · How a project with me works',
+      description:
+        'Scope, prices, ownership, feedback rounds, and what happens after launch — the questions that come up before every project, answered in the open.',
+    },
+    eyebrow: 'FAQ',
+    title: 'The questions that come before a yes.',
+    intro:
+      'Hiring a developer you have never met is a leap. These are the things people ask me, and a few they do not ask but should. If your question is not here, write to me and it will be.',
+    groups: [
+      {
+        title: 'Before we start',
+        items: [
+          {
+            question: 'How does a project actually start?',
+            answer:
+              'With a conversation, free and with no sales pressure. You describe what you need and what you already have. If I can help, you get a written proposal: what is included, what is not, and what it costs. Nothing is built before that is agreed.',
+          },
+          {
+            question: 'Which of the three services do I need?',
+            answer:
+              'It follows the goal, not the size. If people need to find you and understand what you do, that is a website. If you sell products, that is an online store. If a process in your business runs on emails, files, and manual steps, that is custom software. If you are unsure, describe the goal and I will tell you.',
+          },
+          {
+            question: 'What do you need from me?',
+            answer:
+              'What your business does, who your customers are, and what should be easier afterwards. Practically: whether you already have a domain, texts, photos, or an old site. If you have none of it, that is normal and we sort it together.',
+          },
+          {
+            question: 'Do you work with clients outside Germany?',
+            answer:
+              'Yes. I am based in Erfurt and work remotely, in German, English, or Arabic. Prices are the same in euros wherever you are. What changes is the time zone we agree on for calls.',
+          },
+        ],
+      },
+      {
+        title: 'Money and ownership',
+        items: [
+          {
+            question: 'Why does every price say "from"?',
+            answer:
+              'Because the entry price is the smallest scope that still makes sense for that service. A five-page site and a twelve-page site in four languages are not the same job. The final number comes after I have reviewed what you actually need, and it is written down before anything starts.',
+          },
+          {
+            question: 'How is payment split?',
+            answer:
+              'Usually in parts tied to progress rather than dates — at the start, at the agreed checkpoint, and on acceptance. The exact split is named in your proposal. Websites are also available as a monthly instalment, with ownership transferring to you.',
+          },
+          {
+            question: 'Who owns the result?',
+            answer:
+              'You do. Domain, Shopify, and hosting accounts are set up in your name from the start, not mine. After full payment you receive the agreed deliverable and the usage rights to it.',
+          },
+          {
+            question: 'Are there costs that do not go to you?',
+            answer:
+              'Yes, and I would rather you hear them now: a Shopify subscription, the domain, any paid apps, and payment processing fees go directly to those providers. I do not mark them up or resell them. Hosting and ongoing operations are available from me as an optional monthly service.',
+          },
+        ],
+      },
+      {
+        title: 'Working together',
+        items: [
+          {
+            question: 'What if I do not like the design?',
+            answer:
+              'You see the design direction before everything is built on top of it, which is the point at which changing it is cheap. Two feedback rounds are included. If the direction is wrong, we change it there rather than at the end.',
+          },
+          {
+            question: 'How long does a project take?',
+            answer:
+              'The schedule is named in your proposal, because it depends on the scope. The honest part: the variable that moves it most is not my speed, it is how quickly texts, photos, product data, and decisions come back from your side.',
+          },
+          {
+            question: 'Can I change my mind halfway through?',
+            answer:
+              'Yes, and it gets estimated before it gets built. A change to the goal is new work with its own price, agreed in writing. That is not a penalty — it is what keeps the original number honest.',
+          },
+        ],
+      },
+      {
+        title: 'After launch',
+        items: [
+          {
+            question: 'What happens once it is live?',
+            answer:
+              'Bugs inside the agreed scope are fixed for 30 days after launch, at no extra cost. For stores you also get training and a handover so you can run it yourself. Ongoing operations and further development are available on request, not assumed.',
+          },
+          {
+            question: 'What counts as a bug and what counts as new work?',
+            answer:
+              'If something does not do what we agreed it would do, that is a bug and I fix it. A new page, a new role, a new integration, or a new idea is new work. I will always tell you which one I think it is, and why.',
+          },
+          {
+            question: 'Do you do marketing or SEO?',
+            answer:
+              'No. I build, I do not market. The technical groundwork is done properly — speed, structure, mobile, metadata — but I do not run campaigns and I do not promise rankings or revenue. If that is what you need, you need an agency, and I will say so.',
+          },
+          {
+            question: 'What if you are not around later?',
+            answer:
+              'Your accounts are in your name, and I build with ordinary, widely used tools rather than anything only I can maintain. Another developer can pick the project up. That is a deliberate choice: work you cannot leave is not work you own.',
+          },
+        ],
+      },
+    ],
   },
 
   notFound: {

@@ -143,6 +143,7 @@ const pageType = (path: string) => {
   if (path === '/about') return 'AboutPage'
   if (path === '/contact') return 'ContactPage'
   if (path === '/work') return 'CollectionPage'
+  if (path === '/faq') return 'FAQPage'
   return 'WebPage'
 }
 
@@ -156,7 +157,10 @@ const breadcrumb = (language: Language, path: string, title: string) => {
   const { shell, work } = getContent(language)
   const [section, slug] = path.split('/').filter(Boolean)
   const sectionPath = `/${section}`
-  const sectionLabel = shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ?? title
+  // Pages outside the main nav have no label to borrow; the part of the
+  // <title> before the separator is the page's own short name.
+  const sectionLabel =
+    shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ?? title.split(' · ')[0]
   // The leaf reads as the thing itself, not as the page's full <title>.
   const leaf = slug && isProjectSlug(slug) ? work.items[slug].name : title
 
@@ -177,9 +181,20 @@ const breadcrumb = (language: Language, path: string, title: string) => {
   }
 }
 
+/** Every published question, flattened out of its group. */
+const faqQuestions = (language: Language) =>
+  getContent(language).faq.groups.flatMap((group) =>
+    group.items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  )
+
 const mainEntity = (language: Language, path: string) => {
   if (path === '/about') return { '@id': PERSON }
   if (path === '/contact') return { '@id': BUSINESS }
+  if (path === '/faq') return faqQuestions(language)
 
   if (path === '/work') {
     return {

@@ -22,6 +22,12 @@ export type ShellCopy = {
     email: string
     links: string
     builtWith: string
+    /**
+     * Pages the footer carries but the header does not: they answer a
+     * question a visitor already has rather than selling anything, so
+     * putting them in the main nav would only dilute it.
+     */
+    more: Array<{ label: string; to: string }>
   }
 }
 
@@ -127,6 +133,8 @@ export type ServicesCopy = {
   shared: {
     title: string
     items: Array<{ title: string; body: string }>
+    /** Sends the reader on to the FAQ, where the rest of the rules are. */
+    faqLink: string
   }
   cta: { title: string; body: string; button: string }
 }
@@ -222,6 +230,22 @@ export type ContactCopy = {
   }
 }
 
+/**
+ * The objections a buyer has at this deal size, answered in the open.
+ * Grouped so the page can be scanned rather than read start to finish, and
+ * emitted as `FAQPage` structured data.
+ */
+export type FaqCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  groups: Array<{
+    title: string
+    items: Array<{ question: string; answer: string }>
+  }>
+}
+
 export type SiteContent = {
   shell: ShellCopy
   home: HomeCopy
@@ -229,5 +253,6 @@ export type SiteContent = {
   about: AboutCopy
   work: WorkCopy
   contact: ContactCopy
+  faq: FaqCopy
   notFound: { title: string; body: string; link: string }
 }

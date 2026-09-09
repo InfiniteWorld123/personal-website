@@ -18,6 +18,7 @@ export const de: SiteContent = {
       email: 'E-Mail',
       links: 'Seiten',
       builtWith: 'Diese Website und die Verwaltung dahinter sind selbst gebaut.',
+      more: [{ label: 'FAQ', to: '/$lang/faq' }],
     },
   },
 
@@ -266,6 +267,7 @@ export const de: SiteContent = {
           body: '„ab" heißt: ein kleiner, klar umrissener Umfang. Ob netto oder brutto steht im Angebot, je nach steuerlicher Situation zum Zeitpunkt des Angebots.',
         },
       ],
+      faqLink: 'Mehr Fragen zu Ablauf, Preisen und Eigentum',
     },
     cta: {
       title: 'Nicht sicher, welche Leistung passt?',
@@ -489,6 +491,115 @@ export const de: SiteContent = {
       languagesLabel: 'Sprachen',
       languages: 'Deutsch, Englisch, Arabisch',
     },
+  },
+
+  faq: {
+    meta: {
+      title: 'FAQ · Wie ein Projekt mit mir abläuft',
+      description:
+        'Umfang, Preise, Eigentum, Feedbackrunden und was nach dem Launch passiert — die Fragen, die vor jedem Projekt kommen, offen beantwortet.',
+    },
+    eyebrow: 'FAQ',
+    title: 'Die Fragen, die vor einem Ja kommen.',
+    intro:
+      'Jemanden zu beauftragen, den du nie getroffen hast, ist ein Sprung. Das hier sind die Fragen, die mir gestellt werden, und ein paar, die selten gestellt werden, aber wichtig sind. Fehlt deine, schreib mir, dann steht sie hier.',
+    groups: [
+      {
+        title: 'Bevor es losgeht',
+        items: [
+          {
+            question: 'Wie startet ein Projekt konkret?',
+            answer:
+              'Mit einem Gespräch, kostenlos und ohne Verkaufsdruck. Du beschreibst, was du brauchst und was schon da ist. Wenn ich helfen kann, bekommst du ein schriftliches Angebot: was enthalten ist, was nicht, und was es kostet. Vorher wird nichts gebaut.',
+          },
+          {
+            question: 'Welche der drei Leistungen brauche ich?',
+            answer:
+              'Das entscheidet das Ziel, nicht die Größe. Sollen Leute dich finden und verstehen, was du machst, ist das eine Website. Verkaufst du Produkte, ist das ein Online-Shop. Läuft ein Ablauf in deinem Betrieb über E-Mails, Dateien und Handarbeit, ist das individuelle Software. Wenn du unsicher bist, beschreib das Ziel, und ich sage es dir.',
+          },
+          {
+            question: 'Was brauchst du von mir?',
+            answer:
+              'Was dein Betrieb macht, wer deine Kunden sind, und was danach leichter sein soll. Praktisch: ob du schon Domain, Texte, Fotos oder eine alte Seite hast. Wenn nichts davon existiert, ist das normal, das ordnen wir gemeinsam.',
+          },
+          {
+            question: 'Arbeitest du auch mit Kunden außerhalb Deutschlands?',
+            answer:
+              'Ja. Ich sitze in Erfurt und arbeite remote, auf Deutsch, Englisch oder Arabisch. Die Preise sind überall dieselben in Euro. Was sich ändert, ist die Zeitzone, auf die wir uns für Gespräche einigen.',
+          },
+        ],
+      },
+      {
+        title: 'Geld und Eigentum',
+        items: [
+          {
+            question: 'Warum steht bei jedem Preis "ab"?',
+            answer:
+              'Weil der Einstiegspreis der kleinste Umfang ist, der bei dieser Leistung noch sinnvoll ist. Eine Seite mit fünf Unterseiten und eine mit zwölf in vier Sprachen sind nicht dieselbe Arbeit. Die endgültige Zahl kommt, nachdem ich geprüft habe, was du wirklich brauchst, und sie steht schriftlich fest, bevor etwas beginnt.',
+          },
+          {
+            question: 'Wie wird bezahlt?',
+            answer:
+              'In der Regel in Teilen, die an den Fortschritt gebunden sind statt an Kalenderdaten — zum Start, am vereinbarten Zwischenstand und bei der Abnahme. Die genaue Aufteilung steht in deinem Angebot. Websites gibt es auch in monatlichen Raten, wobei das Eigentum an dich übergeht.',
+          },
+          {
+            question: 'Wem gehört das Ergebnis?',
+            answer:
+              'Dir. Domain, Shopify und Hosting laufen von Anfang an auf deinen Namen, nicht auf meinen. Nach vollständiger Zahlung bekommst du das vereinbarte Ergebnis und die Nutzungsrechte daran.',
+          },
+          {
+            question: 'Gibt es Kosten, die nicht an dich gehen?',
+            answer:
+              'Ja, und die sollst du jetzt hören: Shopify-Abo, Domain, kostenpflichtige Apps und die Gebühren der Zahlungsanbieter gehen direkt an diese Anbieter. Ich schlage nichts drauf und verkaufe sie nicht weiter. Hosting und laufender Betrieb sind bei mir optional als Monatsleistung buchbar.',
+          },
+        ],
+      },
+      {
+        title: 'Zusammenarbeit',
+        items: [
+          {
+            question: 'Was, wenn mir das Design nicht gefällt?',
+            answer:
+              'Du siehst die gestalterische Richtung, bevor alles darauf aufgebaut wird — genau an dem Punkt, an dem eine Änderung billig ist. Zwei Feedbackrunden sind enthalten. Wenn die Richtung falsch ist, ändern wir sie dort und nicht am Ende.',
+          },
+          {
+            question: 'Wie lange dauert ein Projekt?',
+            answer:
+              'Der Zeitplan steht in deinem Angebot, weil er vom Umfang abhängt. Der ehrliche Teil: Was den Termin am stärksten verschiebt, ist nicht mein Tempo, sondern wie schnell Texte, Fotos, Produktdaten und Entscheidungen von deiner Seite zurückkommen.',
+          },
+          {
+            question: 'Kann ich unterwegs meine Meinung ändern?',
+            answer:
+              'Ja, und es wird geschätzt, bevor es gebaut wird. Eine Änderung am Ziel ist neue Arbeit mit eigenem Preis, schriftlich vereinbart. Das ist keine Strafe, sondern das, was die ursprüngliche Zahl ehrlich hält.',
+          },
+        ],
+      },
+      {
+        title: 'Nach dem Launch',
+        items: [
+          {
+            question: 'Was passiert, wenn es online ist?',
+            answer:
+              'Fehler innerhalb des vereinbarten Umfangs werden 30 Tage nach dem Launch kostenlos behoben. Bei Shops kommen Einweisung und Übergabe dazu, damit du den Laden selbst führen kannst. Laufender Betrieb und Weiterentwicklung gibt es auf Wunsch, nicht automatisch.',
+          },
+          {
+            question: 'Was ist ein Fehler und was ist neue Arbeit?',
+            answer:
+              'Wenn etwas nicht das tut, was wir vereinbart haben, ist das ein Fehler, und ich behebe ihn. Eine neue Seite, eine neue Rolle, eine neue Schnittstelle oder eine neue Idee ist neue Arbeit. Ich sage dir immer, wofür ich es halte, und warum.',
+          },
+          {
+            question: 'Machst du auch Marketing oder SEO?',
+            answer:
+              'Nein. Ich baue, ich vermarkte nicht. Die technische Grundlage wird sauber gemacht — Geschwindigkeit, Struktur, Mobil, Metadaten — aber ich schalte keine Kampagnen und verspreche weder Rankings noch Umsatz. Wenn du das brauchst, brauchst du eine Agentur, und ich sage es dir auch so.',
+          },
+          {
+            question: 'Was, wenn du später nicht mehr da bist?',
+            answer:
+              'Deine Zugänge laufen auf deinen Namen, und ich baue mit gewöhnlichen, verbreiteten Werkzeugen statt mit etwas, das nur ich pflegen kann. Ein anderer Entwickler kann übernehmen. Das ist eine bewusste Entscheidung: Arbeit, die du nicht verlassen kannst, gehört dir nicht wirklich.',
+          },
+        ],
+      },
+    ],
   },
 
   notFound: {

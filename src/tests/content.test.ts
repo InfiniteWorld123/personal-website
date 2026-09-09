@@ -26,6 +26,31 @@ describe('site content', () => {
     }
   })
 
+  it('answers the same questions in every language', () => {
+    const shape = (language: (typeof languages)[number]) =>
+      content[language].faq.groups.map((group) => group.items.length)
+
+    for (const language of languages) {
+      expect(shape(language)).toEqual(shape('de'))
+      expect(content[language].faq.groups.length).toBeGreaterThan(0)
+
+      for (const group of content[language].faq.groups) {
+        for (const item of group.items) {
+          expect(item.question.length).toBeGreaterThan(0)
+          expect(item.answer.length).toBeGreaterThan(0)
+        }
+      }
+    }
+  })
+
+  it('keeps the FAQ in the footer and out of the header nav', () => {
+    for (const language of languages) {
+      const { nav, footer } = content[language].shell
+      expect(nav.map((item) => item.to)).not.toContain('/$lang/faq')
+      expect(footer.more.map((item) => item.to)).toContain('/$lang/faq')
+    }
+  })
+
   it('states the published starting prices from docs/services', () => {
     expect(servicePrices).toEqual({ websites: 990, shopify: 2490, software: 2990 })
     expect(content.de.services.items.websites.price).toBe('ab 990 €')
