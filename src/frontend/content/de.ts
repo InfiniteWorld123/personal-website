@@ -482,10 +482,12 @@ export const de: SiteContent = {
     },
     aside: {
       title: 'Lieber direkt?',
-      body: 'Eine E-Mail reicht. Ein Termin-Buchungssystem folgt auf dieser Seite.',
+      body: 'Eine E-Mail reicht. Schreib ein paar Zeilen zu dem, was du vorhast.',
       emailLabel: 'E-Mail',
       locationLabel: 'Standort',
-      location: 'Erfurt, Deutschland · Arbeit für ganz Deutschland, Remote',
+      location: 'Erfurt, Deutschland · remote, mit Kunden in Deutschland und darüber hinaus',
+      languagesLabel: 'Sprachen',
+      languages: 'Deutsch, Englisch, Arabisch',
     },
   },
 

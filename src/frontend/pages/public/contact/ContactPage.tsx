@@ -1,4 +1,4 @@
-import { Mail, MapPin } from 'lucide-react'
+import { Languages, Mail, MapPin } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { getContent, site } from '#/frontend/content'
@@ -12,6 +12,7 @@ export function ContactPage() {
   const ref = useReveal<HTMLElement>()
   const mailTilt = useTilt<HTMLAnchorElement>()
   const placeTilt = useTilt<HTMLDivElement>()
+  const langTilt = useTilt<HTMLDivElement>()
 
   return (
     <section ref={ref} data-reveal-scope="" className="contact-page">
@@ -56,6 +57,17 @@ export function ContactPage() {
                   {contact.aside.locationLabel}
                 </span>
                 <span className="text-sm font-semibold text-foreground">{contact.aside.location}</span>
+              </span>
+            </div>
+            <div data-tilt ref={langTilt} className="contact-info-card flex items-center gap-4 rounded-[1.4rem] px-5 py-4">
+              <span className="brand-mark text-primary">
+                <Languages className="size-4" />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-foreground/45 rtl:tracking-normal">
+                  {contact.aside.languagesLabel}
+                </span>
+                <span className="text-sm font-semibold text-foreground">{contact.aside.languages}</span>
               </span>
             </div>
           </div>

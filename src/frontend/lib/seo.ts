@@ -57,7 +57,9 @@ export function buildHead({ language, path, title, description, image, noIndex }
         hrefLang: alternate,
         href: pageUrl(alternate, path),
       })),
-      { rel: 'alternate', hrefLang: 'x-default', href: pageUrl('de', path) },
+      // x-default is the page for a visitor whose language we do not publish;
+      // English serves them better than German now that clients are worldwide.
+      { rel: 'alternate', hrefLang: 'x-default', href: pageUrl('en', path) },
     ],
     scripts: [
       {

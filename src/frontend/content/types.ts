@@ -217,6 +217,8 @@ export type ContactCopy = {
     emailLabel: string
     locationLabel: string
     location: string
+    languagesLabel: string
+    languages: string
   }
 }
 

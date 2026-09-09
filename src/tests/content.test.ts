@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { content, projectOrder, projects, serviceOrder, servicePrices } from '#/frontend/content'
-import { languages, languageFromAcceptLanguage, languageFromPathname, withLanguage } from '#/frontend/i18n/language'
+import {
+  languages,
+  languageFromAcceptLanguage,
+  languageFromCountry,
+  languageFromPathname,
+  withLanguage,
+} from '#/frontend/i18n/language'
 import { formatEuro } from '#/frontend/lib/format'
 
 describe('site content', () => {
@@ -45,8 +51,20 @@ describe('language helpers', () => {
   it('picks the best supported language from Accept-Language', () => {
     expect(languageFromAcceptLanguage('ar-SY,ar;q=0.9,en;q=0.8')).toBe('ar')
     expect(languageFromAcceptLanguage('fr-FR,fr;q=0.9,en-US;q=0.8')).toBe('en')
-    expect(languageFromAcceptLanguage('fr')).toBe('de')
-    expect(languageFromAcceptLanguage(null)).toBe('de')
+  })
+
+  it('says nothing when the browser asks for a language the site does not publish', () => {
+    expect(languageFromAcceptLanguage('fr')).toBeNull()
+    expect(languageFromAcceptLanguage(null)).toBeNull()
+  })
+
+  it('falls back to the visitor country, and only for the languages it can serve', () => {
+    expect(languageFromCountry('DE')).toBe('de')
+    expect(languageFromCountry('at')).toBe('de')
+    expect(languageFromCountry('SY')).toBe('ar')
+    expect(languageFromCountry('AE')).toBe('ar')
+    expect(languageFromCountry('US')).toBeNull()
+    expect(languageFromCountry(null)).toBeNull()
   })
 
   it('formats euro amounts the way each language writes them', () => {

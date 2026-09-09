@@ -31,6 +31,13 @@ const postalAddress = {
 
 const spokenLanguages = languages.map((language) => localeFor(language))
 
+/**
+ * Germany is where the work is based and most clients are; the remote half of
+ * the practice is stated too, so search engines outside Germany do not read
+ * this as a Germany-only business.
+ */
+const AREA_SERVED = [{ '@type': 'Country', name: 'Germany' }, 'Worldwide (remote)']
+
 const priceRange = () => {
   const amounts = serviceOrder.map((slug) => servicePrices[slug])
   return `€${Math.min(...amounts)}–€${Math.max(...amounts)}`
@@ -57,7 +64,7 @@ const offers = (language: Language) => {
       description: items[slug].promise,
       serviceType: items[slug].name,
       provider: { '@id': BUSINESS },
-      areaServed: { '@type': 'Country', name: 'Germany' },
+      areaServed: AREA_SERVED,
       availableLanguage: spokenLanguages,
     },
   }))
@@ -78,6 +85,7 @@ const siteNodes = (language: Language) => {
       description: shell.footer.tagline,
       address: postalAddress,
       knowsLanguage: spokenLanguages,
+      knowsAbout: site.knowsAbout,
       sameAs: [site.github, site.linkedin],
       worksFor: { '@id': BUSINESS },
     },
@@ -91,7 +99,7 @@ const siteNodes = (language: Language) => {
       email: `mailto:${site.email}`,
       founder: { '@id': PERSON },
       address: postalAddress,
-      areaServed: { '@type': 'Country', name: 'Germany' },
+      areaServed: AREA_SERVED,
       availableLanguage: spokenLanguages,
       priceRange: priceRange(),
       makesOffer: offers(language),

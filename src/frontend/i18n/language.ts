@@ -41,9 +41,36 @@ export const withLanguage = (pathname: string, language: Language) => {
   return `/${segments.join('/')}`
 }
 
-/** Pick a language from an Accept-Language header, falling back to German. */
-export const languageFromAcceptLanguage = (header: string | null | undefined): Language => {
-  if (!header) return defaultLanguage
+/** Countries whose visitors are served German first. */
+const GERMAN_SPEAKING = new Set(['DE', 'AT', 'CH', 'LI'])
+
+/** Arab League members, where Arabic is the safer first guess than English. */
+const ARABIC_SPEAKING = new Set([
+  'SY', 'IQ', 'LB', 'JO', 'PS', 'EG', 'SA', 'AE', 'KW', 'QA', 'BH',
+  'OM', 'YE', 'LY', 'TN', 'DZ', 'MA', 'SD', 'MR', 'SO', 'DJ', 'KM',
+])
+
+/**
+ * Language for a visitor's country, used only when the browser sent no
+ * language we publish. Returns null for the rest of the world so the caller
+ * can fall back to English rather than guessing.
+ */
+export const languageFromCountry = (country: string | null | undefined): Language | null => {
+  if (!country) return null
+
+  const code = country.trim().toUpperCase()
+  if (GERMAN_SPEAKING.has(code)) return 'de'
+  if (ARABIC_SPEAKING.has(code)) return 'ar'
+
+  return null
+}
+
+/**
+ * Pick a language from an Accept-Language header. Returns null when the header
+ * names no language this site publishes, so the caller can try the country next.
+ */
+export const languageFromAcceptLanguage = (header: string | null | undefined): Language | null => {
+  if (!header) return null
 
   const ranked = header
     .split(',')
@@ -63,5 +90,5 @@ export const languageFromAcceptLanguage = (header: string | null | undefined): L
     if (isLanguage(base)) return base
   }
 
-  return defaultLanguage
+  return null
 }

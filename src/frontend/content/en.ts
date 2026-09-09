@@ -482,10 +482,12 @@ export const en: SiteContent = {
     },
     aside: {
       title: 'Prefer to write directly?',
-      body: 'An email is enough. A booking system for calls is coming to this page.',
+      body: 'An email is enough. Write a few lines about what you have in mind.',
       emailLabel: 'Email',
       locationLabel: 'Location',
-      location: 'Erfurt, Germany · working across Germany, remote',
+      location: 'Erfurt, Germany · remote, with clients in Germany and beyond',
+      languagesLabel: 'Languages',
+      languages: 'German, English, Arabic',
     },
   },
 
