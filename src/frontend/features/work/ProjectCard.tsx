@@ -21,6 +21,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
   showTech?: boolean
 }) {
   const tilt = useTilt<HTMLElement>()
+  const lead = facts.images?.[0]
 
   return (
     <article className="work-card" data-reveal data-tilt ref={tilt}>
@@ -29,7 +30,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
         <p className="work-card-kind">{copy.kind}</p>
         <ProjectStatusPill status={facts.status} labels={statusLabels} />
       </div>
-      {facts.image ? <img className="work-card-image" src={facts.image.src} width={facts.image.width} height={facts.image.height} alt={facts.image.alt[language]} loading="lazy" /> : null}
+      {lead ? <img className="work-card-image" src={lead.src} width={lead.width} height={lead.height} alt={lead.alt[language]} loading="lazy" /> : null}
       <p className="work-card-summary">{copy.summary}</p>
       {showTech ? <p className="work-card-tech" dir="ltr">{facts.stack.slice(0, 3).join(' · ')}</p> : null}
       <div className="work-card-actions">

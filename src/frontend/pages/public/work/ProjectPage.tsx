@@ -63,7 +63,21 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
             </div>
           </div>
 
-          {facts.image ? <img className="project-page-image" src={facts.image.src} width={facts.image.width} height={facts.image.height} alt={facts.image.alt[language]} /> : null}
+          {facts.images?.length ? (
+            <div data-reveal className="project-gallery">
+              {facts.images.map((shot, index) => (
+                <img
+                  key={shot.src}
+                  className={shot.width < shot.height ? 'project-page-image is-portrait' : 'project-page-image'}
+                  src={shot.src}
+                  width={shot.width}
+                  height={shot.height}
+                  alt={shot.alt[language]}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+              ))}
+            </div>
+          ) : null}
         </Container>
       </section>
 
