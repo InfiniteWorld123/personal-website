@@ -11,17 +11,6 @@ import { defaultLanguage, directionFor, languageFromPathname } from '#/frontend/
 import { MOTION_BOOT_SCRIPT, useMotionPreference } from '#/frontend/motion'
 import { NotFoundPage } from '#/frontend/pages/public/NotFoundPage'
 
-const personStructuredData = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: site.name,
-  url: site.url,
-  image: `${site.url}${site.heroPortrait}`,
-  email: `mailto:${site.email}`,
-  address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: site.country },
-  sameAs: [site.github, site.linkedin],
-}
-
 /**
  * Applies the stored theme before first paint so there is no flash. Language
  * needs no script: it comes from the URL and is rendered on the server.
@@ -49,9 +38,10 @@ export const Route = createRootRoute({
     links: [
       { rel: 'stylesheet', href: appCss },
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'icon', href: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
       { rel: 'manifest', href: '/manifest.json' },
     ],
-    scripts: [{ type: 'application/ld+json', children: JSON.stringify(personStructuredData) }],
   }),
   shellComponent: RootDocument,
   notFoundComponent: () => <NotFoundPage />,

@@ -11,7 +11,6 @@ export const site = {
   linkedin: 'https://linkedin.com/in/yaman-warda',
   /** Transparent cutout of the studio portrait; shown in front of the blob. */
   heroPortrait: '/images/yaman-cutout.png',
-  ogImage: '/images/yaman-hero-blue-v3.png',
   contactEndpoint: '/api/contact',
 } as const
 
