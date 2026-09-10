@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+import { ArrowRight } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
@@ -38,7 +40,7 @@ export function ServicesPage() {
         />
       ))}
 
-      <SharedRules copy={services.shared} />
+      <SharedRules copy={services.shared} language={language} />
 
       <CtaBand title={services.cta.title} body={services.cta.body} button={services.cta.button} />
     </>
@@ -114,7 +116,13 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-function SharedRules({ copy }: { copy: ReturnType<typeof getContent>['services']['shared'] }) {
+function SharedRules({
+  copy,
+  language,
+}: {
+  copy: ReturnType<typeof getContent>['services']['shared']
+  language: Language
+}) {
   return (
     <Section>
       <Container className="flex flex-col gap-10">
@@ -129,6 +137,15 @@ function SharedRules({ copy }: { copy: ReturnType<typeof getContent>['services']
             </div>
           ))}
         </div>
+        <Link
+          data-reveal
+          to="/$lang/faq"
+          params={{ lang: language }}
+          className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-1.5 text-sm font-medium"
+        >
+          {copy.faqLink}
+          <ArrowRight className="size-4 rtl:-scale-x-100" />
+        </Link>
       </Container>
     </Section>
   )

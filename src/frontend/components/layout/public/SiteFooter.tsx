@@ -22,7 +22,7 @@ export function SiteFooter({ copy }: { copy: ShellCopy }) {
           <p className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
             {copy.footer.links}
           </p>
-          {copy.nav.map((item) => (
+          {[...copy.nav, ...copy.footer.more].map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -54,6 +54,18 @@ export function SiteFooter({ copy }: { copy: ShellCopy }) {
         <p>
           © {year} {site.name}
         </p>
+        <nav className="flex flex-wrap gap-x-5 gap-y-1" aria-label={copy.footer.links}>
+          {copy.footer.legal.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              params={{ lang: language }}
+              className="hover:text-foreground w-fit"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <p>{copy.footer.builtWith}</p>
       </Container>
     </footer>

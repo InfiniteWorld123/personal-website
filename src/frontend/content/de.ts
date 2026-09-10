@@ -18,6 +18,14 @@ export const de: SiteContent = {
       email: 'E-Mail',
       links: 'Seiten',
       builtWith: 'Diese Website und die Verwaltung dahinter sind selbst gebaut.',
+      more: [
+        { label: 'FAQ', to: '/$lang/faq' },
+        { label: 'Stack', to: '/$lang/stack' },
+      ],
+      legal: [
+        { label: 'Impressum', to: '/$lang/impressum' },
+        { label: 'Datenschutz', to: '/$lang/datenschutz' },
+      ],
     },
   },
 
@@ -34,7 +42,7 @@ export const de: SiteContent = {
       typed: ['WEB-', 'SHOP-', 'SOFTWARE-'],
       staticLine: 'ENTWICKLER',
       headline: "Deine Idee. Gemeinsam umgesetzt.",
-      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt: durchdacht, persönlich und passend zu deinem Unternehmen.",
+      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt — auf Deutsch, Englisch oder Arabisch.",
       cta: 'Gespräch anfragen',
       secondary: 'Projekte ansehen',
       availability: 'Verfügbar für neue Projekte',
@@ -137,7 +145,7 @@ export const de: SiteContent = {
     about: {
       eyebrow: 'Über mich',
       title: 'Ein Entwickler, ein Ansprechpartner.',
-      body: 'Ich bin Yaman Warda, Entwickler in Erfurt. Ich habe mir das Programmieren selbst beigebracht und baue seitdem komplette Systeme: Oberfläche, Backend, Datenbank, Betrieb. Diese Website samt der Verwaltung dahinter ist selbst gebaut.',
+      body: 'Ich bin Yaman Warda. 2015 kam ich aus Syrien, 2021 habe ich mir das Programmieren beigebracht, und von Erfurt aus baue ich komplette Systeme: Oberfläche, Backend, Datenbank, Betrieb. Diese Website und die Verwaltung dahinter sind eines davon.',
       link: 'Mehr über mich',
     },
     cta: {
@@ -266,6 +274,7 @@ export const de: SiteContent = {
           body: '„ab" heißt: ein kleiner, klar umrissener Umfang. Ob netto oder brutto steht im Angebot, je nach steuerlicher Situation zum Zeitpunkt des Angebots.',
         },
       ],
+      faqLink: 'Mehr Fragen zu Ablauf, Preisen und Eigentum',
     },
     cta: {
       title: 'Nicht sicher, welche Leistung passt?',
@@ -278,18 +287,39 @@ export const de: SiteContent = {
     meta: {
       title: 'Über mich · Yaman Warda, Entwickler in Erfurt',
       description:
-        'Selbst beigebracht, komplett gebaut: Wer hinter den Websites, Shops und Systemen steht, wie ich arbeite und warum ich diese Plattform selbst gebaut habe.',
+        'Syrer, seit 2015 in Deutschland, seit 2021 Autodidakt. Warum ich angefangen habe, wie ich nach Erfurt kam, warum ich ganze Systeme baue und was du von einer Person erwarten kannst.',
     },
     eyebrow: 'Über mich',
     title: 'Ich baue Dinge, die danach jemand täglich benutzt.',
     intro:
-      'Ich bin Yaman Warda, Entwickler in Erfurt. Ich arbeite allein, direkt mit dir, und baue vollständige Systeme statt einzelner Teile.',
+      'Ich bin Yaman Warda. 2015 bin ich aus Syrien nach Deutschland gekommen, 2021 habe ich mir das Programmieren selbst beigebracht, und heute baue ich von Erfurt aus Websites, Shops und Business-Systeme — remote, auf Deutsch, Englisch oder Arabisch.',
     story: {
       title: 'Wie ich hierher gekommen bin',
-      paragraphs: [
-        'Ich habe mir das Programmieren selbst beigebracht. Nicht mit Tutorials, die man nachtippt, sondern mit echten Projekten, die veröffentlicht werden mussten und dann Feedback bekommen haben.',
-        'Dabei ist mir aufgefallen, was ich am liebsten baue: keine einzelnen Bildschirme, sondern ganze Abläufe. Anmeldung, Datenmodell, Zahlungen, Dashboards und die kleinen Details, die eine Software echt wirken lassen.',
-        'Heute baue ich genau das für kleine Unternehmen: Websites, Shops und Systeme, die nach der Übergabe im Alltag funktionieren müssen.',
+      chapters: [
+        {
+          title: 'Warum ich angefangen habe',
+          paragraphs: [
+            'Nicht, weil ich als Kind Computer geliebt hätte. Ich habe 2021 angefangen, weil Programmieren die breiteste Tür war, die ich sehen konnte: eine Fähigkeit, die bezahlt wird, die mitreist, mit der ich für mich selbst oder für andere arbeiten kann und die mir niemand wieder wegnimmt.',
+            'Es gab einen kleineren Grund, und der ist weniger seriös. Es fühlte sich gut an, schnell auf der Tastatur zu sein — schnell zu tippen und zu sehen, wie etwas entsteht. Ich tue nicht so, als wäre das nicht dabei gewesen.',
+            'Beide Gründe haben gereicht.',
+          ],
+        },
+        {
+          title: 'Wie ich in Erfurt gelandet bin',
+          paragraphs: [
+            'Ich bin Syrer. Seit 2015 bin ich in Deutschland.',
+            'Erfurt habe ich mir nicht ausgesucht. Mein Vater hat hier einen Platz bekommen, und dorthin ist die Familie gegangen. Das ist keine Geschichte darüber, die richtige Stadt zu finden. Es ist die gewöhnliche Version, in der man irgendwo ankommt und den Ort dann zu seinem macht.',
+            'Also habe ich Deutsch gelernt, und ein paar Jahre später das Programmieren auf Englisch, also in einer dritten Sprache. Wahrscheinlich ist das der Grund, warum mir Klarheit so wichtig ist. Ich habe lange auf der anderen Seite von Sätzen gestanden, denen ich nicht folgen konnte.',
+          ],
+        },
+        {
+          title: 'Warum ganze Systeme und nicht Bildschirme',
+          paragraphs: [
+            'Das Erste, was ich je ins Internet gestellt habe, war ein Onlineshop. Kein Tutorial-Ergebnis, sondern ein echter, mit Katalog, Warenkorb und Kasse, veröffentlicht dort, wo Freunde und Familie ihn öffnen und mir sagen konnten, was kaputt ist. Das haben sie getan.',
+            'Ich habe mehr Projekte gelöscht als behalten. Die, die geblieben sind, haben mir jedes Mal dasselbe beigebracht: der interessante Teil ist nie der Bildschirm. Es ist das, was dahinter liegt — die Anmeldung, das Datenmodell, die Zahlung, die Bestellung, die morgen immer noch stimmen muss.',
+            'Deshalb baue ich auch auf TanStack Start statt auf Next.js. Es ist kein magisches Framework. Ich sehe, was es tut, der Router ist das beste Stück daran, und das Ökosystem ist durchgehend TypeScript. Ich verstehe meine Werkzeuge lieber, als dass ich von ihnen beeindruckt bin.',
+          ],
+        },
       ],
     },
     method: {
@@ -297,30 +327,54 @@ export const de: SiteContent = {
       items: [
         {
           title: 'Erst verstehen, dann bauen',
-          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er hakt, bevor ich eine Lösung vorschlage.',
+          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er aufhört zu funktionieren, bevor ich irgendetwas vorschlage. Das meiste, was ich im ersten Gespräch höre, ist das Symptom. Die Ursache taucht meistens im zweiten auf.',
         },
         {
-          title: 'Klein anfangen, sauber liefern',
-          body: 'Die erste Version enthält, was den Kern trägt. Erweiterungen kommen, wenn sie gebraucht werden, nicht weil sie möglich sind.',
+          title: 'Klein anfangen',
+          body: 'Die erste Version trägt den Kern. Alles andere wartet, bis es wirklich gebraucht wird.',
         },
         {
-          title: 'Grundlagen statt Tricks',
-          body: 'Ich baue mit Werkzeugen, die ich verstehe, damit ich Fehler finden und dir erklären kann, was passiert.',
+          title: 'Werkzeuge, die ich verstehe',
+          body: 'Ich baue mit Dingen, die ich um Mitternacht debuggen und dir am nächsten Morgen erklären kann. Das schließt eine Menge cleverer Entscheidungen aus, mit Absicht.',
         },
         {
-          title: 'Ehrlich, auch wenn es Umsatz kostet',
-          body: 'Wenn deine Website gut genug ist oder ein fertiges Werkzeug reicht, sage ich das.',
+          title: 'Ehrlich, auch wenn es mich den Auftrag kostet',
+          body: 'Wenn deine Website schon in Ordnung ist oder ein Werkzeug für dreißig Euro im Monat reicht, sage ich das, bevor du mir irgendetwas bezahlst.',
+        },
+      ],
+    },
+    expect: {
+      title: 'Was du von mir erwarten kannst',
+      intro:
+        'Mit einer Person zu arbeiten ist nicht dasselbe wie mit einer Agentur. Hier ist die ehrliche Fassung des Unterschieds.',
+      items: [
+        {
+          title: 'Du sprichst mit dem, der es baut',
+          body: 'Kein Account Manager, keine Übergabe von einem Vertriebler an einen Entwickler, den du nie triffst. Wer deine E-Mail beantwortet, schreibt auch den Code.',
+        },
+        {
+          title: 'Eine Antwort innerhalb eines Werktags',
+          body: 'Nicht immer die vollständige. Manchmal ist es "das muss ich mir richtig ansehen, ich melde mich morgen." Aber du sitzt nicht da und fragst dich, ob die Nachricht angekommen ist.',
+        },
+        {
+          title: 'Du siehst es, bevor es fertig ist',
+          body: 'Die gestalterische Richtung kommt an einem Zwischenstand, solange eine Änderung noch billig ist, und danach zwei Feedbackrunden. Nichts Großes wird auf einer Richtung gebaut, die du nicht gesehen hast.',
+        },
+        {
+          title: 'Die Übergabe gehört zur Arbeit',
+          body: 'Zugänge auf deinen Namen, 30 Tage Fehlerbehebung nach dem Launch, und bei Shops eine Einweisung, damit du ihn selbst führen kannst. Ich versuche nicht, dich von mir abhängig zu machen.',
         },
       ],
     },
     platform: {
-      title: 'Diese Website ist ein Beispiel',
-      body: 'Du siehst gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
+      title: 'Diese Website ist das Beispiel',
+      body: 'Du liest sie gerade. Die öffentlichen Seiten in drei Sprachen, die API, die PostgreSQL-Datenbank und die Verwaltung dahinter für Anfragen, Inhalte, Kunden und Rechnungen sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, kein gekauftes Template.',
+      link: 'Die technische Fassung',
     },
     portraitAlt: 'Yaman Warda',
     cta: {
-      title: 'Lass uns über dein Projekt sprechen.',
-      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn sie lautet: Du brauchst etwas anderes.',
+      title: 'Lass uns über dein Vorhaben sprechen.',
+      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn die Antwort ist, dass du etwas anderes brauchst.',
       button: 'Gespräch anfragen',
       alt: 'Schreib mir eine E-Mail',
     },
@@ -362,14 +416,16 @@ export const de: SiteContent = {
         problem:
           'Ein Shop ist der härteste Test für ein Web-System: Konten, Geld, Lagerbestand und Bestellstatus müssen zusammen stimmen, sonst verliert der Betreiber Geld oder Vertrauen.',
         approach:
-          'Ich habe den gesamten Kaufweg gebaut, vom Produktkatalog über den Warenkorb bis zur Zahlung mit Stripe und der Bestellübersicht für Kunde und Betreiber. Der Admin-Bereich verwaltet Produkte, Bestellungen und Bewertungen.',
+          'Ich habe den gesamten Kaufweg gebaut: einen Katalog mit 500 Produkten in zehn Kategorien, eingegrenzt über Suche und Filter für Kategorie, Farbe, Speicher, Arbeitsspeicher und Bildschirmgröße, dann Warenkorb, Stripe-Checkout und die Bestellübersicht für Kunde und Betreiber. Dazu die Seiten, die ein deutscher Shop seinen Kunden schuldet — Widerruf, Rücksendung, Versand — denn ein Shop, aus dem man rechtlich nicht verkaufen darf, ist nicht fertig.',
         shows:
-          'Dass ich einen kompletten Kaufprozess mit Zahlung, Rechten und Verwaltung durchgängig bauen kann, nicht nur die Schaufensterseite.',
+          'Dass ich einen Kauf vom gefilterten Katalog über die Zahlung bis zur Bestellung tragen kann, die beide Seiten verfolgen können — und dass ich weiß, wofür ein deutscher Shop jenseits des Kaufen-Buttons geradestehen muss.',
         features: [
           'Registrierung, Login und Kundenkonto',
           'Produktverwaltung mit Varianten',
+          'Suche, Filter und Sortierung im Katalog',
           'Warenkorb und Stripe Checkout',
           'Bestellungen mit Status',
+          'Widerruf-, Rücksende- und Versandseiten',
           'Bewertungen',
           'Admin-Dashboard',
         ],
@@ -382,13 +438,14 @@ export const de: SiteContent = {
         problem:
           'Inhalte zu veröffentlichen klingt einfach, bis Editor, Bilder, Kommentare und Benachrichtigungen zusammenspielen müssen.',
         approach:
-          'Ich habe einen Rich-Text-Editor mit Bild-Uploads, Kommentar-Threads, Reaktionen und ein Benachrichtigungssystem gebaut, alles hinter einem Konto-System.',
+          'Ich habe einen Rich-Text-Editor mit Bild-Uploads, Kommentar-Threads, Reaktionen und Benachrichtigungen gebaut, alles hinter einem Konto-System. Die Entdecken-Seite durchsucht alles Veröffentlichte und grenzt es nach Kategorie, nach einem von 25 Schlagwörtern, nach Sortierung und nach Seitengröße ein, damit ein wachsendes Archiv auffindbar bleibt.',
         shows:
-          'Dass ich Inhalts- und Community-Funktionen bauen kann, wie sie in Portalen, Blogs und internen Wissensdatenbanken gebraucht werden.',
+          'Dass ich die Hälfte eines Produkts bauen kann, die aus Inhalten statt aus Transaktionen besteht — schreiben, veröffentlichen, diskutieren und Dinge wiederfinden — also genau das, worauf Portale, Blogs und interne Wissensdatenbanken laufen.',
         features: [
           'Konto und Profile',
           'Rich-Text-Editor',
           'Bild-Uploads',
+          'Suche, Schlagwörter und gefiltertes Entdecken',
           'Kommentare und Reaktionen',
           'Benachrichtigungen',
         ],
@@ -482,10 +539,293 @@ export const de: SiteContent = {
     },
     aside: {
       title: 'Lieber direkt?',
-      body: 'Eine E-Mail reicht. Ein Termin-Buchungssystem folgt auf dieser Seite.',
+      body: 'Eine E-Mail reicht. Schreib ein paar Zeilen zu dem, was du vorhast.',
       emailLabel: 'E-Mail',
       locationLabel: 'Standort',
-      location: 'Erfurt, Deutschland · Arbeit für ganz Deutschland, Remote',
+      location: 'Erfurt, Deutschland · remote, mit Kunden in Deutschland und darüber hinaus',
+      languagesLabel: 'Sprachen',
+      languages: 'Deutsch, Englisch, Arabisch',
+    },
+  },
+
+  faq: {
+    meta: {
+      title: 'FAQ · Wie ein Projekt mit mir abläuft',
+      description:
+        'Umfang, Preise, Eigentum, Feedbackrunden und was nach dem Launch passiert — die Fragen, die vor jedem Projekt kommen, offen beantwortet.',
+    },
+    eyebrow: 'FAQ',
+    title: 'Die Fragen, die vor einem Ja kommen.',
+    intro:
+      'Jemanden zu beauftragen, den du nie getroffen hast, ist ein Sprung. Das hier sind die Fragen, die mir gestellt werden, und ein paar, die selten gestellt werden, aber wichtig sind. Fehlt deine, schreib mir, dann steht sie hier.',
+    groups: [
+      {
+        title: 'Bevor es losgeht',
+        items: [
+          {
+            question: 'Wie startet ein Projekt konkret?',
+            answer:
+              'Mit einem Gespräch, kostenlos und ohne Verkaufsdruck. Du beschreibst, was du brauchst und was schon da ist. Wenn ich helfen kann, bekommst du ein schriftliches Angebot: was enthalten ist, was nicht, und was es kostet. Vorher wird nichts gebaut.',
+          },
+          {
+            question: 'Welche der drei Leistungen brauche ich?',
+            answer:
+              'Das entscheidet das Ziel, nicht die Größe. Sollen Leute dich finden und verstehen, was du machst, ist das eine Website. Verkaufst du Produkte, ist das ein Online-Shop. Läuft ein Ablauf in deinem Betrieb über E-Mails, Dateien und Handarbeit, ist das individuelle Software. Wenn du unsicher bist, beschreib das Ziel, und ich sage es dir.',
+          },
+          {
+            question: 'Was brauchst du von mir?',
+            answer:
+              'Was dein Betrieb macht, wer deine Kunden sind, und was danach leichter sein soll. Praktisch: ob du schon Domain, Texte, Fotos oder eine alte Seite hast. Wenn nichts davon existiert, ist das normal, das ordnen wir gemeinsam.',
+          },
+          {
+            question: 'Arbeitest du auch mit Kunden außerhalb Deutschlands?',
+            answer:
+              'Ja. Ich sitze in Erfurt und arbeite remote, auf Deutsch, Englisch oder Arabisch. Die Preise sind überall dieselben in Euro. Was sich ändert, ist die Zeitzone, auf die wir uns für Gespräche einigen.',
+          },
+        ],
+      },
+      {
+        title: 'Geld und Eigentum',
+        items: [
+          {
+            question: 'Warum steht bei jedem Preis "ab"?',
+            answer:
+              'Weil der Einstiegspreis der kleinste Umfang ist, der bei dieser Leistung noch sinnvoll ist. Eine Seite mit fünf Unterseiten und eine mit zwölf in vier Sprachen sind nicht dieselbe Arbeit. Die endgültige Zahl kommt, nachdem ich geprüft habe, was du wirklich brauchst, und sie steht schriftlich fest, bevor etwas beginnt.',
+          },
+          {
+            question: 'Wie wird bezahlt?',
+            answer:
+              'In der Regel in Teilen, die an den Fortschritt gebunden sind statt an Kalenderdaten — zum Start, am vereinbarten Zwischenstand und bei der Abnahme. Die genaue Aufteilung steht in deinem Angebot. Websites gibt es auch in monatlichen Raten, wobei das Eigentum an dich übergeht.',
+          },
+          {
+            question: 'Wem gehört das Ergebnis?',
+            answer:
+              'Dir. Domain, Shopify und Hosting laufen von Anfang an auf deinen Namen, nicht auf meinen. Nach vollständiger Zahlung bekommst du das vereinbarte Ergebnis und die Nutzungsrechte daran.',
+          },
+          {
+            question: 'Gibt es Kosten, die nicht an dich gehen?',
+            answer:
+              'Ja, und die sollst du jetzt hören: Shopify-Abo, Domain, kostenpflichtige Apps und die Gebühren der Zahlungsanbieter gehen direkt an diese Anbieter. Ich schlage nichts drauf und verkaufe sie nicht weiter. Hosting und laufender Betrieb sind bei mir optional als Monatsleistung buchbar.',
+          },
+        ],
+      },
+      {
+        title: 'Zusammenarbeit',
+        items: [
+          {
+            question: 'Was, wenn mir das Design nicht gefällt?',
+            answer:
+              'Du siehst die gestalterische Richtung, bevor alles darauf aufgebaut wird — genau an dem Punkt, an dem eine Änderung billig ist. Zwei Feedbackrunden sind enthalten. Wenn die Richtung falsch ist, ändern wir sie dort und nicht am Ende.',
+          },
+          {
+            question: 'Wie lange dauert ein Projekt?',
+            answer:
+              'Der Zeitplan steht in deinem Angebot, weil er vom Umfang abhängt. Der ehrliche Teil: Was den Termin am stärksten verschiebt, ist nicht mein Tempo, sondern wie schnell Texte, Fotos, Produktdaten und Entscheidungen von deiner Seite zurückkommen.',
+          },
+          {
+            question: 'Kann ich unterwegs meine Meinung ändern?',
+            answer:
+              'Ja, und es wird geschätzt, bevor es gebaut wird. Eine Änderung am Ziel ist neue Arbeit mit eigenem Preis, schriftlich vereinbart. Das ist keine Strafe, sondern das, was die ursprüngliche Zahl ehrlich hält.',
+          },
+        ],
+      },
+      {
+        title: 'Nach dem Launch',
+        items: [
+          {
+            question: 'Was passiert, wenn es online ist?',
+            answer:
+              'Fehler innerhalb des vereinbarten Umfangs werden 30 Tage nach dem Launch kostenlos behoben. Bei Shops kommen Einweisung und Übergabe dazu, damit du den Laden selbst führen kannst. Laufender Betrieb und Weiterentwicklung gibt es auf Wunsch, nicht automatisch.',
+          },
+          {
+            question: 'Was ist ein Fehler und was ist neue Arbeit?',
+            answer:
+              'Wenn etwas nicht das tut, was wir vereinbart haben, ist das ein Fehler, und ich behebe ihn. Eine neue Seite, eine neue Rolle, eine neue Schnittstelle oder eine neue Idee ist neue Arbeit. Ich sage dir immer, wofür ich es halte, und warum.',
+          },
+          {
+            question: 'Machst du auch Marketing oder SEO?',
+            answer:
+              'Nein. Ich baue, ich vermarkte nicht. Die technische Grundlage wird sauber gemacht — Geschwindigkeit, Struktur, Mobil, Metadaten — aber ich schalte keine Kampagnen und verspreche weder Rankings noch Umsatz. Wenn du das brauchst, brauchst du eine Agentur, und ich sage es dir auch so.',
+          },
+          {
+            question: 'Was, wenn du später nicht mehr da bist?',
+            answer:
+              'Deine Zugänge laufen auf deinen Namen, und ich baue mit gewöhnlichen, verbreiteten Werkzeugen statt mit etwas, das nur ich pflegen kann. Ein anderer Entwickler kann übernehmen. Das ist eine bewusste Entscheidung: Arbeit, die du nicht verlassen kannst, gehört dir nicht wirklich.',
+          },
+        ],
+      },
+    ],
+  },
+
+  stack: {
+    meta: {
+      title: 'Stack · Wie Yaman Warda baut',
+      description:
+        'Für Unternehmen, die mich technisch einschätzen wollen: die Architektur hinter dieser Plattform, vier Entscheidungen und ihr Preis, und die Systeme, die ich ausgeliefert habe.',
+    },
+    eyebrow: 'Stack',
+    title: 'Die technische Fassung.',
+    intro:
+      'Diese Seite ist für Unternehmen, nicht für Kunden. Keine Pakete, keine Preise — die Architektur, die Entscheidungen, die ich gegen eine plausible Alternative getroffen habe, und was jede davon gekostet hat. Ich programmiere seit 2021, habe es mir selbst beigebracht und arbeite allein über den gesamten Stack.',
+    platform: {
+      title: 'Du stehst auf dem Beispiel',
+      body: 'Diese Seite ist kein Portfolio fremder Arbeit. Die öffentlichen Seiten in drei Sprachen, die API, die Datenbank und die Verwaltung dahinter sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, nirgends.',
+      layers: [
+        { label: 'Framework', value: 'TanStack Start, React 19, dateibasierte Routen' },
+        { label: 'API', value: 'Elysia unter /api, Eden Treaty als typisierter Client' },
+        { label: 'Daten', value: 'PostgreSQL über pg, rohes parametrisiertes SQL, kein ORM' },
+        { label: 'Validierung', value: 'Valibot an der Grenze, geteilt zwischen Client und Server' },
+        { label: 'State und Formulare', value: 'React Query für Serverdaten, TanStack Form für Eingaben' },
+        { label: 'Motion', value: 'CSS mit IntersectionObserver und Pointer-Events, ohne Bibliothek' },
+        { label: 'Hosting', value: 'Heute Vercel; eine Hetzner-Maschine in Deutschland ist der nächste Schritt' },
+      ],
+    },
+    decisions: {
+      title: 'Vier Entscheidungen und ihr Preis',
+      intro:
+        'Jede davon wurde gegen etwas Vernünftiges getroffen. Die interessante Hälfte ist nicht, wofür ich mich entschieden habe, sondern was die Entscheidung gekostet hat — also steht das auch hier.',
+      items: [
+        {
+          title: 'Rohes parametrisiertes SQL statt ORM',
+          body: 'Eine Anwendung, eine Datenbank, ein Betreiber. Ein ORM schöbe eine Mapping-Schicht und einen Migrationsdialekt zwischen mich und eine Abfrage, die ich ohnehin lesen kann. In dieser Größe sind das bewegliche Teile ohne Gewinn.',
+          costLabel: 'Was es kostet',
+          cost: 'Mehr Tipparbeit und keine geschenkten Schema-Refactorings. Ich schreibe die Migrationen von Hand und halte die Abfragen nah an den Tabellen.',
+        },
+        {
+          title: 'Eigene Verwaltung statt fremdem CMS',
+          body: 'Anfragen, Seitentexte, Kunden und Rechnungen liegen in einem System mit einem Inhaltsmodell, nicht aufgeteilt zwischen einem Anbieter und einer Datenbank. Dass die Plattform vollständig selbst gebaut ist, ist außerdem der Punkt des Portfolios.',
+          costLabel: 'Was es kostet',
+          cost: 'Ich baue den Editor selbst, statt einen zu installieren. Bis er fertig ist, liegen die Texte in typisierten Dateien — ehrlich statt bequem.',
+        },
+        {
+          title: 'Ein deutscher Server, den ich selbst administriere, statt Serverless',
+          body: 'Kundendaten, Leads und Rechnungen gehören auf eine Maschine in Deutschland, das macht die DSGVO-Antwort kurz. Cron und Hintergrundjobs laufen dort nativ, und eine lokale Datenbank hat kein Serverless-Pooling-Problem, um das man herumbauen müsste.',
+          costLabel: 'Wo das gerade steht',
+          cost: 'Das ist eine Entscheidung, noch keine Tatsache: Die Seite läuft heute auf Vercel, und der Umzug zu Hetzner mit Coolify ist der nächste Infrastruktur-Schritt. Wenn er kommt, gehören Backups und Sicherheitsupdates mir — Snapshots, ein nächtlicher pg_dump, unattended upgrades und ein Restore, den ich tatsächlich getestet und nicht bloß angenommen habe.',
+        },
+        {
+          title: 'Eine Motion-Schicht ohne Animationsbibliothek',
+          body: 'Der erste Versuch lief mit GSAP, ScrollTrigger und Lenis. Er stürzte bei jeder clientseitigen Navigation weg von der Startseite ab und animierte Abschnitte, die niemand freigegeben hatte. Ich habe ihn gelöscht und alles neu gebaut, auf CSS-Transitions, IntersectionObserver, ResizeObserver und Pointer-Events.',
+          costLabel: 'Was es gekostet hat',
+          cost: 'Eine weggeworfene Arbeitswoche und Easing-Kurven, die ich jetzt von Hand schreibe. Dafür liefert die Seite gar keine Animations-Laufzeit aus, und bei Navigation bricht nichts.',
+        },
+      ],
+    },
+    built: {
+      title: 'Was ich ausgeliefert habe',
+      body: 'Einen Onlineshop mit gefiltertem 500-Produkte-Katalog, Stripe-Checkout, Bestellungen und den Pflichtseiten, die ein deutscher Shop braucht. Eine Schreibplattform mit Editor, Uploads, Kommentaren, Reaktionen und Benachrichtigungen. Ein Immobilien-Verwaltungssystem, noch im Bau, auf dessen Architektur diese Seite läuft.',
+      link: 'Projekte ansehen',
+    },
+    links: {
+      title: 'Wenn du sprechen willst',
+      email: 'Schreib mir eine E-Mail',
+    },
+  },
+
+  legal: {
+    impressum: {
+      meta: {
+        title: 'Impressum · Yaman Warda',
+        description: 'Anbieterkennzeichnung nach § 5 DDG für yamanwarda.dev.',
+      },
+      eyebrow: 'Impressum',
+      title: 'Impressum',
+      intro: 'Angaben gemäß § 5 DDG.',
+      sections: [
+        {
+          title: 'Anbieter',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt',
+            'Thüringen, Deutschland',
+          ],
+        },
+        {
+          title: 'Kontakt',
+          lines: ['E-Mail: yamanwarda06@gmail.com'],
+        },
+        {
+          title: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
+          lines: ['Mhd Yaman Warda', 'Warschauer Str. 9', '99089 Erfurt'],
+        },
+        {
+          title: 'Verbraucherstreitbeilegung',
+          body: 'Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+        },
+        {
+          title: 'Haftung für Inhalte',
+          body: 'Als Diensteanbieter bin ich für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Ich bin jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben davon unberührt. Eine diesbezügliche Haftung ist erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden entsprechender Rechtsverletzungen entferne ich diese Inhalte umgehend.',
+        },
+        {
+          title: 'Haftung für Links',
+          body: 'Dieses Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen Einfluss habe. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft; rechtswidrige Inhalte waren nicht erkennbar. Eine dauerhafte inhaltliche Kontrolle ohne konkrete Anhaltspunkte einer Rechtsverletzung ist nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen entferne ich solche Links umgehend.',
+        },
+        {
+          title: 'Urheberrecht',
+          body: 'Die von mir erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen meiner schriftlichen Zustimmung. Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.',
+        },
+      ],
+      updated: 'Stand: 10. September 2026',
+    },
+    privacy: {
+      meta: {
+        title: 'Datenschutzerklärung · Yaman Warda',
+        description:
+          'Welche Daten yamanwarda.dev verarbeitet: Server-Logs, das Kontaktformular und ein einziges technisch notwendiges Cookie. Kein Tracking, keine Werbung.',
+      },
+      eyebrow: 'Datenschutz',
+      title: 'Datenschutzerklärung',
+      intro:
+        'Diese Website erhebt so wenig wie möglich. Es gibt keine Analyse-Tools, keine Werbenetzwerke und kein Tracking über Seiten hinweg. Was tatsächlich verarbeitet wird, steht hier vollständig.',
+      sections: [
+        {
+          title: 'Verantwortlicher',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt, Deutschland',
+            'E-Mail: yamanwarda06@gmail.com',
+          ],
+        },
+        {
+          title: 'Server-Logs beim Hosting',
+          body: 'Diese Website wird bei der Vercel Inc. gehostet, ausgeliefert über deren europäische Region. Beim Aufruf einer Seite verarbeitet der Anbieter technisch notwendige Daten wie IP-Adresse, Datum und Uhrzeit, aufgerufene URL, übertragene Datenmenge, Referrer und Browserkennung. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: das berechtigte Interesse an einer sicheren und funktionsfähigen Auslieferung der Website. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag.',
+        },
+        {
+          title: 'Kontaktformular und E-Mail',
+          body: 'Wenn du das Kontaktformular nutzt, werden Name, E-Mail-Adresse, optional Firma und Telefonnummer, deine Angaben zu Kanal, Projektart, Budget und Zeitrahmen, dein Projekttext sowie eine optionale Datei (PDF, PNG oder JPG, bis 5 MB) verarbeitet. Diese Angaben werden als E-Mail an mich zugestellt; für den Versand nutze ich den Dienst Resend. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO für die Anbahnung eines Vertrags, sonst Art. 6 Abs. 1 lit. f DSGVO. Ich speichere deine Anfrage, solange sie für die Bearbeitung nötig ist, und lösche sie danach, sofern keine gesetzliche Aufbewahrungspflicht besteht.',
+        },
+        {
+          title: 'Cookies',
+          body: 'Diese Website setzt ein einziges Cookie mit dem Namen "lang". Es speichert für ein Jahr, welche Sprache du gewählt hast, damit du sie nicht bei jedem Besuch neu einstellst. Es enthält keine Kennung, mit der du wiedererkannt werden könntest, und wird an keinen Dritten übermittelt. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG und Art. 6 Abs. 1 lit. f DSGVO. Ein Einwilligungsbanner ist dafür nicht erforderlich, weshalb es hier auch keines gibt.',
+        },
+        {
+          title: 'Was nicht passiert',
+          body: 'Es gibt keine Webanalyse, keine Statistik-Software, keine Werbe- oder Retargeting-Pixel, keine eingebetteten Schriften von fremden Servern und keine Social-Media-Plugins. Es werden keine Profile gebildet und es findet keine automatisierte Entscheidungsfindung statt.',
+        },
+        {
+          title: 'Deine Rechte',
+          lines: [
+            'Auskunft über die zu deiner Person gespeicherten Daten (Art. 15 DSGVO)',
+            'Berichtigung unrichtiger Daten (Art. 16 DSGVO)',
+            'Löschung (Art. 17 DSGVO)',
+            'Einschränkung der Verarbeitung (Art. 18 DSGVO)',
+            'Datenübertragbarkeit (Art. 20 DSGVO)',
+            'Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)',
+            'Beschwerde bei einer Aufsichtsbehörde (Art. 77 DSGVO)',
+          ],
+        },
+        {
+          title: 'Zuständige Aufsichtsbehörde',
+          body: 'Thüringer Landesbeauftragter für den Datenschutz und die Informationsfreiheit (TLfDI), Häßlerstraße 8, 99096 Erfurt. Du kannst dich auch an die Aufsichtsbehörde deines Wohnorts wenden.',
+        },
+        {
+          title: 'Änderungen',
+          body: 'Ändert sich, was diese Website verarbeitet, ändert sich auch diese Erklärung. Das Datum unten sagt dir, wann sie zuletzt angepasst wurde.',
+        },
+      ],
+      updated: 'Stand: 10. September 2026',
     },
   },
 

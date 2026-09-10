@@ -22,6 +22,14 @@ export type ShellCopy = {
     email: string
     links: string
     builtWith: string
+    /**
+     * Pages the footer carries but the header does not: they answer a
+     * question a visitor already has rather than selling anything, so
+     * putting them in the main nav would only dilute it.
+     */
+    more: Array<{ label: string; to: string }>
+    /** Impressum and Datenschutz, in the bottom bar as German sites put them. */
+    legal: Array<{ label: string; to: string }>
   }
 }
 
@@ -127,6 +135,8 @@ export type ServicesCopy = {
   shared: {
     title: string
     items: Array<{ title: string; body: string }>
+    /** Sends the reader on to the FAQ, where the rest of the rules are. */
+    faqLink: string
   }
   cta: { title: string; body: string; button: string }
 }
@@ -136,9 +146,16 @@ export type AboutCopy = {
   eyebrow: string
   title: string
   intro: string
-  story: { title: string; paragraphs: string[] }
+  /**
+   * The personal story, in chapters rather than one run of paragraphs.
+   * Every chapter carries at least one checkable fact — a year, a place, a
+   * tool — because a story without them reads as filler.
+   */
+  story: { title: string; chapters: Array<{ title: string; paragraphs: string[] }> }
   method: { title: string; items: Array<{ title: string; body: string }> }
-  platform: { title: string; body: string }
+  /** What a client gets from working with one person, stated plainly. */
+  expect: { title: string; intro: string; items: Array<{ title: string; body: string }> }
+  platform: { title: string; body: string; link: string }
   portraitAlt: string
   cta: { title: string; body: string; button: string; alt: string }
 }
@@ -217,7 +234,63 @@ export type ContactCopy = {
     emailLabel: string
     locationLabel: string
     location: string
+    languagesLabel: string
+    languages: string
   }
+}
+
+/**
+ * The objections a buyer has at this deal size, answered in the open.
+ * Grouped so the page can be scanned rather than read start to finish, and
+ * emitted as `FAQPage` structured data.
+ */
+export type FaqCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  groups: Array<{
+    title: string
+    items: Array<{ question: string; answer: string }>
+  }>
+}
+
+/**
+ * The hiring audience, kept apart from every selling page. Architecture and
+ * trade-offs here; outcomes and prices there. A buyer reading this leaves,
+ * and so does a hiring manager reading service packages.
+ */
+export type StackCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  platform: {
+    title: string
+    body: string
+    layers: Array<{ label: string; value: string }>
+  }
+  decisions: {
+    title: string
+    intro: string
+    /** Each decision names the alternative it beat and the price it charged. */
+    items: Array<{ title: string; body: string; costLabel: string; cost: string }>
+  }
+  built: { title: string; body: string; link: string }
+  links: { title: string; email: string }
+}
+
+/**
+ * One legal document. Sections carry either a paragraph or a list of lines
+ * (an address, a set of rights), never both.
+ */
+export type LegalCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  sections: Array<{ title: string; body?: string; lines?: string[] }>
+  updated: string
 }
 
 export type SiteContent = {
@@ -227,5 +300,8 @@ export type SiteContent = {
   about: AboutCopy
   work: WorkCopy
   contact: ContactCopy
+  faq: FaqCopy
+  stack: StackCopy
+  legal: { impressum: LegalCopy; privacy: LegalCopy }
   notFound: { title: string; body: string; link: string }
 }

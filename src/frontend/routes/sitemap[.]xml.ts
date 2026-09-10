@@ -3,7 +3,7 @@ import { projectOrder, site } from '#/frontend/content/site'
 import { languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
 
-const paths = ['/', '/services', '/work', '/about', '/contact', ...projectOrder.map((slug) => `/work/${slug}`)]
+const paths = ['/', '/services', '/work', '/about', '/faq', '/stack', '/contact', '/impressum', '/datenschutz', ...projectOrder.map((slug) => `/work/${slug}`)]
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;')
 
@@ -16,7 +16,7 @@ const buildSitemap = () => {
           (alternate) =>
             `<xhtml:link rel="alternate" hreflang="${alternate}" href="${escapeXml(site.url + publicPath(alternate, path))}"/>`,
         ),
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(site.url + publicPath('de', path))}"/>`,
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(site.url + publicPath('en', path))}"/>`,
       ].join('')
 
       return `<url><loc>${escapeXml(site.url + publicPath(language, path))}</loc>${alternates}</url>`

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "jobs.yamanwarda.dev" }],
+      "destination": "https://yamanwarda.dev/de/stack",
+      "permanent": false
+    }
+  ]
+}

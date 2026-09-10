@@ -18,6 +18,14 @@ export const en: SiteContent = {
       email: 'Email',
       links: 'Pages',
       builtWith: 'This website and the admin behind it are self-built.',
+      more: [
+        { label: 'FAQ', to: '/$lang/faq' },
+        { label: 'Stack', to: '/$lang/stack' },
+      ],
+      legal: [
+        { label: 'Impressum', to: '/$lang/impressum' },
+        { label: 'Privacy', to: '/$lang/datenschutz' },
+      ],
     },
   },
 
@@ -34,7 +42,7 @@ export const en: SiteContent = {
       typed: ['WEB', 'SHOP', 'SOFTWARE'],
       staticLine: 'DEVELOPER',
       headline: "Your idea. Built together.",
-      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product — thoughtfully built around your business.",
+      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product, in German, English, or Arabic.",
       cta: 'Request a call',
       secondary: 'See my work',
       availability: 'Available for new projects',
@@ -137,7 +145,7 @@ export const en: SiteContent = {
     about: {
       eyebrow: 'About',
       title: 'One developer, one point of contact.',
-      body: 'I am Yaman Warda, a developer in Erfurt. I taught myself to program and have been building complete systems ever since: interface, backend, database, operations. This website, including the admin behind it, is self-built.',
+      body: 'I am Yaman Warda. I came from Syria in 2015, taught myself to program in 2021, and build complete systems from Erfurt: interface, backend, database, operations. This website and the admin behind it are one of them.',
       link: 'More about me',
     },
     cta: {
@@ -266,6 +274,7 @@ export const en: SiteContent = {
           body: '"From" means a small, clearly defined scope. Whether net or gross is stated in the proposal, depending on the tax situation at the time.',
         },
       ],
+      faqLink: 'More on process, pricing, and ownership',
     },
     cta: {
       title: 'Not sure which service fits?',
@@ -278,18 +287,39 @@ export const en: SiteContent = {
     meta: {
       title: 'About · Yaman Warda, developer in Erfurt',
       description:
-        'Self-taught, fully built: who is behind the websites, stores, and systems, how I work, and why I built this platform myself.',
+        'Syrian, in Germany since 2015, self-taught since 2021. Why I started, how I got to Erfurt, why I build whole systems, and what to expect from working with one person.',
     },
     eyebrow: 'About',
     title: 'I build things that someone then uses every day.',
     intro:
-      'I am Yaman Warda, a developer in Erfurt. I work alone, directly with you, and build complete systems rather than isolated parts.',
+      'I am Yaman Warda. I came to Germany from Syria in 2015, taught myself to program in 2021, and now build websites, stores, and business systems from Erfurt — remotely, in German, English, or Arabic.',
     story: {
       title: 'How I got here',
-      paragraphs: [
-        'I taught myself to program. Not with tutorials you type along to, but with real projects that had to be published and then received feedback.',
-        'Along the way I noticed what I most like to build: not single screens, but whole flows. Sign-in, data model, payments, dashboards, and the small details that make software feel real.',
-        'Today I build exactly that for small businesses: websites, stores, and systems that have to work in everyday use after handover.',
+      chapters: [
+        {
+          title: 'Why I started',
+          paragraphs: [
+            'Not because I loved computers as a child. I started in 2021 because programming looked like the widest door I could see: a skill that pays, that travels, that lets me work for myself or for someone else, and that nobody can take away once I have it.',
+            'There was a smaller reason, and it is less respectable. It felt good to be fast at the keyboard — to type quickly and watch something appear. I am not going to pretend that was not part of it.',
+            'Both reasons turned out to be enough.',
+          ],
+        },
+        {
+          title: 'How I ended up in Erfurt',
+          paragraphs: [
+            'I am Syrian. I have been in Germany since 2015.',
+            'I did not choose Erfurt. My father was given a place here, and that is where the family went. It is not a story about finding the right city. It is the ordinary version, where you arrive somewhere and then make it yours.',
+            'So I learned German, and a few years later I learned to program in English, which is a third language. That is probably why I care as much as I do about making things plain. I have spent a long time on the other side of a sentence I could not follow.',
+          ],
+        },
+        {
+          title: 'Why whole systems and not screens',
+          paragraphs: [
+            'The first thing I ever put on the internet was an online store. Not a tutorial result — a real one, with a catalogue, a cart, and a checkout, published where friends and family could open it and tell me what was broken. They did.',
+            'I have deleted more projects than I have kept. The ones that survived taught me the same thing every time: the interesting part is never the screen. It is what sits behind it — the sign-in, the data model, the payment, the order that still has to be correct tomorrow.',
+            'It is also why I build on TanStack Start rather than Next.js. It is not a magic framework. I can see what it does, the router is the best piece of it, and the ecosystem is TypeScript the whole way down. I would rather understand my tools than be impressed by them.',
+          ],
+        },
       ],
     },
     method: {
@@ -297,25 +327,49 @@ export const en: SiteContent = {
       items: [
         {
           title: 'Understand first, then build',
-          body: 'I want to know how your process works today and where it gets stuck before I propose a solution.',
+          body: 'I want to know how your process works today, and where it stops working, before I suggest anything. Most of what I hear in a first conversation is the symptom. The cause usually turns up in the second.',
         },
         {
-          title: 'Start small, deliver cleanly',
-          body: 'The first version contains what carries the core. Extensions come when they are needed, not because they are possible.',
+          title: 'Start small',
+          body: 'The first version carries the core. Everything else waits until it is actually needed.',
         },
         {
-          title: 'Fundamentals over tricks',
-          body: 'I build with tools I understand, so I can find bugs and explain to you what is happening.',
+          title: 'Tools I understand',
+          body: 'I build with things I can debug at midnight and explain to you the next morning. That rules out a lot of clever choices, on purpose.',
         },
         {
-          title: 'Honest, even when it costs revenue',
-          body: 'If your website is good enough or an off-the-shelf tool is enough, I will say so.',
+          title: 'Honest, even when it costs me the job',
+          body: 'If your website is already fine, or a thirty-euro-a-month tool would do what you need, I will say so before you pay me anything.',
+        },
+      ],
+    },
+    expect: {
+      title: 'What to expect from me',
+      intro:
+        'Working with one person is not the same as working with an agency. Here is the honest version of the difference.',
+      items: [
+        {
+          title: 'You talk to the person building it',
+          body: 'No account manager, no handover from a salesperson to a developer you never meet. Whoever answers your email is the one writing the code.',
+        },
+        {
+          title: 'An answer within one working day',
+          body: 'Not always the full answer. Sometimes it is "I need to look at this properly, I will come back tomorrow." But you will not be left wondering whether the message arrived.',
+        },
+        {
+          title: 'You see it before it is finished',
+          body: 'The design direction comes at a checkpoint, while changing it is still cheap, and two rounds of feedback come after that. Nothing large gets built on a direction you have not seen.',
+        },
+        {
+          title: 'The handover is part of the job',
+          body: 'Accounts in your name, 30 days of bug fixing after launch, and for stores a walkthrough so you can run it yourself. I am not trying to make you dependent on me.',
         },
       ],
     },
     platform: {
-      title: 'This website is an example',
-      body: 'You are looking at a system I built entirely myself: the public site in three languages and, behind it, an admin for enquiries, content, clients, and invoices. No site builder, no third-party CMS. That is the kind of work I offer.',
+      title: 'This website is the example',
+      body: 'You are reading it. The public pages in three languages, the API, the PostgreSQL database, and the admin behind it for enquiries, content, clients, and invoices are one application I wrote and run. No site builder, no third-party CMS, no bought template.',
+      link: 'The technical version',
     },
     portraitAlt: 'Yaman Warda',
     cta: {
@@ -362,14 +416,16 @@ export const en: SiteContent = {
         problem:
           'A store is the hardest test for a web system: accounts, money, stock, and order status have to agree, or the operator loses money or trust.',
         approach:
-          'I built the entire purchase path, from the product catalogue through the cart to payment with Stripe and the order overview for customer and operator. The admin area manages products, orders, and reviews.',
+          'I built the whole purchase path: a catalogue of 500 products across ten categories, narrowed by search and by filters for category, colour, storage, memory, and screen size, then the cart, the Stripe checkout, and the order view for customer and operator alike. It also carries the pages a German store owes its customers — right of withdrawal, returns, shipping — because a store you cannot legally sell from is not finished.',
         shows:
-          'That I can build a complete purchase process with payment, permissions, and administration end to end, not just the storefront.',
+          'That I can carry a purchase from a filtered catalogue through payment to an order both sides can follow, and that I know what a German store has to answer for beyond the checkout button.',
         features: [
           'Registration, login, and customer account',
           'Product management with variants',
+          'Search, filters, and sorting across the catalogue',
           'Cart and Stripe checkout',
           'Orders with status',
+          'Withdrawal, returns, and shipping pages',
           'Reviews',
           'Admin dashboard',
         ],
@@ -382,13 +438,14 @@ export const en: SiteContent = {
         problem:
           'Publishing content sounds simple until the editor, images, comments, and notifications have to work together.',
         approach:
-          'I built a rich-text editor with image uploads, comment threads, reactions, and a notification system, all behind an account system.',
+          'I built a rich-text editor with image uploads, comment threads, reactions, and notifications, all behind accounts. The discover page searches everything published and narrows it by category, by any of 25 tags, by sort order, and by page size, so a growing archive stays findable.',
         shows:
-          'That I can build content and community features of the kind portals, blogs, and internal knowledge bases need.',
+          'That I can build the half of a product that is content rather than transactions — writing, publishing, discussion, and finding things again — which is what portals, blogs, and internal knowledge bases actually run on.',
         features: [
           'Accounts and profiles',
           'Rich-text editor',
           'Image uploads',
+          'Search, tags, and filtered discovery',
           'Comments and reactions',
           'Notifications',
         ],
@@ -482,10 +539,294 @@ export const en: SiteContent = {
     },
     aside: {
       title: 'Prefer to write directly?',
-      body: 'An email is enough. A booking system for calls is coming to this page.',
+      body: 'An email is enough. Write a few lines about what you have in mind.',
       emailLabel: 'Email',
       locationLabel: 'Location',
-      location: 'Erfurt, Germany · working across Germany, remote',
+      location: 'Erfurt, Germany · remote, with clients in Germany and beyond',
+      languagesLabel: 'Languages',
+      languages: 'German, English, Arabic',
+    },
+  },
+
+  faq: {
+    meta: {
+      title: 'FAQ · How a project with me works',
+      description:
+        'Scope, prices, ownership, feedback rounds, and what happens after launch — the questions that come up before every project, answered in the open.',
+    },
+    eyebrow: 'FAQ',
+    title: 'The questions that come before a yes.',
+    intro:
+      'Hiring a developer you have never met is a leap. These are the things people ask me, and a few they do not ask but should. If your question is not here, write to me and it will be.',
+    groups: [
+      {
+        title: 'Before we start',
+        items: [
+          {
+            question: 'How does a project actually start?',
+            answer:
+              'With a conversation, free and with no sales pressure. You describe what you need and what you already have. If I can help, you get a written proposal: what is included, what is not, and what it costs. Nothing is built before that is agreed.',
+          },
+          {
+            question: 'Which of the three services do I need?',
+            answer:
+              'It follows the goal, not the size. If people need to find you and understand what you do, that is a website. If you sell products, that is an online store. If a process in your business runs on emails, files, and manual steps, that is custom software. If you are unsure, describe the goal and I will tell you.',
+          },
+          {
+            question: 'What do you need from me?',
+            answer:
+              'What your business does, who your customers are, and what should be easier afterwards. Practically: whether you already have a domain, texts, photos, or an old site. If you have none of it, that is normal and we sort it together.',
+          },
+          {
+            question: 'Do you work with clients outside Germany?',
+            answer:
+              'Yes. I am based in Erfurt and work remotely, in German, English, or Arabic. Prices are the same in euros wherever you are. What changes is the time zone we agree on for calls.',
+          },
+        ],
+      },
+      {
+        title: 'Money and ownership',
+        items: [
+          {
+            question: 'Why does every price say "from"?',
+            answer:
+              'Because the entry price is the smallest scope that still makes sense for that service. A five-page site and a twelve-page site in four languages are not the same job. The final number comes after I have reviewed what you actually need, and it is written down before anything starts.',
+          },
+          {
+            question: 'How is payment split?',
+            answer:
+              'Usually in parts tied to progress rather than dates — at the start, at the agreed checkpoint, and on acceptance. The exact split is named in your proposal. Websites are also available as a monthly instalment, with ownership transferring to you.',
+          },
+          {
+            question: 'Who owns the result?',
+            answer:
+              'You do. Domain, Shopify, and hosting accounts are set up in your name from the start, not mine. After full payment you receive the agreed deliverable and the usage rights to it.',
+          },
+          {
+            question: 'Are there costs that do not go to you?',
+            answer:
+              'Yes, and I would rather you hear them now: a Shopify subscription, the domain, any paid apps, and payment processing fees go directly to those providers. I do not mark them up or resell them. Hosting and ongoing operations are available from me as an optional monthly service.',
+          },
+        ],
+      },
+      {
+        title: 'Working together',
+        items: [
+          {
+            question: 'What if I do not like the design?',
+            answer:
+              'You see the design direction before everything is built on top of it, which is the point at which changing it is cheap. Two feedback rounds are included. If the direction is wrong, we change it there rather than at the end.',
+          },
+          {
+            question: 'How long does a project take?',
+            answer:
+              'The schedule is named in your proposal, because it depends on the scope. The honest part: the variable that moves it most is not my speed, it is how quickly texts, photos, product data, and decisions come back from your side.',
+          },
+          {
+            question: 'Can I change my mind halfway through?',
+            answer:
+              'Yes, and it gets estimated before it gets built. A change to the goal is new work with its own price, agreed in writing. That is not a penalty — it is what keeps the original number honest.',
+          },
+        ],
+      },
+      {
+        title: 'After launch',
+        items: [
+          {
+            question: 'What happens once it is live?',
+            answer:
+              'Bugs inside the agreed scope are fixed for 30 days after launch, at no extra cost. For stores you also get training and a handover so you can run it yourself. Ongoing operations and further development are available on request, not assumed.',
+          },
+          {
+            question: 'What counts as a bug and what counts as new work?',
+            answer:
+              'If something does not do what we agreed it would do, that is a bug and I fix it. A new page, a new role, a new integration, or a new idea is new work. I will always tell you which one I think it is, and why.',
+          },
+          {
+            question: 'Do you do marketing or SEO?',
+            answer:
+              'No. I build, I do not market. The technical groundwork is done properly — speed, structure, mobile, metadata — but I do not run campaigns and I do not promise rankings or revenue. If that is what you need, you need an agency, and I will say so.',
+          },
+          {
+            question: 'What if you are not around later?',
+            answer:
+              'Your accounts are in your name, and I build with ordinary, widely used tools rather than anything only I can maintain. Another developer can pick the project up. That is a deliberate choice: work you cannot leave is not work you own.',
+          },
+        ],
+      },
+    ],
+  },
+
+  stack: {
+    meta: {
+      title: 'Stack · How Yaman Warda builds',
+      description:
+        'For companies looking at me technically: the architecture behind this platform, four decisions and what each one cost, and the systems I have shipped.',
+    },
+    eyebrow: 'Stack',
+    title: 'The technical version.',
+    intro:
+      'This page is for companies rather than clients. No packages, no prices — the architecture, the decisions I made against a plausible alternative, and what each of them cost me. I have been programming since 2021, taught myself, and work alone across the whole stack.',
+    platform: {
+      title: 'You are standing on the example',
+      body: 'This site is not a portfolio of someone else’s work. The public pages in three languages, the API, the database, and the admin behind it are one application I wrote and run. There is no site builder and no third-party CMS anywhere in it.',
+      layers: [
+        { label: 'Framework', value: 'TanStack Start, React 19, file-based routes' },
+        { label: 'API', value: 'Elysia mounted at /api, Eden Treaty for a typed client' },
+        { label: 'Data', value: 'PostgreSQL through pg, raw parameterised SQL, no ORM' },
+        { label: 'Validation', value: 'Valibot on the boundary, shared between client and server' },
+        { label: 'State and forms', value: 'React Query for server state, TanStack Form for input' },
+        { label: 'Motion', value: 'CSS with IntersectionObserver and pointer events, no library' },
+        { label: 'Hosting', value: 'Vercel today; a Hetzner box in Germany is the next move' },
+      ],
+    },
+    decisions: {
+      title: 'Four decisions and their price',
+      intro:
+        'Every one of these was chosen against something reasonable. The interesting half is not what I picked — it is what picking it cost, so that is written down too.',
+      items: [
+        {
+          title: 'Raw parameterised SQL instead of an ORM',
+          body: 'One app, one database, one operator. An ORM would add a mapping layer and a migration dialect between me and a query I can already read. At this scale that is moving parts without a benefit.',
+          costLabel: 'What it costs',
+          cost: 'More typing, and no free schema refactors. I write the migrations by hand and I keep the queries close to the tables.',
+        },
+        {
+          title: 'My own admin, not an external CMS',
+          body: 'Contact enquiries, page copy, clients, and invoices live in one system with one content model, not split across a vendor and a database. The platform being entirely self-built is also the point of the portfolio.',
+          costLabel: 'What it costs',
+          cost: 'I build the editor myself instead of installing one. The copy still lives in typed files until that editor is finished, which is honest rather than convenient.',
+        },
+        {
+          title: 'A German server I administer, over staying serverless',
+          body: 'Client data, leads, and invoices belong on a machine in Germany, which makes the GDPR answer short. Cron and background jobs run natively there, and a local database has no serverless connection-pooling problem to design around.',
+          costLabel: 'Where this one stands',
+          cost: 'This is a decision, not yet a fact: the site runs on Vercel today, and the move to Hetzner with Coolify is the next infrastructure job. When it lands, backups and security updates become mine — snapshots, a nightly pg_dump, unattended upgrades, and a restore I have actually tested rather than assumed.',
+        },
+        {
+          title: 'A motion layer with no animation library',
+          body: 'The first attempt used GSAP with ScrollTrigger and Lenis. It crashed on every client-side navigation away from the home page, and it animated sections nobody had approved. I deleted it and rebuilt the whole thing on CSS transitions, IntersectionObserver, ResizeObserver, and pointer events.',
+          costLabel: 'What it cost',
+          cost: 'A week of work thrown away, and easing curves I now write by hand. In return the page ships no animation runtime at all and nothing breaks on navigation.',
+        },
+      ],
+    },
+    built: {
+      title: 'What I have shipped',
+      body: 'An online store with a filtered 500-product catalogue, Stripe checkout, orders, and the German support pages a shop legally needs. A writing platform with an editor, uploads, comments, reactions, and notifications. A property management system, in progress, whose architecture this site is built on.',
+      link: 'See the projects',
+    },
+    links: {
+      title: 'If you want to talk',
+      email: 'Email me',
+    },
+  },
+
+  legal: {
+    impressum: {
+      meta: {
+        title: 'Impressum · Yaman Warda',
+        description: 'Provider identification under § 5 DDG for yamanwarda.dev.',
+      },
+      eyebrow: 'Impressum',
+      title: 'Impressum',
+      intro:
+        'Provider identification under § 5 DDG. German law governs this page, and the German version is the binding one.',
+      sections: [
+        {
+          title: 'Provider',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt',
+            'Thuringia, Germany',
+          ],
+        },
+        {
+          title: 'Contact',
+          lines: ['Email: yamanwarda06@gmail.com'],
+        },
+        {
+          title: 'Responsible for content under § 18 (2) MStV',
+          lines: ['Mhd Yaman Warda', 'Warschauer Str. 9', '99089 Erfurt'],
+        },
+        {
+          title: 'Consumer dispute resolution',
+          body: 'I am neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.',
+        },
+        {
+          title: 'Liability for content',
+          body: 'As a service provider I am responsible for my own content on these pages under general law. I am not obliged to monitor transmitted or stored third-party information, or to investigate circumstances that indicate unlawful activity. Obligations to remove or block the use of information under general law remain unaffected. Liability in this respect begins only from the point at which a concrete infringement becomes known. If I become aware of such infringements, I will remove the content promptly.',
+        },
+        {
+          title: 'Liability for links',
+          body: 'This site contains links to external websites over whose content I have no influence. The respective provider or operator is always responsible for the content of linked pages. Those pages were checked for possible legal violations at the time of linking, and no unlawful content was apparent. Permanent monitoring of linked content without concrete evidence of an infringement is not reasonable. If I become aware of infringements, I will remove such links promptly.',
+        },
+        {
+          title: 'Copyright',
+          body: 'The content and works created by me on these pages are subject to German copyright law. Reproduction, adaptation, distribution, and any kind of exploitation beyond the limits of copyright require my written consent. Downloads and copies of this page are permitted for private, non-commercial use only.',
+        },
+      ],
+      updated: 'Last updated: 10 September 2026',
+    },
+    privacy: {
+      meta: {
+        title: 'Privacy · Yaman Warda',
+        description:
+          'What yamanwarda.dev processes: server logs, the contact form, and one strictly necessary cookie. No tracking, no advertising.',
+      },
+      eyebrow: 'Privacy',
+      title: 'Privacy policy',
+      intro:
+        'This site collects as little as it can. There are no analytics tools, no advertising networks, and no cross-site tracking. What is actually processed is listed here in full. The German version is the binding one.',
+      sections: [
+        {
+          title: 'Controller',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt, Germany',
+            'Email: yamanwarda06@gmail.com',
+          ],
+        },
+        {
+          title: 'Hosting and server logs',
+          body: 'This site is hosted by Vercel Inc. and served from their European region. When you open a page, the provider processes technically necessary data such as your IP address, the date and time, the URL requested, the volume of data transferred, the referrer, and your browser identification. The legal basis is Art. 6 (1) (f) GDPR: the legitimate interest in delivering the site securely and reliably. A data processing agreement is in place with the provider.',
+        },
+        {
+          title: 'Contact form and email',
+          body: 'If you use the contact form, the following are processed: your name, email address, optionally company and phone number, your answers on preferred channel, project type, budget and timeline, your project description, and an optional file (PDF, PNG, or JPG, up to 5 MB). These are delivered to me as an email; I use the service Resend to send it. The legal basis is Art. 6 (1) (b) GDPR for steps prior to a contract, otherwise Art. 6 (1) (f) GDPR. I keep your enquiry for as long as handling it requires and delete it afterwards, unless a statutory retention period applies.',
+        },
+        {
+          title: 'Cookies',
+          body: 'This site sets exactly one cookie, named "lang". It remembers for one year which language you chose, so you do not have to set it on every visit. It contains no identifier that could be used to recognise you and is not sent to any third party. The legal basis is § 25 (2) no. 2 TDDDG and Art. 6 (1) (f) GDPR. No consent banner is required for this, which is why there is none.',
+        },
+        {
+          title: 'What does not happen',
+          body: 'There is no web analytics, no statistics software, no advertising or retargeting pixels, no fonts embedded from third-party servers, and no social media plugins. No profiles are built and no automated decision-making takes place.',
+        },
+        {
+          title: 'Your rights',
+          lines: [
+            'Access to the data held about you (Art. 15 GDPR)',
+            'Rectification of inaccurate data (Art. 16 GDPR)',
+            'Erasure (Art. 17 GDPR)',
+            'Restriction of processing (Art. 18 GDPR)',
+            'Data portability (Art. 20 GDPR)',
+            'Objection to processing (Art. 21 GDPR)',
+            'Complaint to a supervisory authority (Art. 77 GDPR)',
+          ],
+        },
+        {
+          title: 'Supervisory authority',
+          body: 'Thüringer Landesbeauftragter für den Datenschutz und die Informationsfreiheit (TLfDI), Häßlerstraße 8, 99096 Erfurt. You may also contact the supervisory authority where you live.',
+        },
+        {
+          title: 'Changes',
+          body: 'If what this site processes changes, this policy changes with it. The date below tells you when it was last revised.',
+        },
+      ],
+      updated: 'Last updated: 10 September 2026',
     },
   },
 
