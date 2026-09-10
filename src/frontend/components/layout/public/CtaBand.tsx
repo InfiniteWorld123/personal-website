@@ -45,7 +45,7 @@ export function CtaBand({
           >
             <Link to="/$lang/contact" params={{ lang: language }}>
               {button}
-              <ArrowRight className="rtl:-scale-x-100" />
+              <ArrowRight className="btn-arrow rtl:-scale-x-100" />
             </Link>
           </Button>
           {alt ? (

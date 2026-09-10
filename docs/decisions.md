@@ -418,3 +418,43 @@ field of the same one.
 carries the same supporting line and second, email button as the one on the
 home page — the page ends on someone who has just read a personal story, and
 mail is the lower-stakes of the two ways to answer.
+
+---
+
+### D20 — One lift for every button, one mechanism for every arrow
+
+The owner spotted it from two screenshots: some buttons rose under the pointer
+and some did not, and an arrow turned on one button but sat still on the next.
+
+**What was actually there.** Three lifts — `-2px` on primary, `-1.5px` on
+outline, none on ghost — plus the magnetic lean on primary only. Nobody
+perceives half a pixel as a decision, so it read as breakage. Worse, the arrow
+had *two* mechanisms: an implicit rule that turned any icon inside a blue
+button, and the explicit `.btn-arrow` from D19. Every outline button that
+forgot the class stopped turning silently, which had happened on the service
+cards, the about teaser, the hero's secondary button, and both text links
+added with `/faq` and `/stack`.
+
+**Decided.** Every button lifts the same `-2px`, set once on
+`[data-slot="button"]:not(:disabled):hover` with no variant qualifier. The
+magnetic lean stays on primary buttons alone: it is then the only movement
+that separates the main action from the rest, and that difference means
+something. The alternative — no lift anywhere — was prototyped and rejected;
+it is consistent and it makes the page feel dead, because the lift is the cue
+that says a thing is pressable.
+
+**The implicit arrow rule is deleted.** `.btn-arrow` is now the only thing that
+turns an arrow, written on the icon by hand, and it is keyed on `a:hover` /
+`button:hover` so it works on text links too — a link does not lift, but its
+arrow turns like every other. An arrow that stays still is now a visible
+choice in the JSX rather than a forgotten class.
+
+**Three arrows deliberately never carry it**, each for a reason: the carousel's
+`←`/`→` and the back link state direction, not "go"; and an icon-only link to
+another site keeps a fixed `↗`, because there the diagonal is information —
+it says the link opens a new tab — and not decoration. This part of D19 stands.
+
+**Also fixed.** The hero's secondary button rested at `↗`, which is the state
+the gesture is supposed to end on, so it never had anywhere to travel. It rests
+at `→` now like the rest.
+

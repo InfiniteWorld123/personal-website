@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, ArrowUpRight, Github, MapPin } from 'lucide-react'
+import { ArrowRight, Github, MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
@@ -89,13 +89,13 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               <Button asChild size="lg" className="rounded-full px-7">
                 <Link to="/$lang/contact" params={{ lang: language }}>
                   {copy.cta}
-                  <ArrowRight className="rtl:-scale-x-100" />
+                  <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-7">
                 <Link to="/$lang/work" params={{ lang: language }}>
                   {copy.secondary}
-                  <ArrowUpRight className="rtl:-scale-x-100" />
+                  <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
             </div>

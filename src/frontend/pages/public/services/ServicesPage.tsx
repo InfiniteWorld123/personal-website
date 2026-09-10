@@ -144,7 +144,7 @@ function SharedRules({
           className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-1.5 text-sm font-medium"
         >
           {copy.faqLink}
-          <ArrowRight className="size-4 rtl:-scale-x-100" />
+          <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
         </Link>
       </Container>
     </Section>

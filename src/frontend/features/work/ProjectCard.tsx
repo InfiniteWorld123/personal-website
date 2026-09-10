@@ -35,7 +35,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
       {showTech ? <p className="work-card-tech" dir="ltr">{facts.stack.slice(0, 3).join(' · ')}</p> : null}
       <div className="work-card-actions">
         <Button asChild className="project-detail-link">
-          <Link to="/$lang/work/$slug" params={{ lang: language, slug: facts.slug }}>{labels.detail}<ArrowRight className="rtl:-scale-x-100" /></Link>
+          <Link to="/$lang/work/$slug" params={{ lang: language, slug: facts.slug }}>{labels.detail}<ArrowRight className="btn-arrow rtl:-scale-x-100" /></Link>
         </Button>
         {facts.website ? <Button asChild variant="outline" size="icon" aria-label={labels.visit + ': ' + copy.name} title={labels.visit}>
           <a href={facts.website} target="_blank" rel="noreferrer"><ArrowUpRight /></a>

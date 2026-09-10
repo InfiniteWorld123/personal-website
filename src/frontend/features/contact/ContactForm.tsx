@@ -190,7 +190,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         className="mt-1 w-fit rounded-full bg-primary px-7 text-primary-foreground"
       >
         {status === 'sending' ? copy.sending : copy.submit}
-        <ArrowRight className="rtl:-scale-x-100" />
+        <ArrowRight className="btn-arrow rtl:-scale-x-100" />
       </Button>
     </form>
   )

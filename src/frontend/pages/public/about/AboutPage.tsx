@@ -91,7 +91,7 @@ export function AboutPage() {
               className="text-primary hover:text-primary/80 mt-1 inline-flex items-center gap-1.5 text-sm font-medium"
             >
               {about.platform.link}
-              <ArrowRight className="size-4 rtl:-scale-x-100" />
+              <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
             </Link>
           </div>
         </Container>

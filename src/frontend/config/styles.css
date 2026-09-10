@@ -735,9 +735,21 @@ html[lang="ar"] .font-heading {
   transition: opacity 260ms ease;
 }
 
+/* Every button rises the same distance on hover. The pointer-lean applied to
+   primary buttons by `useMagneticButtons` is then the only movement that
+   separates the main action from the rest — which is the one difference worth
+   feeling. Two lifts a pixel apart read as a mistake, not a hierarchy. */
+[data-slot="button"]:not(:disabled):hover {
+  --btn-lift: -2px;
+}
+
+[data-slot="button"]:not(:disabled):active {
+  --btn-lift: 0px;
+  transition-duration: 80ms;
+}
+
 [data-slot="button"][data-variant="default"]:not(:disabled):hover {
   background: #2d51e8;
-  --btn-lift: -2px;
   box-shadow:
     0 18px 44px rgba(53, 92, 255, 0.4),
     0 6px 14px rgba(53, 92, 255, 0.22);
@@ -745,11 +757,6 @@ html[lang="ar"] .font-heading {
 
 [data-slot="button"][data-variant="default"]:not(:disabled):hover::after {
   opacity: 1;
-}
-
-[data-slot="button"][data-variant="default"]:not(:disabled):active {
-  --btn-lift: 0px;
-  transition-duration: 80ms;
 }
 
 [data-slot="button"][data-variant="outline"] {
@@ -760,7 +767,6 @@ html[lang="ar"] .font-heading {
 }
 
 [data-slot="button"][data-variant="outline"]:not(:disabled):hover {
-  --btn-lift: -1.5px;
   border-color: rgba(53, 92, 255, 0.3);
   background: color-mix(in srgb, var(--primary) 5%, var(--card));
   box-shadow:
@@ -2245,15 +2251,23 @@ html.motion .site-header {
   transition: rotate 300ms var(--ease-out-soft);
 }
 
-[data-slot="button"][data-variant="default"]:not(:disabled):not([data-size^="icon"]):hover > svg,
-[data-slot="button"]:not(:disabled):hover .btn-arrow {
+/* `.btn-arrow` is the only thing that makes an arrow turn, and it is written
+   on the icon by hand. There used to be a second, implicit rule that turned
+   any icon inside a blue button, which is why arrows on outline buttons
+   silently stopped turning whenever the class was forgotten. Now an arrow
+   that stays still is a visible decision in the JSX.
+
+   It works on links as well as buttons: a text link does not lift, but its
+   arrow turns like every other. */
+a:hover .btn-arrow,
+button:hover .btn-arrow {
   rotate: -45deg;
 }
 
 /* The icon is mirrored in Arabic, so the turn has to go the other way for the
    arrow to end up pointing outwards rather than down. */
-html[dir="rtl"] [data-slot="button"][data-variant="default"]:not(:disabled):not([data-size^="icon"]):hover > svg,
-html[dir="rtl"] [data-slot="button"]:not(:disabled):hover .btn-arrow {
+html[dir="rtl"] a:hover .btn-arrow,
+html[dir="rtl"] button:hover .btn-arrow {
   rotate: 45deg;
 }
 

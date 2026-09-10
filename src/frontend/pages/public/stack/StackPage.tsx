@@ -98,7 +98,7 @@ export function StackPage() {
             <Button asChild data-reveal className="rounded-full bg-primary px-5 text-primary-foreground">
               <Link to="/$lang/work" params={{ lang: language }}>
                 {stack.built.link}
-                <ArrowRight className="size-4 rtl:-scale-x-100" />
+                <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
               </Link>
             </Button>
           </div>

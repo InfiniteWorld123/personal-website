@@ -79,7 +79,7 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
           >
             <Link to="/$lang/contact" params={{ lang: language }}>
               {copy.cta}
-              <ArrowRight className="rtl:-scale-x-100" />
+              <ArrowRight className="btn-arrow rtl:-scale-x-100" />
             </Link>
           </Button>
         </div>

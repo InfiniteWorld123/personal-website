@@ -29,7 +29,7 @@ export function AboutTeaser({ copy, language }: { copy: HomeCopy['about']; langu
           >
             <Link to="/$lang/about" params={{ lang: language }}>
               {copy.link}
-              <ArrowRight className="rtl:-scale-x-100" />
+              <ArrowRight className="btn-arrow rtl:-scale-x-100" />
             </Link>
           </Button>
         </div>

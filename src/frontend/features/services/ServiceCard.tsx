@@ -47,7 +47,7 @@ export function ServiceCard({
         >
           <Link to="/$lang/services" params={{ lang: language }} hash={slug}>
             {moreLabel}
-            <ArrowRight className="rtl:-scale-x-100" />
+            <ArrowRight className="btn-arrow rtl:-scale-x-100" />
           </Link>
         </Button>
       </CardFooter>
