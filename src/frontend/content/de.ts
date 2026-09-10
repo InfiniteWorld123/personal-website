@@ -22,6 +22,10 @@ export const de: SiteContent = {
         { label: 'FAQ', to: '/$lang/faq' },
         { label: 'Stack', to: '/$lang/stack' },
       ],
+      legal: [
+        { label: 'Impressum', to: '/$lang/impressum' },
+        { label: 'Datenschutz', to: '/$lang/datenschutz' },
+      ],
     },
   },
 
@@ -715,6 +719,113 @@ export const de: SiteContent = {
     links: {
       title: 'Wenn du sprechen willst',
       email: 'Schreib mir eine E-Mail',
+    },
+  },
+
+  legal: {
+    impressum: {
+      meta: {
+        title: 'Impressum · Yaman Warda',
+        description: 'Anbieterkennzeichnung nach § 5 DDG für yamanwarda.dev.',
+      },
+      eyebrow: 'Impressum',
+      title: 'Impressum',
+      intro: 'Angaben gemäß § 5 DDG.',
+      sections: [
+        {
+          title: 'Anbieter',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt',
+            'Thüringen, Deutschland',
+          ],
+        },
+        {
+          title: 'Kontakt',
+          lines: ['E-Mail: yamanwarda06@gmail.com'],
+        },
+        {
+          title: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
+          lines: ['Mhd Yaman Warda', 'Warschauer Str. 9', '99089 Erfurt'],
+        },
+        {
+          title: 'Verbraucherstreitbeilegung',
+          body: 'Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+        },
+        {
+          title: 'Haftung für Inhalte',
+          body: 'Als Diensteanbieter bin ich für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Ich bin jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben davon unberührt. Eine diesbezügliche Haftung ist erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden entsprechender Rechtsverletzungen entferne ich diese Inhalte umgehend.',
+        },
+        {
+          title: 'Haftung für Links',
+          body: 'Dieses Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen Einfluss habe. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft; rechtswidrige Inhalte waren nicht erkennbar. Eine dauerhafte inhaltliche Kontrolle ohne konkrete Anhaltspunkte einer Rechtsverletzung ist nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen entferne ich solche Links umgehend.',
+        },
+        {
+          title: 'Urheberrecht',
+          body: 'Die von mir erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen meiner schriftlichen Zustimmung. Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.',
+        },
+      ],
+      updated: 'Stand: 10. September 2026',
+    },
+    privacy: {
+      meta: {
+        title: 'Datenschutzerklärung · Yaman Warda',
+        description:
+          'Welche Daten yamanwarda.dev verarbeitet: Server-Logs, das Kontaktformular und ein einziges technisch notwendiges Cookie. Kein Tracking, keine Werbung.',
+      },
+      eyebrow: 'Datenschutz',
+      title: 'Datenschutzerklärung',
+      intro:
+        'Diese Website erhebt so wenig wie möglich. Es gibt keine Analyse-Tools, keine Werbenetzwerke und kein Tracking über Seiten hinweg. Was tatsächlich verarbeitet wird, steht hier vollständig.',
+      sections: [
+        {
+          title: 'Verantwortlicher',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt, Deutschland',
+            'E-Mail: yamanwarda06@gmail.com',
+          ],
+        },
+        {
+          title: 'Server-Logs beim Hosting',
+          body: 'Diese Website wird bei der Vercel Inc. gehostet, ausgeliefert über deren europäische Region. Beim Aufruf einer Seite verarbeitet der Anbieter technisch notwendige Daten wie IP-Adresse, Datum und Uhrzeit, aufgerufene URL, übertragene Datenmenge, Referrer und Browserkennung. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: das berechtigte Interesse an einer sicheren und funktionsfähigen Auslieferung der Website. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag.',
+        },
+        {
+          title: 'Kontaktformular und E-Mail',
+          body: 'Wenn du das Kontaktformular nutzt, werden Name, E-Mail-Adresse, optional Firma und Telefonnummer, deine Angaben zu Kanal, Projektart, Budget und Zeitrahmen, dein Projekttext sowie eine optionale Datei (PDF, PNG oder JPG, bis 5 MB) verarbeitet. Diese Angaben werden als E-Mail an mich zugestellt; für den Versand nutze ich den Dienst Resend. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO für die Anbahnung eines Vertrags, sonst Art. 6 Abs. 1 lit. f DSGVO. Ich speichere deine Anfrage, solange sie für die Bearbeitung nötig ist, und lösche sie danach, sofern keine gesetzliche Aufbewahrungspflicht besteht.',
+        },
+        {
+          title: 'Cookies',
+          body: 'Diese Website setzt ein einziges Cookie mit dem Namen "lang". Es speichert für ein Jahr, welche Sprache du gewählt hast, damit du sie nicht bei jedem Besuch neu einstellst. Es enthält keine Kennung, mit der du wiedererkannt werden könntest, und wird an keinen Dritten übermittelt. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG und Art. 6 Abs. 1 lit. f DSGVO. Ein Einwilligungsbanner ist dafür nicht erforderlich, weshalb es hier auch keines gibt.',
+        },
+        {
+          title: 'Was nicht passiert',
+          body: 'Es gibt keine Webanalyse, keine Statistik-Software, keine Werbe- oder Retargeting-Pixel, keine eingebetteten Schriften von fremden Servern und keine Social-Media-Plugins. Es werden keine Profile gebildet und es findet keine automatisierte Entscheidungsfindung statt.',
+        },
+        {
+          title: 'Deine Rechte',
+          lines: [
+            'Auskunft über die zu deiner Person gespeicherten Daten (Art. 15 DSGVO)',
+            'Berichtigung unrichtiger Daten (Art. 16 DSGVO)',
+            'Löschung (Art. 17 DSGVO)',
+            'Einschränkung der Verarbeitung (Art. 18 DSGVO)',
+            'Datenübertragbarkeit (Art. 20 DSGVO)',
+            'Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)',
+            'Beschwerde bei einer Aufsichtsbehörde (Art. 77 DSGVO)',
+          ],
+        },
+        {
+          title: 'Zuständige Aufsichtsbehörde',
+          body: 'Thüringer Landesbeauftragter für den Datenschutz und die Informationsfreiheit (TLfDI), Häßlerstraße 8, 99096 Erfurt. Du kannst dich auch an die Aufsichtsbehörde deines Wohnorts wenden.',
+        },
+        {
+          title: 'Änderungen',
+          body: 'Ändert sich, was diese Website verarbeitet, ändert sich auch diese Erklärung. Das Datum unten sagt dir, wann sie zuletzt angepasst wurde.',
+        },
+      ],
+      updated: 'Stand: 10. September 2026',
     },
   },
 

@@ -16,7 +16,11 @@ import { Route as SitemapDotxmlRouteImport } from './../routes/sitemap[.]xml'
 import { Route as LangIndexRouteImport } from './../routes/$lang.index'
 import { Route as LangAboutRouteImport } from './../routes/$lang.about'
 import { Route as LangContactRouteImport } from './../routes/$lang.contact'
+import { Route as LangDatenschutzRouteImport } from './../routes/$lang.datenschutz'
+import { Route as LangFaqRouteImport } from './../routes/$lang.faq'
+import { Route as LangImpressumRouteImport } from './../routes/$lang.impressum'
 import { Route as LangServicesRouteImport } from './../routes/$lang.services'
+import { Route as LangStackRouteImport } from './../routes/$lang.stack'
 import { Route as AdminIndexRouteImport } from './../routes/admin.index'
 import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './../routes/api.$'
@@ -59,9 +63,29 @@ const LangContactRoute = LangContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => LangRoute,
 } as any)
+const LangDatenschutzRoute = LangDatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangFaqRoute = LangFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangImpressumRoute = LangImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => LangRoute,
+} as any)
 const LangServicesRoute = LangServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangStackRoute = LangStackRouteImport.update({
+  id: '/stack',
+  path: '/stack',
   getParentRoute: () => LangRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -102,7 +126,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
   '/$lang/contact': typeof LangContactRoute
+  '/$lang/datenschutz': typeof LangDatenschutzRoute
+  '/$lang/faq': typeof LangFaqRoute
+  '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
+  '/$lang/stack': typeof LangStackRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -116,7 +144,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
   '/$lang/contact': typeof LangContactRoute
+  '/$lang/datenschutz': typeof LangDatenschutzRoute
+  '/$lang/faq': typeof LangFaqRoute
+  '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
+  '/$lang/stack': typeof LangStackRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -133,7 +165,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
   '/$lang/contact': typeof LangContactRoute
+  '/$lang/datenschutz': typeof LangDatenschutzRoute
+  '/$lang/faq': typeof LangFaqRoute
+  '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
+  '/$lang/stack': typeof LangStackRoute
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -151,7 +187,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/$lang/about'
     | '/$lang/contact'
+    | '/$lang/datenschutz'
+    | '/$lang/faq'
+    | '/$lang/impressum'
     | '/$lang/services'
+    | '/$lang/stack'
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
@@ -165,7 +205,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/$lang/about'
     | '/$lang/contact'
+    | '/$lang/datenschutz'
+    | '/$lang/faq'
+    | '/$lang/impressum'
     | '/$lang/services'
+    | '/$lang/stack'
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
@@ -181,7 +225,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/$lang/about'
     | '/$lang/contact'
+    | '/$lang/datenschutz'
+    | '/$lang/faq'
+    | '/$lang/impressum'
     | '/$lang/services'
+    | '/$lang/stack'
     | '/admin_/login'
     | '/api/$'
     | '/api/contact'
@@ -252,11 +300,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangContactRouteImport
       parentRoute: typeof LangRoute
     }
+    '/$lang/datenschutz': {
+      id: '/$lang/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/$lang/datenschutz'
+      preLoaderRoute: typeof LangDatenschutzRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/faq': {
+      id: '/$lang/faq'
+      path: '/faq'
+      fullPath: '/$lang/faq'
+      preLoaderRoute: typeof LangFaqRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/impressum': {
+      id: '/$lang/impressum'
+      path: '/impressum'
+      fullPath: '/$lang/impressum'
+      preLoaderRoute: typeof LangImpressumRouteImport
+      parentRoute: typeof LangRoute
+    }
     '/$lang/services': {
       id: '/$lang/services'
       path: '/services'
       fullPath: '/$lang/services'
       preLoaderRoute: typeof LangServicesRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/stack': {
+      id: '/$lang/stack'
+      path: '/stack'
+      fullPath: '/$lang/stack'
+      preLoaderRoute: typeof LangStackRouteImport
       parentRoute: typeof LangRoute
     }
     '/admin/': {
@@ -307,7 +383,11 @@ declare module '@tanstack/react-router' {
 interface LangRouteChildren {
   LangAboutRoute: typeof LangAboutRoute
   LangContactRoute: typeof LangContactRoute
+  LangDatenschutzRoute: typeof LangDatenschutzRoute
+  LangFaqRoute: typeof LangFaqRoute
+  LangImpressumRoute: typeof LangImpressumRoute
   LangServicesRoute: typeof LangServicesRoute
+  LangStackRoute: typeof LangStackRoute
   LangIndexRoute: typeof LangIndexRoute
   LangWorkSlugRoute: typeof LangWorkSlugRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
@@ -316,7 +396,11 @@ interface LangRouteChildren {
 const LangRouteChildren: LangRouteChildren = {
   LangAboutRoute: LangAboutRoute,
   LangContactRoute: LangContactRoute,
+  LangDatenschutzRoute: LangDatenschutzRoute,
+  LangFaqRoute: LangFaqRoute,
+  LangImpressumRoute: LangImpressumRoute,
   LangServicesRoute: LangServicesRoute,
+  LangStackRoute: LangStackRoute,
   LangIndexRoute: LangIndexRoute,
   LangWorkSlugRoute: LangWorkSlugRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,

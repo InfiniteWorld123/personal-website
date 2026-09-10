@@ -56,6 +56,27 @@ describe('site content', () => {
     }
   })
 
+  it('carries the legally required pages in every language', () => {
+    for (const language of languages) {
+      const legalPaths = content[language].shell.footer.legal.map((item) => item.to)
+      expect(legalPaths).toEqual(['/$lang/impressum', '/$lang/datenschutz'])
+
+      for (const document of ['impressum', 'privacy'] as const) {
+        const copy = content[language].legal[document]
+        expect(copy.sections.length).toBeGreaterThan(0)
+        // Every section says something: a paragraph or a list, never neither.
+        for (const section of copy.sections) {
+          expect(section.body ?? section.lines?.join('')).toBeTruthy()
+        }
+      }
+
+      // The address is a fact, not copy: it must not drift between languages.
+      expect(content[language].legal.impressum.sections[0]?.lines).toEqual(
+        expect.arrayContaining(['Mhd Yaman Warda', 'Warschauer Str. 9', '99089 Erfurt']),
+      )
+    }
+  })
+
   it('states the published starting prices from docs/services', () => {
     expect(servicePrices).toEqual({ websites: 990, shopify: 2490, software: 2990 })
     expect(content.de.services.items.websites.price).toBe('ab 990 €')

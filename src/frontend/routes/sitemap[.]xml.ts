@@ -3,7 +3,7 @@ import { projectOrder, site } from '#/frontend/content/site'
 import { languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
 
-const paths = ['/', '/services', '/work', '/about', '/faq', '/stack', '/contact', ...projectOrder.map((slug) => `/work/${slug}`)]
+const paths = ['/', '/services', '/work', '/about', '/faq', '/stack', '/contact', '/impressum', '/datenschutz', ...projectOrder.map((slug) => `/work/${slug}`)]
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;')
 

@@ -22,6 +22,10 @@ export const en: SiteContent = {
         { label: 'FAQ', to: '/$lang/faq' },
         { label: 'Stack', to: '/$lang/stack' },
       ],
+      legal: [
+        { label: 'Impressum', to: '/$lang/impressum' },
+        { label: 'Privacy', to: '/$lang/datenschutz' },
+      ],
     },
   },
 
@@ -715,6 +719,114 @@ export const en: SiteContent = {
     links: {
       title: 'If you want to talk',
       email: 'Email me',
+    },
+  },
+
+  legal: {
+    impressum: {
+      meta: {
+        title: 'Impressum · Yaman Warda',
+        description: 'Provider identification under § 5 DDG for yamanwarda.dev.',
+      },
+      eyebrow: 'Impressum',
+      title: 'Impressum',
+      intro:
+        'Provider identification under § 5 DDG. German law governs this page, and the German version is the binding one.',
+      sections: [
+        {
+          title: 'Provider',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt',
+            'Thuringia, Germany',
+          ],
+        },
+        {
+          title: 'Contact',
+          lines: ['Email: yamanwarda06@gmail.com'],
+        },
+        {
+          title: 'Responsible for content under § 18 (2) MStV',
+          lines: ['Mhd Yaman Warda', 'Warschauer Str. 9', '99089 Erfurt'],
+        },
+        {
+          title: 'Consumer dispute resolution',
+          body: 'I am neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.',
+        },
+        {
+          title: 'Liability for content',
+          body: 'As a service provider I am responsible for my own content on these pages under general law. I am not obliged to monitor transmitted or stored third-party information, or to investigate circumstances that indicate unlawful activity. Obligations to remove or block the use of information under general law remain unaffected. Liability in this respect begins only from the point at which a concrete infringement becomes known. If I become aware of such infringements, I will remove the content promptly.',
+        },
+        {
+          title: 'Liability for links',
+          body: 'This site contains links to external websites over whose content I have no influence. The respective provider or operator is always responsible for the content of linked pages. Those pages were checked for possible legal violations at the time of linking, and no unlawful content was apparent. Permanent monitoring of linked content without concrete evidence of an infringement is not reasonable. If I become aware of infringements, I will remove such links promptly.',
+        },
+        {
+          title: 'Copyright',
+          body: 'The content and works created by me on these pages are subject to German copyright law. Reproduction, adaptation, distribution, and any kind of exploitation beyond the limits of copyright require my written consent. Downloads and copies of this page are permitted for private, non-commercial use only.',
+        },
+      ],
+      updated: 'Last updated: 10 September 2026',
+    },
+    privacy: {
+      meta: {
+        title: 'Privacy · Yaman Warda',
+        description:
+          'What yamanwarda.dev processes: server logs, the contact form, and one strictly necessary cookie. No tracking, no advertising.',
+      },
+      eyebrow: 'Privacy',
+      title: 'Privacy policy',
+      intro:
+        'This site collects as little as it can. There are no analytics tools, no advertising networks, and no cross-site tracking. What is actually processed is listed here in full. The German version is the binding one.',
+      sections: [
+        {
+          title: 'Controller',
+          lines: [
+            'Mhd Yaman Warda',
+            'Warschauer Str. 9',
+            '99089 Erfurt, Germany',
+            'Email: yamanwarda06@gmail.com',
+          ],
+        },
+        {
+          title: 'Hosting and server logs',
+          body: 'This site is hosted by Vercel Inc. and served from their European region. When you open a page, the provider processes technically necessary data such as your IP address, the date and time, the URL requested, the volume of data transferred, the referrer, and your browser identification. The legal basis is Art. 6 (1) (f) GDPR: the legitimate interest in delivering the site securely and reliably. A data processing agreement is in place with the provider.',
+        },
+        {
+          title: 'Contact form and email',
+          body: 'If you use the contact form, the following are processed: your name, email address, optionally company and phone number, your answers on preferred channel, project type, budget and timeline, your project description, and an optional file (PDF, PNG, or JPG, up to 5 MB). These are delivered to me as an email; I use the service Resend to send it. The legal basis is Art. 6 (1) (b) GDPR for steps prior to a contract, otherwise Art. 6 (1) (f) GDPR. I keep your enquiry for as long as handling it requires and delete it afterwards, unless a statutory retention period applies.',
+        },
+        {
+          title: 'Cookies',
+          body: 'This site sets exactly one cookie, named "lang". It remembers for one year which language you chose, so you do not have to set it on every visit. It contains no identifier that could be used to recognise you and is not sent to any third party. The legal basis is § 25 (2) no. 2 TDDDG and Art. 6 (1) (f) GDPR. No consent banner is required for this, which is why there is none.',
+        },
+        {
+          title: 'What does not happen',
+          body: 'There is no web analytics, no statistics software, no advertising or retargeting pixels, no fonts embedded from third-party servers, and no social media plugins. No profiles are built and no automated decision-making takes place.',
+        },
+        {
+          title: 'Your rights',
+          lines: [
+            'Access to the data held about you (Art. 15 GDPR)',
+            'Rectification of inaccurate data (Art. 16 GDPR)',
+            'Erasure (Art. 17 GDPR)',
+            'Restriction of processing (Art. 18 GDPR)',
+            'Data portability (Art. 20 GDPR)',
+            'Objection to processing (Art. 21 GDPR)',
+            'Complaint to a supervisory authority (Art. 77 GDPR)',
+          ],
+        },
+        {
+          title: 'Supervisory authority',
+          body: 'Thüringer Landesbeauftragter für den Datenschutz und die Informationsfreiheit (TLfDI), Häßlerstraße 8, 99096 Erfurt. You may also contact the supervisory authority where you live.',
+        },
+        {
+          title: 'Changes',
+          body: 'If what this site processes changes, this policy changes with it. The date below tells you when it was last revised.',
+        },
+      ],
+      updated: 'Last updated: 10 September 2026',
     },
   },
 

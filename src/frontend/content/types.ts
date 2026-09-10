@@ -28,6 +28,8 @@ export type ShellCopy = {
      * putting them in the main nav would only dilute it.
      */
     more: Array<{ label: string; to: string }>
+    /** Impressum and Datenschutz, in the bottom bar as German sites put them. */
+    legal: Array<{ label: string; to: string }>
   }
 }
 
@@ -278,6 +280,19 @@ export type StackCopy = {
   links: { title: string; email: string }
 }
 
+/**
+ * One legal document. Sections carry either a paragraph or a list of lines
+ * (an address, a set of rights), never both.
+ */
+export type LegalCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  sections: Array<{ title: string; body?: string; lines?: string[] }>
+  updated: string
+}
+
 export type SiteContent = {
   shell: ShellCopy
   home: HomeCopy
@@ -287,5 +302,6 @@ export type SiteContent = {
   contact: ContactCopy
   faq: FaqCopy
   stack: StackCopy
+  legal: { impressum: LegalCopy; privacy: LegalCopy }
   notFound: { title: string; body: string; link: string }
 }
