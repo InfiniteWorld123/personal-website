@@ -673,7 +673,7 @@ export const de: SiteContent = {
         { label: 'Validierung', value: 'Valibot an der Grenze, geteilt zwischen Client und Server' },
         { label: 'State und Formulare', value: 'React Query für Serverdaten, TanStack Form für Eingaben' },
         { label: 'Motion', value: 'CSS mit IntersectionObserver und Pointer-Events, ohne Bibliothek' },
-        { label: 'Hosting', value: 'Hetzner in Deutschland, Coolify, PostgreSQL im Docker auf demselben Host' },
+        { label: 'Hosting', value: 'Heute Vercel; eine Hetzner-Maschine in Deutschland ist der nächste Schritt' },
       ],
     },
     decisions: {
@@ -694,10 +694,10 @@ export const de: SiteContent = {
           cost: 'Ich baue den Editor selbst, statt einen zu installieren. Bis er fertig ist, liegen die Texte in typisierten Dateien — ehrlich statt bequem.',
         },
         {
-          title: 'Ein deutscher Server, den ich selbst administriere',
-          body: 'Kundendaten, Leads und Rechnungen liegen auf einer Hetzner-Maschine in Deutschland, was die DSGVO-Geschichte kurz macht. Cron und Hintergrundjobs laufen nativ, und die Datenbank ist lokal, also gibt es kein Serverless-Pooling-Problem.',
-          costLabel: 'Was es kostet',
-          cost: 'Backups und Sicherheitsupdates gehören mir. Snapshots, ein nächtlicher pg_dump, unattended upgrades und ein Restore, den ich tatsächlich getestet habe — nicht einer, von dem ich annehme, dass er funktioniert.',
+          title: 'Ein deutscher Server, den ich selbst administriere, statt Serverless',
+          body: 'Kundendaten, Leads und Rechnungen gehören auf eine Maschine in Deutschland, das macht die DSGVO-Antwort kurz. Cron und Hintergrundjobs laufen dort nativ, und eine lokale Datenbank hat kein Serverless-Pooling-Problem, um das man herumbauen müsste.',
+          costLabel: 'Wo das gerade steht',
+          cost: 'Das ist eine Entscheidung, noch keine Tatsache: Die Seite läuft heute auf Vercel, und der Umzug zu Hetzner mit Coolify ist der nächste Infrastruktur-Schritt. Wenn er kommt, gehören Backups und Sicherheitsupdates mir — Snapshots, ein nächtlicher pg_dump, unattended upgrades und ein Restore, den ich tatsächlich getestet und nicht bloß angenommen habe.',
         },
         {
           title: 'Eine Motion-Schicht ohne Animationsbibliothek',

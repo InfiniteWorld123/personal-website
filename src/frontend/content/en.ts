@@ -673,7 +673,7 @@ export const en: SiteContent = {
         { label: 'Validation', value: 'Valibot on the boundary, shared between client and server' },
         { label: 'State and forms', value: 'React Query for server state, TanStack Form for input' },
         { label: 'Motion', value: 'CSS with IntersectionObserver and pointer events, no library' },
-        { label: 'Hosting', value: 'Hetzner in Germany, Coolify, PostgreSQL in Docker on the same host' },
+        { label: 'Hosting', value: 'Vercel today; a Hetzner box in Germany is the next move' },
       ],
     },
     decisions: {
@@ -694,10 +694,10 @@ export const en: SiteContent = {
           cost: 'I build the editor myself instead of installing one. The copy still lives in typed files until that editor is finished, which is honest rather than convenient.',
         },
         {
-          title: 'A German server I administer, not serverless',
-          body: 'Client data, leads, and invoices sit on a Hetzner box in Germany, which makes the GDPR story short. Cron and background jobs work natively, and the database is local, so there is no serverless connection-pooling problem.',
-          costLabel: 'What it costs',
-          cost: 'Backups and security updates are mine. Snapshots, a nightly pg_dump, unattended upgrades, and a restore I have actually tested — not one I assume works.',
+          title: 'A German server I administer, over staying serverless',
+          body: 'Client data, leads, and invoices belong on a machine in Germany, which makes the GDPR answer short. Cron and background jobs run natively there, and a local database has no serverless connection-pooling problem to design around.',
+          costLabel: 'Where this one stands',
+          cost: 'This is a decision, not yet a fact: the site runs on Vercel today, and the move to Hetzner with Coolify is the next infrastructure job. When it lands, backups and security updates become mine — snapshots, a nightly pg_dump, unattended upgrades, and a restore I have actually tested rather than assumed.',
         },
         {
           title: 'A motion layer with no animation library',
