@@ -144,9 +144,16 @@ export type AboutCopy = {
   eyebrow: string
   title: string
   intro: string
-  story: { title: string; paragraphs: string[] }
+  /**
+   * The personal story, in chapters rather than one run of paragraphs.
+   * Every chapter carries at least one checkable fact — a year, a place, a
+   * tool — because a story without them reads as filler.
+   */
+  story: { title: string; chapters: Array<{ title: string; paragraphs: string[] }> }
   method: { title: string; items: Array<{ title: string; body: string }> }
-  platform: { title: string; body: string }
+  /** What a client gets from working with one person, stated plainly. */
+  expect: { title: string; intro: string; items: Array<{ title: string; body: string }> }
+  platform: { title: string; body: string; link: string }
   portraitAlt: string
   cta: { title: string; body: string; button: string; alt: string }
 }

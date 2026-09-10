@@ -38,7 +38,7 @@ export const en: SiteContent = {
       typed: ['WEB', 'SHOP', 'SOFTWARE'],
       staticLine: 'DEVELOPER',
       headline: "Your idea. Built together.",
-      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product — thoughtfully built around your business.",
+      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product, in German, English, or Arabic.",
       cta: 'Request a call',
       secondary: 'See my work',
       availability: 'Available for new projects',
@@ -141,7 +141,7 @@ export const en: SiteContent = {
     about: {
       eyebrow: 'About',
       title: 'One developer, one point of contact.',
-      body: 'I am Yaman Warda, a developer in Erfurt. I taught myself to program and have been building complete systems ever since: interface, backend, database, operations. This website, including the admin behind it, is self-built.',
+      body: 'I am Yaman Warda. I came from Syria in 2015, taught myself to program in 2021, and build complete systems from Erfurt: interface, backend, database, operations. This website and the admin behind it are one of them.',
       link: 'More about me',
     },
     cta: {
@@ -283,18 +283,39 @@ export const en: SiteContent = {
     meta: {
       title: 'About · Yaman Warda, developer in Erfurt',
       description:
-        'Self-taught, fully built: who is behind the websites, stores, and systems, how I work, and why I built this platform myself.',
+        'Syrian, in Germany since 2015, self-taught since 2021. Why I started, how I got to Erfurt, why I build whole systems, and what to expect from working with one person.',
     },
     eyebrow: 'About',
     title: 'I build things that someone then uses every day.',
     intro:
-      'I am Yaman Warda, a developer in Erfurt. I work alone, directly with you, and build complete systems rather than isolated parts.',
+      'I am Yaman Warda. I came to Germany from Syria in 2015, taught myself to program in 2021, and now build websites, stores, and business systems from Erfurt — remotely, in German, English, or Arabic.',
     story: {
       title: 'How I got here',
-      paragraphs: [
-        'I taught myself to program. Not with tutorials you type along to, but with real projects that had to be published and then received feedback.',
-        'Along the way I noticed what I most like to build: not single screens, but whole flows. Sign-in, data model, payments, dashboards, and the small details that make software feel real.',
-        'Today I build exactly that for small businesses: websites, stores, and systems that have to work in everyday use after handover.',
+      chapters: [
+        {
+          title: 'Why I started',
+          paragraphs: [
+            'Not because I loved computers as a child. I started in 2021 because programming looked like the widest door I could see: a skill that pays, that travels, that lets me work for myself or for someone else, and that nobody can take away once I have it.',
+            'There was a smaller reason, and it is less respectable. It felt good to be fast at the keyboard — to type quickly and watch something appear. I am not going to pretend that was not part of it.',
+            'Both reasons turned out to be enough.',
+          ],
+        },
+        {
+          title: 'How I ended up in Erfurt',
+          paragraphs: [
+            'I am Syrian. I have been in Germany since 2015.',
+            'I did not choose Erfurt. My father was given a place here, and that is where the family went. It is not a story about finding the right city. It is the ordinary version, where you arrive somewhere and then make it yours.',
+            'So I learned German, and a few years later I learned to program in English, which is a third language. That is probably why I care as much as I do about making things plain. I have spent a long time on the other side of a sentence I could not follow.',
+          ],
+        },
+        {
+          title: 'Why whole systems and not screens',
+          paragraphs: [
+            'The first thing I ever put on the internet was an online store. Not a tutorial result — a real one, with a catalogue, a cart, and a checkout, published where friends and family could open it and tell me what was broken. They did.',
+            'I have deleted more projects than I have kept. The ones that survived taught me the same thing every time: the interesting part is never the screen. It is what sits behind it — the sign-in, the data model, the payment, the order that still has to be correct tomorrow.',
+            'It is also why I build on TanStack Start rather than Next.js. It is not a magic framework. I can see what it does, the router is the best piece of it, and the ecosystem is TypeScript the whole way down. I would rather understand my tools than be impressed by them.',
+          ],
+        },
       ],
     },
     method: {
@@ -302,25 +323,49 @@ export const en: SiteContent = {
       items: [
         {
           title: 'Understand first, then build',
-          body: 'I want to know how your process works today and where it gets stuck before I propose a solution.',
+          body: 'I want to know how your process works today, and where it stops working, before I suggest anything. Most of what I hear in a first conversation is the symptom. The cause usually turns up in the second.',
         },
         {
-          title: 'Start small, deliver cleanly',
-          body: 'The first version contains what carries the core. Extensions come when they are needed, not because they are possible.',
+          title: 'Start small',
+          body: 'The first version carries the core. Everything else waits until it is actually needed.',
         },
         {
-          title: 'Fundamentals over tricks',
-          body: 'I build with tools I understand, so I can find bugs and explain to you what is happening.',
+          title: 'Tools I understand',
+          body: 'I build with things I can debug at midnight and explain to you the next morning. That rules out a lot of clever choices, on purpose.',
         },
         {
-          title: 'Honest, even when it costs revenue',
-          body: 'If your website is good enough or an off-the-shelf tool is enough, I will say so.',
+          title: 'Honest, even when it costs me the job',
+          body: 'If your website is already fine, or a thirty-euro-a-month tool would do what you need, I will say so before you pay me anything.',
+        },
+      ],
+    },
+    expect: {
+      title: 'What to expect from me',
+      intro:
+        'Working with one person is not the same as working with an agency. Here is the honest version of the difference.',
+      items: [
+        {
+          title: 'You talk to the person building it',
+          body: 'No account manager, no handover from a salesperson to a developer you never meet. Whoever answers your email is the one writing the code.',
+        },
+        {
+          title: 'An answer within one working day',
+          body: 'Not always the full answer. Sometimes it is "I need to look at this properly, I will come back tomorrow." But you will not be left wondering whether the message arrived.',
+        },
+        {
+          title: 'You see it before it is finished',
+          body: 'The design direction comes at a checkpoint, while changing it is still cheap, and two rounds of feedback come after that. Nothing large gets built on a direction you have not seen.',
+        },
+        {
+          title: 'The handover is part of the job',
+          body: 'Accounts in your name, 30 days of bug fixing after launch, and for stores a walkthrough so you can run it yourself. I am not trying to make you dependent on me.',
         },
       ],
     },
     platform: {
-      title: 'This website is an example',
-      body: 'You are looking at a system I built entirely myself: the public site in three languages and, behind it, an admin for enquiries, content, clients, and invoices. No site builder, no third-party CMS. That is the kind of work I offer.',
+      title: 'This website is the example',
+      body: 'You are reading it. The public pages in three languages, the API, the PostgreSQL database, and the admin behind it for enquiries, content, clients, and invoices are one application I wrote and run. No site builder, no third-party CMS, no bought template.',
+      link: 'The technical version',
     },
     portraitAlt: 'Yaman Warda',
     cta: {

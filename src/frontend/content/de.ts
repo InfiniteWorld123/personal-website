@@ -38,7 +38,7 @@ export const de: SiteContent = {
       typed: ['WEB-', 'SHOP-', 'SOFTWARE-'],
       staticLine: 'ENTWICKLER',
       headline: "Deine Idee. Gemeinsam umgesetzt.",
-      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt: durchdacht, persönlich und passend zu deinem Unternehmen.",
+      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt — auf Deutsch, Englisch oder Arabisch.",
       cta: 'Gespräch anfragen',
       secondary: 'Projekte ansehen',
       availability: 'Verfügbar für neue Projekte',
@@ -141,7 +141,7 @@ export const de: SiteContent = {
     about: {
       eyebrow: 'Über mich',
       title: 'Ein Entwickler, ein Ansprechpartner.',
-      body: 'Ich bin Yaman Warda, Entwickler in Erfurt. Ich habe mir das Programmieren selbst beigebracht und baue seitdem komplette Systeme: Oberfläche, Backend, Datenbank, Betrieb. Diese Website samt der Verwaltung dahinter ist selbst gebaut.',
+      body: 'Ich bin Yaman Warda. 2015 kam ich aus Syrien, 2021 habe ich mir das Programmieren beigebracht, und von Erfurt aus baue ich komplette Systeme: Oberfläche, Backend, Datenbank, Betrieb. Diese Website und die Verwaltung dahinter sind eines davon.',
       link: 'Mehr über mich',
     },
     cta: {
@@ -283,18 +283,39 @@ export const de: SiteContent = {
     meta: {
       title: 'Über mich · Yaman Warda, Entwickler in Erfurt',
       description:
-        'Selbst beigebracht, komplett gebaut: Wer hinter den Websites, Shops und Systemen steht, wie ich arbeite und warum ich diese Plattform selbst gebaut habe.',
+        'Syrer, seit 2015 in Deutschland, seit 2021 Autodidakt. Warum ich angefangen habe, wie ich nach Erfurt kam, warum ich ganze Systeme baue und was du von einer Person erwarten kannst.',
     },
     eyebrow: 'Über mich',
     title: 'Ich baue Dinge, die danach jemand täglich benutzt.',
     intro:
-      'Ich bin Yaman Warda, Entwickler in Erfurt. Ich arbeite allein, direkt mit dir, und baue vollständige Systeme statt einzelner Teile.',
+      'Ich bin Yaman Warda. 2015 bin ich aus Syrien nach Deutschland gekommen, 2021 habe ich mir das Programmieren selbst beigebracht, und heute baue ich von Erfurt aus Websites, Shops und Business-Systeme — remote, auf Deutsch, Englisch oder Arabisch.',
     story: {
       title: 'Wie ich hierher gekommen bin',
-      paragraphs: [
-        'Ich habe mir das Programmieren selbst beigebracht. Nicht mit Tutorials, die man nachtippt, sondern mit echten Projekten, die veröffentlicht werden mussten und dann Feedback bekommen haben.',
-        'Dabei ist mir aufgefallen, was ich am liebsten baue: keine einzelnen Bildschirme, sondern ganze Abläufe. Anmeldung, Datenmodell, Zahlungen, Dashboards und die kleinen Details, die eine Software echt wirken lassen.',
-        'Heute baue ich genau das für kleine Unternehmen: Websites, Shops und Systeme, die nach der Übergabe im Alltag funktionieren müssen.',
+      chapters: [
+        {
+          title: 'Warum ich angefangen habe',
+          paragraphs: [
+            'Nicht, weil ich als Kind Computer geliebt hätte. Ich habe 2021 angefangen, weil Programmieren die breiteste Tür war, die ich sehen konnte: eine Fähigkeit, die bezahlt wird, die mitreist, mit der ich für mich selbst oder für andere arbeiten kann und die mir niemand wieder wegnimmt.',
+            'Es gab einen kleineren Grund, und der ist weniger seriös. Es fühlte sich gut an, schnell auf der Tastatur zu sein — schnell zu tippen und zu sehen, wie etwas entsteht. Ich tue nicht so, als wäre das nicht dabei gewesen.',
+            'Beide Gründe haben gereicht.',
+          ],
+        },
+        {
+          title: 'Wie ich in Erfurt gelandet bin',
+          paragraphs: [
+            'Ich bin Syrer. Seit 2015 bin ich in Deutschland.',
+            'Erfurt habe ich mir nicht ausgesucht. Mein Vater hat hier einen Platz bekommen, und dorthin ist die Familie gegangen. Das ist keine Geschichte darüber, die richtige Stadt zu finden. Es ist die gewöhnliche Version, in der man irgendwo ankommt und den Ort dann zu seinem macht.',
+            'Also habe ich Deutsch gelernt, und ein paar Jahre später das Programmieren auf Englisch, also in einer dritten Sprache. Wahrscheinlich ist das der Grund, warum mir Klarheit so wichtig ist. Ich habe lange auf der anderen Seite von Sätzen gestanden, denen ich nicht folgen konnte.',
+          ],
+        },
+        {
+          title: 'Warum ganze Systeme und nicht Bildschirme',
+          paragraphs: [
+            'Das Erste, was ich je ins Internet gestellt habe, war ein Onlineshop. Kein Tutorial-Ergebnis, sondern ein echter, mit Katalog, Warenkorb und Kasse, veröffentlicht dort, wo Freunde und Familie ihn öffnen und mir sagen konnten, was kaputt ist. Das haben sie getan.',
+            'Ich habe mehr Projekte gelöscht als behalten. Die, die geblieben sind, haben mir jedes Mal dasselbe beigebracht: der interessante Teil ist nie der Bildschirm. Es ist das, was dahinter liegt — die Anmeldung, das Datenmodell, die Zahlung, die Bestellung, die morgen immer noch stimmen muss.',
+            'Deshalb baue ich auch auf TanStack Start statt auf Next.js. Es ist kein magisches Framework. Ich sehe, was es tut, der Router ist das beste Stück daran, und das Ökosystem ist durchgehend TypeScript. Ich verstehe meine Werkzeuge lieber, als dass ich von ihnen beeindruckt bin.',
+          ],
+        },
       ],
     },
     method: {
@@ -302,30 +323,54 @@ export const de: SiteContent = {
       items: [
         {
           title: 'Erst verstehen, dann bauen',
-          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er hakt, bevor ich eine Lösung vorschlage.',
+          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er aufhört zu funktionieren, bevor ich irgendetwas vorschlage. Das meiste, was ich im ersten Gespräch höre, ist das Symptom. Die Ursache taucht meistens im zweiten auf.',
         },
         {
-          title: 'Klein anfangen, sauber liefern',
-          body: 'Die erste Version enthält, was den Kern trägt. Erweiterungen kommen, wenn sie gebraucht werden, nicht weil sie möglich sind.',
+          title: 'Klein anfangen',
+          body: 'Die erste Version trägt den Kern. Alles andere wartet, bis es wirklich gebraucht wird.',
         },
         {
-          title: 'Grundlagen statt Tricks',
-          body: 'Ich baue mit Werkzeugen, die ich verstehe, damit ich Fehler finden und dir erklären kann, was passiert.',
+          title: 'Werkzeuge, die ich verstehe',
+          body: 'Ich baue mit Dingen, die ich um Mitternacht debuggen und dir am nächsten Morgen erklären kann. Das schließt eine Menge cleverer Entscheidungen aus, mit Absicht.',
         },
         {
-          title: 'Ehrlich, auch wenn es Umsatz kostet',
-          body: 'Wenn deine Website gut genug ist oder ein fertiges Werkzeug reicht, sage ich das.',
+          title: 'Ehrlich, auch wenn es mich den Auftrag kostet',
+          body: 'Wenn deine Website schon in Ordnung ist oder ein Werkzeug für dreißig Euro im Monat reicht, sage ich das, bevor du mir irgendetwas bezahlst.',
+        },
+      ],
+    },
+    expect: {
+      title: 'Was du von mir erwarten kannst',
+      intro:
+        'Mit einer Person zu arbeiten ist nicht dasselbe wie mit einer Agentur. Hier ist die ehrliche Fassung des Unterschieds.',
+      items: [
+        {
+          title: 'Du sprichst mit dem, der es baut',
+          body: 'Kein Account Manager, keine Übergabe von einem Vertriebler an einen Entwickler, den du nie triffst. Wer deine E-Mail beantwortet, schreibt auch den Code.',
+        },
+        {
+          title: 'Eine Antwort innerhalb eines Werktags',
+          body: 'Nicht immer die vollständige. Manchmal ist es "das muss ich mir richtig ansehen, ich melde mich morgen." Aber du sitzt nicht da und fragst dich, ob die Nachricht angekommen ist.',
+        },
+        {
+          title: 'Du siehst es, bevor es fertig ist',
+          body: 'Die gestalterische Richtung kommt an einem Zwischenstand, solange eine Änderung noch billig ist, und danach zwei Feedbackrunden. Nichts Großes wird auf einer Richtung gebaut, die du nicht gesehen hast.',
+        },
+        {
+          title: 'Die Übergabe gehört zur Arbeit',
+          body: 'Zugänge auf deinen Namen, 30 Tage Fehlerbehebung nach dem Launch, und bei Shops eine Einweisung, damit du ihn selbst führen kannst. Ich versuche nicht, dich von mir abhängig zu machen.',
         },
       ],
     },
     platform: {
-      title: 'Diese Website ist ein Beispiel',
-      body: 'Du siehst gerade ein System, das ich komplett selbst gebaut habe: die öffentliche Seite in drei Sprachen und dahinter eine Verwaltung für Anfragen, Inhalte, Kunden und Rechnungen. Kein Baukasten, kein fremdes CMS. Das ist die Art Arbeit, die ich anbiete.',
+      title: 'Diese Website ist das Beispiel',
+      body: 'Du liest sie gerade. Die öffentlichen Seiten in drei Sprachen, die API, die PostgreSQL-Datenbank und die Verwaltung dahinter für Anfragen, Inhalte, Kunden und Rechnungen sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, kein gekauftes Template.',
+      link: 'Die technische Fassung',
     },
     portraitAlt: 'Yaman Warda',
     cta: {
-      title: 'Lass uns über dein Projekt sprechen.',
-      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn sie lautet: Du brauchst etwas anderes.',
+      title: 'Lass uns über dein Vorhaben sprechen.',
+      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn die Antwort ist, dass du etwas anderes brauchst.',
       button: 'Gespräch anfragen',
       alt: 'Schreib mir eine E-Mail',
     },
