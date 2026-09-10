@@ -87,6 +87,18 @@ is the preferred implementation for most store projects and appears in the
 service detail, case studies, and search copy where platform expertise helps.
 The home page sells the outcome without presenting the business as Shopify-only.
 
+### Local root, global reach
+
+The work is based in Erfurt and taken remotely from anywhere, in German,
+English, or Arabic. Erfurt leads because it is the specific, checkable half;
+"worldwide" never leads, because every freelancer claims it and it weakens
+rather than strengthens trust. Prices stay in euros for everyone — a second,
+cheaper tier for Arabic-speaking markets was considered and rejected, because
+two prices for the same work undermines both.
+
+The Arabic pages serve Arabic speakers in Germany, Austria, Switzerland, and
+the Gulf. That is the honest reach at these price bands.
+
 ### Address and identity
 
 German client-facing copy uses **du**: direct and friendly, but still precise.
@@ -119,8 +131,10 @@ manager reading service packages leaves.
 | `/work` | Prove capability with real projects |
 | `/about` | Build trust in the person — story, method, why this work |
 | `/blog` | Show thinking; earn return visits |
+| `/faq` | Answer the objections before the visitor has to ask |
 | `/stack` | Address companies, separately |
 | `/contact` | Catch everyone the booking flow does not |
+| `/impressum`, `/datenschutz` | Legally required, and evidence of a real business |
 
 The landing page **stops** at the offer. Personal story lives on `/about`. This
 split was requested and is correct: a landing page that opens with autobiography
@@ -161,6 +175,14 @@ proof. They do not appear in the hero or home-page service cards.
 - First person. This is one person, and that is a strength at this size, not
   something to hide behind corporate "we".
 - Never invent numbers. If there is no client count worth stating, state none.
+- Every paragraph about the person carries a checkable fact: a year, a place, a
+  tool, an event. Prose without them reads as generated filler, which is what
+  the about page was before September 2026.
+- At least one opinion per page that a reader could disagree with. Perfect
+  neutrality is the clearest tell that nobody wrote it.
+- Do not describe infrastructure or features as done when they are decided.
+  `/stack` names Vercel today and Hetzner as the next move for exactly this
+  reason.
 
 ## Editable content keys
 
