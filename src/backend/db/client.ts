@@ -19,6 +19,7 @@ export type Db = {
 }
 
 let sharedPool: Pool | undefined
+const requestPool = new AsyncLocalStorage<{ pool?: Pool }>()
 
 /**
  * True inside a Cloudflare Worker. A Worker may not reuse a socket between
@@ -41,7 +42,7 @@ export const isWorkerRuntime = (): boolean =>
  * the server path still uses.
  */
 let hyperdriveUrl: string | undefined
-let hyperdriveResolved = false
+let hyperdriveResolution: Promise<void> | undefined
 
 /**
  * Resolved on the first request rather than at module load. A top-level
@@ -49,34 +50,42 @@ let hyperdriveResolved = false
  * upload with `The uploaded script has no registered event handlers` because
  * the default export is not there when it looks.
  */
-const resolveHyperdriveUrl = async (): Promise<void> => {
-  if (hyperdriveResolved) return
+const resolveHyperdriveUrl = (): Promise<void> =>
+  (hyperdriveResolution ??= (async () => {
+    try {
+      const specifier = ['cloudflare', 'workers'].join(':')
+      const workerModule = (await import(specifier)) as { env?: Record<string, unknown> }
+      const binding = workerModule.env?.HYPERDRIVE as { connectionString?: string } | undefined
 
-  hyperdriveResolved = true
-
-  try {
-    const specifier = ['cloudflare', 'workers'].join(':')
-    const workerModule = (await import(specifier)) as { env?: Record<string, unknown> }
-    const binding = workerModule.env?.HYPERDRIVE as { connectionString?: string } | undefined
-
-    hyperdriveUrl = binding?.connectionString
-  } catch {
-    hyperdriveUrl = undefined
-  }
-}
+      hyperdriveUrl = binding?.connectionString
+    } catch {
+      hyperdriveUrl = undefined
+    }
+  })())
 
 /**
  * The pool for the current context. On a server it is process-wide and lives
  * for the life of the process. On a Worker it lasts one request and is closed
  * by `withRequestScope`.
  */
-export const getPool = (): Pool =>
-  (sharedPool ??= new Pool({ connectionString: hyperdriveUrl ?? env.DATABASE_URL }))
+export const getPool = (): Pool => {
+  const scope = requestPool.getStore()
+  if (scope) {
+    return (scope.pool ??= new Pool({
+      connectionString: hyperdriveUrl ?? env.DATABASE_URL,
+      max: 5,
+      connectionTimeoutMillis: 10_000,
+    }))
+  }
+  return (sharedPool ??= new Pool({ connectionString: env.DATABASE_URL }))
+}
 
 /** Closes the pool. CLI entry points, and the end of a Worker request. */
 export const closePool = async (): Promise<void> => {
-  const pool = sharedPool
-  sharedPool = undefined
+  const scope = requestPool.getStore()
+  const pool = scope ? scope.pool : sharedPool
+  if (scope) scope.pool = undefined
+  else sharedPool = undefined
 
   await pool?.end().catch(() => {})
 }
@@ -111,11 +120,13 @@ export const withRequestScope = async <T>(fn: () => Promise<T>): Promise<T> => {
 
   await resolveHyperdriveUrl()
 
-  try {
-    return await fn()
-  } finally {
-    await closePool()
-  }
+  return requestPool.run({}, async () => {
+    try {
+      return await fn()
+    } finally {
+      await closePool()
+    }
+  })
 }
 
 /**
