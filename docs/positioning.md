@@ -1,7 +1,10 @@
 # Positioning and Messaging
 
 Owns how the business is described to visitors. Every headline, service
-description, and CTA on the public site answers to this file.
+description, and CTA on the public site answers to this file. Accepted
+page-composition and copy-direction decisions are recorded in
+[`content-decisions.md`](./content-decisions.md); the source code may lag those
+decisions until an approved content implementation pass ships.
 
 ---
 
@@ -43,6 +46,12 @@ what makes retainers and subscriptions (phase 5) a natural continuation of the
 sale rather than an upsell.
 
 ### Current direction — B3 as built
+
+> The implementation currently reflects the direction documented below. The
+> accepted next content direction is recorded in
+> [`content-decisions.md`](./content-decisions.md), especially C5–C9. Use that
+> register when planning the next public-content pass; do not treat this
+> historical implementation note as approval to retain older copy or sections.
 
 The identity is a friendly, independent technical partner: professional
 clarity with the owner's own energetic look (see `design-system.md`). Custom
@@ -107,18 +116,18 @@ Erfurt**. The public site always uses first person singular, never agency "we".
 
 ---
 
-## Two audiences, two pages, two messages
+## Two routes, two messages
 
 | | `/` and `/services` | `/stack` |
 | --- | --- | --- |
-| Reader | Business owner buying a service | Company considering hiring |
-| Question | "Can he build what I need?" | "Is he technically strong?" |
-| Language | Outcomes, deliverables, process | Architecture, stack, decisions |
-| Proof | Case studies, screenshots | This platform, code decisions |
-| CTA | Book a call | Contact / CV |
+| Reader | Business owner buying a service | Technically curious reader |
+| Question | "Can he build what I need?" | "What technology does he work with?" |
+| Language | Outcomes, deliverables, process | A short, current technology overview |
+| Proof | Case studies, screenshots | This platform and project links |
+| CTA | Book a call | Email / GitHub |
 
-Never merge these. A buyer reading architecture diagrams leaves; a hiring
-manager reading service packages leaves.
+Never merge these. A buyer does not need a technology list before they
+understand the offer, and a technical reader does not need a service pitch.
 
 ---
 
@@ -132,7 +141,7 @@ manager reading service packages leaves.
 | `/about` | Build trust in the person — story, method, why this work |
 | `/blog` | Show thinking; earn return visits |
 | `/faq` | Answer the objections before the visitor has to ask |
-| `/stack` | Address companies, separately |
+| `/stack` | Give a concise, factual technical overview |
 | `/contact` | Catch everyone the booking flow does not |
 | `/impressum`, `/datenschutz` | Legally required, and evidence of a real business |
 
@@ -146,23 +155,23 @@ buries the offer.
 
 Ordered by what a cold visitor needs, in order:
 
-1. **Hero** — concrete deliverables, the person, and the primary CTA
-   ("Gespräch anfragen" / "Request a call" / "اطلب مكالمة", the same label on
-   every page)
-2. **What I build** — the three service lines, without prices on the home page
-3. **Work** — up to six projects in content order, with equal visual treatment.
-   Prime Estate, Tech Store, then InkNest initially. No premium labels or
-   oversized featured project; no fake screenshot placeholders.
-4. **Story moment** — requirements notes → wireframe → a working request/booking interface.
-   Clearly labeled as a process illustration, not a client project. A plain
-   vertical section; copy and illustration still to be reviewed.
-5. **How it works** — the process in three or four steps. Removes the fear of
-   hiring a stranger, which is the actual objection at this deal size
-6. **Who this is for** — plain qualification, including who it is *not* for.
-   Filtering out bad fits raises the quality of every booking
-7. **About, briefly** — two sentences and a link to `/about`
-8. **CTA** — title, explanation, then contact and email actions together.
-   The contact form is available now; booking is implemented in B5.
+1. **Hero** — the person, a direct and human offer, and the primary CTA.
+   The shared action label remains "Gespräch anfragen" / "Request a call" /
+   "اطلب مكالمة" until a whole-site CTA review changes it.
+2. **What I build** — the three service lines, without prices on the home page.
+3. **Work** — current projects in equal treatment and with honest status. No
+   premium labels, oversized featured project, fake client work, or placeholder
+   screenshots.
+4. **How it works** — the process in three or four steps, including how the
+   relationship can continue after launch when the client needs it.
+5. **FAQ** — eight shared questions in accordions, answering the practical
+   hesitation that appears immediately before contact.
+6. **CTA** — a low-barrier invitation to describe an idea, even if it is not
+   yet a finished plan; contact and direct email stay available.
+
+The story illustration, home-page fit/not-fit section, and brief about teaser
+are not part of the approved landing-page content pass. Their purpose belongs
+on dedicated pages or can be reconsidered in a later content decision.
 
 Prices live on `/services`, after the visitor has understood the offer and seen
 proof. They do not appear in the hero or home-page service cards.
@@ -175,14 +184,14 @@ proof. They do not appear in the hero or home-page service cards.
 - First person. This is one person, and that is a strength at this size, not
   something to hide behind corporate "we".
 - Never invent numbers. If there is no client count worth stating, state none.
-- Every paragraph about the person carries a checkable fact: a year, a place, a
-  tool, an event. Prose without them reads as generated filler, which is what
-  the about page was before September 2026.
+- Personal detail must serve the reader's professional trust, not invite
+  sympathy. Use a checkable fact only when it clarifies the work, a decision,
+  or the relationship; `/about` is not a biography.
 - At least one opinion per page that a reader could disagree with. Perfect
   neutrality is the clearest tell that nobody wrote it.
-- Do not describe infrastructure or features as done when they are decided.
-  `/stack` names Vercel today and Hetzner as the next move for exactly this
-  reason.
+- Do not describe infrastructure or features as done when they are only
+  planned. `/stack` names only current technologies and describes the admin as
+  being expanded.
 
 ## Editable content keys
 

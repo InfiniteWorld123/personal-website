@@ -73,8 +73,8 @@ Google Calendar sync is a follow-up block, not part of this one.
 ## [ ] B6 — Content management
 *Model: Sonnet 5 · medium*
 `content_blocks` + translations, page copy migrated out of code,
-`/admin/content`, and full CRUD for projects and services with Cloudinary
-image upload.
+`/admin/content`, and full CRUD for projects and services with R2 image
+upload (D21).
 🔒 **Security checkpoint** — file upload validation.
 
 ## [ ] B7 — Blog

@@ -1,6 +1,6 @@
 # Design System
 
-The visual identity is the one on yamanwarda.dev, the owner's own design:
+The visual identity is the one on yamanwarda.de, the owner's own design:
 electric blue on white, a huge uppercase display line whose first word types
 itself, a serif for section titles, rounded cards with soft shadows, buttons
 that lift and glow, and the portrait inside a morphing blue blob. B3 keeps
@@ -98,7 +98,7 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
   appears on hover, so what a card gains is lift and shadow only. The gradient
   hairline D18 drew on `::before` was removed in D19.
 - **Card shadow** (`--shadow-card`, `-hover`, `-lit`): two layers, not one
-  (D21) — a tight neutral contact shadow plus a wide, very faint blue one.
+  (refining D18) — a tight neutral contact shadow plus a wide, very faint blue one.
   A single wide blue shadow read as a tinted panel behind the card: on the
   white sections a white card has no edge of its own, so the shadow became
   the only visible boundary. At its strongest it reached `#F0F3FF`, stronger
@@ -142,11 +142,15 @@ Also in `@theme`: `spacing-section` / `spacing-section-lg` (`py-section`) and
 
 Hero (typed line, headline sentence, sub, contact and work buttons, email,
 three service pills, portrait) → services (three cards, no prices on the home
-page; they live on `/services`) → projects (carousel that shows all three on
-desktop) → building story (three labelled stages in normal flow; copy and
-illustration still to be reviewed with the owner) → process → fit → about
-teaser → closing call to action. The primary button reads "Gespräch anfragen"
-/ "Request a call" / "اطلب مكالمة" everywhere. Copy is `du`-form German.
+page; they live on `/services`) → work (carousel that shows all three on
+desktop) → process → FAQ (eight shared questions in native disclosure controls)
+→ closing call to action. The primary button reads
+"Gespräch anfragen" / "Request a call" / "اطلب مكالمة" everywhere. Copy is
+`du`-form German.
+
+The story, fit, and about-teaser sections are no longer part of the home page
+(`docs/content-decisions.md` C6). Their components and copy are kept; the
+visual treatment of every section that remains is unchanged.
 
 ## Theme
 

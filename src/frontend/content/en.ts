@@ -31,21 +31,21 @@ export const en: SiteContent = {
 
   home: {
     meta: {
-      title: 'Yaman Warda · Websites, online stores, and custom software from Erfurt',
+      title: 'Yaman Warda · Web and software developer from Erfurt',
       description:
-        'Websites, online stores, and custom software for small businesses — planned and developed directly by Yaman Warda in Erfurt.',
+        'Yaman Warda plans and builds websites, online stores, and custom software — from Erfurt and remotely, in German, English, or Arabic.',
     },
     hero: {
       eyebrow: 'Independent web and software developer from Erfurt',
-      greeting: 'Hi, I am Yaman Warda.',
+      greeting: 'Hi, I’m Yaman Warda.',
       prefix: 'Websites · Online stores · Software',
       typed: ['WEB', 'SHOP', 'SOFTWARE'],
       staticLine: 'DEVELOPER',
-      headline: "Your idea. Built together.",
-      sub: "Your direct technical partner for custom software and websites. From the first conversation to the finished product, in German, English, or Arabic.",
+      headline: 'Your direct partner for digital projects.',
+      sub: 'I listen, plan clearly, and build something you can genuinely use.',
       cta: 'Request a call',
-      secondary: 'See my work',
-      availability: 'Available for new projects',
+      secondary: 'What I’ve built',
+      availability: 'At home in Erfurt · working with you remotely',
     },
     story: {
   "eyebrow": "Understand",
@@ -89,36 +89,42 @@ export const en: SiteContent = {
 },
     services: {
       eyebrow: 'Services',
-      title: 'What I build',
-      sub: 'Three paths, depending on whether you need to be seen, sell online, or digitise a workflow.',
+      title: 'What I can build for you.',
+      sub: 'A clear digital home for your business, an online store ready to launch, or a system shaped around the way you work.',
+      cards: {
+        websites: 'One clear place online where people understand what you do and how to reach you.',
+        shopify: 'An online store ready to launch — and ready for you to run afterwards.',
+        software:
+          'A digital solution that fits your workflow instead of forcing you into someone else’s process.',
+      },
       more: 'See details',
     },
     work: {
       eyebrow: 'Work',
-      title: "Projects from my workspace",
-      sub: 'My own projects, shown because they demonstrate how I build. Client case studies follow once they are live.',
+      title: 'What I’ve built.',
+      sub: 'These are my own projects, not client work. I show them so you can see how I turn an idea into a complete, working product.',
       all: 'All projects',
     },
     process: {
-      eyebrow: 'Process',
-      title: 'How a project runs',
-      sub: 'Four steps, no surprises. You always know where the project stands and what it costs.',
+      eyebrow: 'Working together',
+      title: 'How an idea becomes a working project.',
+      sub: 'You know your business and your goal. I take care of planning and technical delivery, with clear moments where you help guide the direction.',
       steps: [
         {
-          title: 'Conversation',
-          body: 'We clarify what you need, what you already have, and what the project should do. Free, with no sales pressure.',
+          title: 'Tell me what you want to achieve.',
+          body: 'An unfinished idea is enough. We talk about your goal, what is difficult today, and what should work better.',
         },
         {
-          title: 'Fixed-price proposal',
-          body: 'You get a written proposal: what is included, what is not, and what it costs. No open ends.',
+          title: 'We define the right scope.',
+          body: 'I sort out what the first version truly needs. For a clear scope, you receive a written proposal; for complex workflows, we first define the most useful starting point.',
         },
         {
-          title: 'Build with checkpoints',
-          body: 'You see the design direction before everything is built, and you give feedback in two rounds.',
+          title: 'I build — you see the important steps.',
+          body: 'I lead the technical delivery. You see the direction early and give feedback at agreed checkpoints.',
         },
         {
-          title: 'Launch and 30 days of bug fixing',
-          body: 'After launch I stay on it: bugs within the agreed scope are fixed for 30 days. Operations and further development on request.',
+          title: 'You launch — and know who to ask.',
+          body: 'After handover, you still have a clear point of contact. I fix defects within the agreed scope and post-launch period, and we can keep building when the next step is right.',
         },
       ],
     },
@@ -145,14 +151,14 @@ export const en: SiteContent = {
     about: {
       eyebrow: 'About',
       title: 'One developer, one point of contact.',
-      body: 'I am Yaman Warda. I came from Syria in 2015, taught myself to program in 2021, and build complete systems from Erfurt: interface, backend, database, operations. This website and the admin behind it are one of them.',
+      body: 'I am Yaman Warda, an independent web and software developer from Erfurt. I plan and build websites, online stores, and custom web applications.',
       link: 'More about me',
     },
     cta: {
-      title: 'Tell me about your project.',
-      body: 'Write a few lines about what you have in mind. You get an honest assessment, even if it says: you do not need this.',
+      title: 'Tell me about your idea.',
+      body: 'You do not need a finished plan. Tell me what you want to build or make easier, and we will find the right next step.',
       button: 'Request a call',
-      alt: 'Or email directly',
+      alt: 'Or email me directly',
     },
   },
 
@@ -160,164 +166,145 @@ export const en: SiteContent = {
     meta: {
       title: 'Services · Websites, online stores, custom software',
       description:
-        'Websites from €990, online stores — usually with Shopify — from €2,490, and custom software from €2,990. Scope, fit, and pricing in detail.',
+        'Websites from €990, online stores from €2,490, and custom software from €2,990. Together, we work out the right first step for your project.',
     },
     eyebrow: 'Services',
-    title: 'Three services. Three different outcomes.',
+    title: 'The right digital solution for your project.',
     intro:
-      'Website, store, or software is decided by the goal, not the size: present your business, sell products, or run a process. Scope and complexity then set the price within the service.',
+      'You do not need to know which technology you need. Tell me what you want to show, sell, or make easier — then we will find the right way forward.',
     from: 'from',
     items: {
       websites: {
         name: 'Websites',
-        short: 'A fast, clear website that explains your business and leads visitors to a call, an enquiry, or a booking.',
+        short: 'A clear, professional place where people understand what you do and how to reach you.',
         promise:
-          'You get a professional, fast website that explains your business, presents information clearly, and makes it easy for visitors to take the next step. Design, publishing, and hosting are handled for you.',
-        audienceTitle: 'Who it is for',
+          'I plan and build a website that presents your business clearly and makes the next step easy for visitors — from the first structure through to launch.',
+        audienceTitle: 'A good fit if you',
         audience: [
-          'A new business that needs an official presence.',
-          'A local business that gets customers through referrals, Google, or social media and needs one clear place for its information.',
-          'A business with an outdated website that no longer reflects its current level.',
-          'Anyone who wants a distinct visual presence beyond template builders.',
+          'want to launch a new business with a professional presence.',
+          'run a local business and want all essential information in one clear place.',
+          'have an existing website that no longer reflects your current standard.',
+          'need a clear place for enquiries, contact, or simple bookings.',
         ],
-        includesTitle: 'What is included',
+        includesTitle: 'This can include',
         includes: [
-          'From a one-page website to a custom-designed company site.',
-          'Structure and content sorted together so visitors find what they need quickly.',
-          'Mobile, loading speed, and forms set up properly.',
-          'Domain, email, and publishing configured.',
-          'Two feedback rounds and 30 days of bug fixing after launch.',
-          'Optionally: hosting and operations as a monthly service.',
+          'a clear page structure and the technical build.',
+          'a presentation that works reliably on mobile and desktop.',
+          'contact, enquiry, or simple booking options.',
+          'support to organise your content and publish the site.',
         ],
-        priceTitle: 'What it costs',
+        priceTitle: 'Starting price',
         price: 'from €990',
         priceNote:
-          'The entry price covers a one-page website built on a proven design system. More pages, custom design, languages, and features raise the price. A custom-designed site starts at €1,990. Also available as a monthly instalment with ownership transferring to you.',
-        boundaryTitle: 'What I do not promise',
-        boundary:
-          'No guaranteed number of customers, no guaranteed Google ranking. I guarantee the agreed scope, the technical quality, and a clear process.',
+          'The starting price fits a small, clearly defined website project. We will assess page scope, bespoke design, additional languages, and functionality together before you receive a written proposal.',
       },
       shopify: {
         name: 'Online stores',
-        short: 'A store handed over ready to sell, which you run yourself afterwards.',
+        short: 'An online store you can launch with — and run yourself afterwards.',
         promise:
-          'I build a clear, operational online store — usually with Shopify: the foundation, the buying experience, and the handover, not just an installed theme.',
-        audienceTitle: 'Who it is for',
+          'I build a clear online store with a solid foundation for products, the buying journey, and handover. When Shopify suits your project, it is usually the right foundation.',
+        audienceTitle: 'A good fit if you',
         audience: [
-          'A business launching its first store with clear products and data.',
-          'A small or medium brand that wants a store it can manage after handover.',
-          'An existing store that needs reorganising or migrating to Shopify.',
-          'A business that needs a customised Shopify storefront or a manageable set of integrations.',
+          'want to sell your products online for the first time.',
+          'want to organise or improve an existing store more clearly.',
+          'need a store you can manage yourself after handover.',
+          'need a suitable setup for products, variants, payment, and shipping.',
         ],
-        includesTitle: 'What is included',
+        includesTitle: 'This can include',
         includes: [
-          'Shopify setup and a suitable theme adapted to your brand.',
-          'Navigation, collections, and the essential store pages.',
-          'Payment, shipping, and tax configured technically according to your decisions.',
-          'Product templates and variants, with up to ten products as a starting catalogue.',
-          'Domain, essential analytics, and a test order.',
-          'Training, handover, and 30 days of bug fixing.',
+          'the right store foundation and a presence that fits your brand.',
+          'product structure, navigation, and the essential store pages.',
+          'technical payment and shipping setup based on your requirements.',
+          'a joint handover so you can run the store confidently afterwards.',
         ],
-        priceTitle: 'What it costs',
+        priceTitle: 'Starting price',
         price: 'from €2,490',
         priceNote:
-          'The entry price covers a new, manageable store with ready data and a standard theme. Data preparation, design depth, languages, migration, and integrations are added as clearly named items. Shopify subscription, domain, apps, and payment fees are paid directly to the providers.',
-        boundaryTitle: 'What I do not promise',
-        boundary:
-          'No revenue or conversion promises, no legal or tax advice. Legal texts come from you or a provider for that.',
+          'The starting price applies to a manageable new store with prepared product data. We review scope, data preparation, languages, migration, and integrations before the proposal. You pay Shopify, domain, app, and payment fees directly to the relevant providers.',
       },
       software: {
         name: 'Custom software',
-        short: 'Booking systems, internal tools, client portals, dashboards: the smallest version that truly carries your process.',
+        short: 'A digital tool that fits the way you work — instead of forcing you into someone else’s process.',
         promise:
-          'I understand the process you want to improve and build the smallest web application that supports it clearly: interface, backend, database, and deployment sized to the agreed scope.',
-        audienceTitle: 'Who it is for',
+          'I plan and build the smallest useful web application for your workflow: for example, an internal tool, booking system, client area, or first product version.',
+        audienceTitle: 'A good fit if you',
         audience: [
-          'A business whose processes currently live in files, emails, and manual steps.',
-          'A business that needs bookings, a client portal, or an internal dashboard.',
-          'Founders who want to test a first real version of a subscription or SaaS product.',
-          'A business that no off-the-shelf software fits, or that needs two tools connected.',
+          'have a process that is currently stuck in emails, spreadsheets, or manual work.',
+          'want to bring data, tasks, or enquiries together in one reliable place.',
+          'need an internal tool for yourself or your team.',
+          'want to test a first real version of a digital product.',
         ],
-        includesTitle: 'What can be included',
+        includesTitle: 'This can include',
         includes: [
-          'Login and permissions, admin dashboard, payments or subscriptions.',
-          'Email and notifications, uploads, search and filters.',
-          'Reports, exports, APIs, and webhooks.',
-          'Only what the first version needs. Nothing because it sounds good.',
+          'a web application with exactly the features the first version needs.',
+          'interface, logic, and data storage within the agreed scope.',
+          'roles, an admin area, notifications, or an integration where they are genuinely needed.',
+          'a technical foundation that can be developed further deliberately later.',
         ],
-        priceTitle: 'What it costs',
+        priceTitle: 'Starting price',
         price: 'from €2,990',
         priceNote:
-          'The entry price is the smallest project that makes sense under this service: narrow, clear, testable. Systems with several roles, payments, and integrations sit well above it. The final price follows a first review of the scope. Usual payment: 40 / 30 / 30 percent at start, checkpoint, and acceptance.',
-        boundaryTitle: 'What I do not promise',
-        boundary:
-          'No assurance that the system brings revenue or saves a specific amount. I guarantee a clear scope and the agreed technical quality. I do not modify third-party systems I cannot safely inspect and test.',
+          'The starting price represents a small, clearly bounded software project. If several roles, integrations, payments, or a complex workflow are involved, I first need time to work out the right starting point. You will then receive a written proposal for the agreed scope.',
       },
     },
     shared: {
-      title: 'What applies to all three',
+      title: 'What applies to every project',
       items: [
         {
-          title: 'Fixed scope before the start',
-          body: 'Nothing starts before it is written down what will be delivered and what will not. Changes to the goal are estimated before they are built.',
+          title: 'Clarity before implementation',
+          body: 'Before we begin, we put in writing what the first version should do — and what it should not.',
         },
         {
-          title: 'Bugs are not new features',
-          body: 'If something does not work as agreed, that is a bug and it is fixed for 30 days after launch. New pages, roles, or integrations are new work.',
+          title: 'A price for the right scope',
+          body: 'The prices on this page are starting points. I will give you the final price after I understand your project and review the scope.',
         },
         {
-          title: 'Your data, your accounts',
-          body: 'Domain, Shopify, and hosting accounts are in your name. After full payment you receive the agreed deliverable and the usage rights.',
+          title: 'Your accounts stay yours',
+          body: 'Your domain, store, hosting, and other important accounts are held in your name.',
         },
         {
-          title: 'Prices are entry points',
-          body: '"From" means a small, clearly defined scope. Whether net or gross is stated in the proposal, depending on the tax situation at the time.',
+          title: 'A clear path after launch',
+          body: 'I correct defects within the agreed scope during the agreed period. For operations, maintenance, or the next improvement, we can make an arrangement that fits.',
         },
       ],
-      faqLink: 'More on process, pricing, and ownership',
+      faqLink: 'Questions about process, pricing, and handover',
     },
     cta: {
-      title: 'Not sure which service fits?',
-      body: 'That is normal. Describe what you want to achieve and I will tell you what you need. Or that you do not need it.',
+      title: 'Not sure what you need yet?',
+      body: 'That is completely fine. Briefly tell me what you want to show, sell, or make easier — I will help you identify the right first step.',
       button: 'Request a call',
     },
   },
 
   about: {
     meta: {
-      title: 'About · Yaman Warda, developer in Erfurt',
+      title: 'About · Yaman Warda, web and software developer from Erfurt',
       description:
-        'Syrian, in Germany since 2015, self-taught since 2021. Why I started, how I got to Erfurt, why I build whole systems, and what to expect from working with one person.',
+        'Yaman Warda is an independent web and software developer from Erfurt. He plans and builds websites, online stores, and custom web applications.',
     },
     eyebrow: 'About',
-    title: 'I build things that someone then uses every day.',
+    title: 'Web and software developer. Your technical partner.',
     intro:
-      'I am Yaman Warda. I came to Germany from Syria in 2015, taught myself to program in 2021, and now build websites, stores, and business systems from Erfurt — remotely, in German, English, or Arabic.',
+      'I am Yaman Warda, an independent web and software developer from Erfurt. I plan and build websites, online stores, and custom web applications — and take responsibility for the technical side of your project.',
     story: {
-      title: 'How I got here',
+      title: 'How I look at projects',
       chapters: [
         {
-          title: 'Why I started',
+          title: 'Technology needs a purpose',
           paragraphs: [
-            'Not because I loved computers as a child. I started in 2021 because programming looked like the widest door I could see: a skill that pays, that travels, that lets me work for myself or for someone else, and that nobody can take away once I have it.',
-            'There was a smaller reason, and it is less respectable. It felt good to be fast at the keyboard — to type quickly and watch something appear. I am not going to pretend that was not part of it.',
-            'Both reasons turned out to be enough.',
+            'I am not interested in making an interface merely look good. Technology is useful when it helps a business present itself clearly, sell products, or make a workflow simpler and more reliable.',
           ],
         },
         {
-          title: 'How I ended up in Erfurt',
+          title: 'The whole thing needs to hold together',
           paragraphs: [
-            'I am Syrian. I have been in Germany since 2015.',
-            'I did not choose Erfurt. My father was given a place here, and that is where the family went. It is not a story about finding the right city. It is the ordinary version, where you arrive somewhere and then make it yours.',
-            'So I learned German, and a few years later I learned to program in English, which is a third language. That is probably why I care as much as I do about making things plain. I have spent a long time on the other side of a sentence I could not follow.',
+            'A website needs a clear presence and next step. A store needs products, a buying journey, and a useful handover. Software needs a workflow that still works tomorrow. That is why I think beyond individual pages and consider the system behind them.',
           ],
         },
         {
-          title: 'Why whole systems and not screens',
+          title: 'Clarity is part of the work',
           paragraphs: [
-            'The first thing I ever put on the internet was an online store. Not a tutorial result — a real one, with a catalogue, a cart, and a checkout, published where friends and family could open it and tell me what was broken. They did.',
-            'I have deleted more projects than I have kept. The ones that survived taught me the same thing every time: the interesting part is never the screen. It is what sits behind it — the sign-in, the data model, the payment, the order that still has to be correct tomorrow.',
-            'It is also why I build on TanStack Start rather than Next.js. It is not a magic framework. I can see what it does, the router is the best piece of it, and the ecosystem is TypeScript the whole way down. I would rather understand my tools than be impressed by them.',
+            'Before I build anything, I want to understand what is genuinely needed. That lets us define the first version sensibly, explain it clearly, and develop it further deliberately later.',
           ],
         },
       ],
@@ -327,54 +314,54 @@ export const en: SiteContent = {
       items: [
         {
           title: 'Understand first, then build',
-          body: 'I want to know how your process works today, and where it stops working, before I suggest anything. Most of what I hear in a first conversation is the symptom. The cause usually turns up in the second.',
+          body: 'I first look at your goal, your current workflow, and what is not working well. Then we decide what the first version actually needs.',
         },
         {
-          title: 'Start small',
-          body: 'The first version carries the core. Everything else waits until it is actually needed.',
+          title: 'Start usefully small',
+          body: 'The first version should carry the core reliably. Everything else is added when there is a real reason for it.',
         },
         {
-          title: 'Tools I understand',
-          body: 'I build with things I can debug at midnight and explain to you the next morning. That rules out a lot of clever choices, on purpose.',
+          title: 'Take responsibility for the technical side',
+          body: 'I plan, build, and check the technical foundation within the agreed scope. You do not need to know every tool, but you should be able to understand the important decisions.',
         },
         {
-          title: 'Honest, even when it costs me the job',
-          body: 'If your website is already fine, or a thirty-euro-a-month tool would do what you need, I will say so before you pay me anything.',
+          title: 'Recommend honestly',
+          body: 'If a simple solution is enough or an existing tool fits better, I will say so openly. Not every problem needs custom software.',
         },
       ],
     },
     expect: {
-      title: 'What to expect from me',
+      title: 'What working with me means',
       intro:
-        'Working with one person is not the same as working with an agency. Here is the honest version of the difference.',
+        'You work directly with the developer who understands and builds your project. That keeps communication, responsibility, and decisions in one place.',
       items: [
         {
           title: 'You talk to the person building it',
-          body: 'No account manager, no handover from a salesperson to a developer you never meet. Whoever answers your email is the one writing the code.',
+          body: 'I am your point of contact from the first assessment through handover. There is no handoff from a sales conversation to an unfamiliar development team.',
         },
         {
-          title: 'An answer within one working day',
-          body: 'Not always the full answer. Sometimes it is "I need to look at this properly, I will come back tomorrow." But you will not be left wondering whether the message arrived.',
+          title: 'A clear shared framework',
+          body: 'Before implementation begins, we record what we are building, which decisions remain open, and how we will review progress together.',
         },
         {
-          title: 'You see it before it is finished',
-          body: 'The design direction comes at a checkpoint, while changing it is still cheap, and two rounds of feedback come after that. Nothing large gets built on a direction you have not seen.',
+          title: 'Important steps stay visible',
+          body: 'You see the direction and agreed checkpoints before anything substantial becomes final. That keeps feedback useful and decisions understandable.',
         },
         {
           title: 'The handover is part of the job',
-          body: 'Accounts in your name, 30 days of bug fixing after launch, and for stores a walkthrough so you can run it yourself. I am not trying to make you dependent on me.',
+          body: 'Important accounts are held in your name. At the agreed finish, you should know what you can take over and when we can work together again on the next step.',
         },
       ],
     },
     platform: {
-      title: 'This website is the example',
-      body: 'You are reading it. The public pages in three languages, the API, the PostgreSQL database, and the admin behind it for enquiries, content, clients, and invoices are one application I wrote and run. No site builder, no third-party CMS, no bought template.',
-      link: 'The technical version',
+      title: 'This website is a project of my own',
+      body: 'It is not a site builder or a bought template. I am developing it myself as a long-term platform for my work — from the public site to the tools taking shape behind it over time.',
+      link: 'The technical side',
     },
     portraitAlt: 'Yaman Warda',
     cta: {
       title: 'Let us talk about your project.',
-      body: 'Tell me what you are working on. You get an honest assessment back — including when the answer is that you need something else.',
+      body: 'You do not need a finished plan. Tell me what you want to build or make easier — then we will find the right first step.',
       button: 'Request a call',
       alt: 'Write me an email',
     },
@@ -389,7 +376,7 @@ export const en: SiteContent = {
     eyebrow: 'Work',
     title: 'Projects that show how I build.',
     intro:
-      'These are my own projects, not client work. I show them because they make visible how completely I build. Client case studies follow once they are live.',
+      'Selected personal projects that make visible how I take products and systems from an idea to a working application.',
     status: { live: 'Live', building: 'In progress' },
     visit: 'Open website',
     source: 'Source code',
@@ -474,14 +461,14 @@ export const en: SiteContent = {
 
   contact: {
     meta: {
-      title: 'Contact · Request a call',
+      title: 'Contact · Tell me about your project',
       description:
-        'Describe your project briefly. You get an honest assessment of whether and how I can help.',
+        'Describe your project briefly. You do not need a finished plan to start a conversation.',
     },
     eyebrow: 'Contact',
     title: 'Tell me about your project.',
     intro:
-      'A few questions up front, so our conversation does not start from zero. I reply with an honest assessment.',
+      'A few details help me understand the context. An unfinished idea is enough to work out the right next step.',
     form: {
       name: 'Name',
       email: 'Email',
@@ -493,33 +480,34 @@ export const en: SiteContent = {
       preferredOptions: [
         { value: 'email', label: 'Email' },
         { value: 'call', label: 'Call' },
-        { value: 'whatsapp', label: 'WhatsApp' },
       ],
-      projectType: 'What is it about?',
+      projectType: 'What is it about? (optional)',
       projectTypes: [
-        { value: 'website', label: 'Website' },
-        { value: 'shopify', label: 'Online store' },
-        { value: 'software', label: 'Custom software' },
         { value: 'unsure', label: 'Not sure yet' },
+        { value: 'website', label: 'Website' },
+        { value: 'shop', label: 'Online store' },
+        { value: 'software', label: 'Custom web application or software' },
       ],
-      budget: 'Budget range',
+      budget: 'Budget range (optional)',
       budgets: [
+        { value: 'unsure', label: 'Not sure yet' },
         { value: 'lt1500', label: 'up to €1,500' },
         { value: '1500-3000', label: '€1,500 to €3,000' },
         { value: '3000-6000', label: '€3,000 to €6,000' },
         { value: 'gt6000', label: 'over €6,000' },
-        { value: 'open', label: 'Still open' },
       ],
-      timeline: 'Timeline',
+      timeline: 'When would you roughly like your project to be ready?',
+      timelineHint: 'A rough estimate is enough.',
       timelines: [
-        { value: 'asap', label: 'As soon as possible' },
-        { value: '1-3', label: 'In the next 1 to 3 months' },
-        { value: 'later', label: 'Later, I am exploring' },
+        { value: 'unsure', label: 'Not sure yet' },
+        { value: 'weeks', label: 'In the next few weeks' },
+        { value: '1-3', label: 'In 1 to 3 months' },
+        { value: 'later', label: 'Later — I am still exploring' },
       ],
       message: 'Your project',
-      messageHint: 'What should be built? What do you already have: a domain, texts, an old site?',
+      messageHint: 'A few sentences about your goal are enough. If you already have something, you can mention it.',
       attachment: 'Attachment',
-      attachmentHint: 'PDF, PNG or JPG, up to 5 MB',
+      attachmentHint: 'Optional: a PDF or image that helps explain the context (up to 5 MB)',
       attachmentChoose: 'Choose file',
       attachmentEmpty: 'No file chosen',
       attachmentRemove: 'Remove',
@@ -527,7 +515,7 @@ export const en: SiteContent = {
       sending: 'Sending …',
       sent: {
         title: 'Thank you, the request is in.',
-        body: 'I will reply by email. If it is urgent, write to me directly.',
+        body: 'I will review your request and reply through the contact method you prefer.',
       },
       error: 'That did not work. Please try again or email me directly.',
       errors: {
@@ -539,7 +527,7 @@ export const en: SiteContent = {
     },
     aside: {
       title: 'Prefer to write directly?',
-      body: 'An email is enough. Write a few lines about what you have in mind.',
+      body: 'An email is enough — even if it is about a collaboration or another question rather than a project.',
       emailLabel: 'Email',
       locationLabel: 'Location',
       location: 'Erfurt, Germany · remote, with clients in Germany and beyond',
@@ -550,14 +538,14 @@ export const en: SiteContent = {
 
   faq: {
     meta: {
-      title: 'FAQ · How a project with me works',
+      title: 'FAQ · Questions about process, price, and handover',
       description:
-        'Scope, prices, ownership, feedback rounds, and what happens after launch — the questions that come up before every project, answered in the open.',
+        'Answers about starting a project, price ranges, working together, handover, and the technical groundwork for visibility.',
     },
     eyebrow: 'FAQ',
-    title: 'The questions that come before a yes.',
+    title: 'Common questions, answered clearly.',
     intro:
-      'Hiring a developer you have never met is a leap. These are the things people ask me, and a few they do not ask but should. If your question is not here, write to me and it will be.',
+      'Here are the most important answers about a project. If something is still open for your situation, we will clarify it in conversation.',
     groups: [
       {
         title: 'Before we start',
@@ -565,92 +553,52 @@ export const en: SiteContent = {
           {
             question: 'How does a project actually start?',
             answer:
-              'With a conversation, free and with no sales pressure. You describe what you need and what you already have. If I can help, you get a written proposal: what is included, what is not, and what it costs. Nothing is built before that is agreed.',
+              'You describe your goal and what makes it difficult today. You do not need a finished plan. We work out whether and what makes sense; once the scope is clear, you receive a written proposal.',
           },
           {
             question: 'Which of the three services do I need?',
             answer:
-              'It follows the goal, not the size. If people need to find you and understand what you do, that is a website. If you sell products, that is an online store. If a process in your business runs on emails, files, and manual steps, that is custom software. If you are unsure, describe the goal and I will tell you.',
+              'It follows the goal, not the size. People need to understand your offer: a website. You want to sell products: an online store. A process depends on emails, files, and manual steps: custom software. If you are unsure, simply describe the goal.',
           },
           {
-            question: 'What do you need from me?',
+            question: 'Do I already need texts, images, or a domain?',
             answer:
-              'What your business does, who your customers are, and what should be easier afterwards. Practically: whether you already have a domain, texts, photos, or an old site. If you have none of it, that is normal and we sort it together.',
+              'No. It helps to know what you already have, such as a domain, text, photos, product data, or an existing site. If something is missing, we name what is needed for the agreed scope.',
           },
           {
             question: 'Do you work with clients outside Germany?',
             answer:
-              'Yes. I am based in Erfurt and work remotely, in German, English, or Arabic. Prices are the same in euros wherever you are. What changes is the time zone we agree on for calls.',
+              'Yes. I work remotely from Erfurt in German, English, or Arabic. We simply agree on a suitable time for conversations.',
           },
         ],
       },
       {
-        title: 'Money and ownership',
+        title: 'Scope and price',
         items: [
           {
             question: 'Why does every price say "from"?',
             answer:
-              'Because the entry price is the smallest scope that still makes sense for that service. A five-page site and a twelve-page site in four languages are not the same job. The final number comes after I have reviewed what you actually need, and it is written down before anything starts.',
+              'The starting price is the smallest clear scope that makes sense for that service. The final proposal follows your real scope and records what will be built, what is outside it, and what it costs.',
           },
           {
-            question: 'How is payment split?',
+            question: 'Who owns the accounts, and are there other costs?',
             answer:
-              'Usually in parts tied to progress rather than dates — at the start, at the agreed checkpoint, and on acceptance. The exact split is named in your proposal. Websites are also available as a monthly instalment, with ownership transferring to you.',
-          },
-          {
-            question: 'Who owns the result?',
-            answer:
-              'You do. Domain, Shopify, and hosting accounts are set up in your name from the start, not mine. After full payment you receive the agreed deliverable and the usage rights to it.',
-          },
-          {
-            question: 'Are there costs that do not go to you?',
-            answer:
-              'Yes, and I would rather you hear them now: a Shopify subscription, the domain, any paid apps, and payment processing fees go directly to those providers. I do not mark them up or resell them. Hosting and ongoing operations are available from me as an optional monthly service.',
+              'Important accounts such as a domain, hosting, or shop accounts are created in your name when your project needs them. Third-party costs — for example a domain, hosting, apps, or payment providers — are explained up front and paid directly to those providers.',
           },
         ],
       },
       {
-        title: 'Working together',
+        title: 'During and after the project',
         items: [
           {
-            question: 'What if I do not like the design?',
+            question: 'How do delivery, handover, and the time after work?',
             answer:
-              'You see the design direction before everything is built on top of it, which is the point at which changing it is cheap. Two feedback rounds are included. If the direction is wrong, we change it there rather than at the end.',
-          },
-          {
-            question: 'How long does a project take?',
-            answer:
-              'The schedule is named in your proposal, because it depends on the scope. The honest part: the variable that moves it most is not my speed, it is how quickly texts, photos, product data, and decisions come back from your side.',
-          },
-          {
-            question: 'Can I change my mind halfway through?',
-            answer:
-              'Yes, and it gets estimated before it gets built. A change to the goal is new work with its own price, agreed in writing. That is not a penalty — it is what keeps the original number honest.',
-          },
-        ],
-      },
-      {
-        title: 'After launch',
-        items: [
-          {
-            question: 'What happens once it is live?',
-            answer:
-              'Bugs inside the agreed scope are fixed for 30 days after launch, at no extra cost. For stores you also get training and a handover so you can run it yourself. Ongoing operations and further development are available on request, not assumed.',
-          },
-          {
-            question: 'What counts as a bug and what counts as new work?',
-            answer:
-              'If something does not do what we agreed it would do, that is a bug and I fix it. A new page, a new role, a new integration, or a new idea is new work. I will always tell you which one I think it is, and why.',
+              'The timeline follows the agreed scope. You review important directions early, before everything depends on them. If the goal changes later, we clarify the effort and price first. Handover includes the agreed access and what you need to use the result. Further development or operations can be agreed separately.',
           },
           {
             question: 'Do you do marketing or SEO?',
             answer:
-              'No. I build, I do not market. The technical groundwork is done properly — speed, structure, mobile, metadata — but I do not run campaigns and I do not promise rankings or revenue. If that is what you need, you need an agency, and I will say so.',
-          },
-          {
-            question: 'What if you are not around later?',
-            answer:
-              'Your accounts are in your name, and I build with ordinary, widely used tools rather than anything only I can maintain. Another developer can pick the project up. That is a deliberate choice: work you cannot leave is not work you own.',
+              'I build the technical groundwork for speed, clear structure, mobile use, and discoverability. I do not promise campaigns, rankings, or revenue — marketing remains its own job.',
           },
         ],
       },
@@ -659,65 +607,31 @@ export const en: SiteContent = {
 
   stack: {
     meta: {
-      title: 'Stack · How Yaman Warda builds',
+      title: 'Stack · Technologies Yaman Warda works with',
       description:
-        'For companies looking at me technically: the architecture behind this platform, four decisions and what each one cost, and the systems I have shipped.',
+        'A short overview of the technologies Yaman Warda uses to build web applications and their technical foundation.',
     },
     eyebrow: 'Stack',
-    title: 'The technical version.',
+    title: 'Technologies I work with.',
     intro:
-      'This page is for companies rather than clients. No packages, no prices — the architecture, the decisions I made against a plausible alternative, and what each of them cost me. I have been programming since 2021, taught myself, and work alone across the whole stack.',
+      'A short technical overview. The right technology follows the project — not every job needs the same stack.',
     platform: {
-      title: 'You are standing on the example',
-      body: 'This site is not a portfolio of someone else’s work. The public pages in three languages, the API, the database, and the admin behind it are one application I wrote and run. There is no site builder and no third-party CMS anywhere in it.',
+      title: 'My technical foundation',
+      body: 'This platform is my own technical project. I develop the public website and its foundation myself, and I am extending the administrative tools step by step inside the same platform.',
       layers: [
-        { label: 'Framework', value: 'TanStack Start, React 19, file-based routes' },
-        { label: 'API', value: 'Elysia mounted at /api, Eden Treaty for a typed client' },
-        { label: 'Data', value: 'PostgreSQL through pg, raw parameterised SQL, no ORM' },
-        { label: 'Validation', value: 'Valibot on the boundary, shared between client and server' },
-        { label: 'State and forms', value: 'React Query for server state, TanStack Form for input' },
-        { label: 'Motion', value: 'CSS with IntersectionObserver and pointer events, no library' },
-        { label: 'Hosting', value: 'Vercel today; a Hetzner box in Germany is the next move' },
-      ],
-    },
-    decisions: {
-      title: 'Four decisions and their price',
-      intro:
-        'Every one of these was chosen against something reasonable. The interesting half is not what I picked — it is what picking it cost, so that is written down too.',
-      items: [
-        {
-          title: 'Raw parameterised SQL instead of an ORM',
-          body: 'One app, one database, one operator. An ORM would add a mapping layer and a migration dialect between me and a query I can already read. At this scale that is moving parts without a benefit.',
-          costLabel: 'What it costs',
-          cost: 'More typing, and no free schema refactors. I write the migrations by hand and I keep the queries close to the tables.',
-        },
-        {
-          title: 'My own admin, not an external CMS',
-          body: 'Contact enquiries, page copy, clients, and invoices live in one system with one content model, not split across a vendor and a database. The platform being entirely self-built is also the point of the portfolio.',
-          costLabel: 'What it costs',
-          cost: 'I build the editor myself instead of installing one. The copy still lives in typed files until that editor is finished, which is honest rather than convenient.',
-        },
-        {
-          title: 'A German server I administer, over staying serverless',
-          body: 'Client data, leads, and invoices belong on a machine in Germany, which makes the GDPR answer short. Cron and background jobs run natively there, and a local database has no serverless connection-pooling problem to design around.',
-          costLabel: 'Where this one stands',
-          cost: 'This is a decision, not yet a fact: the site runs on Vercel today, and the move to Hetzner with Coolify is the next infrastructure job. When it lands, backups and security updates become mine — snapshots, a nightly pg_dump, unattended upgrades, and a restore I have actually tested rather than assumed.',
-        },
-        {
-          title: 'A motion layer with no animation library',
-          body: 'The first attempt used GSAP with ScrollTrigger and Lenis. It crashed on every client-side navigation away from the home page, and it animated sections nobody had approved. I deleted it and rebuilt the whole thing on CSS transitions, IntersectionObserver, ResizeObserver, and pointer events.',
-          costLabel: 'What it cost',
-          cost: 'A week of work thrown away, and easing curves I now write by hand. In return the page ships no animation runtime at all and nothing breaks on navigation.',
-        },
+        { label: 'Frontend', value: 'TypeScript, React, TanStack Start' },
+        { label: 'Backend and API', value: 'TypeScript, Elysia' },
+        { label: 'Data', value: 'PostgreSQL, pg, parameterised SQL' },
+        { label: 'Development and operations', value: 'Docker' },
       ],
     },
     built: {
-      title: 'What I have shipped',
-      body: 'An online store with a filtered 500-product catalogue, Stripe checkout, orders, and the German support pages a shop legally needs. A writing platform with an editor, uploads, comments, reactions, and notifications. A property management system, in progress, whose architecture this site is built on.',
+      title: 'See it in practice',
+      body: 'The projects show how I use this foundation for different products — from an online store and publishing platform to a business system in progress.',
       link: 'See the projects',
     },
     links: {
-      title: 'If you want to talk',
+      title: 'Find more',
       email: 'Email me',
     },
   },
@@ -726,7 +640,7 @@ export const en: SiteContent = {
     impressum: {
       meta: {
         title: 'Impressum · Yaman Warda',
-        description: 'Provider identification under § 5 DDG for yamanwarda.dev.',
+        description: 'Provider identification under § 5 DDG for yamanwarda.de.',
       },
       eyebrow: 'Impressum',
       title: 'Impressum',
@@ -773,7 +687,7 @@ export const en: SiteContent = {
       meta: {
         title: 'Privacy · Yaman Warda',
         description:
-          'What yamanwarda.dev processes: server logs, the contact form, and one strictly necessary cookie. No tracking, no advertising.',
+          'What yamanwarda.de processes: server logs, the contact form, and one strictly necessary cookie. No tracking, no advertising.',
       },
       eyebrow: 'Privacy',
       title: 'Privacy policy',

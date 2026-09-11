@@ -3,12 +3,18 @@ import { ArrowRight } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
-import { getContent, serviceOrder, servicePrices } from '#/frontend/content'
+import { getContent, servicePrices } from '#/frontend/content'
 import type { ServiceCopy, ServiceSlug } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { formatEuro } from '#/frontend/lib/format'
 import { SplitWords, useReveal } from '#/frontend/motion'
+
+/**
+ * The services page helps a prospective client choose a starting point. Its
+ * order deliberately differs from the shared order used by the home hero.
+ */
+const servicesPageOrder: ServiceSlug[] = ['websites', 'shopify', 'software']
 
 export function ServicesPage() {
   const { language } = useLanguage()
@@ -29,7 +35,7 @@ export function ServicesPage() {
         </Container>
       </section>
 
-      {serviceOrder.map((slug, index) => (
+      {servicesPageOrder.map((slug, index) => (
         <ServiceDetail
           key={slug}
           slug={slug}
@@ -89,11 +95,6 @@ function ServiceDetail({
             <h3 className="text-base font-medium">{copy.priceTitle}</h3>
             <p className="section-title tabular text-2xl text-primary">{copy.price}</p>
             <p className="text-muted-foreground text-sm leading-relaxed">{copy.priceNote}</p>
-          </div>
-
-          <div data-reveal className="border-border flex flex-col gap-2 border-t pt-6">
-            <h3 className="text-base font-medium">{copy.boundaryTitle}</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">{copy.boundary}</p>
           </div>
         </div>
       </Container>

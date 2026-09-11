@@ -55,37 +55,6 @@ export function StackPage() {
         </Container>
       </Section>
 
-      <Section className="pt-4">
-        <Container className="flex flex-col gap-10">
-          <div className="flex max-w-2xl flex-col gap-4">
-            <h2 className="section-title text-display-md text-foreground">
-              <SplitWords text={stack.decisions.title} />
-            </h2>
-            <p data-reveal className="m-0 text-base leading-8 text-foreground/62">
-              {stack.decisions.intro}
-            </p>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            {stack.decisions.items.map((item) => (
-              <article
-                key={item.title}
-                data-reveal
-                className="surface-card flex flex-col gap-3 rounded-[1.5rem] px-6 py-6"
-              >
-                <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
-                <p className="m-0 text-sm leading-7 text-foreground/58">{item.body}</p>
-                <div className="border-border mt-1 flex flex-col gap-1 border-t pt-3">
-                  <span className="text-muted-foreground text-[0.7rem] font-semibold uppercase tracking-[0.14em] rtl:tracking-normal">
-                    {item.costLabel}
-                  </span>
-                  <p className="m-0 text-sm leading-7 text-foreground/58">{item.cost}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Container>
-      </Section>
-
       <Section tone="tint" className="pt-4">
         <Container className="grid gap-8 md:grid-cols-[0.9fr_1.1fr]">
           <h2 className="section-title max-w-sm text-display-md text-foreground">

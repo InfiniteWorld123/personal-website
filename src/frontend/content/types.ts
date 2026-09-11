@@ -73,6 +73,11 @@ export type HomeCopy = {
     eyebrow: string
     title: string
     sub: string
+    /**
+     * The home page's own card descriptions. Shorter and warmer than the
+     * summaries on `/services`, which keep using `ServiceCopy.short`.
+     */
+    cards: Record<ServiceSlug, string>
     more: string
   }
   work: {
@@ -121,8 +126,6 @@ export type ServiceCopy = {
   priceTitle: string
   price: string
   priceNote: string
-  boundaryTitle: string
-  boundary: string
 }
 
 export type ServicesCopy = {
@@ -146,11 +149,7 @@ export type AboutCopy = {
   eyebrow: string
   title: string
   intro: string
-  /**
-   * The personal story, in chapters rather than one run of paragraphs.
-   * Every chapter carries at least one checkable fact — a year, a place, a
-   * tool — because a story without them reads as filler.
-   */
+  /** Professional thinking in chapters rather than a private biography. */
   story: { title: string; chapters: Array<{ title: string; paragraphs: string[] }> }
   method: { title: string; items: Array<{ title: string; body: string }> }
   /** What a client gets from working with one person, stated plainly. */
@@ -214,6 +213,7 @@ export type ContactCopy = {
     budget: string
     budgets: Array<{ value: string; label: string }>
     timeline: string
+    timelineHint: string
     timelines: Array<{ value: string; label: string }>
     message: string
     messageHint: string
@@ -269,12 +269,6 @@ export type StackCopy = {
     title: string
     body: string
     layers: Array<{ label: string; value: string }>
-  }
-  decisions: {
-    title: string
-    intro: string
-    /** Each decision names the alternative it beat and the price it charged. */
-    items: Array<{ title: string; body: string; costLabel: string; cost: string }>
   }
   built: { title: string; body: string; link: string }
   links: { title: string; email: string }

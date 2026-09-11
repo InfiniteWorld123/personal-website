@@ -1603,12 +1603,20 @@ html[lang="ar"] .work-card-kind {
      margins hand the space straight back, so the 3-up column width and the
      spacing around the carousel are both unchanged: the top and bottom
      margins keep the same 0.5rem/0.75rem of visible air D21 left. */
-  padding: 2.75rem 3.5rem 5rem;
-  margin-inline: -3.5rem;
+  /* The sideways half of that clearance is capped by how much room there
+     actually is beside the container, because a negative margin makes this
+     box wider than its parent: bleed past the viewport and the page itself
+     overflows. In RTL that does not merely hide — the scroll origin sits on
+     the right, so the surplus shifts the whole page sideways on load and the
+     first card lands off-screen. --track-bleed is lowered per breakpoint to
+     the gutter that is really there (Container: px-5, sm:px-8). */
+  --track-bleed: 3.5rem;
+  padding: 2.75rem var(--track-bleed) 5rem;
+  margin-inline: calc(var(--track-bleed) * -1);
   margin-block: -2.25rem -4.25rem;
   /* Snapping measures from the padding box, so without this the first card
      would snap flush to the edge and clip its own glow again. */
-  scroll-padding-inline: 3.5rem;
+  scroll-padding-inline: var(--track-bleed);
 }
 
 .project-track::-webkit-scrollbar {
@@ -1846,6 +1854,13 @@ html[lang="ar"] .work-card-kind {
 .delay-4 { animation-delay: 0.32s; }
 
 /* ── Responsive ────────────────────────────────────────────── */
+/* Above 1200px the container is capped at 72rem, so there is spare room
+   beside it and the track can bleed its full 3.5rem. Below that the only
+   room is the container's own gutter, so the bleed steps down to match it. */
+@media (max-width: 1199px) {
+  .project-track { --track-bleed: 2rem; }
+}
+
 @media (max-width: 1023px) {
   .hero-layout { gap: 2rem; }
   .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1872,7 +1887,7 @@ html[lang="ar"] .work-card-kind {
 
 @media (max-width: 639px) {
   .work-grid { grid-template-columns: 1fr; }
-  .project-track { grid-auto-columns: 100%; }
+  .project-track { grid-auto-columns: 100%; --track-bleed: 1.25rem; }
   .work-card { padding: 1.4rem; }
   .work-card-heading { min-height: 0; }
   .closing-cta-actions { width: 100%; }

@@ -132,7 +132,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         <Field label={copy.budget} htmlFor="budget">
           <Select id="budget" name="budget" options={copy.budgets} />
         </Field>
-        <Field label={copy.timeline} htmlFor="timeline">
+        <Field label={copy.timeline} htmlFor="timeline" hint={copy.timelineHint} className="sm:col-span-2">
           <Select id="timeline" name="timeline" options={copy.timelines} />
         </Field>
       </div>
@@ -228,9 +228,8 @@ function Field({
 }
 
 /**
- * Three choices, all visible: a radio group rather than a select, because the
- * answer changes what the visitor expects to happen next and hiding it behind
- * a closed list makes it look like paperwork.
+ * Visible channel choices keep a visitor in control of the reply without
+ * turning a short project request into paperwork.
  */
 function ChannelChoice({
   label,

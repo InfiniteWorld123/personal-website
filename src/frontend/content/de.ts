@@ -31,9 +31,9 @@ export const de: SiteContent = {
 
   home: {
     meta: {
-      title: 'Yaman Warda · Websites, Online-Shops und individuelle Software aus Erfurt',
+      title: 'Yaman Warda · Web- und Softwareentwickler aus Erfurt',
       description:
-        'Websites, Online-Shops und individuelle Software für kleine Unternehmen — direkt geplant und entwickelt von Yaman Warda in Erfurt.',
+        'Yaman Warda plant und entwickelt Websites, Online-Shops und individuelle Software — aus Erfurt und remote, auf Deutsch, Englisch oder Arabisch.',
     },
     hero: {
       eyebrow: 'Selbstständiger Web- und Softwareentwickler aus Erfurt',
@@ -41,11 +41,11 @@ export const de: SiteContent = {
       prefix: 'Websites · Online-Shops · Software',
       typed: ['WEB-', 'SHOP-', 'SOFTWARE-'],
       staticLine: 'ENTWICKLER',
-      headline: "Deine Idee. Gemeinsam umgesetzt.",
-      sub: "Ich bin dein direkter Ansprechpartner für individuelle Software und Websites. Vom ersten Gespräch bis zum fertigen Produkt — auf Deutsch, Englisch oder Arabisch.",
+      headline: 'Dein direkter Partner für digitale Projekte.',
+      sub: 'Ich höre zu, plane klar und baue etwas, das du wirklich nutzen kannst.',
       cta: 'Gespräch anfragen',
-      secondary: 'Projekte ansehen',
-      availability: 'Verfügbar für neue Projekte',
+      secondary: 'Was ich gebaut habe',
+      availability: 'In Erfurt zu Hause · remote für dich',
     },
     story: {
   "eyebrow": "Verstehen",
@@ -89,36 +89,43 @@ export const de: SiteContent = {
 },
     services: {
       eyebrow: 'Leistungen',
-      title: 'Was ich baue',
-      sub: 'Drei Wege, je nachdem ob du sichtbar werden, online verkaufen oder einen eigenen Ablauf digitalisieren willst.',
+      title: 'Was ich für dich bauen kann.',
+      sub: 'Einen klaren Ort für dein Geschäft, einen Online-Shop für den Start oder ein System, das zu deinem Ablauf passt.',
+      cards: {
+        websites:
+          'Ein klarer Ort im Internet, an dem Menschen verstehen, was du machst und wie sie dich erreichen.',
+        shopify: 'Ein Online-Shop, der bereit ist zu starten — und den du danach selbst führen kannst.',
+        software:
+          'Eine digitale Lösung, die zu deinem Ablauf passt, statt dich in einen fremden Prozess zu zwingen.',
+      },
       more: 'Details ansehen',
     },
     work: {
       eyebrow: 'Arbeiten',
-      title: "Projekte aus meiner Werkstatt",
-      sub: 'Eigene Projekte, die zeigen, wie ich baue. Fallstudien mit Kundenprojekten folgen, sobald sie live sind.',
+      title: 'Was ich gebaut habe.',
+      sub: 'Das sind eigene Projekte, keine Kundenarbeiten. Ich zeige sie, damit du sehen kannst, wie ich eine Idee in ein vollständiges, funktionierendes Produkt verwandle.',
       all: 'Alle Projekte',
     },
     process: {
-      eyebrow: 'Ablauf',
-      title: 'So läuft ein Projekt',
-      sub: 'Vier Schritte, keine Überraschungen. Du weißt jederzeit, wo das Projekt steht und was es kostet.',
+      eyebrow: 'Zusammenarbeit',
+      title: 'So wird aus deiner Idee ein funktionierendes Projekt.',
+      sub: 'Du kennst dein Geschäft und dein Ziel. Ich übernehme Planung und technische Umsetzung — mit klaren Punkten, an denen du den Weg mitbestimmst.',
       steps: [
         {
-          title: 'Gespräch',
-          body: 'Wir klären, was du brauchst, was du schon hast und was das Projekt leisten soll. Kostenlos und ohne Verkaufsdruck.',
+          title: 'Erzähl mir, was du erreichen willst.',
+          body: 'Eine unfertige Idee reicht. Wir sprechen über dein Ziel, was heute nicht gut läuft und was besser werden soll.',
         },
         {
-          title: 'Angebot mit festem Preis',
-          body: 'Du bekommst ein schriftliches Angebot: was drin ist, was nicht und was es kostet. Keine offenen Enden.',
+          title: 'Wir klären den richtigen Umfang.',
+          body: 'Ich sortiere, was die erste Version wirklich braucht. Für einen klaren Umfang bekommst du ein schriftliches Angebot; bei komplexen Abläufen klären wir zunächst den sinnvollsten Einstieg.',
         },
         {
-          title: 'Umsetzung mit Zwischenständen',
-          body: 'Du siehst die Designrichtung, bevor das Ganze gebaut wird, und gibst in zwei Runden Feedback.',
+          title: 'Ich baue — du siehst die wichtigen Schritte.',
+          body: 'Ich führe die technische Umsetzung. Du siehst die Richtung früh und gibst an den vereinbarten Punkten Feedback.',
         },
         {
-          title: 'Launch und 30 Tage Fehlerbehebung',
-          body: 'Nach dem Start bleibe ich dran: Fehler im vereinbarten Umfang behebe ich 30 Tage lang. Betrieb und Weiterentwicklung auf Wunsch.',
+          title: 'Du startest — und weißt, wen du fragen kannst.',
+          body: 'Nach der Übergabe bleibt klar, wer dein Ansprechpartner ist. Fehler im vereinbarten Umfang behebe ich innerhalb der vereinbarten Frist; für die nächsten Schritte können wir weiterarbeiten.',
         },
       ],
     },
@@ -145,14 +152,14 @@ export const de: SiteContent = {
     about: {
       eyebrow: 'Über mich',
       title: 'Ein Entwickler, ein Ansprechpartner.',
-      body: 'Ich bin Yaman Warda. 2015 kam ich aus Syrien, 2021 habe ich mir das Programmieren beigebracht, und von Erfurt aus baue ich komplette Systeme: Oberfläche, Backend, Datenbank, Betrieb. Diese Website und die Verwaltung dahinter sind eines davon.',
+      body: 'Ich bin Yaman Warda, selbstständiger Web- und Softwareentwickler aus Erfurt. Ich plane und entwickle Websites, Online-Shops und individuelle Web-Anwendungen.',
       link: 'Mehr über mich',
     },
     cta: {
-      title: 'Erzähl mir von deinem Vorhaben.',
-      body: 'Schreib kurz, worum es geht. Du bekommst eine ehrliche Einschätzung, auch wenn sie lautet: Das brauchst du gerade nicht.',
+      title: 'Erzähl mir von deiner Idee.',
+      body: 'Du brauchst keinen fertigen Plan. Schreib mir, was du aufbauen oder einfacher machen willst — dann finden wir heraus, was der richtige nächste Schritt ist.',
       button: 'Gespräch anfragen',
-      alt: 'Oder direkt per E-Mail',
+      alt: 'Oder schreib mir direkt',
     },
   },
 
@@ -160,221 +167,202 @@ export const de: SiteContent = {
     meta: {
       title: 'Leistungen · Websites, Online-Shops, individuelle Software',
       description:
-        'Websites ab 990 €, Online-Shops — meistens mit Shopify — ab 2.490 €, individuelle Software ab 2.990 €. Umfang, Passung und Preise im Detail.',
+        'Websites ab 990 €, Online-Shops ab 2.490 € und individuelle Software ab 2.990 €. Gemeinsam klären wir, was für dein Vorhaben der richtige erste Schritt ist.',
     },
     eyebrow: 'Leistungen',
-    title: 'Drei Leistungen. Drei verschiedene Ergebnisse.',
+    title: 'Die richtige digitale Lösung für dein Vorhaben.',
     intro:
-      'Ob Website, Shop oder Software entscheidet nicht die Größe, sondern das Ziel: dein Unternehmen zeigen, Produkte verkaufen oder einen Ablauf betreiben. Umfang und Komplexität bestimmen dann den Preis innerhalb der Leistung.',
+      'Du musst nicht wissen, welche Technik du brauchst. Erzähl mir, was du zeigen, verkaufen oder einfacher machen willst — dann finden wir den passenden Weg.',
     from: 'ab',
     items: {
       websites: {
         name: 'Websites',
-        short: 'Eine schnelle, klare Website, die dein Unternehmen erklärt und Besucher zum Anruf, zur Anfrage oder zur Buchung führt.',
+        short: 'Ein klarer, professioneller Ort, an dem Menschen verstehen, was du machst und wie sie dich erreichen.',
         promise:
-          'Du bekommst eine professionelle, schnelle Website, die dein Unternehmen erklärt, Informationen klar zeigt und es Besuchern leicht macht, den nächsten Schritt zu gehen. Design, Veröffentlichung und Hosting nehme ich dir ab.',
-        audienceTitle: 'Für wen',
+          'Ich plane und entwickle eine Website, die dein Unternehmen verständlich zeigt und Besuchern den nächsten Schritt leicht macht — von der ersten Struktur bis zur Veröffentlichung.',
+        audienceTitle: 'Passt, wenn du',
         audience: [
-          'Ein neues Unternehmen, das einen offiziellen Auftritt braucht.',
-          'Ein lokaler Betrieb, der Kunden über Empfehlungen, Google oder Social Media bekommt und einen klaren Ort für alle Informationen braucht.',
-          'Ein Unternehmen mit einer veralteten Website, die das heutige Niveau nicht mehr zeigt.',
-          'Wer einen eigenen visuellen Auftritt will, der über Baukasten-Seiten hinausgeht.',
+          'ein neues Unternehmen mit einem seriösen Auftritt starten willst.',
+          'einen lokalen Betrieb führst und alle wichtigen Informationen an einem klaren Ort zeigen möchtest.',
+          'eine bestehende Website hast, die dein heutiges Niveau nicht mehr zeigt.',
+          'eine klare Anlaufstelle für Anfragen, Kontakt oder eine einfache Buchung brauchst.',
         ],
-        includesTitle: 'Was drin ist',
+        includesTitle: 'Das kann dazugehören',
         includes: [
-          'Einseiten-Website bis hin zum individuell gestalteten Firmenauftritt.',
-          'Struktur und Inhalt gemeinsam sortiert, damit Besucher schnell finden, was sie suchen.',
-          'Handy, Ladezeit und Formulare sauber eingestellt.',
-          'Domain, E-Mail und Veröffentlichung eingerichtet.',
-          'Zwei Feedback-Runden und 30 Tage Fehlerbehebung nach dem Start.',
-          'Auf Wunsch: Betrieb und Hosting als monatliche Betreuung.',
+          'eine klare Seitenstruktur und die technische Umsetzung.',
+          'eine Darstellung, die auf Handy und Desktop zuverlässig funktioniert.',
+          'Kontakt, Anfragen oder eine einfache Buchungsmöglichkeit.',
+          'Unterstützung beim Sortieren deiner Inhalte und bei der Veröffentlichung.',
         ],
-        priceTitle: 'Was es kostet',
+        priceTitle: 'Startpreis',
         price: 'ab 990 €',
         priceNote:
-          'Der Einstiegspreis gilt für eine Einseiten-Website auf Basis eines erprobten Designsystems. Mehr Seiten, eigenes Design, Sprachen und Funktionen erhöhen den Preis. Ein individuell gestalteter Auftritt beginnt bei 1.990 €. Auf Wunsch auch als monatliche Rate mit Übergang in dein Eigentum.',
-        boundaryTitle: 'Was ich nicht verspreche',
-        boundary:
-          'Keine garantierte Anzahl an Kunden, keine garantierte Google-Platzierung. Ich garantiere den vereinbarten Umfang, die technische Qualität und einen klaren Ablauf.',
+          'Der Startpreis passt zu einem kleinen, klaren Website-Projekt. Seitenumfang, eigene Gestaltung, zusätzliche Sprachen und Funktionen ordnen wir gemeinsam ein, bevor du ein schriftliches Angebot bekommst.',
       },
       shopify: {
         name: 'Online-Shops',
-        short: 'Ein Shop, der verkaufsbereit übergeben wird und den du danach selbst führen kannst.',
+        short: 'Ein Online-Shop, mit dem du starten kannst — und den du danach selbst führen kannst.',
         promise:
-          'Ich baue einen klaren, betriebsbereiten Online-Shop — meistens mit Shopify: Grundstruktur, Kauferlebnis und Übergabe, nicht nur ein installiertes Theme.',
-        audienceTitle: 'Für wen',
+          'Ich baue einen klaren Online-Shop mit einer guten Grundlage für Produkte, Kaufablauf und Übergabe. Wenn Shopify zu deinem Vorhaben passt, ist es meist die richtige Basis.',
+        audienceTitle: 'Passt, wenn du',
         audience: [
-          'Ein Unternehmen, das seinen ersten Shop mit klaren Produkten und Daten starten will.',
-          'Eine kleine oder mittlere Marke, die einen Shop will, den sie nach der Übergabe selbst verwaltet.',
-          'Ein bestehender Shop, der neu geordnet oder zu Shopify umgezogen werden soll.',
-          'Ein Unternehmen, das eine angepasste Shopify-Oberfläche oder überschaubare Integrationen braucht.',
+          'deine Produkte erstmals online verkaufen willst.',
+          'einen bestehenden Shop klarer ordnen oder weiterentwickeln möchtest.',
+          'einen Shop brauchst, den du nach der Übergabe selbst verwalten kannst.',
+          'eine passende Lösung für Produkte, Varianten, Zahlung und Versand brauchst.',
         ],
-        includesTitle: 'Was drin ist',
+        includesTitle: 'Das kann dazugehören',
         includes: [
-          'Shopify-Einrichtung und ein passendes Theme, angepasst an deine Marke.',
-          'Navigation, Kollektionen und die wichtigen Shop-Seiten.',
-          'Zahlung, Versand und Steuern technisch eingerichtet nach deinen Vorgaben.',
-          'Produktvorlagen und Varianten, mit bis zu zehn Produkten als Startbestand.',
-          'Domain, notwendige Analytics und eine Testbestellung.',
-          'Einweisung, Übergabe und 30 Tage Fehlerbehebung.',
+          'die passende Shop-Grundlage und ein Auftritt, der zu deiner Marke passt.',
+          'Produktstruktur, Navigation und die wichtigen Shop-Seiten.',
+          'die technische Einrichtung von Zahlung und Versand nach deinen Vorgaben.',
+          'eine gemeinsame Übergabe, damit du den Shop danach sicher führen kannst.',
         ],
-        priceTitle: 'Was es kostet',
+        priceTitle: 'Startpreis',
         price: 'ab 2.490 €',
         priceNote:
-          'Der Einstiegspreis gilt für einen neuen, überschaubaren Shop mit fertigen Daten und einem Standard-Theme. Datenaufbereitung, Designtiefe, Sprachen, Umzug und Integrationen kommen als klar benannte Posten dazu. Shopify-Abo, Domain, Apps und Zahlungsgebühren zahlst du direkt an die Anbieter.',
-        boundaryTitle: 'Was ich nicht verspreche',
-        boundary:
-          'Keine Umsatz- oder Conversion-Versprechen, keine Rechts- oder Steuerberatung. Rechtstexte kommen von dir oder einem Anbieter dafür.',
+          'Der Startpreis gilt für einen überschaubaren neuen Shop mit vorbereiteten Produktdaten. Umfang, Datenaufbereitung, Sprachen, Umzug und Integrationen prüfen wir vor dem Angebot. Shopify, Domain, Apps und Zahlungsgebühren bezahlst du direkt an die jeweiligen Anbieter.',
       },
       software: {
         name: 'Individuelle Software',
-        short: 'Buchungssysteme, interne Tools, Kundenportale, Dashboards: die kleinste Version, die deinen Ablauf wirklich trägt.',
+        short: 'Ein digitales Werkzeug, das zu deinem Ablauf passt — statt dich in einen fremden Prozess zu zwingen.',
         promise:
-          'Ich verstehe den Ablauf, den du verbessern willst, und baue die kleinste Web-Anwendung, die ihn klar abbildet: Oberfläche, Backend, Datenbank und Betrieb passend zum vereinbarten Umfang.',
-        audienceTitle: 'Für wen',
+          'Ich plane und entwickle die kleinste sinnvolle Web-Anwendung für deinen Ablauf: zum Beispiel ein internes Werkzeug, ein Buchungssystem, ein Kundenbereich oder eine erste Produktversion.',
+        audienceTitle: 'Passt, wenn du',
         audience: [
-          'Ein Unternehmen, dessen Abläufe heute in Dateien, E-Mails und Handarbeit stecken.',
-          'Ein Betrieb, der Buchungen, ein Kundenportal oder ein internes Dashboard braucht.',
-          'Gründer, die eine erste echte Version eines Abo- oder SaaS-Produkts testen wollen.',
-          'Ein Unternehmen, für das keine Standard-Software passt oder das zwei Werkzeuge verbinden muss.',
+          'einen Ablauf hast, der heute in E-Mails, Tabellen oder Handarbeit stecken bleibt.',
+          'Daten, Aufgaben oder Anfragen an einem zuverlässigen Ort bündeln willst.',
+          'ein internes Werkzeug für dich oder dein Team brauchst.',
+          'eine erste echte Version eines digitalen Produkts prüfen möchtest.',
         ],
-        includesTitle: 'Was drin sein kann',
+        includesTitle: 'Das kann dazugehören',
         includes: [
-          'Login und Rechte, Admin-Dashboard, Zahlungen oder Abos.',
-          'E-Mails und Benachrichtigungen, Uploads, Suche und Filter.',
-          'Berichte, Exporte, Schnittstellen und Webhooks.',
-          'Nur was die erste Version braucht. Nichts, weil es gut klingt.',
+          'eine Web-Anwendung mit genau den Funktionen, die die erste Version braucht.',
+          'Oberfläche, Logik und Datenhaltung im vereinbarten Umfang.',
+          'Rollen, einen Admin-Bereich, Benachrichtigungen oder eine Schnittstelle, wenn sie wirklich nötig sind.',
+          'eine technische Grundlage, die sich später gezielt weiterentwickeln lässt.',
         ],
-        priceTitle: 'Was es kostet',
+        priceTitle: 'Startpreis',
         price: 'ab 2.990 €',
         priceNote:
-          'Der Einstiegspreis ist das kleinste Projekt, das unter dieser Leistung sinnvoll ist: eng, klar, testbar. Systeme mit mehreren Rollen, Zahlungen und Integrationen liegen deutlich darüber. Der endgültige Preis folgt nach einer ersten Prüfung des Umfangs. Übliche Zahlung: 40 / 30 / 30 Prozent an Start, Zwischenstand und Abnahme.',
-        boundaryTitle: 'Was ich nicht verspreche',
-        boundary:
-          'Keine Zusage, dass das System Umsatz bringt oder einen bestimmten Betrag spart. Ich garantiere einen klaren Umfang und die vereinbarte technische Qualität. Fremde Systeme, die ich nicht sicher prüfen und testen kann, ändere ich nicht.',
+          'Der Startpreis steht für ein kleines, klar abgegrenztes Software-Projekt. Bei mehreren Rollen, Integrationen, Zahlungen oder einem komplexen Ablauf brauche ich zuerst Zeit, um den richtigen Einstieg zu klären. Danach erhältst du ein schriftliches Angebot für den vereinbarten Umfang.',
       },
     },
     shared: {
-      title: 'Was für alle drei gilt',
+      title: 'Was für jedes Projekt gilt',
       items: [
         {
-          title: 'Fester Umfang vor dem Start',
-          body: 'Es geht nicht los, bevor schriftlich steht, was geliefert wird und was nicht. Änderungen am Ziel werden geschätzt, bevor sie gebaut werden.',
+          title: 'Erst Klarheit, dann Umsetzung',
+          body: 'Bevor es losgeht, halten wir schriftlich fest, was die erste Version leisten soll — und was nicht.',
         },
         {
-          title: 'Fehler sind keine neuen Funktionen',
-          body: 'Wenn etwas nicht wie vereinbart funktioniert, ist das ein Fehler und wird 30 Tage nach dem Start behoben. Neue Seiten, Rollen oder Integrationen sind neue Arbeit.',
+          title: 'Ein Preis für den passenden Umfang',
+          body: 'Die Preise auf dieser Seite sind Startpunkte. Den endgültigen Preis nenne ich dir, nachdem ich dein Vorhaben verstanden und den Umfang geprüft habe.',
         },
         {
-          title: 'Deine Daten, deine Konten',
-          body: 'Domain, Shopify und Hosting-Konten laufen auf deinen Namen. Nach vollständiger Zahlung bekommst du den vereinbarten Stand und die Nutzungsrechte.',
+          title: 'Deine Konten bleiben deine',
+          body: 'Domain, Shop-, Hosting- und andere wichtige Zugänge laufen auf deinen Namen.',
         },
         {
-          title: 'Preise sind Einstiege',
-          body: '„ab" heißt: ein kleiner, klar umrissener Umfang. Ob netto oder brutto steht im Angebot, je nach steuerlicher Situation zum Zeitpunkt des Angebots.',
+          title: 'Nach dem Launch geht es klar weiter',
+          body: 'Fehler im vereinbarten Umfang korrigiere ich innerhalb der vereinbarten Frist. Für Betrieb, Pflege oder die nächste Verbesserung können wir eine passende Vereinbarung treffen.',
         },
       ],
-      faqLink: 'Mehr Fragen zu Ablauf, Preisen und Eigentum',
+      faqLink: 'Fragen zu Ablauf, Preisen und Übergabe',
     },
     cta: {
-      title: 'Nicht sicher, welche Leistung passt?',
-      body: 'Das ist normal. Beschreib, was du erreichen willst, und ich sage dir, was du brauchst. Oder dass du es nicht brauchst.',
+      title: 'Noch nicht sicher, was du brauchst?',
+      body: 'Das ist in Ordnung. Beschreib mir kurz, was du zeigen, verkaufen oder einfacher machen willst — ich helfe dir, den richtigen ersten Schritt einzuordnen.',
       button: 'Gespräch anfragen',
     },
   },
 
   about: {
     meta: {
-      title: 'Über mich · Yaman Warda, Entwickler in Erfurt',
+      title: 'Über mich · Yaman Warda, Web- und Softwareentwickler aus Erfurt',
       description:
-        'Syrer, seit 2015 in Deutschland, seit 2021 Autodidakt. Warum ich angefangen habe, wie ich nach Erfurt kam, warum ich ganze Systeme baue und was du von einer Person erwarten kannst.',
+        'Yaman Warda ist selbstständiger Web- und Softwareentwickler aus Erfurt. Er plant und entwickelt Websites, Online-Shops und individuelle Web-Anwendungen.',
     },
     eyebrow: 'Über mich',
-    title: 'Ich baue Dinge, die danach jemand täglich benutzt.',
+    title: 'Web- und Softwareentwickler. Dein technischer Partner.',
     intro:
-      'Ich bin Yaman Warda. 2015 bin ich aus Syrien nach Deutschland gekommen, 2021 habe ich mir das Programmieren selbst beigebracht, und heute baue ich von Erfurt aus Websites, Shops und Business-Systeme — remote, auf Deutsch, Englisch oder Arabisch.',
+      'Ich bin Yaman Warda, selbstständiger Web- und Softwareentwickler aus Erfurt. Ich plane und entwickle Websites, Online-Shops und individuelle Web-Anwendungen — und übernehme dabei die technische Seite deines Projekts.',
     story: {
-      title: 'Wie ich hierher gekommen bin',
+      title: 'Wie ich auf Projekte schaue',
       chapters: [
         {
-          title: 'Warum ich angefangen habe',
+          title: 'Technik braucht einen Zweck',
           paragraphs: [
-            'Nicht, weil ich als Kind Computer geliebt hätte. Ich habe 2021 angefangen, weil Programmieren die breiteste Tür war, die ich sehen konnte: eine Fähigkeit, die bezahlt wird, die mitreist, mit der ich für mich selbst oder für andere arbeiten kann und die mir niemand wieder wegnimmt.',
-            'Es gab einen kleineren Grund, und der ist weniger seriös. Es fühlte sich gut an, schnell auf der Tastatur zu sein — schnell zu tippen und zu sehen, wie etwas entsteht. Ich tue nicht so, als wäre das nicht dabei gewesen.',
-            'Beide Gründe haben gereicht.',
+            'Mich interessiert nicht, eine Oberfläche nur schön aussehen zu lassen. Technik ist dann gut, wenn sie einem Unternehmen hilft, sich klar zu zeigen, Produkte zu verkaufen oder einen Ablauf einfacher und verlässlicher zu machen.',
           ],
         },
         {
-          title: 'Wie ich in Erfurt gelandet bin',
+          title: 'Das Ganze muss zusammenpassen',
           paragraphs: [
-            'Ich bin Syrer. Seit 2015 bin ich in Deutschland.',
-            'Erfurt habe ich mir nicht ausgesucht. Mein Vater hat hier einen Platz bekommen, und dorthin ist die Familie gegangen. Das ist keine Geschichte darüber, die richtige Stadt zu finden. Es ist die gewöhnliche Version, in der man irgendwo ankommt und den Ort dann zu seinem macht.',
-            'Also habe ich Deutsch gelernt, und ein paar Jahre später das Programmieren auf Englisch, also in einer dritten Sprache. Wahrscheinlich ist das der Grund, warum mir Klarheit so wichtig ist. Ich habe lange auf der anderen Seite von Sätzen gestanden, denen ich nicht folgen konnte.',
+            'Bei einer Website geht es um einen klaren Auftritt und den nächsten Schritt. Bei einem Shop um Produkte, Kaufablauf und Übergabe. Bei Software um einen Ablauf, der auch morgen noch trägt. Deshalb denke ich nicht nur an einzelne Seiten, sondern an das System dahinter.',
           ],
         },
         {
-          title: 'Warum ganze Systeme und nicht Bildschirme',
+          title: 'Klarheit gehört zur Arbeit',
           paragraphs: [
-            'Das Erste, was ich je ins Internet gestellt habe, war ein Onlineshop. Kein Tutorial-Ergebnis, sondern ein echter, mit Katalog, Warenkorb und Kasse, veröffentlicht dort, wo Freunde und Familie ihn öffnen und mir sagen konnten, was kaputt ist. Das haben sie getan.',
-            'Ich habe mehr Projekte gelöscht als behalten. Die, die geblieben sind, haben mir jedes Mal dasselbe beigebracht: der interessante Teil ist nie der Bildschirm. Es ist das, was dahinter liegt — die Anmeldung, das Datenmodell, die Zahlung, die Bestellung, die morgen immer noch stimmen muss.',
-            'Deshalb baue ich auch auf TanStack Start statt auf Next.js. Es ist kein magisches Framework. Ich sehe, was es tut, der Router ist das beste Stück daran, und das Ökosystem ist durchgehend TypeScript. Ich verstehe meine Werkzeuge lieber, als dass ich von ihnen beeindruckt bin.',
+            'Bevor ich etwas baue, will ich verstehen, was wirklich gebraucht wird. Dann lässt sich die erste Version sinnvoll begrenzen, klar erklären und später gezielt weiterentwickeln.',
           ],
         },
       ],
     },
     method: {
-      title: 'Wie ich arbeite',
+      title: 'So arbeite ich',
       items: [
         {
           title: 'Erst verstehen, dann bauen',
-          body: 'Ich will wissen, wie dein Ablauf heute funktioniert und wo er aufhört zu funktionieren, bevor ich irgendetwas vorschlage. Das meiste, was ich im ersten Gespräch höre, ist das Symptom. Die Ursache taucht meistens im zweiten auf.',
+          body: 'Ich schaue zuerst auf dein Ziel, deinen heutigen Ablauf und das, was nicht gut funktioniert. Erst dann entscheide ich mit dir, was die erste Version wirklich braucht.',
         },
         {
-          title: 'Klein anfangen',
-          body: 'Die erste Version trägt den Kern. Alles andere wartet, bis es wirklich gebraucht wird.',
+          title: 'Sinnvoll klein anfangen',
+          body: 'Die erste Version soll den Kern zuverlässig tragen. Alles Weitere kommt dazu, wenn es einen echten Grund dafür gibt.',
         },
         {
-          title: 'Werkzeuge, die ich verstehe',
-          body: 'Ich baue mit Dingen, die ich um Mitternacht debuggen und dir am nächsten Morgen erklären kann. Das schließt eine Menge cleverer Entscheidungen aus, mit Absicht.',
+          title: 'Die technische Seite übernehmen',
+          body: 'Ich plane, baue und prüfe die technische Grundlage im vereinbarten Umfang. Du musst nicht jedes Werkzeug kennen, aber du sollst die wichtigen Entscheidungen verstehen können.',
         },
         {
-          title: 'Ehrlich, auch wenn es mich den Auftrag kostet',
-          body: 'Wenn deine Website schon in Ordnung ist oder ein Werkzeug für dreißig Euro im Monat reicht, sage ich das, bevor du mir irgendetwas bezahlst.',
+          title: 'Ehrlich empfehlen',
+          body: 'Wenn eine einfache Lösung ausreicht oder ein bestehendes Werkzeug besser passt, sage ich das offen. Nicht jedes Problem braucht individuelle Software.',
         },
       ],
     },
     expect: {
-      title: 'Was du von mir erwarten kannst',
+      title: 'Was die Zusammenarbeit mit mir bedeutet',
       intro:
-        'Mit einer Person zu arbeiten ist nicht dasselbe wie mit einer Agentur. Hier ist die ehrliche Fassung des Unterschieds.',
+        'Du arbeitest direkt mit dem Entwickler, der dein Projekt versteht und baut. Das hält Kommunikation, Verantwortung und Entscheidungen an einem Ort.',
       items: [
         {
           title: 'Du sprichst mit dem, der es baut',
-          body: 'Kein Account Manager, keine Übergabe von einem Vertriebler an einen Entwickler, den du nie triffst. Wer deine E-Mail beantwortet, schreibt auch den Code.',
+          body: 'Ich bin dein Ansprechpartner von der ersten Einordnung bis zur Übergabe. Es gibt keine Übergabe von einem Vertriebsgespräch an ein unbekanntes Entwicklungsteam.',
         },
         {
-          title: 'Eine Antwort innerhalb eines Werktags',
-          body: 'Nicht immer die vollständige. Manchmal ist es "das muss ich mir richtig ansehen, ich melde mich morgen." Aber du sitzt nicht da und fragst dich, ob die Nachricht angekommen ist.',
+          title: 'Ein klarer gemeinsamer Rahmen',
+          body: 'Bevor die Umsetzung beginnt, halten wir fest, was gebaut wird, welche Entscheidungen noch offen sind und wie wir den Fortschritt gemeinsam prüfen.',
         },
         {
-          title: 'Du siehst es, bevor es fertig ist',
-          body: 'Die gestalterische Richtung kommt an einem Zwischenstand, solange eine Änderung noch billig ist, und danach zwei Feedbackrunden. Nichts Großes wird auf einer Richtung gebaut, die du nicht gesehen hast.',
+          title: 'Wichtige Schritte bleiben sichtbar',
+          body: 'Du siehst die Richtung und die vereinbarten Zwischenstände, bevor etwas Großes endgültig wird. So bleiben Rückmeldungen sinnvoll und Entscheidungen nachvollziehbar.',
         },
         {
           title: 'Die Übergabe gehört zur Arbeit',
-          body: 'Zugänge auf deinen Namen, 30 Tage Fehlerbehebung nach dem Launch, und bei Shops eine Einweisung, damit du ihn selbst führen kannst. Ich versuche nicht, dich von mir abhängig zu machen.',
+          body: 'Wichtige Zugänge liegen auf deinem Namen. Nach dem vereinbarten Abschluss sollst du wissen, was du übernehmen kannst und wann wir für den nächsten Schritt wieder zusammenarbeiten.',
         },
       ],
     },
     platform: {
-      title: 'Diese Website ist das Beispiel',
-      body: 'Du liest sie gerade. Die öffentlichen Seiten in drei Sprachen, die API, die PostgreSQL-Datenbank und die Verwaltung dahinter für Anfragen, Inhalte, Kunden und Rechnungen sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, kein gekauftes Template.',
-      link: 'Die technische Fassung',
+      title: 'Diese Website ist ein eigenes Projekt',
+      body: 'Sie ist kein Baukasten und kein gekauftes Template. Ich entwickle sie selbst als langfristige Plattform für meine Arbeit — vom öffentlichen Auftritt bis zu den Werkzeugen, die im Hintergrund nach und nach entstehen.',
+      link: 'Zur technischen Seite',
     },
     portraitAlt: 'Yaman Warda',
     cta: {
       title: 'Lass uns über dein Vorhaben sprechen.',
-      body: 'Erzähl mir, woran du arbeitest. Du bekommst eine ehrliche Einschätzung zurück — auch dann, wenn die Antwort ist, dass du etwas anderes brauchst.',
+      body: 'Du brauchst keinen fertigen Plan. Erzähl mir, was du aufbauen oder einfacher machen willst — dann finden wir den passenden ersten Schritt.',
       button: 'Gespräch anfragen',
       alt: 'Schreib mir eine E-Mail',
     },
@@ -389,7 +377,7 @@ export const de: SiteContent = {
     eyebrow: 'Arbeiten',
     title: 'Projekte, die zeigen, wie ich baue.',
     intro:
-      'Das sind eigene Projekte, keine Kundenarbeiten. Ich zeige sie, weil man daran sehen kann, wie vollständig ich baue. Fallstudien mit Kunden folgen, sobald sie live sind.',
+      'Ausgewählte eigene Projekte, an denen sichtbar wird, wie ich Produkte und Systeme von der Idee bis zur funktionierenden Anwendung baue.',
     status: { live: 'Live', building: 'Im Bau' },
     visit: 'Website öffnen',
     source: 'Quellcode',
@@ -474,14 +462,14 @@ export const de: SiteContent = {
 
   contact: {
     meta: {
-      title: 'Kontakt · Gespräch anfragen',
+      title: 'Kontakt · Erzähl mir von deinem Projekt',
       description:
-        'Beschreib kurz dein Vorhaben. Du bekommst eine ehrliche Einschätzung, ob und wie ich helfen kann.',
+        'Beschreib kurz dein Vorhaben. Ein fertiger Plan ist nicht nötig, um ins Gespräch zu kommen.',
     },
     eyebrow: 'Kontakt',
     title: 'Erzähl mir von deinem Vorhaben.',
     intro:
-      'Ein paar Fragen vorab, damit unser Gespräch nicht bei null anfängt. Ich melde mich mit einer ehrlichen Einschätzung.',
+      'Ein paar Angaben helfen mir beim Einordnen. Eine unfertige Idee reicht völlig aus, um den passenden nächsten Schritt zu klären.',
     form: {
       name: 'Name',
       email: 'E-Mail',
@@ -493,33 +481,34 @@ export const de: SiteContent = {
       preferredOptions: [
         { value: 'email', label: 'E-Mail' },
         { value: 'call', label: 'Anruf' },
-        { value: 'whatsapp', label: 'WhatsApp' },
       ],
-      projectType: 'Worum geht es?',
+      projectType: 'Worum geht es? (optional)',
       projectTypes: [
+        { value: 'unsure', label: 'Noch nicht sicher' },
         { value: 'website', label: 'Website' },
-        { value: 'shopify', label: 'Onlineshop' },
-        { value: 'software', label: 'Individuelle Software' },
-        { value: 'unsure', label: 'Noch unklar' },
+        { value: 'shop', label: 'Online-Shop' },
+        { value: 'software', label: 'Individuelle Web-Anwendung oder Software' },
       ],
-      budget: 'Budgetrahmen',
+      budget: 'Budgetrahmen (optional)',
       budgets: [
+        { value: 'unsure', label: 'Noch nicht sicher' },
         { value: 'lt1500', label: 'bis 1.500 €' },
         { value: '1500-3000', label: '1.500 bis 3.000 €' },
         { value: '3000-6000', label: '3.000 bis 6.000 €' },
         { value: 'gt6000', label: 'über 6.000 €' },
-        { value: 'open', label: 'Noch offen' },
       ],
-      timeline: 'Zeitrahmen',
+      timeline: 'Wann soll dein Projekt ungefähr bereit sein?',
+      timelineHint: 'Eine grobe Einschätzung reicht.',
       timelines: [
-        { value: 'asap', label: 'So bald wie möglich' },
-        { value: '1-3', label: 'In den nächsten 1 bis 3 Monaten' },
-        { value: 'later', label: 'Später, ich orientiere mich' },
+        { value: 'unsure', label: 'Noch nicht sicher' },
+        { value: 'weeks', label: 'In den nächsten Wochen' },
+        { value: '1-3', label: 'In 1 bis 3 Monaten' },
+        { value: 'later', label: 'Später — ich erkunde noch' },
       ],
       message: 'Dein Vorhaben',
-      messageHint: 'Was soll entstehen? Was hast du schon: Domain, Texte, einen alten Auftritt?',
+      messageHint: 'Ein paar Sätze zu deinem Ziel reichen. Wenn du schon etwas hast, kannst du es gern erwähnen.',
       attachment: 'Anhang',
-      attachmentHint: 'PDF, PNG oder JPG, bis 5 MB',
+      attachmentHint: 'Optional: ein PDF oder Bild, das beim Einordnen hilft (bis 5 MB)',
       attachmentChoose: 'Datei wählen',
       attachmentEmpty: 'Keine Datei gewählt',
       attachmentRemove: 'Entfernen',
@@ -527,7 +516,7 @@ export const de: SiteContent = {
       sending: 'Wird gesendet …',
       sent: {
         title: 'Danke, die Anfrage ist da.',
-        body: 'Ich melde mich per E-Mail. Falls es eilt, schreib mir direkt.',
+        body: 'Ich prüfe dein Anliegen und melde mich über den Weg, den du bevorzugst.',
       },
       error: 'Das hat nicht geklappt. Bitte versuch es noch einmal oder schreib mir direkt per E-Mail.',
       errors: {
@@ -539,7 +528,7 @@ export const de: SiteContent = {
     },
     aside: {
       title: 'Lieber direkt?',
-      body: 'Eine E-Mail reicht. Schreib ein paar Zeilen zu dem, was du vorhast.',
+      body: 'Eine E-Mail reicht — auch wenn es nicht um ein Projekt geht, sondern um eine Zusammenarbeit oder eine andere Frage.',
       emailLabel: 'E-Mail',
       locationLabel: 'Standort',
       location: 'Erfurt, Deutschland · remote, mit Kunden in Deutschland und darüber hinaus',
@@ -550,107 +539,67 @@ export const de: SiteContent = {
 
   faq: {
     meta: {
-      title: 'FAQ · Wie ein Projekt mit mir abläuft',
+      title: 'FAQ · Fragen zu Ablauf, Preis und Übergabe',
       description:
-        'Umfang, Preise, Eigentum, Feedbackrunden und was nach dem Launch passiert — die Fragen, die vor jedem Projekt kommen, offen beantwortet.',
+        'Antworten zu Projektstart, Preisrahmen, Zusammenarbeit, Übergabe und der technischen Grundlage für Sichtbarkeit.',
     },
     eyebrow: 'FAQ',
-    title: 'Die Fragen, die vor einem Ja kommen.',
+    title: 'Häufige Fragen, klar beantwortet.',
     intro:
-      'Jemanden zu beauftragen, den du nie getroffen hast, ist ein Sprung. Das hier sind die Fragen, die mir gestellt werden, und ein paar, die selten gestellt werden, aber wichtig sind. Fehlt deine, schreib mir, dann steht sie hier.',
+      'Hier findest du die wichtigsten Antworten zu einem Projekt. Wenn etwas für dein Vorhaben noch offen ist, klären wir es im Gespräch.',
     groups: [
       {
-        title: 'Bevor es losgeht',
+        title: 'Vor dem Start',
         items: [
           {
             question: 'Wie startet ein Projekt konkret?',
             answer:
-              'Mit einem Gespräch, kostenlos und ohne Verkaufsdruck. Du beschreibst, was du brauchst und was schon da ist. Wenn ich helfen kann, bekommst du ein schriftliches Angebot: was enthalten ist, was nicht, und was es kostet. Vorher wird nichts gebaut.',
+              'Du beschreibst dein Ziel und was es heute schwierig macht. Ein fertiger Plan ist nicht nötig. Wir klären, ob und was sinnvoll passt; bei klarem Umfang erhältst du anschließend ein schriftliches Angebot.',
           },
           {
             question: 'Welche der drei Leistungen brauche ich?',
             answer:
-              'Das entscheidet das Ziel, nicht die Größe. Sollen Leute dich finden und verstehen, was du machst, ist das eine Website. Verkaufst du Produkte, ist das ein Online-Shop. Läuft ein Ablauf in deinem Betrieb über E-Mails, Dateien und Handarbeit, ist das individuelle Software. Wenn du unsicher bist, beschreib das Ziel, und ich sage es dir.',
+              'Das entscheidet das Ziel, nicht die Größe. Menschen sollen dein Angebot verstehen: Website. Du willst Produkte verkaufen: Online-Shop. Ein Ablauf hängt an E-Mails, Dateien und Handarbeit: individuelle Software. Wenn du unsicher bist, beschreib einfach das Ziel.',
           },
           {
-            question: 'Was brauchst du von mir?',
+            question: 'Muss ich Texte, Bilder oder eine Domain schon haben?',
             answer:
-              'Was dein Betrieb macht, wer deine Kunden sind, und was danach leichter sein soll. Praktisch: ob du schon Domain, Texte, Fotos oder eine alte Seite hast. Wenn nichts davon existiert, ist das normal, das ordnen wir gemeinsam.',
+              'Nein. Hilfreich ist, was du schon hast: etwa eine Domain, Texte, Fotos, Produktdaten oder eine bestehende Seite. Wenn noch etwas fehlt, halten wir fest, was für den vereinbarten Umfang gebraucht wird.',
           },
           {
             question: 'Arbeitest du auch mit Kunden außerhalb Deutschlands?',
             answer:
-              'Ja. Ich sitze in Erfurt und arbeite remote, auf Deutsch, Englisch oder Arabisch. Die Preise sind überall dieselben in Euro. Was sich ändert, ist die Zeitzone, auf die wir uns für Gespräche einigen.',
+              'Ja. Ich arbeite von Erfurt aus remote auf Deutsch, Englisch oder Arabisch. Für Gespräche stimmen wir uns einfach auf eine passende Zeit ab.',
           },
         ],
       },
       {
-        title: 'Geld und Eigentum',
+        title: 'Umfang und Preis',
         items: [
           {
             question: 'Warum steht bei jedem Preis "ab"?',
             answer:
-              'Weil der Einstiegspreis der kleinste Umfang ist, der bei dieser Leistung noch sinnvoll ist. Eine Seite mit fünf Unterseiten und eine mit zwölf in vier Sprachen sind nicht dieselbe Arbeit. Die endgültige Zahl kommt, nachdem ich geprüft habe, was du wirklich brauchst, und sie steht schriftlich fest, bevor etwas beginnt.',
+              'Der Startpreis ist der kleinste klare Umfang, der für diese Leistung sinnvoll ist. Das endgültige Angebot entsteht erst aus deinem tatsächlichen Umfang und hält fest, was gebaut wird, was nicht dazugehört und was es kostet.',
           },
           {
-            question: 'Wie wird bezahlt?',
+            question: 'Wem gehören Zugänge und gibt es weitere Kosten?',
             answer:
-              'In der Regel in Teilen, die an den Fortschritt gebunden sind statt an Kalenderdaten — zum Start, am vereinbarten Zwischenstand und bei der Abnahme. Die genaue Aufteilung steht in deinem Angebot. Websites gibt es auch in monatlichen Raten, wobei das Eigentum an dich übergeht.',
-          },
-          {
-            question: 'Wem gehört das Ergebnis?',
-            answer:
-              'Dir. Domain, Shopify und Hosting laufen von Anfang an auf deinen Namen, nicht auf meinen. Nach vollständiger Zahlung bekommst du das vereinbarte Ergebnis und die Nutzungsrechte daran.',
-          },
-          {
-            question: 'Gibt es Kosten, die nicht an dich gehen?',
-            answer:
-              'Ja, und die sollst du jetzt hören: Shopify-Abo, Domain, kostenpflichtige Apps und die Gebühren der Zahlungsanbieter gehen direkt an diese Anbieter. Ich schlage nichts drauf und verkaufe sie nicht weiter. Hosting und laufender Betrieb sind bei mir optional als Monatsleistung buchbar.',
+              'Wichtige Zugänge wie Domain, Hosting oder Shop-Konten werden, wenn sie für dein Projekt nötig sind, auf deinen Namen angelegt. Kosten von Drittanbietern — etwa Domain, Hosting, Apps oder Zahlungsanbieter — werden vorab transparent eingeordnet und gehen direkt an diese Anbieter.',
           },
         ],
       },
       {
-        title: 'Zusammenarbeit',
+        title: 'Während und nach dem Projekt',
         items: [
           {
-            question: 'Was, wenn mir das Design nicht gefällt?',
+            question: 'Wie läuft Umsetzung, Übergabe und die Zeit danach ab?',
             answer:
-              'Du siehst die gestalterische Richtung, bevor alles darauf aufgebaut wird — genau an dem Punkt, an dem eine Änderung billig ist. Zwei Feedbackrunden sind enthalten. Wenn die Richtung falsch ist, ändern wir sie dort und nicht am Ende.',
-          },
-          {
-            question: 'Wie lange dauert ein Projekt?',
-            answer:
-              'Der Zeitplan steht in deinem Angebot, weil er vom Umfang abhängt. Der ehrliche Teil: Was den Termin am stärksten verschiebt, ist nicht mein Tempo, sondern wie schnell Texte, Fotos, Produktdaten und Entscheidungen von deiner Seite zurückkommen.',
-          },
-          {
-            question: 'Kann ich unterwegs meine Meinung ändern?',
-            answer:
-              'Ja, und es wird geschätzt, bevor es gebaut wird. Eine Änderung am Ziel ist neue Arbeit mit eigenem Preis, schriftlich vereinbart. Das ist keine Strafe, sondern das, was die ursprüngliche Zahl ehrlich hält.',
-          },
-        ],
-      },
-      {
-        title: 'Nach dem Launch',
-        items: [
-          {
-            question: 'Was passiert, wenn es online ist?',
-            answer:
-              'Fehler innerhalb des vereinbarten Umfangs werden 30 Tage nach dem Launch kostenlos behoben. Bei Shops kommen Einweisung und Übergabe dazu, damit du den Laden selbst führen kannst. Laufender Betrieb und Weiterentwicklung gibt es auf Wunsch, nicht automatisch.',
-          },
-          {
-            question: 'Was ist ein Fehler und was ist neue Arbeit?',
-            answer:
-              'Wenn etwas nicht das tut, was wir vereinbart haben, ist das ein Fehler, und ich behebe ihn. Eine neue Seite, eine neue Rolle, eine neue Schnittstelle oder eine neue Idee ist neue Arbeit. Ich sage dir immer, wofür ich es halte, und warum.',
+              'Der Zeitplan richtet sich nach dem vereinbarten Umfang. Wichtige Richtungen prüfst du früh, bevor alles darauf aufbaut. Wenn sich das Ziel später verändert, klären wir Aufwand und Preis zuerst. Zur Übergabe gehören die vereinbarten Zugänge und alles, was du brauchst, um das Ergebnis zu nutzen. Weiterentwicklung oder Betrieb können wir separat vereinbaren.',
           },
           {
             question: 'Machst du auch Marketing oder SEO?',
             answer:
-              'Nein. Ich baue, ich vermarkte nicht. Die technische Grundlage wird sauber gemacht — Geschwindigkeit, Struktur, Mobil, Metadaten — aber ich schalte keine Kampagnen und verspreche weder Rankings noch Umsatz. Wenn du das brauchst, brauchst du eine Agentur, und ich sage es dir auch so.',
-          },
-          {
-            question: 'Was, wenn du später nicht mehr da bist?',
-            answer:
-              'Deine Zugänge laufen auf deinen Namen, und ich baue mit gewöhnlichen, verbreiteten Werkzeugen statt mit etwas, das nur ich pflegen kann. Ein anderer Entwickler kann übernehmen. Das ist eine bewusste Entscheidung: Arbeit, die du nicht verlassen kannst, gehört dir nicht wirklich.',
+              'Ich baue die technische Grundlage für Geschwindigkeit, klare Struktur, mobile Nutzung und gute Auffindbarkeit. Kampagnen, Rankings oder Umsatz verspreche ich nicht — Marketing bleibt eine eigene Aufgabe.',
           },
         ],
       },
@@ -659,65 +608,31 @@ export const de: SiteContent = {
 
   stack: {
     meta: {
-      title: 'Stack · Wie Yaman Warda baut',
+      title: 'Stack · Technologien, mit denen Yaman Warda arbeitet',
       description:
-        'Für Unternehmen, die mich technisch einschätzen wollen: die Architektur hinter dieser Plattform, vier Entscheidungen und ihr Preis, und die Systeme, die ich ausgeliefert habe.',
+        'Ein kurzer Überblick über die Technologien, mit denen Yaman Warda Web-Anwendungen und ihre technische Grundlage baut.',
     },
     eyebrow: 'Stack',
-    title: 'Die technische Fassung.',
+    title: 'Technologien, mit denen ich arbeite.',
     intro:
-      'Diese Seite ist für Unternehmen, nicht für Kunden. Keine Pakete, keine Preise — die Architektur, die Entscheidungen, die ich gegen eine plausible Alternative getroffen habe, und was jede davon gekostet hat. Ich programmiere seit 2021, habe es mir selbst beigebracht und arbeite allein über den gesamten Stack.',
+      'Ein kurzer technischer Überblick. Die passende Technik richtet sich nach dem Projekt — nicht jedes Vorhaben braucht denselben Stack.',
     platform: {
-      title: 'Du stehst auf dem Beispiel',
-      body: 'Diese Seite ist kein Portfolio fremder Arbeit. Die öffentlichen Seiten in drei Sprachen, die API, die Datenbank und die Verwaltung dahinter sind eine Anwendung, die ich geschrieben habe und betreibe. Kein Baukasten, kein fremdes CMS, nirgends.',
+      title: 'Meine technische Grundlage',
+      body: 'Diese Plattform ist mein eigenes technisches Projekt. Die öffentliche Website und ihre Grundlage entwickle ich selbst; die Verwaltungswerkzeuge erweitere ich Schritt für Schritt innerhalb derselben Plattform.',
       layers: [
-        { label: 'Framework', value: 'TanStack Start, React 19, dateibasierte Routen' },
-        { label: 'API', value: 'Elysia unter /api, Eden Treaty als typisierter Client' },
-        { label: 'Daten', value: 'PostgreSQL über pg, rohes parametrisiertes SQL, kein ORM' },
-        { label: 'Validierung', value: 'Valibot an der Grenze, geteilt zwischen Client und Server' },
-        { label: 'State und Formulare', value: 'React Query für Serverdaten, TanStack Form für Eingaben' },
-        { label: 'Motion', value: 'CSS mit IntersectionObserver und Pointer-Events, ohne Bibliothek' },
-        { label: 'Hosting', value: 'Heute Vercel; eine Hetzner-Maschine in Deutschland ist der nächste Schritt' },
-      ],
-    },
-    decisions: {
-      title: 'Vier Entscheidungen und ihr Preis',
-      intro:
-        'Jede davon wurde gegen etwas Vernünftiges getroffen. Die interessante Hälfte ist nicht, wofür ich mich entschieden habe, sondern was die Entscheidung gekostet hat — also steht das auch hier.',
-      items: [
-        {
-          title: 'Rohes parametrisiertes SQL statt ORM',
-          body: 'Eine Anwendung, eine Datenbank, ein Betreiber. Ein ORM schöbe eine Mapping-Schicht und einen Migrationsdialekt zwischen mich und eine Abfrage, die ich ohnehin lesen kann. In dieser Größe sind das bewegliche Teile ohne Gewinn.',
-          costLabel: 'Was es kostet',
-          cost: 'Mehr Tipparbeit und keine geschenkten Schema-Refactorings. Ich schreibe die Migrationen von Hand und halte die Abfragen nah an den Tabellen.',
-        },
-        {
-          title: 'Eigene Verwaltung statt fremdem CMS',
-          body: 'Anfragen, Seitentexte, Kunden und Rechnungen liegen in einem System mit einem Inhaltsmodell, nicht aufgeteilt zwischen einem Anbieter und einer Datenbank. Dass die Plattform vollständig selbst gebaut ist, ist außerdem der Punkt des Portfolios.',
-          costLabel: 'Was es kostet',
-          cost: 'Ich baue den Editor selbst, statt einen zu installieren. Bis er fertig ist, liegen die Texte in typisierten Dateien — ehrlich statt bequem.',
-        },
-        {
-          title: 'Ein deutscher Server, den ich selbst administriere, statt Serverless',
-          body: 'Kundendaten, Leads und Rechnungen gehören auf eine Maschine in Deutschland, das macht die DSGVO-Antwort kurz. Cron und Hintergrundjobs laufen dort nativ, und eine lokale Datenbank hat kein Serverless-Pooling-Problem, um das man herumbauen müsste.',
-          costLabel: 'Wo das gerade steht',
-          cost: 'Das ist eine Entscheidung, noch keine Tatsache: Die Seite läuft heute auf Vercel, und der Umzug zu Hetzner mit Coolify ist der nächste Infrastruktur-Schritt. Wenn er kommt, gehören Backups und Sicherheitsupdates mir — Snapshots, ein nächtlicher pg_dump, unattended upgrades und ein Restore, den ich tatsächlich getestet und nicht bloß angenommen habe.',
-        },
-        {
-          title: 'Eine Motion-Schicht ohne Animationsbibliothek',
-          body: 'Der erste Versuch lief mit GSAP, ScrollTrigger und Lenis. Er stürzte bei jeder clientseitigen Navigation weg von der Startseite ab und animierte Abschnitte, die niemand freigegeben hatte. Ich habe ihn gelöscht und alles neu gebaut, auf CSS-Transitions, IntersectionObserver, ResizeObserver und Pointer-Events.',
-          costLabel: 'Was es gekostet hat',
-          cost: 'Eine weggeworfene Arbeitswoche und Easing-Kurven, die ich jetzt von Hand schreibe. Dafür liefert die Seite gar keine Animations-Laufzeit aus, und bei Navigation bricht nichts.',
-        },
+        { label: 'Frontend', value: 'TypeScript, React, TanStack Start' },
+        { label: 'Backend und API', value: 'TypeScript, Elysia' },
+        { label: 'Daten', value: 'PostgreSQL, pg, parametrisiertes SQL' },
+        { label: 'Entwicklung und Betrieb', value: 'Docker' },
       ],
     },
     built: {
-      title: 'Was ich ausgeliefert habe',
-      body: 'Einen Onlineshop mit gefiltertem 500-Produkte-Katalog, Stripe-Checkout, Bestellungen und den Pflichtseiten, die ein deutscher Shop braucht. Eine Schreibplattform mit Editor, Uploads, Kommentaren, Reaktionen und Benachrichtigungen. Ein Immobilien-Verwaltungssystem, noch im Bau, auf dessen Architektur diese Seite läuft.',
+      title: 'In der Praxis ansehen',
+      body: 'Die Projekte zeigen, wie ich diese Grundlage für unterschiedliche Produkte einsetze — vom Online-Shop über eine Publishing-Plattform bis zu einem Geschäftssystem im Bau.',
       link: 'Projekte ansehen',
     },
     links: {
-      title: 'Wenn du sprechen willst',
+      title: 'Mehr finden',
       email: 'Schreib mir eine E-Mail',
     },
   },
@@ -726,7 +641,7 @@ export const de: SiteContent = {
     impressum: {
       meta: {
         title: 'Impressum · Yaman Warda',
-        description: 'Anbieterkennzeichnung nach § 5 DDG für yamanwarda.dev.',
+        description: 'Anbieterkennzeichnung nach § 5 DDG für yamanwarda.de.',
       },
       eyebrow: 'Impressum',
       title: 'Impressum',
@@ -772,7 +687,7 @@ export const de: SiteContent = {
       meta: {
         title: 'Datenschutzerklärung · Yaman Warda',
         description:
-          'Welche Daten yamanwarda.dev verarbeitet: Server-Logs, das Kontaktformular und ein einziges technisch notwendiges Cookie. Kein Tracking, keine Werbung.',
+          'Welche Daten yamanwarda.de verarbeitet: Server-Logs, das Kontaktformular und ein einziges technisch notwendiges Cookie. Kein Tracking, keine Werbung.',
       },
       eyebrow: 'Datenschutz',
       title: 'Datenschutzerklärung',
