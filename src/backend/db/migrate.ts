@@ -2,11 +2,13 @@ import 'dotenv/config'
 
 import { readFile, readdir } from 'node:fs/promises'
 
-import { pool } from './pool'
+import { closePool, getPool } from './client'
 
 const migrationsDirectory = new URL('./migrations/', import.meta.url)
 
 export async function runMigrations() {
+  const pool = getPool()
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       name text PRIMARY KEY,
@@ -47,5 +49,5 @@ try {
   await runMigrations()
   console.log('Database migrations are up to date.')
 } finally {
-  await pool.end()
+  await closePool()
 }

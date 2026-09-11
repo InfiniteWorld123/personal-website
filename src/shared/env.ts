@@ -33,9 +33,24 @@ export const env = {
   EMAIL_FROM: getOptionalEnvVar('EMAIL_FROM'),
   /** Where contact-form messages are delivered. Replaced by the leads module in B4. */
   CONTACT_TO_EMAIL: getOptionalEnvVar('CONTACT_TO_EMAIL'),
-  CLOUDINARY_CLOUD_NAME: getOptionalEnvVar('CLOUDINARY_CLOUD_NAME'),
-  CLOUDINARY_API_KEY: getOptionalEnvVar('CLOUDINARY_API_KEY'),
-  CLOUDINARY_API_SECRET: getOptionalEnvVar('CLOUDINARY_API_SECRET'),
+
+  /**
+   * Cloudflare R2, the image store (D21, superseding the Cloudinary choice in
+   * D14). Optional so the app still boots without them; the media endpoint
+   * refuses uploads and says so rather than failing at import time.
+   */
+  R2_ACCOUNT_ID: getOptionalEnvVar('R2_ACCOUNT_ID'),
+  R2_ACCESS_KEY_ID: getOptionalEnvVar('R2_ACCESS_KEY_ID'),
+  R2_SECRET_ACCESS_KEY: getOptionalEnvVar('R2_SECRET_ACCESS_KEY'),
+  R2_BUCKET: getOptionalEnvVar('R2_BUCKET'),
+  /** Public origin the bucket is served from, e.g. `https://media.yamanwarda.dev`. */
+  R2_PUBLIC_URL: getOptionalEnvVar('R2_PUBLIC_URL'),
+
+  /**
+   * Signs draft-preview links. Separate from BETTER_AUTH_SECRET on purpose:
+   * one leaked secret must not also hand out sessions.
+   */
+  PREVIEW_TOKEN_SECRET: getOptionalEnvVar('PREVIEW_TOKEN_SECRET'),
 } as const
 
 export type EnvVariables = typeof env

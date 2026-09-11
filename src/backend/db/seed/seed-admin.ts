@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
 import * as v from 'valibot'
 import { EmailSchema, PasswordSchema } from '#/shared/validation/auth.validation'
 import { auth } from '../../shared/auth'
-import { pool } from '../pool'
+import { closePool, getPool } from '../client'
 
 /**
  * Provisions the single administrator. Sign-up is disabled on the public API,
@@ -22,7 +22,7 @@ async function seedAdmin() {
   const context = await auth.$context
   const passwordHash = await context.password.hash(password)
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
 
   try {
     await client.query('BEGIN')
@@ -80,5 +80,5 @@ async function seedAdmin() {
 try {
   await seedAdmin()
 } finally {
-  await pool.end()
+  await closePool()
 }

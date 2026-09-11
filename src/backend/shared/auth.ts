@@ -3,7 +3,7 @@ import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import * as v from 'valibot'
 import { PasswordSchema } from '#/shared/validation/auth.validation'
-import { pool } from '../db/pool'
+import { getDb, getPool } from '../db/client'
 
 const passwordFieldByPath = new Map<string, string>([
   ['/reset-password', 'newPassword'],
@@ -29,7 +29,7 @@ const validatePassword = (value: unknown) => {
 const isAdminEmail = async (value: unknown) => {
   if (typeof value !== 'string') return false
 
-  const result = await pool.query<{ role: string }>(
+  const result = await getDb().query<{ role: string }>(
     `SELECT role FROM "user" WHERE email = $1 LIMIT 1;`,
     [value.trim().toLowerCase()],
   )
@@ -38,7 +38,7 @@ const isAdminEmail = async (value: unknown) => {
 }
 
 export const auth = betterAuth({
-  database: pool,
+  database: getPool(),
   user: {
     additionalFields: {
       role: {
