@@ -21,15 +21,101 @@ export type Db = {
 let sharedPool: Pool | undefined
 
 /**
- * The process-wide pool. Better Auth needs a real `pg.Pool`, and the CLI
- * entry points need something they can close; application code does not.
+ * True inside a Cloudflare Worker. A Worker may not reuse a socket between
+ * requests, so a pool that outlives a request holds connections that are
+ * already dead — every second database request failed instantly until this
+ * was found.
  */
-export const getPool = (): Pool => (sharedPool ??= new Pool({ connectionString: env.DATABASE_URL }))
+export const isWorkerRuntime = (): boolean =>
+  typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers'
 
-/** Closes the shared pool. For CLI entry points only — never during a request. */
+/**
+ * Hyperdrive's connection string, when the Worker has that binding.
+ *
+ * Connecting straight to Frankfurt costs a full TLS handshake on every single
+ * request, because a Worker may not keep the socket. Hyperdrive holds the pool
+ * on Cloudflare's side, so the handshake is theirs and already done.
+ *
+ * The specifier is held in a variable on purpose: `cloudflare:workers` only
+ * exists inside a Worker, and a static import would break the Node build that
+ * the server path still uses.
+ */
+let hyperdriveUrl: string | undefined
+let hyperdriveResolved = false
+
+/**
+ * Resolved on the first request rather than at module load. A top-level
+ * `await` makes the whole module graph async, and Cloudflare then rejects the
+ * upload with `The uploaded script has no registered event handlers` because
+ * the default export is not there when it looks.
+ */
+const resolveHyperdriveUrl = async (): Promise<void> => {
+  if (hyperdriveResolved) return
+
+  hyperdriveResolved = true
+
+  try {
+    const specifier = ['cloudflare', 'workers'].join(':')
+    const workerModule = (await import(specifier)) as { env?: Record<string, unknown> }
+    const binding = workerModule.env?.HYPERDRIVE as { connectionString?: string } | undefined
+
+    hyperdriveUrl = binding?.connectionString
+  } catch {
+    hyperdriveUrl = undefined
+  }
+}
+
+/**
+ * The pool for the current context. On a server it is process-wide and lives
+ * for the life of the process. On a Worker it lasts one request and is closed
+ * by `withRequestScope`.
+ */
+export const getPool = (): Pool =>
+  (sharedPool ??= new Pool({ connectionString: hyperdriveUrl ?? env.DATABASE_URL }))
+
+/** Closes the pool. CLI entry points, and the end of a Worker request. */
 export const closePool = async (): Promise<void> => {
-  await sharedPool?.end()
+  const pool = sharedPool
   sharedPool = undefined
+
+  await pool?.end().catch(() => {})
+}
+
+/**
+ * A live handle on whatever `getPool()` currently returns. Better Auth takes a
+ * `pg.Pool` once, at construction, and holds it forever; on a Worker that pool
+ * is discarded after every request. This forwards each call to the current
+ * one, so Better Auth never talks to a closed pool and does not have to be
+ * rebuilt per request — which would cost CPU the free plan does not have.
+ */
+export const livePool = new Proxy({} as Pool, {
+  get(_target, property) {
+    const pool = getPool()
+    const value = Reflect.get(pool, property, pool)
+
+    return typeof value === 'function' ? value.bind(pool) : value
+  },
+  // Better Auth picks its adapter with `'connect' in db`. Without this trap the
+  // question reaches the empty target, the answer is no, and it gives up with
+  // `Failed to initialize database adapter`.
+  has: (_target, property) => Reflect.has(getPool(), property),
+  getPrototypeOf: () => Reflect.getPrototypeOf(getPool()),
+})
+
+/**
+ * Runs one request with a database connection that does not outlive it.
+ * A no-op on a server, where a long-lived pool is the right thing.
+ */
+export const withRequestScope = async <T>(fn: () => Promise<T>): Promise<T> => {
+  if (!isWorkerRuntime()) return fn()
+
+  await resolveHyperdriveUrl()
+
+  try {
+    return await fn()
+  } finally {
+    await closePool()
+  }
 }
 
 /**

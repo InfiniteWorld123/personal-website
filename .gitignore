@@ -19,5 +19,8 @@ todos.json
 # Personal photo drops, never part of the site
 my images/
 
+# Wrangler's local secret file for `wrangler dev`. Same contents as `.env`.
+.dev.vars
+
 # Vercel CLI link data. `.env` and `*.local` above already cover its env files.
 .vercel

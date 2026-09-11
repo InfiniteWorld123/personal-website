@@ -23,8 +23,8 @@ pg.Pool · parameterized SQL
 PostgreSQL
 ```
 
-External services: Resend (email), Cloudinary (images), PostHog EU (analytics),
-Google Calendar (booking v2), Stripe (payments, phase 5).
+External services: Resend (email), Cloudflare R2 (images), PostHog EU
+(analytics), Google Calendar (booking v2), Stripe (payments, phase 5).
 
 ## Folder structure
 
@@ -118,10 +118,14 @@ through an inbound-email webhook. This is not a mail client — see `AGENTS.md`.
 
 ## Images
 
-Cloudinary behind a backend `image-storage` abstraction. PostgreSQL stores
-storage keys and metadata; responses receive generated URLs. Project screenshots
-and blog images are not personal data, so US-hosted delivery is acceptable.
-Client records, leads, and invoices never leave the German server.
+Cloudflare R2 behind the backend `image-storage` abstraction (D21). PostgreSQL
+stores storage keys and metadata; responses receive generated URLs, and
+resizing happens through Cloudflare's image transformations on the bucket's
+public origin. The R2 client signs its own SigV4 requests over `fetch`, so the
+same code runs on a Worker, on a server, and in tests.
+
+Project screenshots and blog images are not personal data. Client records,
+leads, and invoices live only in PostgreSQL.
 
 ## Analytics
 
@@ -131,15 +135,32 @@ into the admin overview. Deep analysis stays in PostHog's own dashboard.
 
 ## Background jobs
 
-`pg-boss` runs on the existing PostgreSQL instance — no Redis. Jobs: booking
-reminders, PostHog metric refresh, invoice due-date checks, nightly backup
-verification.
+On Cloudflare, scheduled work runs on Cron Triggers, which are available on the
+free plan. Jobs: booking reminders, PostHog metric refresh, and invoice
+due-date checks. Nothing is built yet — `pg-boss` is not installed, and B5 is
+where the job system is first needed.
+
+`pg-boss` on the existing PostgreSQL instance remains the plan for whenever the
+application moves to a server (D22), since a persistent process makes it the
+simpler tool. No Redis in either case.
 
 ## Deployment
 
-Hetzner CX22 (Nuremberg or Falkenstein) running Coolify. Application and
-PostgreSQL in Docker on the same host. TLS via Coolify. Backups: Hetzner
-snapshots plus a nightly `pg_dump` to a Storage Box, plus `unattended-upgrades`.
+Cloudflare Workers, with PostgreSQL hosted externally in an EU region and
+reached through Hyperdrive (D22). Cloudflare also carries DNS, TLS, CDN, DDoS
+protection, and the R2 bucket. The public origin is `yamanwarda.de`.
+
+Server-rendered CPU time is measured on a staging hostname before the domain is
+cut over: the free plan allows 10 ms per invocation, and this application
+renders React on the server.
+
+PostgreSQL stays ordinary PostgreSQL and D1 is never used, so the move to a
+server later is a connection change rather than a migration.
+
+**The intended destination** is still a Hetzner box running Coolify with
+PostgreSQL in Docker beside the application, revisited when income is steady
+(D2, D22). Its backup obligations apply from the day it is adopted: Hetzner
+snapshots, a nightly `pg_dump` to a Storage Box, and `unattended-upgrades`.
 
 A restore has to be tested once before phase 5 stores real invoices. An untested
 backup is not a backup.

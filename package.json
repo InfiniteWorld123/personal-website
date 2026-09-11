@@ -9,6 +9,10 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "build:cf": "NITRO_PRESET=cloudflare-module vite build",
+    "deploy": "bun run build:cf && wrangler deploy",
+    "dev:cf": "bun run build:cf && cp .env .output/server/.dev.vars && CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=$(grep '^DATABASE_URL=' .env | cut -d= -f2-) wrangler dev --config .output/server/wrangler.json --port 8788 --local",
+    "cf:tail": "wrangler tail",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -60,6 +64,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "wrangler": "^4.131.1"
   }
 }

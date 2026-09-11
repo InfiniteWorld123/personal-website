@@ -21,6 +21,9 @@ ORM would add moving parts with no benefit at single-operator scale.
 
 ### D2 — Hetzner CX22 + Coolify, PostgreSQL in Docker on the same host
 
+Status: **Superseded by D22** on timing, not on reasoning. The plan below is
+still the intended destination; D22 records why it is not affordable yet.
+
 **Why:** client PII, leads, and invoices on a German server makes the GDPR story
 trivial. Cron and background jobs work natively. PostgreSQL is local, so there
 is no serverless connection-pooling problem. Cost is flat and small.
@@ -188,6 +191,8 @@ addresses the real concern (going into a call cold) rather than avoiding calls.
 ---
 
 ### D14 — Cloudinary for images
+
+Status: **Superseded by D21.** Images are on Cloudflare R2.
 
 **Why:** free tier is sufficient, automatic resizing and modern formats come for
 free, and the integration already exists in `prime-estate` and can be ported.
@@ -458,3 +463,112 @@ it says the link opens a new tab — and not decoration. This part of D19 stands
 the gesture is supposed to end on, so it never had anywhere to travel. It rests
 at `→` now like the rest.
 
+
+---
+
+### D21 — Cloudflare R2 for images, not Cloudinary
+
+Status: **Accepted.** Supersedes D14.
+
+Images go to a Cloudflare R2 bucket behind the existing backend `image-storage`
+abstraction. PostgreSQL stores storage keys and metadata; responses receive
+generated URLs. Resizing and format negotiation come from Cloudflare's image
+transformations on the bucket's public origin, not from the application.
+
+**Why:** the platform was already going to sit behind Cloudflare for DNS, TLS
+and CDN (D22). Putting the bucket there too removes a vendor, removes an egress
+bill, and keeps one dashboard instead of two. R2 charges nothing for egress,
+which is the line item that eventually makes an image host expensive.
+
+**Why the integration is small:** `src/backend/shared/image-storage/r2.ts`
+signs its own SigV4 requests over `fetch`. There is no AWS SDK and no Node-only
+API in the path, so the same code runs on a Worker, on a server, and in tests.
+
+**Data boundary, unchanged from D14:** project screenshots and blog images are
+not personal data. Client records, leads, and invoices stay in PostgreSQL.
+
+**Numbering note:** `docs/design-system.md` also referenced "D21" for a
+two-layer card shadow. That shadow is a refinement of D18 and was always
+documented in full inside `design-system.md` itself; the stray reference has
+been corrected there. D21 is this decision.
+
+---
+
+### D22 — Cloudflare Workers now; Hetzner when the income is steady
+
+Status: **Accepted.** Supersedes D2.
+
+The application deploys to Cloudflare Workers, with PostgreSQL hosted
+externally in an EU region and reached through Hyperdrive. Cloudflare also
+carries DNS, TLS, CDN, DDoS protection and the R2 bucket (D21). Vercel is left
+behind.
+
+**Why not Vercel, which is where the site actually runs today:** Vercel's Hobby
+plan forbids commercial use, and defines it broadly enough to cover a
+freelancer's own services site with a lead form. This is not a preference — the
+current deployment is out of compliance and has to move regardless.
+
+**Why not Hetzner today, which D2 chose and which is still the better
+long-term home:** every cost-optimized plan — `CX23`, `CX33`, `CX43`, and the
+whole ARM `CAX` family — is sold out at the time of writing. The cheapest plan
+that can actually be bought is €14.27/month including VAT. The owner's income
+is not yet steady, and a server that gets deleted in a lean month takes the
+site, the database, and the search ranking with it. A free tier that stays up
+in a month with no money is worth more than a better architecture that
+intermittently does not exist.
+
+**What was checked before accepting the platform's limits,** rather than
+assumed:
+
+- Invoice PDFs: Cloudflare's browser rendering is on the free plan, at ten
+  browser-minutes per day. One invoice costs a few seconds; the roadmap implies
+  tens of invoices per month, not per hour.
+- Scheduled work: Cron Triggers are free, so reminders and due-date checks have
+  a home. `pg-boss` is not installed and B5 has not started, so nothing is being
+  rewritten — the job system is simply chosen before it is built rather than
+  after.
+- Revenue and analytics queries: aggregation runs inside PostgreSQL. Waiting on
+  the database does not count against a Worker's CPU budget, so a heavy report
+  is not a heavy Worker.
+
+**The one limit that had to be measured, not reasoned about:** the free plan
+allows 10 ms of CPU per invocation, and this application renders React on the
+server.
+
+**Measured on 11 Sep 2026**, on a real deployment at
+`yamanwarda.wardayaman47.workers.dev`, read back from `wrangler tail`:
+
+| request | CPU |
+|---|---|
+| `GET /en`, `GET /ar` | 16–20 ms |
+| `GET /de` (cold) | 89 ms |
+| `POST /api/auth/sign-in/email` | 51–137 ms |
+| `GET /api/admin/me` | 52 ms |
+
+Eight samples: 16 ms low, 137 ms high, 61 ms average. **Every request is over
+the free ceiling**, and server-rendering React is why. Cloudflare tolerates
+infrequent overruns, which is why all eight returned `ok`, but a Worker that
+consistently exceeds the limit is terminated with error 1102.
+
+**So the free plan does not carry this application.** The Workers Paid plan at
+$5/month raises the ceiling to 30 seconds, which is not a constraint at these
+numbers. That is a third of the €14.27 the server would cost, so the decision
+above stands — it is simply $5 rather than $0.
+
+**Three Worker-specific defects were found and fixed getting there**, none of
+which would have appeared on a server: Elysia compiling routes with
+`new Function`, the request body being read twice on the auth passthrough, and
+a `pg.Pool` outliving the request that opened it. Each is commented at its
+site.
+
+**The condition that keeps this reversible, and it is not optional:**
+PostgreSQL stays ordinary PostgreSQL. D1 is never used. `db/client.ts` already
+routes every query through one accessor, so the move to a server is a
+connection change rather than a migration. Choosing D1 would be the one
+decision that makes D2 unrecoverable.
+
+**When to revisit:** when monthly income is steady enough that €14/month is an
+expense rather than a gamble — not the first month the balance happens to
+cover it. At that point D2's reasoning returns intact: compute next to data,
+no CPU ceiling, a simpler data-residency story for German clients, and room to
+host client projects on the same box.

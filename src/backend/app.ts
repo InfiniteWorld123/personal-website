@@ -1,16 +1,34 @@
 import { Elysia } from 'elysia'
 import { adminRoutes } from './modules/admin/admin.route'
-import { authRoutes } from './modules/auth/auth.route'
+import { handleAuthRequest, isAuthRequest } from './modules/auth/auth.route'
+import { withRequestScope } from './db/client'
 import { AppError } from './shared/error'
 import { handleError } from './shared/error-handler'
 import { HttpStatusCode } from './shared/http'
 import { responseError, responseOk } from './shared/response'
 
-export const app = new Elysia({ prefix: '/api' })
+/**
+ * Elysia compiles its router and validators with `new Function`, which
+ * Cloudflare Workers forbid — the API answered every request with
+ * `EvalError: Code generation from strings disallowed` until this was found.
+ *
+ * The capability is probed rather than keyed off a build flag, so one bundle
+ * runs on a Worker and on a Node server without a second code path (D22).
+ */
+const supportsCodeGeneration = (() => {
+  try {
+    new Function('')
+
+    return true
+  } catch {
+    return false
+  }
+})()
+
+export const app = new Elysia({ prefix: '/api', aot: supportsCodeGeneration })
   .error({ AppError })
   .onError(handleError)
   .use(adminRoutes)
-  .use(authRoutes)
   .get('/', () => responseOk({ data: { status: 'ok' }, message: 'API is running' }))
 
 export type App = typeof app
@@ -19,16 +37,20 @@ export type App = typeof app
  * Elysia returns an empty 404 body for unmatched routes. Normalize that into
  * the standard error envelope so every API response has the same shape.
  */
-export const handleApiRequest = async (request: Request) => {
-  const response = await app.fetch(request)
+export const handleApiRequest = (request: Request) =>
+  withRequestScope(async () => {
+    // Handed over before Elysia sees it — see `auth.route.ts` for why.
+    if (isAuthRequest(new URL(request.url).pathname)) return handleAuthRequest(request)
 
-  if (response.status !== HttpStatusCode.NOT_FOUND) return response
+    const response = await app.fetch(request)
 
-  const body = await response.clone().text()
+    if (response.status !== HttpStatusCode.NOT_FOUND) return response
 
-  if (body.trim() !== '') return response
+    const body = await response.clone().text()
 
-  return Response.json(responseError({ message: 'Route not found', code: 'NOT_FOUND' }), {
-    status: HttpStatusCode.NOT_FOUND,
+    if (body.trim() !== '') return response
+
+    return Response.json(responseError({ message: 'Route not found', code: 'NOT_FOUND' }), {
+      status: HttpStatusCode.NOT_FOUND,
+    })
   })
-}

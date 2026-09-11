@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yamanwarda",
+  "compatibility_date": "2026-09-01",
+
+  // `pg`, `AsyncLocalStorage`, and the crypto used by Better Auth all need the
+  // Node compatibility layer. Nitro adds this flag on its own when it writes
+  // the deployed config; it is stated here so the value is visible in the repo.
+  "compatibility_flags": ["nodejs_compat"],
+
+  "observability": { "enabled": true },
+
+  // Adding a custom domain switches the `*.workers.dev` address off unless this
+  // is stated. It stays on until the domain is live, so the site is never
+  // without an address; turn it off afterwards to avoid a duplicate of the
+  // site that search engines can index.
+  "workers_dev": true,
+
+  // The site answers on the domain itself, not only on `*.workers.dev`.
+  // `custom_domain` makes Cloudflare own the DNS record and the certificate
+  // for each hostname; there is nothing to add by hand in the DNS panel.
+  //
+  // `zone_name` is not optional here: the zone is still pending activation, so
+  // Wrangler cannot infer it from the hostname and the deploy half-fails.
+  "routes": [
+    { "pattern": "yamanwarda.de", "custom_domain": true, "zone_name": "yamanwarda.de" },
+    { "pattern": "www.yamanwarda.de", "custom_domain": true, "zone_name": "yamanwarda.de" }
+  ],
+
+  // Cloudflare holds the PostgreSQL connection pool outside the Worker.
+  // A Worker may not reuse a socket between requests, so the application
+  // opens a connection per request; Hyperdrive is what makes that cheap
+  // instead of a fresh TLS handshake to Frankfurt every time.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "ff94beb83ae744a38526c880364ac7a9"
+    }
+  ],
+
+  // `main` and `assets` are filled in by Nitro at build time from the preset —
+  // do not set them here, they would be ignored with a warning.
+
+  // Secrets are never written in this file. They are set once per environment:
+  //   bunx wrangler secret put BETTER_AUTH_SECRET
+  // and are listed in `.env.example`.
+  "vars": {
+    "APP_NAME": "Yaman Warda"
+  }
+}
