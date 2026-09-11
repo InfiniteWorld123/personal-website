@@ -10,11 +10,11 @@
 
   "observability": { "enabled": true },
 
-  // Adding a custom domain switches the `*.workers.dev` address off unless this
-  // is stated. It stays on until the domain is live, so the site is never
-  // without an address; turn it off afterwards to avoid a duplicate of the
-  // site that search engines can index.
-  "workers_dev": true,
+  // Off since the domain went live on 11 Sep 2026. A `*.workers.dev` address
+  // would be a second, crawlable copy of the whole site competing with it in
+  // search. Set it back to `true` only to reach the Worker while the domain
+  // itself is broken — and turn it off again afterwards.
+  "workers_dev": false,
 
   // The site answers on the domain itself, not only on `*.workers.dev`.
   // `custom_domain` makes Cloudflare own the DNS record and the certificate
