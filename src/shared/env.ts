@@ -43,7 +43,7 @@ export const env = {
   R2_ACCESS_KEY_ID: getOptionalEnvVar('R2_ACCESS_KEY_ID'),
   R2_SECRET_ACCESS_KEY: getOptionalEnvVar('R2_SECRET_ACCESS_KEY'),
   R2_BUCKET: getOptionalEnvVar('R2_BUCKET'),
-  /** Public origin the bucket is served from, e.g. `https://media.yamanwarda.dev`. */
+  /** Public origin the bucket is served from, e.g. `https://media.yamanwarda.de`. */
   R2_PUBLIC_URL: getOptionalEnvVar('R2_PUBLIC_URL'),
 
   /**

@@ -4,4 +4,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://yamanwarda.dev/sitemap.xml
+Sitemap: https://yamanwarda.de/sitemap.xml

@@ -22,14 +22,14 @@ afterEach(() => {
 
 describe('image URLs', () => {
   it('builds a transformation URL on a Cloudflare zone', async () => {
-    const { imageUrl, imageVariantUrl } = await loadUrlModule('https://media.yamanwarda.dev')
+    const { imageUrl, imageVariantUrl } = await loadUrlModule('https://media.yamanwarda.de')
 
-    expect(imageUrl('projects/abc.jpg')).toBe('https://media.yamanwarda.dev/projects/abc.jpg')
+    expect(imageUrl('projects/abc.jpg')).toBe('https://media.yamanwarda.de/projects/abc.jpg')
     expect(imageVariantUrl('projects/abc.jpg', { width: 800 })).toBe(
-      'https://media.yamanwarda.dev/cdn-cgi/image/width=800,fit=scale-down,format=auto/projects/abc.jpg',
+      'https://media.yamanwarda.de/cdn-cgi/image/width=800,fit=scale-down,format=auto/projects/abc.jpg',
     )
     expect(imageVariantUrl('projects/abc.jpg', { width: 400, height: 300, fit: 'cover' })).toBe(
-      'https://media.yamanwarda.dev/cdn-cgi/image/width=400,height=300,fit=cover,format=auto/projects/abc.jpg',
+      'https://media.yamanwarda.de/cdn-cgi/image/width=400,height=300,fit=cover,format=auto/projects/abc.jpg',
     )
   })
 
@@ -42,13 +42,13 @@ describe('image URLs', () => {
   })
 
   it('does not double the slash when the configured origin ends with one', async () => {
-    const { imageUrl } = await loadUrlModule('https://media.yamanwarda.dev/')
+    const { imageUrl } = await loadUrlModule('https://media.yamanwarda.de/')
 
-    expect(imageUrl('projects/abc.jpg')).toBe('https://media.yamanwarda.dev/projects/abc.jpg')
+    expect(imageUrl('projects/abc.jpg')).toBe('https://media.yamanwarda.de/projects/abc.jpg')
   })
 
   it('builds a srcset across the laid-out widths', async () => {
-    const { imageSrcSet } = await loadUrlModule('https://media.yamanwarda.dev')
+    const { imageSrcSet } = await loadUrlModule('https://media.yamanwarda.de')
     const srcset = imageSrcSet('projects/abc.jpg')
 
     expect(srcset.split(', ')).toHaveLength(4)

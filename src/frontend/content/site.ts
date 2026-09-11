@@ -3,7 +3,7 @@ import type { ServiceSlug } from './types'
 /** Language-independent facts about the site and its owner. */
 export const site = {
   name: 'Yaman Warda',
-  url: 'https://yamanwarda.dev',
+  url: 'https://yamanwarda.de',
   email: 'yamanwarda06@gmail.com',
   city: 'Erfurt',
   country: 'DE',
