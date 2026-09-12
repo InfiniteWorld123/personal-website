@@ -50,8 +50,9 @@ export const isSafeHref = (value: string): boolean => {
   const href = value.trim()
 
   if (href === '') return false
-  // Site-relative, but not protocol-relative: `//evil.example` is off-site.
-  if (href.startsWith('/') && !href.startsWith('//')) return true
+  // Site-relative, but not protocol-relative: `//evil.example` is off-site, and
+  // so is `/\evil.example` — browsers normalise that backslash to a slash.
+  if (/^\/(?![/\\])/.test(href)) return true
 
   try {
     return SAFE_PROTOCOLS.includes(new URL(href).protocol)
@@ -65,7 +66,7 @@ export const isSafeImageSrc = (value: string): boolean => {
   const src = value.trim()
 
   if (src === '') return false
-  if (src.startsWith('/') && !src.startsWith('//')) return true
+  if (/^\/(?![/\\])/.test(src)) return true
 
   try {
     return new URL(src).protocol === 'https:'

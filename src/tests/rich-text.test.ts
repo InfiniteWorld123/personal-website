@@ -27,6 +27,17 @@ describe('link safety', () => {
     expect(isSafeHref('//evil.example')).toBe(false)
   })
 
+  it('treats a backslash after the leading slash as off-site', () => {
+    // Browsers normalise `/\` to `//`, so this leaves the site the same way a
+    // protocol-relative link does.
+    expect(isSafeHref('/\\evil.example')).toBe(false)
+    expect(isSafeImageSrc('/\\evil.example/logo.png')).toBe(false)
+  })
+
+  it('still allows the site root', () => {
+    expect(isSafeHref('/')).toBe(true)
+  })
+
   it('refuses the protocols that execute', () => {
     expect(isSafeHref('javascript:alert(1)')).toBe(false)
     expect(isSafeHref('JavaScript:alert(1)')).toBe(false)
