@@ -25,8 +25,17 @@ import { Route as AdminIndexRouteImport } from './../routes/admin.index'
 import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
+import { Route as RssArDotxmlRouteImport } from './../routes/rss.ar[.]xml'
+import { Route as RssDeDotxmlRouteImport } from './../routes/rss.de[.]xml'
+import { Route as RssEnDotxmlRouteImport } from './../routes/rss.en[.]xml'
+import { Route as LangBlogIndexRouteImport } from './../routes/$lang.blog.index'
+import { Route as LangBlogSlugRouteImport } from './../routes/$lang.blog.$slug'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
+import { Route as AdminBlogIndexRouteImport } from './../routes/admin.blog.index'
+import { Route as AdminBlogIdRouteImport } from './../routes/admin.blog.$id'
+import { Route as AdminBlogNewRouteImport } from './../routes/admin.blog.new'
+import { Route as AdminBlogTagsRouteImport } from './../routes/admin.blog.tags'
 import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
@@ -111,6 +120,31 @@ const ApiContactRoute = ApiContactRouteImport.update({
   path: '/api/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RssArDotxmlRoute = RssArDotxmlRouteImport.update({
+  id: '/rss/ar.xml',
+  path: '/rss/ar.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssDeDotxmlRoute = RssDeDotxmlRouteImport.update({
+  id: '/rss/de.xml',
+  path: '/rss/de.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssEnDotxmlRoute = RssEnDotxmlRouteImport.update({
+  id: '/rss/en.xml',
+  path: '/rss/en.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LangBlogIndexRoute = LangBlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangBlogSlugRoute = LangBlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => LangRoute,
+} as any)
 const LangWorkIndexRoute = LangWorkIndexRouteImport.update({
   id: '/work/',
   path: '/work/',
@@ -120,6 +154,26 @@ const LangWorkSlugRoute = LangWorkSlugRouteImport.update({
   id: '/work/$slug',
   path: '/work/$slug',
   getParentRoute: () => LangRoute,
+} as any)
+const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
+  id: '/blog/$id',
+  path: '/blog/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
+  id: '/blog/new',
+  path: '/blog/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBlogTagsRoute = AdminBlogTagsRouteImport.update({
+  id: '/blog/tags',
+  path: '/blog/tags',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
   id: '/projects/',
@@ -152,12 +206,21 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/rss/ar.xml': typeof RssArDotxmlRoute
+  '/rss/de.xml': typeof RssDeDotxmlRoute
+  '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
+  '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -173,12 +236,21 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/rss/ar.xml': typeof RssArDotxmlRoute
+  '/rss/de.xml': typeof RssDeDotxmlRoute
+  '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang': typeof LangIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
+  '/$lang/blog': typeof LangBlogIndexRoute
   '/$lang/work': typeof LangWorkIndexRoute
+  '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
 }
 export interface FileRoutesById {
@@ -197,12 +269,21 @@ export interface FileRoutesById {
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
+  '/rss/ar.xml': typeof RssArDotxmlRoute
+  '/rss/de.xml': typeof RssDeDotxmlRoute
+  '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
+  '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
+  '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
 }
 export interface FileRouteTypes {
@@ -222,12 +303,21 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
+    | '/rss/ar.xml'
+    | '/rss/de.xml'
+    | '/rss/en.xml'
     | '/$lang/'
     | '/admin/'
+    | '/$lang/blog/$slug'
     | '/$lang/work/$slug'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
+    | '/admin/blog/tags'
     | '/admin/projects/$id'
     | '/admin/projects/new'
+    | '/$lang/blog/'
     | '/$lang/work/'
+    | '/admin/blog/'
     | '/admin/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -243,12 +333,21 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
+    | '/rss/ar.xml'
+    | '/rss/de.xml'
+    | '/rss/en.xml'
     | '/$lang'
     | '/admin'
+    | '/$lang/blog/$slug'
     | '/$lang/work/$slug'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
+    | '/admin/blog/tags'
     | '/admin/projects/$id'
     | '/admin/projects/new'
+    | '/$lang/blog'
     | '/$lang/work'
+    | '/admin/blog'
     | '/admin/projects'
   id:
     | '__root__'
@@ -266,12 +365,21 @@ export interface FileRouteTypes {
     | '/admin_/login'
     | '/api/$'
     | '/api/contact'
+    | '/rss/ar.xml'
+    | '/rss/de.xml'
+    | '/rss/en.xml'
     | '/$lang/'
     | '/admin/'
+    | '/$lang/blog/$slug'
     | '/$lang/work/$slug'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
+    | '/admin/blog/tags'
     | '/admin/projects/$id'
     | '/admin/projects/new'
+    | '/$lang/blog/'
     | '/$lang/work/'
+    | '/admin/blog/'
     | '/admin/projects/'
   fileRoutesById: FileRoutesById
 }
@@ -283,6 +391,9 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiContactRoute: typeof ApiContactRoute
+  RssArDotxmlRoute: typeof RssArDotxmlRoute
+  RssDeDotxmlRoute: typeof RssDeDotxmlRoute
+  RssEnDotxmlRoute: typeof RssEnDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -399,6 +510,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rss/ar.xml': {
+      id: '/rss/ar.xml'
+      path: '/rss/ar.xml'
+      fullPath: '/rss/ar.xml'
+      preLoaderRoute: typeof RssArDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss/de.xml': {
+      id: '/rss/de.xml'
+      path: '/rss/de.xml'
+      fullPath: '/rss/de.xml'
+      preLoaderRoute: typeof RssDeDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss/en.xml': {
+      id: '/rss/en.xml'
+      path: '/rss/en.xml'
+      fullPath: '/rss/en.xml'
+      preLoaderRoute: typeof RssEnDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$lang/blog/': {
+      id: '/$lang/blog/'
+      path: '/blog'
+      fullPath: '/$lang/blog/'
+      preLoaderRoute: typeof LangBlogIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/blog/$slug': {
+      id: '/$lang/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/$lang/blog/$slug'
+      preLoaderRoute: typeof LangBlogSlugRouteImport
+      parentRoute: typeof LangRoute
+    }
     '/$lang/work/': {
       id: '/$lang/work/'
       path: '/work'
@@ -412,6 +558,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/$lang/work/$slug'
       preLoaderRoute: typeof LangWorkSlugRouteImport
       parentRoute: typeof LangRoute
+    }
+    '/admin/blog/': {
+      id: '/admin/blog/'
+      path: '/blog'
+      fullPath: '/admin/blog/'
+      preLoaderRoute: typeof AdminBlogIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/blog/$id': {
+      id: '/admin/blog/$id'
+      path: '/blog/$id'
+      fullPath: '/admin/blog/$id'
+      preLoaderRoute: typeof AdminBlogIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/blog/new': {
+      id: '/admin/blog/new'
+      path: '/blog/new'
+      fullPath: '/admin/blog/new'
+      preLoaderRoute: typeof AdminBlogNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/blog/tags': {
+      id: '/admin/blog/tags'
+      path: '/blog/tags'
+      fullPath: '/admin/blog/tags'
+      preLoaderRoute: typeof AdminBlogTagsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/projects/': {
       id: '/admin/projects/'
@@ -446,7 +620,9 @@ interface LangRouteChildren {
   LangServicesRoute: typeof LangServicesRoute
   LangStackRoute: typeof LangStackRoute
   LangIndexRoute: typeof LangIndexRoute
+  LangBlogSlugRoute: typeof LangBlogSlugRoute
   LangWorkSlugRoute: typeof LangWorkSlugRoute
+  LangBlogIndexRoute: typeof LangBlogIndexRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
 }
 
@@ -459,7 +635,9 @@ const LangRouteChildren: LangRouteChildren = {
   LangServicesRoute: LangServicesRoute,
   LangStackRoute: LangStackRoute,
   LangIndexRoute: LangIndexRoute,
+  LangBlogSlugRoute: LangBlogSlugRoute,
   LangWorkSlugRoute: LangWorkSlugRoute,
+  LangBlogIndexRoute: LangBlogIndexRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,
 }
 
@@ -467,15 +645,23 @@ const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBlogIdRoute: typeof AdminBlogIdRoute
+  AdminBlogNewRoute: typeof AdminBlogNewRoute
+  AdminBlogTagsRoute: typeof AdminBlogTagsRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
   AdminProjectsNewRoute: typeof AdminProjectsNewRoute
+  AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminBlogIdRoute: AdminBlogIdRoute,
+  AdminBlogNewRoute: AdminBlogNewRoute,
+  AdminBlogTagsRoute: AdminBlogTagsRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
   AdminProjectsNewRoute: AdminProjectsNewRoute,
+  AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminProjectsIndexRoute: AdminProjectsIndexRoute,
 }
 
@@ -489,6 +675,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiContactRoute: ApiContactRoute,
+  RssArDotxmlRoute: RssArDotxmlRoute,
+  RssDeDotxmlRoute: RssDeDotxmlRoute,
+  RssEnDotxmlRoute: RssEnDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

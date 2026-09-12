@@ -34,8 +34,9 @@ Do not read every document when the task concerns one slice.
 - Clients and referrers are records in the database. They do not get accounts,
   portals, or logins.
 - Market assumptions: Germany, EUR, Europe/Berlin time, German invoicing rules.
-- The public site is trilingual: German, English, Arabic. Blog posts are
-  written in one language each and carry a language tag.
+- The public site is trilingual: German, English, Arabic. This includes blog
+  posts: a post carries one translation per language and cannot be published
+  until all three are written. See `docs/decisions.md` D23, which reversed D7.
 - Never fabricate testimonials, client names, revenue figures, project counts,
   ratings, or years of experience. If a number is not real, it does not ship.
 - Never promise business results the work cannot guarantee — no revenue lifts,

@@ -1,9 +1,23 @@
 import { getContent, site } from '#/frontend/content'
 import { type Language, languages, localeFor } from '#/frontend/i18n/language'
-import { buildStructuredData, type StructuredProject } from './structured-data'
+import { buildStructuredData, type StructuredArticle, type StructuredProject } from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
 
 export { publicPath }
+
+/**
+ * The generated social cards are JPEG, but an article's cover is whatever was
+ * uploaded, and a wrong `og:image:type` makes some scrapers skip the image.
+ */
+const mediaTypeFor = (url: string): string => {
+  const extension = url.split('?')[0]?.split('.').pop()?.toLowerCase()
+
+  if (extension === 'png') return 'image/png'
+  if (extension === 'webp') return 'image/webp'
+  if (extension === 'avif') return 'image/avif'
+
+  return 'image/jpeg'
+}
 
 type HeadInput = {
   language: Language
@@ -12,9 +26,13 @@ type HeadInput = {
   title: string
   description: string
   image?: string
+  /** Real pixel size of `image`, when it is not the standard social card. */
+  imageSize?: { width: number; height: number }
   noIndex?: boolean
   /** Passed straight to the JSON-LD graph; see `structured-data.ts`. */
   projects?: StructuredProject[]
+  /** Set on a blog post, which is an article rather than a website page. */
+  article?: StructuredArticle
 }
 
 /**
@@ -22,9 +40,22 @@ type HeadInput = {
  * per language plus x-default, Open Graph / Twitter cards, and the page's
  * JSON-LD graph.
  */
-export function buildHead({ language, path, title, description, image, noIndex, projects }: HeadInput) {
+export function buildHead({
+  language,
+  path,
+  title,
+  description,
+  image,
+  imageSize,
+  noIndex,
+  projects,
+  article,
+}: HeadInput) {
   const canonical = pageUrl(language, path)
   const card = absolute(image ?? socialCard(language))
+  // A page that brings its own image states that image's size; the generated
+  // social cards are all the same shape, so they state the shared constant.
+  const cardSize = image && imageSize ? imageSize : SOCIAL_CARD_SIZE
   const cardAlt = `${site.name} — ${getContent(language).shell.footer.tagline}`
 
   return {
@@ -32,7 +63,7 @@ export function buildHead({ language, path, title, description, image, noIndex, 
       { title },
       { name: 'description', content: description },
       { name: 'robots', content: noIndex ? 'noindex, nofollow' : 'index, follow' },
-      { property: 'og:type', content: 'website' },
+      { property: 'og:type', content: article ? 'article' : 'website' },
       { property: 'og:site_name', content: site.name },
       { property: 'og:locale', content: localeFor(language).replace('-', '_') },
       // No `og:locale:alternate`: the head manager keeps one tag per property,
@@ -42,15 +73,23 @@ export function buildHead({ language, path, title, description, image, noIndex, 
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
       { property: 'og:image', content: card },
-      { property: 'og:image:type', content: 'image/jpeg' },
-      { property: 'og:image:width', content: String(SOCIAL_CARD_SIZE.width) },
-      { property: 'og:image:height', content: String(SOCIAL_CARD_SIZE.height) },
+      { property: 'og:image:type', content: mediaTypeFor(card) },
+      { property: 'og:image:width', content: String(cardSize.width) },
+      { property: 'og:image:height', content: String(cardSize.height) },
       { property: 'og:image:alt', content: cardAlt },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: card },
       { name: 'twitter:image:alt', content: cardAlt },
+      // Open Graph dates an article; a website page has no publication date
+      // to state, so the tag is left off rather than filled with the build time.
+      ...(article
+        ? [
+            { property: 'article:published_time', content: `${article.publishedOn}T00:00:00.000Z` },
+            { property: 'article:author', content: site.name },
+          ]
+        : []),
     ],
     links: [
       { rel: 'canonical', href: canonical },
@@ -62,12 +101,33 @@ export function buildHead({ language, path, title, description, image, noIndex, 
       // x-default is the page for a visitor whose language we do not publish;
       // English serves them better than German now that clients are worldwide.
       { rel: 'alternate', hrefLang: 'x-default', href: pageUrl('en', path) },
+      // Feed discovery, on the blog pages only: one feed per language, so the
+      // reader who subscribes from the Arabic archive gets Arabic articles.
+      ...(path.startsWith('/blog')
+        ? [
+            {
+              rel: 'alternate',
+              type: 'application/rss+xml',
+              title: `${site.name} — ${getContent(language).blog.eyebrow}`,
+              href: absolute(`/rss/${language}.xml`),
+            },
+          ]
+        : []),
     ],
     scripts: [
       {
         type: 'application/ld+json',
         children: JSON.stringify(
-          buildStructuredData({ language, path, title, description, canonical, image: card, projects }),
+          buildStructuredData({
+            language,
+            path,
+            title,
+            description,
+            canonical,
+            image: card,
+            projects,
+            article,
+          }),
         ),
       },
     ],

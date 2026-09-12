@@ -5,6 +5,7 @@ export const de: SiteContent = {
     nav: [
       { label: 'Leistungen', to: '/$lang/services' },
       { label: 'Arbeiten', to: '/$lang/work' },
+      { label: 'Blog', to: '/$lang/blog' },
       { label: 'Über mich', to: '/$lang/about' },
       { label: 'Kontakt', to: '/$lang/contact' },
     ],
@@ -457,6 +458,34 @@ export const de: SiteContent = {
           'Admin-Verwaltung',
         ],
       },
+    },
+  },
+
+  blog: {
+    meta: {
+      title: 'Blog · Yaman Warda',
+      description:
+        'Notizen zum Bauen von Websites, Online-Shops und individueller Software: was Suchmaschinen wirklich belohnen, wofür ein kleines Unternehmen Geld ausgeben sollte, und was ich beim Bau meiner eigenen Plattform gelernt habe.',
+    },
+    eyebrow: 'Blog',
+    title: 'Was ich beim Bauen lerne.',
+    intro:
+      'Kurze Texte zu den Fragen, die Kunden mir immer wieder stellen — zu Suche, zu Kosten, dazu, was sich zu bauen lohnt und was nicht. Auf Deutsch, Englisch und Arabisch.',
+    empty: 'Der erste Artikel ist unterwegs.',
+    allTags: 'Alle Themen',
+    readingTime: '{minutes} Min. Lesezeit',
+    readArticle: 'Artikel lesen',
+    loadMore: 'Mehr Artikel laden',
+    back: 'Alle Artikel',
+    aboutProject: 'Dieser Artikel handelt von {project}.',
+    seeProject: 'Zum Projekt',
+    shown: '{visible} von {total} Artikeln',
+    feed: 'RSS-Feed',
+    home: {
+      eyebrow: 'Geschrieben',
+      title: 'Was ich beim Bauen lerne.',
+      sub: 'Kurze Texte zu Suche, Kosten und dem, was sich zu bauen lohnt.',
+      all: 'Alle Artikel',
     },
   },
 

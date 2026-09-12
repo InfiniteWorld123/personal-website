@@ -4,64 +4,13 @@ import type {
 } from '#/shared/types/project.types'
 import type { ProjectFilterInput, ProjectWriteInput } from '#/shared/validation/project.validation'
 import { api } from './client'
+import { unwrap } from './response'
 
 /**
- * A failed API call, carrying what the central error flow returned. `details`
- * holds the field issues, so a form can point at the input that is wrong.
+ * `ApiRequestError` is re-exported so the modules that already import it from
+ * here keep working; it now lives beside the envelope unwrapping it belongs to.
  */
-export class ApiRequestError extends Error {
-  readonly code: string | null
-  readonly status: number
-  readonly details: unknown
-
-  constructor({
-    message,
-    code,
-    status,
-    details,
-  }: {
-    message: string
-    code?: string | null
-    status: number
-    details?: unknown
-  }) {
-    super(message)
-    this.name = 'ApiRequestError'
-    this.code = code ?? null
-    this.status = status
-    this.details = details
-  }
-}
-
-type ErrorBody = { message?: string; code?: string; details?: unknown }
-
-/**
- * The shape every Eden Treaty call returns. `error.status` is widened to
- * `unknown` on purpose: Treaty types it that way for routes whose error
- * responses are not declared in an Elysia schema, and this application
- * validates with Valibot instead.
- */
-type TreatyResponse = {
-  data: unknown
-  error: { status?: unknown; value?: unknown } | null
-  status: number
-}
-
-/** Unwraps the shared response envelope, or throws what the server reported. */
-const unwrap = <TData>(response: TreatyResponse): TData => {
-  if (response.error) {
-    const body = (response.error.value ?? {}) as ErrorBody
-
-    throw new ApiRequestError({
-      message: body.message ?? 'The request failed',
-      code: body.code,
-      status: typeof response.error.status === 'number' ? response.error.status : response.status,
-      details: body.details,
-    })
-  }
-
-  return (response.data as { data: TData }).data
-}
+export { ApiRequestError } from './response'
 
 /** Query-string values are strings; the server coerces and clamps them. */
 const toQuery = (filter: ProjectFilterInput) => ({

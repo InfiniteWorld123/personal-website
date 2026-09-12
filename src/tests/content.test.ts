@@ -17,6 +17,7 @@ describe('site content', () => {
       expect(copy.shell.nav.map((item) => item.to)).toEqual([
         '/$lang/services',
         '/$lang/work',
+        '/$lang/blog',
         '/$lang/about',
         '/$lang/contact',
       ])

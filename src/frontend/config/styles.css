@@ -2536,3 +2536,323 @@ body::after {
 body.dark::after {
   opacity: 0.07;
 }
+
+/* ── Blog ────────────────────────────────────────────────────
+   The archive borrows the work grid's proportions so the two listings read as
+   one site; the article itself is a single narrow column, because that is the
+   only shape long prose is comfortable in. */
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.post-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem;
+  border-radius: 1.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  transform: translateY(var(--lift, 0px));
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.post-card:hover {
+  --lift: -4px;
+  box-shadow: var(--shadow-card-hover);
+}
+
+.dark .post-card {
+  border-color: color-mix(in srgb, var(--foreground) 24%, transparent);
+}
+
+.post-card-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.post-card-meta,
+.post-meta {
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+.post-card h3 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+.post-card h3 a:hover {
+  color: var(--primary);
+}
+
+.post-card-summary {
+  line-height: 1.85;
+  font-size: 0.93rem;
+  color: var(--hero-copy);
+  flex: 1;
+  margin-block: 0.6rem 1.25rem;
+}
+
+.post-card-tags {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.post-card-actions {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Tag chips ────────────────────────────────────────────── */
+
+.post-tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.post-tag-chip {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--foreground) 64%, transparent);
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.post-tag-chip:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.post-tag-chip[data-active] {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.post-feed-link {
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.post-feed-link:hover {
+  color: var(--primary);
+}
+
+/* ── One article ─────────────────────────────────────────── */
+
+.post-article {
+  /* 68ch is the line length the body type is comfortable at; the container's
+     own padding keeps it off the edge on a phone. */
+  max-width: 68ch;
+}
+
+.post-back {
+  margin-bottom: 1.5rem;
+  margin-inline-start: -0.5rem;
+}
+
+.post-meta {
+  margin-top: 1rem;
+}
+
+.post-article .post-tag-filter {
+  margin-block: 1.25rem 0;
+}
+
+.post-lead {
+  margin-top: 1.5rem;
+  font-size: 1.08rem;
+  line-height: 1.9;
+  color: var(--hero-copy);
+}
+
+.post-cover {
+  width: 100%;
+  height: auto;
+  border-radius: 1.25rem;
+  margin-top: 2rem;
+}
+
+.post-project {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+  font-size: 0.95rem;
+}
+
+/* ── The article body ────────────────────────────────────────
+   The rendered document from `PostBody`. Every selector here is a tag the
+   renderer can emit, and no other tag can reach this tree. */
+
+.post-body {
+  margin-top: 2.5rem;
+  font-size: 1.02rem;
+  line-height: 1.95;
+  color: var(--hero-copy);
+}
+
+.post-body > * + * {
+  margin-top: 1.35rem;
+}
+
+.post-body h2,
+.post-body h3,
+.post-body h4 {
+  color: var(--foreground);
+  font-weight: 700;
+  line-height: 1.4;
+  margin-top: 2.75rem;
+}
+
+.post-body h2 { font-size: 1.55rem; }
+.post-body h3 { font-size: 1.25rem; }
+.post-body h4 { font-size: 1.08rem; }
+
+.post-body a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.post-body ul,
+.post-body ol {
+  padding-inline-start: 1.4rem;
+}
+
+.post-body ul { list-style: disc; }
+.post-body ol { list-style: decimal; }
+
+.post-body li + li {
+  margin-top: 0.5rem;
+}
+
+.post-body blockquote {
+  padding-inline-start: 1.25rem;
+  border-inline-start: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+  font-style: italic;
+}
+
+.post-body code {
+  font-size: 0.88em;
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.post-body pre {
+  padding: 1.1rem 1.25rem;
+  border-radius: 1rem;
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid var(--border);
+}
+
+.post-body pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.85rem;
+  line-height: 1.75;
+}
+
+.post-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 2.5rem;
+}
+
+.post-body img {
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}
+
+/* ── The admin editor ─────────────────────────────────────── */
+
+.post-editor .tiptap {
+  min-height: 22rem;
+  padding: 1.25rem;
+  outline: none;
+  font-size: 0.95rem;
+  line-height: 1.85;
+}
+
+.post-editor .tiptap > * + * {
+  margin-top: 1rem;
+}
+
+.post-editor .tiptap h2 { font-size: 1.4rem; font-weight: 700; margin-top: 1.75rem; }
+.post-editor .tiptap h3 { font-size: 1.18rem; font-weight: 700; margin-top: 1.5rem; }
+.post-editor .tiptap h4 { font-size: 1.02rem; font-weight: 700; margin-top: 1.25rem; }
+
+.post-editor .tiptap ul { list-style: disc; padding-inline-start: 1.4rem; }
+.post-editor .tiptap ol { list-style: decimal; padding-inline-start: 1.4rem; }
+
+.post-editor .tiptap blockquote {
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  font-style: italic;
+}
+
+.post-editor .tiptap a { color: var(--primary); text-decoration: underline; }
+
+.post-editor .tiptap code {
+  font-size: 0.88em;
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.post-editor .tiptap pre {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  overflow-x: auto;
+}
+
+.post-editor .tiptap pre code { padding: 0; background: none; }
+
+.post-editor .tiptap hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 1.5rem;
+}
+
+.post-editor .tiptap img { max-width: 100%; height: auto; border-radius: 0.75rem; }
+
+@media (max-width: 1024px) {
+  .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .post-grid { grid-template-columns: 1fr; }
+  .post-card { padding: 1.4rem; }
+  .post-body { font-size: 0.98rem; }
+}

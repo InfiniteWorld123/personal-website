@@ -194,6 +194,34 @@ export type WorkCopy = {
   items: Record<ProjectSlug, ProjectCopy>
 }
 
+/**
+ * The blog's own furniture — everything around an article that is written
+ * once per language rather than once per post. The articles themselves live
+ * in the database, three translations each (D23).
+ */
+export type BlogCopy = {
+  meta: PageMeta
+  eyebrow: string
+  title: string
+  intro: string
+  empty: string
+  /** Clears the tag filter on the archive. */
+  allTags: string
+  /** Carries `{minutes}`. */
+  readingTime: string
+  readArticle: string
+  loadMore: string
+  back: string
+  /** Carries `{project}`; shown when an article is about a case study. */
+  aboutProject: string
+  seeProject: string
+  /** Carries `{visible}` and `{total}`. */
+  shown: string
+  feed: string
+  /** The latest-articles section on the home page. */
+  home: { eyebrow: string; title: string; sub: string; all: string }
+}
+
 export type ContactCopy = {
   meta: PageMeta
   eyebrow: string
@@ -293,6 +321,7 @@ export type SiteContent = {
   services: ServicesCopy
   about: AboutCopy
   work: WorkCopy
+  blog: BlogCopy
   contact: ContactCopy
   faq: FaqCopy
   stack: StackCopy

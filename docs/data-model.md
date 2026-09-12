@@ -42,10 +42,22 @@ than one free-text blob, so writing them is filling defined fields.
 
 | Table | Purpose |
 | --- | --- |
-| `posts` | `slug`, `language`, `status` (draft/published), `published_at`, body |
-| `post_tags` / `tags` | Tagging and archive pages |
+| `posts` | `slug`, `project_id`, cover image, `is_published`, `published_at` |
+| `post_translations` | Title, excerpt, body, cover alt text, reading time, per language |
+| `tags` / `tag_translations` | Archive labels: a slug for the URL, a name per language |
+| `post_tags` | Which tags a post carries, in the owner's order |
 
-One post is one language. No translation table here — see `decisions.md` D7.
+A post carries all three languages and cannot be published until all three are
+written — the same rule projects follow. See `decisions.md` D23, which reversed
+D7's single-language plan.
+
+The body is a ProseMirror document in a `jsonb` column, never HTML. The node
+types that may appear are listed in `shared/validation/rich-text.ts`; see
+`decisions.md` D24.
+
+`published_at` is set on first publish and kept afterwards, so editing an
+article does not move it to the top of the feed. The public projection reads it
+back in UTC as a plain day.
 
 ## Leads and conversations
 

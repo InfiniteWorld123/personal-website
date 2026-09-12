@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { site } from '#/frontend/content/site'
+import { fetchPublishedPostSlugs } from '#/frontend/features/blog/server/published-posts'
 import { fetchPublishedProjectSlugs } from '#/frontend/features/work/server/published-projects'
 import { languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
 
-const staticPaths = ['/', '/services', '/work', '/about', '/faq', '/stack', '/contact', '/impressum', '/datenschutz']
+const staticPaths = ['/', '/services', '/work', '/blog', '/about', '/faq', '/stack', '/contact', '/impressum', '/datenschutz']
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;')
 
@@ -31,11 +32,21 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        // Only published projects are listed: an unpublished one answers 404,
-        // and a sitemap that points at 404s is worse than a shorter sitemap.
-        const slugs = await fetchPublishedProjectSlugs()
+        // Only published work is listed: an unpublished project or post
+        // answers 404, and a sitemap that points at 404s is worse than a
+        // shorter sitemap.
+        const [projectSlugs, postSlugs] = await Promise.all([
+          fetchPublishedProjectSlugs(),
+          fetchPublishedPostSlugs(),
+        ])
 
-        return new Response(buildSitemap([...staticPaths, ...slugs.map((slug) => `/work/${slug}`)]), {
+        const paths = [
+          ...staticPaths,
+          ...projectSlugs.map((slug) => `/work/${slug}`),
+          ...postSlugs.map((slug) => `/blog/${slug}`),
+        ]
+
+        return new Response(buildSitemap(paths), {
           headers: { 'Content-Type': 'application/xml; charset=utf-8' },
         })
       },

@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia'
 import { adminRoutes } from './modules/admin/admin.route'
+import { publicPostRoutes } from './modules/posts/post.route'
 import { publicProjectRoutes } from './modules/projects/project.route'
 import { handleAuthRequest, isAuthRequest } from './modules/auth/auth.route'
 import { withRequestScope } from './db/client'
@@ -31,6 +32,7 @@ export const app = new Elysia({ prefix: '/api', aot: supportsCodeGeneration })
   .onError(handleError)
   .use(adminRoutes)
   .use(publicProjectRoutes)
+  .use(publicPostRoutes)
   .get('/', () => responseOk({ data: { status: 'ok' }, message: 'API is running' }))
 
 export type App = typeof app

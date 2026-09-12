@@ -5,6 +5,7 @@ export const en: SiteContent = {
     nav: [
       { label: 'Services', to: '/$lang/services' },
       { label: 'Work', to: '/$lang/work' },
+      { label: 'Blog', to: '/$lang/blog' },
       { label: 'About', to: '/$lang/about' },
       { label: 'Contact', to: '/$lang/contact' },
     ],
@@ -456,6 +457,34 @@ export const en: SiteContent = {
           'Admin area',
         ],
       },
+    },
+  },
+
+  blog: {
+    meta: {
+      title: 'Blog · Yaman Warda',
+      description:
+        'Notes on building websites, online stores, and custom software: what search engines actually reward, what a small business should spend money on, and what I learned building my own platform.',
+    },
+    eyebrow: 'Blog',
+    title: 'What I learn while building.',
+    intro:
+      'Short pieces on the questions clients keep asking me — about search, about cost, about what is worth building and what is not. Written in German, English, and Arabic.',
+    empty: 'The first article is on its way.',
+    allTags: 'All topics',
+    readingTime: '{minutes} min read',
+    readArticle: 'Read the article',
+    loadMore: 'Load more articles',
+    back: 'All articles',
+    aboutProject: 'This article is about {project}.',
+    seeProject: 'See the project',
+    shown: '{visible} of {total} articles',
+    feed: 'RSS feed',
+    home: {
+      eyebrow: 'Writing',
+      title: 'What I learn while building.',
+      sub: 'Short pieces on search, cost, and what is worth building.',
+      all: 'All articles',
     },
   },
 

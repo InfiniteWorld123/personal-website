@@ -1,7 +1,9 @@
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { getContent } from '#/frontend/content'
 import type { ProjectEntry } from '#/frontend/features/work/project-list'
+import type { PublicPostSummary } from '#/shared/types/post.types'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { BlogSection } from './BlogSection'
 import { HeroSection } from './HeroSection'
 import { HomeFaqSection } from './HomeFaqSection'
 import { ProcessSection } from './ProcessSection'
@@ -14,10 +16,18 @@ import { WorkSection } from './WorkSection'
  * questions, then the call to action.
  * The story illustration, fit section, and about teaser are not part of the
  * landing page; their content and components stay for their own pages.
+ * The writing section sits after the process and disappears when nothing is
+ * published, so the page never advertises an empty blog.
  */
-export function HomePage({ entries }: { entries: ProjectEntry[] }) {
+export function HomePage({
+  entries,
+  posts,
+}: {
+  entries: ProjectEntry[]
+  posts: PublicPostSummary[]
+}) {
   const { language } = useLanguage()
-  const { home, services, work, faq } = getContent(language)
+  const { home, services, work, faq, blog } = getContent(language)
 
   return (
     <>
@@ -25,6 +35,7 @@ export function HomePage({ entries }: { entries: ProjectEntry[] }) {
       <ServicesSection copy={home.services} services={services.items} language={language} />
       <WorkSection copy={home.work} work={work} language={language} entries={entries} />
       <ProcessSection copy={home.process} />
+      <BlogSection blog={blog} language={language} posts={posts} />
       <HomeFaqSection copy={faq} />
       <CtaBand title={home.cta.title} body={home.cta.body} button={home.cta.button} alt={home.cta.alt} />
     </>

@@ -23,6 +23,6 @@ export const adminNavigation: AdminNavigationItem[] = [
   { label: 'Leads', to: '/admin/leads', icon: Users, available: false },
   { label: 'Bookings', to: '/admin/bookings', icon: CalendarClock, available: false },
   { label: 'Content', to: '/admin/content', icon: FileText, available: false },
-  { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: false },
+  { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
   { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },
 ]

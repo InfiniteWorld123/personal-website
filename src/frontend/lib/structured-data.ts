@@ -18,6 +18,18 @@ export type StructuredProject = {
 }
 
 /**
+ * What the graph needs to know about a blog post. Like `StructuredProject`,
+ * it is passed in by the route that loaded it rather than fetched again.
+ */
+export type StructuredArticle = {
+  title: string
+  /** A plain day, `2026-09-12`; the graph states it as a date, not an instant. */
+  publishedOn: string
+  readingMinutes: number
+  tags: string[]
+}
+
+/**
  * JSON-LD for the public pages. Every page carries the same three stable
  * nodes — the person, the one-man business, and the website — plus a node
  * for the page itself. Google merges nodes by `@id`, so the identity is
@@ -137,10 +149,28 @@ const projectNode = (language: Language, project: StructuredProject) => ({
   ...(project.source ? { codeRepository: project.source } : {}),
 })
 
+/** An article as a work of its own, linked from the page that renders it. */
+const articleNode = (language: Language, path: string, article: StructuredArticle, image: string) => ({
+  '@type': 'BlogPosting',
+  '@id': `${pageUrl(language, path)}#article`,
+  headline: article.title,
+  datePublished: article.publishedOn,
+  inLanguage: localeFor(language),
+  image,
+  ...(article.tags.length > 0 ? { keywords: article.tags.join(', ') } : {}),
+  // Schema.org counts words; the site shows minutes, and 200 words a minute
+  // is the same rate `readingMinutes` divides by.
+  wordCount: article.readingMinutes * 200,
+  author: { '@id': PERSON },
+  publisher: { '@id': PERSON },
+  isPartOf: { '@id': WEBSITE },
+})
+
 const pageType = (path: string) => {
   if (path === '/about') return 'AboutPage'
   if (path === '/contact') return 'ContactPage'
   if (path === '/work') return 'CollectionPage'
+  if (path === '/blog') return 'CollectionPage'
   if (path === '/faq') return 'FAQPage'
   return 'WebPage'
 }
@@ -154,6 +184,7 @@ const breadcrumb = (
   path: string,
   title: string,
   projects: StructuredProject[],
+  article: StructuredArticle | undefined,
 ) => {
   if (path === '/') return null
 
@@ -165,7 +196,7 @@ const breadcrumb = (
   const sectionLabel =
     shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ?? title.split(' · ')[0]
   // The leaf reads as the thing itself, not as the page's full <title>.
-  const leaf = projects.find((project) => project.slug === slug)?.name ?? title
+  const leaf = article?.title ?? projects.find((project) => project.slug === slug)?.name ?? title
 
   const trail = [
     { name: site.name, item: pageUrl(language, '/') },
@@ -194,7 +225,15 @@ const faqQuestions = (language: Language) =>
     })),
   )
 
-const mainEntity = (language: Language, path: string, projects: StructuredProject[]) => {
+const mainEntity = (
+  language: Language,
+  path: string,
+  projects: StructuredProject[],
+  article: StructuredArticle | undefined,
+  image: string,
+) => {
+  if (article) return articleNode(language, path, article, image)
+
   if (path === '/about') return { '@id': PERSON }
   if (path === '/contact') return { '@id': BUSINESS }
   if (path === '/faq') return faqQuestions(language)
@@ -232,6 +271,8 @@ type PageInput = {
   image: string
   /** The projects this page is about; empty for every page that has none. */
   projects?: StructuredProject[]
+  /** Set on a blog post, which is an article rather than a website page. */
+  article?: StructuredArticle
 }
 
 /** The `@graph` for one public page, ready to be serialised into a script tag. */
@@ -243,9 +284,10 @@ export function buildStructuredData({
   canonical,
   image,
   projects = [],
+  article,
 }: PageInput) {
-  const entity = mainEntity(language, path, projects)
-  const trail = breadcrumb(language, path, title, projects)
+  const entity = mainEntity(language, path, projects, article, image)
+  const trail = breadcrumb(language, path, title, projects, article)
 
   const page = {
     '@type': pageType(path),

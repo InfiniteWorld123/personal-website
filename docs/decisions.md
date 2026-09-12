@@ -100,6 +100,9 @@ referrer, or a Gutschrift issued to them.
 
 ### D7 — Trilingual marketing, single-language blog posts
 
+**Reversed by D23 on 12 Sep 2026.** Kept here because the cost it names is
+real and will be felt; D23 says why the owner accepted it anyway.
+
 Marketing pages carry de/en/ar translations. Each blog post is written in one
 language and tagged with it.
 
@@ -572,3 +575,66 @@ expense rather than a gamble — not the first month the balance happens to
 cover it. At that point D2's reasoning returns intact: compute next to data,
 no CPU ceiling, a simpler data-residency story for German clients, and room to
 host client projects on the same box.
+
+---
+
+### D23 — Blog posts carry all three languages, like every other page
+
+*12 Sep 2026. Reverses D7.*
+
+A post is one record with one `post_translations` row per language, and it
+cannot be published until German, English, and Arabic are all written — the
+same rule projects follow. There is no per-post language tag and no
+single-language article.
+
+**Why:** the owner asked for it directly, having seen D7's reasoning restated.
+His answer was that he translates with an assistant, so the third version is
+minutes rather than an afternoon. The gain is that the blog behaves like the
+rest of the site: `/ar/blog` is never an empty page, the language switcher
+never dead-ends on an article, and `hreflang` on a post is true rather than
+decorative.
+
+**What D7 got right, and still does:** the marketing pages are a fixed set and
+the articles are not, so this cost compounds. The place it will show is the
+half-finished draft: three languages to finish means an article sits unshipped
+longer than it would have. The publish check names exactly what is missing, so
+the cost is at least visible rather than mysterious.
+
+**When to revisit:** if drafts pile up unpublished because the third language
+is the thing standing in the way. The escape is already shaped: the schema
+holds one to three translations, and only the service's publish check demands
+all three. Loosening that check is a few lines, not a migration.
+
+---
+
+### D24 — The article body is a stored document, not stored HTML
+
+*12 Sep 2026.*
+
+The owner chose a visual editor over Markdown. The body is written in Tiptap
+and stored as a ProseMirror document in a `jsonb` column. It is never stored
+as HTML, and nothing in the blog renders with `dangerouslySetInnerHTML`.
+
+`shared/validation/rich-text.ts` lists every node type, every mark, and every
+attribute that may exist. `features/blog/PostBody.tsx` emits a React element
+per node type and returns null for anything else.
+
+**Why not HTML:** storing HTML means sanitising it, and a sanitiser is a
+deny-list that has to be kept current forever. Worse for this application
+specifically, the DOM-based sanitisers need a DOM, and the site runs on
+Cloudflare Workers, where there is none (D22).
+
+A stored document inverts the problem into an allow-list. An attribute the
+schema does not name is dropped on the way in; a node the renderer does not
+know draws nothing on the way out. There is no markup to clean, because there
+is no markup until the page is rendered.
+
+**What it costs:** the editor and the renderer have to agree. Adding a node
+type to the editor without adding it to the schema means it fails to save;
+adding it to both but not the stylesheet means it saves and looks wrong. The
+three files name each other in their comments for that reason.
+
+**Also decided here:** the editor's link and image buttons check the protocol
+before inserting. `javascript:` and `data:` parse as perfectly valid URLs, so
+a URL check is not the test — the protocol is. The same rule runs server-side,
+because the client's copy of it is a courtesy, not a boundary.

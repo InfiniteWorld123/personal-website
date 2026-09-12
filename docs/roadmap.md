@@ -77,9 +77,20 @@ Google Calendar sync is a follow-up block, not part of this one.
 upload (D21).
 🔒 **Security checkpoint** — file upload validation.
 
-## [ ] B7 — Blog
-*Model: Sonnet 5 · medium*
-`posts` schema, admin editor, draft/publish, `/blog`, `/blog/$slug`, tags, RSS.
+## [x] B7 — Blog
+*Model: Opus 5 · high*
+`posts` + `post_translations` + `tags` schema, the admin editor, draft/publish,
+`/blog`, `/blog/$slug`, tag archive, per-language RSS, the latest-articles
+section on the landing page, sitemap and `BlogPosting` structured data.
+
+Built out of order, ahead of B4–B6, at the owner's request (12 Sep 2026).
+
+Two decisions were taken during the block and are recorded: posts carry all
+three languages rather than one (D23, reversing D7), and the body is stored as
+a document rather than as HTML because the owner chose a visual editor (D24).
+
+Open: images inside an article are referenced by path, as project images still
+are. Uploading them belongs to B6.
 
 ## [ ] B8 — Analytics and overview
 *Model: Sonnet 5 · medium*
