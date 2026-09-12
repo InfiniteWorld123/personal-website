@@ -19,7 +19,8 @@
     "db:up": "docker compose up -d database",
     "db:down": "docker compose down",
     "db:migrate": "bun src/backend/db/migrate.ts",
-    "db:seed:admin": "bun src/backend/db/seed/seed-admin.ts"
+    "db:seed:admin": "bun src/backend/db/seed/seed-admin.ts",
+    "db:seed:projects": "bun src/backend/db/seed/seed-projects.ts"
   },
   "dependencies": {
     "@elysia/eden": "^1.4.10",
