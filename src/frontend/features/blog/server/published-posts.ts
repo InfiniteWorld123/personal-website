@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import * as v from 'valibot'
+import { withRequestScope } from '#/backend/db/client'
 import {
   getPublishedPost,
   listPublishedPostSlugs,
@@ -13,6 +14,11 @@ import { POST_LANGUAGES } from '#/shared/validation/post.validation'
  * The public pages read their posts on the server, straight from the service.
  * There is no HTTP round trip back to our own API: the page is being rendered
  * on the machine that owns the database.
+ *
+ * Every handler here goes through `withRequestScope` for the same reason
+ * `handleApiRequest` does: this path renders on a Worker too, and without the
+ * scope the query lands on the module-level pool, whose sockets Cloudflare has
+ * already torn down between requests — and which never sees Hyperdrive.
  */
 const LanguageInput = v.object({
   language: v.picklist(POST_LANGUAGES),
@@ -27,20 +33,22 @@ const SlugInput = v.object({
 export const fetchPublishedPosts = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(LanguageInput, input))
   .handler(async ({ data }): Promise<PublicPostSummary[]> =>
-    listPublishedPosts(data.language, data.tag || undefined),
+    withRequestScope(() => listPublishedPosts(data.language, data.tag || undefined)),
   )
 
 export const fetchPublishedTags = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(v.object({ language: v.picklist(POST_LANGUAGES) }), input))
-  .handler(async ({ data }): Promise<PublicTag[]> => listPublishedTags(data.language))
+  .handler(async ({ data }): Promise<PublicTag[]> =>
+    withRequestScope(() => listPublishedTags(data.language)),
+  )
 
 export const fetchPublishedPost = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(SlugInput, input))
   .handler(async ({ data }): Promise<PublicPost | null> =>
-    getPublishedPost(data.language, data.slug),
+    withRequestScope(() => getPublishedPost(data.language, data.slug)),
   )
 
 /** Just the slugs, for the sitemap. */
 export const fetchPublishedPostSlugs = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<string[]> => listPublishedPostSlugs(),
+  async (): Promise<string[]> => withRequestScope(() => listPublishedPostSlugs()),
 )
