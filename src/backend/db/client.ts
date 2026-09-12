@@ -151,11 +151,18 @@ export const withTransaction = async <T>(fn: (db: Db) => Promise<T>): Promise<T>
     const result = await activeConnection.run(connection, () => fn(connection))
     await connection.query('COMMIT')
 
+    connection.release()
+
     return result
   } catch (error) {
-    await connection.query('ROLLBACK')
+    // A failed ROLLBACK must not replace the error that caused it: on a Worker
+    // the connection is often already broken, and its complaint says
+    // nothing about what actually went wrong.
+    await connection.query('ROLLBACK').catch(() => {})
+    // `release(error)` is pg's signal to destroy the client rather than hand a
+    // connection in an unknown state back to the pool.
+    connection.release(error instanceof Error ? error : new Error(String(error)))
+
     throw error
-  } finally {
-    connection.release()
   }
 }
