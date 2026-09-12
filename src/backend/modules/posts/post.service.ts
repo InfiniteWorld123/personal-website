@@ -1,5 +1,5 @@
 import { getDb, withTransaction } from '#/backend/db/client'
-import { conflictError, notFoundError, validationError } from '#/backend/shared/error'
+import { conflictError, internalError, notFoundError, validationError } from '#/backend/shared/error'
 import type {
   AdminPostDetail,
   AdminPostList,
@@ -98,7 +98,7 @@ export const createTag = async (input: TagWriteInput): Promise<AdminTag> => {
       })
 
     const tagId = created.rows[0]?.id
-    if (!tagId) throw notFoundError('The tag could not be created')
+    if (!tagId) throw internalError('The tag could not be created')
 
     await writeTagNames(tagId, input.names)
 
@@ -106,7 +106,7 @@ export const createTag = async (input: TagWriteInput): Promise<AdminTag> => {
   })
 
   const tag = (await listTags()).find((entry) => entry.id === id)
-  if (!tag) throw notFoundError('The tag could not be created')
+  if (!tag) throw internalError('The tag could not be created')
 
   return tag
 }
@@ -255,7 +255,7 @@ export const listPostsForAdmin = async (filter: PostFilterInput): Promise<AdminP
           LIMIT 1
        ) title ON true
        ${where}
-      ORDER BY p.published_at DESC NULLS FIRST, p.created_at DESC
+      ORDER BY p.published_at DESC NULLS FIRST, p.created_at DESC, p.id
       LIMIT $${values.length + 1} OFFSET $${values.length + 2};`,
     [...values, POST_PAGE_SIZE, (page - 1) * POST_PAGE_SIZE],
   )
@@ -433,7 +433,7 @@ export const createPost = async (input: PostWriteInput): Promise<AdminPostDetail
       })
 
     const postId = created.rows[0]?.id
-    if (!postId) throw notFoundError('The post could not be created')
+    if (!postId) throw internalError('The post could not be created')
 
     await writePostChildren(postId, input)
 

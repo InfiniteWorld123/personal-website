@@ -1,5 +1,5 @@
 import { getDb, withTransaction } from '#/backend/db/client'
-import { conflictError, notFoundError, validationError } from '#/backend/shared/error'
+import { conflictError, internalError, notFoundError, validationError } from '#/backend/shared/error'
 import type {
   AdminProjectDetail,
   AdminProjectList,
@@ -124,7 +124,7 @@ export const listProjectsForAdmin = async (filter: ProjectFilterInput): Promise<
           LIMIT 1
        ) title ON true
        ${where}
-      ORDER BY p.sort_order, p.created_at
+      ORDER BY p.sort_order, p.created_at, p.id
       LIMIT $${values.length + 1} OFFSET $${values.length + 2};`,
     [...values, PROJECT_PAGE_SIZE, (page - 1) * PROJECT_PAGE_SIZE],
   )
@@ -358,7 +358,7 @@ export const createProject = async (input: ProjectWriteInput): Promise<AdminProj
       })
 
     const projectId = created.rows[0]?.id
-    if (!projectId) throw notFoundError('The project could not be created')
+    if (!projectId) throw internalError('The project could not be created')
 
     await writeProjectChildren(projectId, input)
 
