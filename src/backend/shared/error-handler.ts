@@ -110,6 +110,16 @@ const toResponseError = (error: unknown): NormalizedError => {
 }
 
 export const handleError: ErrorHandler<{ AppError: AppError }> = ({ code, error, status }) => {
+  // Answered first on purpose. Elysia derives `code` from the error's own
+  // `code` field, and ours uses `NOT_FOUND` — the same name Elysia gives an
+  // unmatched route. Checked in the other order, every "that post does not
+  // exist" reached the client as "Route not found" instead.
+  if (isAppError(error)) {
+    const appResponse = toResponseError(error)
+
+    return status(appResponse.status, appResponse.body)
+  }
+
   if (code === 'VALIDATION') {
     const issues = error.all.map(({ message, summary }) => ({
       message: message ?? summary ?? 'Invalid value',
