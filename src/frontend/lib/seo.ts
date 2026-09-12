@@ -1,6 +1,6 @@
 import { getContent, site } from '#/frontend/content'
 import { type Language, languages, localeFor } from '#/frontend/i18n/language'
-import { buildStructuredData } from './structured-data'
+import { buildStructuredData, type StructuredProject } from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
 
 export { publicPath }
@@ -13,6 +13,8 @@ type HeadInput = {
   description: string
   image?: string
   noIndex?: boolean
+  /** Passed straight to the JSON-LD graph; see `structured-data.ts`. */
+  projects?: StructuredProject[]
 }
 
 /**
@@ -20,7 +22,7 @@ type HeadInput = {
  * per language plus x-default, Open Graph / Twitter cards, and the page's
  * JSON-LD graph.
  */
-export function buildHead({ language, path, title, description, image, noIndex }: HeadInput) {
+export function buildHead({ language, path, title, description, image, noIndex, projects }: HeadInput) {
   const canonical = pageUrl(language, path)
   const card = absolute(image ?? socialCard(language))
   const cardAlt = `${site.name} — ${getContent(language).shell.footer.tagline}`
@@ -65,7 +67,7 @@ export function buildHead({ language, path, title, description, image, noIndex }
       {
         type: 'application/ld+json',
         children: JSON.stringify(
-          buildStructuredData({ language, path, title, description, canonical, image: card }),
+          buildStructuredData({ language, path, title, description, canonical, image: card, projects }),
         ),
       },
     ],

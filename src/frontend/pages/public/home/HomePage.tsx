@@ -1,5 +1,6 @@
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { getContent } from '#/frontend/content'
+import type { ProjectEntry } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { HeroSection } from './HeroSection'
 import { HomeFaqSection } from './HomeFaqSection'
@@ -14,7 +15,7 @@ import { WorkSection } from './WorkSection'
  * The story illustration, fit section, and about teaser are not part of the
  * landing page; their content and components stay for their own pages.
  */
-export function HomePage() {
+export function HomePage({ entries }: { entries: ProjectEntry[] }) {
   const { language } = useLanguage()
   const { home, services, work, faq } = getContent(language)
 
@@ -22,7 +23,7 @@ export function HomePage() {
     <>
       <HeroSection copy={home.hero} />
       <ServicesSection copy={home.services} services={services.items} language={language} />
-      <WorkSection copy={home.work} work={work} language={language} />
+      <WorkSection copy={home.work} work={work} language={language} entries={entries} />
       <ProcessSection copy={home.process} />
       <HomeFaqSection copy={faq} />
       <CtaBand title={home.cta.title} body={home.cta.body} button={home.cta.button} alt={home.cta.alt} />

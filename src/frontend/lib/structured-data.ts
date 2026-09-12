@@ -1,15 +1,21 @@
-import {
-  getContent,
-  isProjectSlug,
-  projectOrder,
-  projects,
-  serviceOrder,
-  servicePrices,
-  site,
-} from '#/frontend/content'
-import type { ProjectFacts } from '#/frontend/content/site'
+import { getContent, serviceOrder, servicePrices, site } from '#/frontend/content'
 import { type Language, languages, localeFor } from '#/frontend/i18n/language'
 import { absolute, pageUrl, socialCard } from './url'
+
+/**
+ * What the graph needs to know about a project. Passed in by the route that
+ * loaded it, because projects live in the database now and the head is built
+ * from the same data the page renders.
+ */
+export type StructuredProject = {
+  slug: string
+  name: string
+  kind: string
+  summary: string
+  stack: string[]
+  website: string | null
+  source: string | null
+}
 
 /**
  * JSON-LD for the public pages. Every page carries the same three stable
@@ -117,27 +123,19 @@ const siteNodes = (language: Language) => {
 }
 
 /** A project as a work of its own, linked from its detail page. */
-const projectNode = (language: Language, slug: string) => {
-  if (!isProjectSlug(slug)) return null
-
-  const { work } = getContent(language)
-  const copy = work.items[slug]
-  const facts: ProjectFacts = projects[slug]
-
-  return {
-    '@type': 'CreativeWork',
-    '@id': `${pageUrl(language, `/work/${slug}`)}#project`,
-    name: copy.name,
-    description: copy.summary,
-    abstract: copy.kind,
-    inLanguage: localeFor(language),
-    keywords: facts.stack.join(', '),
-    author: { '@id': PERSON },
-    creator: { '@id': PERSON },
-    ...(facts.website ? { url: facts.website } : {}),
-    ...(facts.source ? { codeRepository: facts.source } : {}),
-  }
-}
+const projectNode = (language: Language, project: StructuredProject) => ({
+  '@type': 'CreativeWork',
+  '@id': `${pageUrl(language, `/work/${project.slug}`)}#project`,
+  name: project.name,
+  description: project.summary,
+  abstract: project.kind,
+  inLanguage: localeFor(language),
+  keywords: project.stack.join(', '),
+  author: { '@id': PERSON },
+  creator: { '@id': PERSON },
+  ...(project.website ? { url: project.website } : {}),
+  ...(project.source ? { codeRepository: project.source } : {}),
+})
 
 const pageType = (path: string) => {
   if (path === '/about') return 'AboutPage'
@@ -151,10 +149,15 @@ const pageType = (path: string) => {
  * Home → section → page. Built from the same nav labels the header shows, so
  * the trail always matches what a visitor reads.
  */
-const breadcrumb = (language: Language, path: string, title: string) => {
+const breadcrumb = (
+  language: Language,
+  path: string,
+  title: string,
+  projects: StructuredProject[],
+) => {
   if (path === '/') return null
 
-  const { shell, work } = getContent(language)
+  const { shell } = getContent(language)
   const [section, slug] = path.split('/').filter(Boolean)
   const sectionPath = `/${section}`
   // Pages outside the main nav have no label to borrow; the part of the
@@ -162,7 +165,7 @@ const breadcrumb = (language: Language, path: string, title: string) => {
   const sectionLabel =
     shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ?? title.split(' · ')[0]
   // The leaf reads as the thing itself, not as the page's full <title>.
-  const leaf = slug && isProjectSlug(slug) ? work.items[slug].name : title
+  const leaf = projects.find((project) => project.slug === slug)?.name ?? title
 
   const trail = [
     { name: site.name, item: pageUrl(language, '/') },
@@ -191,7 +194,7 @@ const faqQuestions = (language: Language) =>
     })),
   )
 
-const mainEntity = (language: Language, path: string) => {
+const mainEntity = (language: Language, path: string, projects: StructuredProject[]) => {
   if (path === '/about') return { '@id': PERSON }
   if (path === '/contact') return { '@id': BUSINESS }
   if (path === '/faq') return faqQuestions(language)
@@ -199,17 +202,22 @@ const mainEntity = (language: Language, path: string) => {
   if (path === '/work') {
     return {
       '@type': 'ItemList',
-      itemListElement: projectOrder.map((slug, index) => ({
+      itemListElement: projects.map((project, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: pageUrl(language, `/work/${slug}`),
-        name: getContent(language).work.items[slug].name,
+        url: pageUrl(language, `/work/${project.slug}`),
+        name: project.name,
       })),
     }
   }
 
   const [section, slug] = path.split('/').filter(Boolean)
-  if (section === 'work' && slug) return projectNode(language, slug)
+
+  if (section === 'work' && slug) {
+    const project = projects.find((entry) => entry.slug === slug)
+
+    return project ? projectNode(language, project) : null
+  }
 
   return null
 }
@@ -222,6 +230,8 @@ type PageInput = {
   description: string
   canonical: string
   image: string
+  /** The projects this page is about; empty for every page that has none. */
+  projects?: StructuredProject[]
 }
 
 /** The `@graph` for one public page, ready to be serialised into a script tag. */
@@ -232,9 +242,10 @@ export function buildStructuredData({
   description,
   canonical,
   image,
+  projects = [],
 }: PageInput) {
-  const entity = mainEntity(language, path)
-  const trail = breadcrumb(language, path, title)
+  const entity = mainEntity(language, path, projects)
+  const trail = breadcrumb(language, path, title, projects)
 
   const page = {
     '@type': pageType(path),

@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
 import { ProjectCarousel } from '#/frontend/features/work/ProjectCarousel'
-import { getProjectEntries } from '#/frontend/features/work/project-list'
+import { toProjectEntry } from '#/frontend/features/work/project-list'
 import { getContent } from '#/frontend/content'
 import { ContactForm } from '#/frontend/features/contact/ContactForm'
+import { publicProjectFixture } from './fixtures/project'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, params, children, ...props }: any) => <a href={to.replace('$lang', params.lang).replace('$slug', params.slug ?? '')} {...props}>{children}</a>,
@@ -16,16 +17,22 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 const work = getContent('en').work
 const labels = { visit: work.visit, source: work.source, detail: work.detailLabel }
 
+/** A project with nothing optional filled in: no links, no images, no tech shown. */
+const bareEntry = () =>
+  toProjectEntry(publicProjectFixture({ website: null, source: null, images: [] }))
+
+const fullEntry = () => toProjectEntry(publicProjectFixture())
+
 describe('equal project presentation', () => {
   it('omits missing links and placeholder images', () => {
-    const { facts, copy } = getProjectEntries('en')[0]
+    const { facts, copy } = bareEntry()
     render(<ProjectCard facts={facts} copy={copy} language="en" statusLabels={work.status} labels={labels} />)
     expect(screen.getAllByRole('link')).toHaveLength(2) // title and case study
     expect(screen.queryByRole('img')).toBeNull()
     expect(screen.queryByText(facts.stack[0])).toBeNull()
   })
   it('limits Work technology text to three and keeps primary action first', () => {
-    const { facts, copy } = getProjectEntries('en')[1]
+    const { facts, copy } = fullEntry()
     const { container } = render(<ProjectCard facts={facts} copy={copy} language="en" statusLabels={work.status} labels={labels} showTech />)
     expect(container.querySelector('.work-card-tech')?.textContent).toBe(facts.stack.slice(0, 3).join(' · '))
     expect(container.querySelector('.work-card-actions a')?.textContent).toContain(work.detailLabel)
@@ -33,7 +40,7 @@ describe('equal project presentation', () => {
   })
   it.each([0, 1, 3, 6, 10])('handles %i carousel fixtures without a fixed project count', count => {
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
-    const entry = getProjectEntries('en')[0]
+    const entry = fullEntry()
     const entries = Array.from({ length: count }, (_, i) => ({ ...entry, facts: { ...entry.facts, slug: 'fixture-' + i } }))
     render(<ProjectCarousel entries={entries} work={work} language="en" />)
     expect(screen.queryAllByRole('article')).toHaveLength(count)
@@ -49,7 +56,10 @@ describe('equal project presentation', () => {
     const scrollBy = vi.fn()
     vi.stubGlobal('getComputedStyle', () => ({ columnGap: '20px', getPropertyValue: () => '' }))
     Object.defineProperty(HTMLElement.prototype, 'scrollBy', { value: scrollBy, configurable: true })
-    const { unmount } = render(<ProjectCarousel entries={getProjectEntries(language)} work={work} language={language} />)
+    const entries = ['a', 'b', 'c'].map((slug) =>
+      toProjectEntry(publicProjectFixture({ slug: `fixture-${slug}` })),
+    )
+    const { unmount } = render(<ProjectCarousel entries={entries} work={work} language={language} />)
     expect((screen.getByRole('button', { name: work.previous }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: work.next }))
     expect(scrollBy).toHaveBeenCalledWith({ left: language === 'ar' ? -300 : 300, behavior: 'instant' })

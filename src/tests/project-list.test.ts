@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getProjectBatch, getProjectEntries, parseProjectPage } from '#/frontend/features/work/project-list'
-import { isProjectSlug, projectOrder } from '#/frontend/content/site'
-import { languages } from '#/frontend/i18n/language'
+import {
+  getProjectBatch,
+  parseProjectPage,
+  toProjectEntry,
+  toStructuredProject,
+} from '#/frontend/features/work/project-list'
+import { publicProjectFixture } from './fixtures/project'
 
 describe('local project collection', () => {
   it.each([0, 1, 3, 6, 10])('renders %i records in cumulative batches of six', count => {
@@ -21,14 +25,28 @@ describe('local project collection', () => {
     expect(parseProjectPage('2')).toBe(2)
     expect(getProjectBatch(Array.from({ length: 10 }), 999).page).toBe(2)
   })
-  it('derives slugs and order from the actual registry', () => {
-    expect(projectOrder).toEqual(['prime-estate', 'tech-store', 'inknest'])
-    for (const slug of projectOrder) expect(isProjectSlug(slug)).toBe(true)
-    expect(isProjectSlug('constructor')).toBe(false)
-    expect(isProjectSlug('missing')).toBe(false)
-    for (const language of languages) {
-      expect(getProjectEntries(language).map(entry => entry.facts.slug)).toEqual(projectOrder)
-      expect(getProjectEntries(language).every(entry => entry.copy.name && entry.copy.summary)).toBe(true)
-    }
+  it('splits a published project into the facts and the copy each view needs', () => {
+    const { facts, copy } = toProjectEntry(publicProjectFixture())
+
+    expect(facts).toEqual({
+      slug: 'fixture-project',
+      status: 'live',
+      website: 'https://example.com',
+      source: 'https://github.com/example/fixture',
+      stack: ['React', 'TypeScript', 'PostgreSQL', 'Stripe'],
+      images: [{ src: '/images/fixture.jpg', width: 1600, height: 1000, alt: 'A fixture screenshot.' }],
+    })
+    expect(copy.name).toBe('Fixture Project')
+    expect(copy.features).toEqual(['One', 'Two'])
+  })
+  it('carries a project with no links into the graph as null, not as a missing key', () => {
+    const entry = toProjectEntry(publicProjectFixture({ website: null, source: null }))
+
+    expect(toStructuredProject(entry)).toMatchObject({
+      slug: 'fixture-project',
+      name: 'Fixture Project',
+      website: null,
+      source: null,
+    })
   })
 })

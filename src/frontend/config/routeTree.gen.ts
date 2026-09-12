@@ -27,6 +27,9 @@ import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
+import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
+import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
+import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,6 +121,21 @@ const LangWorkSlugRoute = LangWorkSlugRouteImport.update({
   path: '/work/$slug',
   getParentRoute: () => LangRoute,
 } as any)
+const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProjectsIdRoute = AdminProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProjectsNewRoute = AdminProjectsNewRouteImport.update({
+  id: '/projects/new',
+  path: '/projects/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,7 +155,10 @@ export interface FileRoutesByFullPath {
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/projects/$id': typeof AdminProjectsIdRoute
+  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/work/': typeof LangWorkIndexRoute
+  '/admin/projects/': typeof AdminProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,7 +176,10 @@ export interface FileRoutesByTo {
   '/$lang': typeof LangIndexRoute
   '/admin': typeof AdminIndexRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/projects/$id': typeof AdminProjectsIdRoute
+  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/work': typeof LangWorkIndexRoute
+  '/admin/projects': typeof AdminProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,7 +200,10 @@ export interface FileRoutesById {
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
+  '/admin/projects/$id': typeof AdminProjectsIdRoute
+  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/work/': typeof LangWorkIndexRoute
+  '/admin/projects/': typeof AdminProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,7 +225,10 @@ export interface FileRouteTypes {
     | '/$lang/'
     | '/admin/'
     | '/$lang/work/$slug'
+    | '/admin/projects/$id'
+    | '/admin/projects/new'
     | '/$lang/work/'
+    | '/admin/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -216,7 +246,10 @@ export interface FileRouteTypes {
     | '/$lang'
     | '/admin'
     | '/$lang/work/$slug'
+    | '/admin/projects/$id'
+    | '/admin/projects/new'
     | '/$lang/work'
+    | '/admin/projects'
   id:
     | '__root__'
     | '/'
@@ -236,7 +269,10 @@ export interface FileRouteTypes {
     | '/$lang/'
     | '/admin/'
     | '/$lang/work/$slug'
+    | '/admin/projects/$id'
+    | '/admin/projects/new'
     | '/$lang/work/'
+    | '/admin/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -377,6 +413,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangWorkSlugRouteImport
       parentRoute: typeof LangRoute
     }
+    '/admin/projects/': {
+      id: '/admin/projects/'
+      path: '/projects'
+      fullPath: '/admin/projects/'
+      preLoaderRoute: typeof AdminProjectsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/projects/$id': {
+      id: '/admin/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/admin/projects/$id'
+      preLoaderRoute: typeof AdminProjectsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/projects/new': {
+      id: '/admin/projects/new'
+      path: '/projects/new'
+      fullPath: '/admin/projects/new'
+      preLoaderRoute: typeof AdminProjectsNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -410,10 +467,16 @@ const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminProjectsIdRoute: typeof AdminProjectsIdRoute
+  AdminProjectsNewRoute: typeof AdminProjectsNewRoute
+  AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminProjectsIdRoute: AdminProjectsIdRoute,
+  AdminProjectsNewRoute: AdminProjectsNewRoute,
+  AdminProjectsIndexRoute: AdminProjectsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

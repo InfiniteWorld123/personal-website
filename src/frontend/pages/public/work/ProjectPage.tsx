@@ -4,18 +4,16 @@ import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
-import { getContent, projects } from '#/frontend/content'
-import type { ProjectSlug } from '#/frontend/content/types'
+import { getContent } from '#/frontend/content'
 import { ProjectStatusPill } from '#/frontend/features/work/ProjectCard'
-import type { ProjectFacts } from '#/frontend/content/site'
+import type { ProjectEntry } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 
-export function ProjectPage({ slug }: { slug: ProjectSlug }) {
+export function ProjectPage({ entry }: { entry: ProjectEntry }) {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
-  const copy = work.items[slug]
-  const facts: ProjectFacts = projects[slug]
+  const { facts, copy } = entry
   const header = useReveal<HTMLElement>()
 
   return (
@@ -63,7 +61,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
             </div>
           </div>
 
-          {facts.images?.length ? (
+          {facts.images.length ? (
             <div data-reveal className="project-gallery">
               {facts.images.map((shot, index) => (
                 <img
@@ -72,7 +70,7 @@ export function ProjectPage({ slug }: { slug: ProjectSlug }) {
                   src={shot.src}
                   width={shot.width}
                   height={shot.height}
-                  alt={shot.alt[language]}
+                  alt={shot.alt}
                   loading={index === 0 ? 'eager' : 'lazy'}
                 />
               ))}

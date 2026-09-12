@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   FileText,
+  FolderKanban,
   LayoutDashboard,
   Newspaper,
   Users,
@@ -18,6 +19,7 @@ export type AdminNavigationItem = {
 
 export const adminNavigation: AdminNavigationItem[] = [
   { label: 'Overview', to: '/admin', icon: LayoutDashboard, available: true },
+  { label: 'Projects', to: '/admin/projects', icon: FolderKanban, available: true },
   { label: 'Leads', to: '/admin/leads', icon: Users, available: false },
   { label: 'Bookings', to: '/admin/bookings', icon: CalendarClock, available: false },
   { label: 'Content', to: '/admin/content', icon: FileText, available: false },

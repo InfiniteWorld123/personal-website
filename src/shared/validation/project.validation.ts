@@ -44,18 +44,40 @@ const OptionalUrlSchema = v.pipe(
   v.nullable(v.pipe(v.string(), v.url('Enter a full URL including https://'), v.maxLength(500))),
 )
 
+/**
+ * A text field that may still be empty. Drafts are written over several
+ * sittings, so an unfinished section must be saveable; what it may not do is
+ * reach a visitor, which `missingPublishRequirements` below is what prevents.
+ */
+const draftText = (max: number) =>
+  v.pipe(v.optional(v.string(), ''), v.trim(), v.maxLength(max, 'That text is too long'))
+
+/**
+ * One language of a case study. Only the name is required: a translation
+ * without one cannot be listed, labelled, or found again in the admin.
+ */
 export const ProjectTranslationSchema = v.object({
   name: trimmed('A project name is required', 120),
-  kind: trimmed('Say what kind of project this is', 80),
-  summary: trimmed('A summary is required', 400),
-  problem: trimmed('Describe the problem', 4000),
-  approach: trimmed('Describe the approach', 4000),
-  shows: trimmed('Say what the project shows', 4000),
+  kind: draftText(80),
+  summary: draftText(400),
+  problem: draftText(4000),
+  approach: draftText(4000),
+  shows: draftText(4000),
   features: v.pipe(
     v.array(trimmed('A feature cannot be empty', 240)),
     v.maxLength(16, 'Sixteen features is already too many for one page'),
   ),
 })
+
+/** Every field a visitor reads. All of them must be written before publishing. */
+export const PROJECT_TRANSLATION_FIELDS = [
+  'name',
+  'kind',
+  'summary',
+  'problem',
+  'approach',
+  'shows',
+] as const
 
 export type ProjectTranslationInput = v.InferOutput<typeof ProjectTranslationSchema>
 
@@ -134,23 +156,39 @@ export const ProjectReorderSchema = v.object({
 export type ProjectReorderInput = v.InferOutput<typeof ProjectReorderSchema>
 
 /**
- * A project may only be published when all three languages are written and
- * every image carries alt text in all three. Shared with the frontend so the
- * publish toggle can explain itself before the request is sent.
+ * A project may only be published when all three languages are fully written
+ * and every image carries alt text in all three. Shared with the frontend so
+ * the publish toggle can explain itself before the request is sent.
  */
 export const missingPublishRequirements = (input: {
-  translations: Partial<Record<ProjectLanguage, unknown>>
+  translations: Partial<Record<ProjectLanguage, Partial<Record<string, unknown>>>>
   images: Array<{ alt: Partial<Record<ProjectLanguage, unknown>> }>
 }): string[] => {
   const missing: string[] = []
 
   for (const language of PROJECT_LANGUAGES) {
-    if (!input.translations[language]) missing.push(`The ${language.toUpperCase()} translation is missing`)
+    const translation = input.translations[language]
+    const label = language.toUpperCase()
+
+    if (!translation) {
+      missing.push(`The ${label} translation is missing`)
+      continue
+    }
+
+    for (const field of PROJECT_TRANSLATION_FIELDS) {
+      const value = translation[field]
+
+      if (typeof value !== 'string' || value.trim() === '') {
+        missing.push(`${label}: ${field} is empty`)
+      }
+    }
   }
 
   input.images.forEach((image, index) => {
     for (const language of PROJECT_LANGUAGES) {
-      if (!image.alt[language]) missing.push(`Image ${index + 1} has no ${language.toUpperCase()} alt text`)
+      if (!image.alt[language]) {
+        missing.push(`Image ${index + 1} has no ${language.toUpperCase()} alt text`)
+      }
     }
   })
 

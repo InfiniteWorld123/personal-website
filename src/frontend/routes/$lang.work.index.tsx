@@ -1,16 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getContent } from '#/frontend/content'
+import { parseProjectPage, toStructuredProject } from '#/frontend/features/work/project-list'
+import { fetchPublishedProjects } from '#/frontend/features/work/server/published-projects'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { buildHead } from '#/frontend/lib/seo'
 import { WorkPage } from '#/frontend/pages/public/work/WorkPage'
-import { parseProjectPage } from '#/frontend/features/work/project-list'
 
 export const Route = createFileRoute('/$lang/work/')({
   validateSearch: (search: Record<string, unknown>): { page?: number } => ({ page: parseProjectPage(search.page) }),
-  head: ({ params }) => {
+  loader: async ({ params }) => {
+    const language = isLanguage(params.lang) ? params.lang : defaultLanguage
+
+    return { entries: await fetchPublishedProjects({ data: { language } }) }
+  },
+  head: ({ params, loaderData }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
     const { meta } = getContent(language).work
-    return buildHead({ language, path: '/work', ...meta })
+
+    return buildHead({
+      language,
+      path: '/work',
+      ...meta,
+      // The head is built before the loader resolves on the first render, so
+      // the list node is simply absent then rather than wrong.
+      projects: loaderData?.entries.map(toStructuredProject) ?? [],
+    })
   },
-  component: WorkPage,
+  component: WorkRoute,
 })
+
+function WorkRoute() {
+  return <WorkPage entries={Route.useLoaderData().entries} />
+}

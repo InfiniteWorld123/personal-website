@@ -1,27 +1,27 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight, Github } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
-import type { ProjectCopy, WorkCopy } from '#/frontend/content/types'
-import type { ProjectFacts } from '#/frontend/content/site'
+import type { WorkCopy } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
 import { useTilt } from '#/frontend/motion'
+import type { ProjectEntryCopy, ProjectEntryFacts } from './project-list'
 
 export function ProjectStatusPill({ status, labels }: {
-  status: ProjectFacts['status']; labels: WorkCopy['status']
+  status: ProjectEntryFacts['status']; labels: WorkCopy['status']
 }) {
   return <span className="project-status"><span className={status === 'live' ? 'status-dot is-live' : 'status-dot'} />{labels[status]}</span>
 }
 
 export function ProjectCard({ facts, copy, language, statusLabels, labels, showTech = false }: {
-  facts: ProjectFacts
-  copy: Pick<ProjectCopy, 'name' | 'kind' | 'summary'>
+  facts: ProjectEntryFacts
+  copy: Pick<ProjectEntryCopy, 'name' | 'kind' | 'summary'>
   language: Language
   statusLabels: WorkCopy['status']
   labels: { visit: string; source: string; detail: string }
   showTech?: boolean
 }) {
   const tilt = useTilt<HTMLElement>()
-  const lead = facts.images?.[0]
+  const lead = facts.images[0]
 
   return (
     <article className="work-card" data-reveal data-tilt ref={tilt}>
@@ -30,7 +30,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
         <p className="work-card-kind">{copy.kind}</p>
         <ProjectStatusPill status={facts.status} labels={statusLabels} />
       </div>
-      {lead ? <img className="work-card-image" src={lead.src} width={lead.width} height={lead.height} alt={lead.alt[language]} loading="lazy" /> : null}
+      {lead ? <img className="work-card-image" src={lead.src} width={lead.width} height={lead.height} alt={lead.alt} loading="lazy" /> : null}
       <p className="work-card-summary">{copy.summary}</p>
       {showTech ? <p className="work-card-tech" dir="ltr">{facts.stack.slice(0, 3).join(' · ')}</p> : null}
       <div className="work-card-actions">

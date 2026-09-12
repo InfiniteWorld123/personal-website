@@ -5,18 +5,17 @@ import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent } from '#/frontend/content'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
-import { getProjectBatch, getProjectEntries } from '#/frontend/features/work/project-list'
+import { getProjectBatch, type ProjectEntry } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 
-export function WorkPage() {
+export function WorkPage({ entries }: { entries: ProjectEntry[] }) {
   const { language } = useLanguage()
   const { work, home } = getContent(language)
   const { page } = useSearch({ from: '/$lang/work/' })
   const navigate = useNavigate()
   const header = useReveal<HTMLElement>()
   const grid = useReveal<HTMLElement>()
-  const entries = getProjectEntries(language)
   const batch = getProjectBatch(entries, page)
   return <>
     <section ref={header} data-reveal-scope="" className="public-page-intro">
