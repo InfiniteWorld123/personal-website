@@ -193,7 +193,10 @@ export function ProjectsPage({ search }: { search: ProjectSearch }) {
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => setPendingDelete(project)}
+                        onClick={() => {
+                          remove.reset()
+                          setPendingDelete(project)
+                        }}
                       >
                         Delete
                       </Button>
@@ -253,12 +256,23 @@ export function ProjectsPage({ search }: { search: ProjectSearch }) {
               This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {remove.isError ? (
+            <p role="alert" className="text-destructive text-sm">
+              The project could not be deleted. {(remove.error as Error).message}
+            </p>
+          ) : null}
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (pendingDelete) remove.mutate(pendingDelete.id)
-                setPendingDelete(null)
+              disabled={remove.isPending}
+              onClick={(event) => {
+                // The dialog stays open until the server confirms. Closing it
+                // first showed the row vanishing on a failure that never
+                // happened, and nothing else would ever have caught it.
+                event.preventDefault()
+                if (pendingDelete) {
+                  remove.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) })
+                }
               }}
             >
               Delete project

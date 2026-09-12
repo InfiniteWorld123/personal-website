@@ -164,7 +164,10 @@ export function PostsPage({ search }: { search: PostSearch }) {
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => setPendingDelete(post)}
+                        onClick={() => {
+                          remove.reset()
+                          setPendingDelete(post)
+                        }}
                       >
                         Delete
                       </Button>
@@ -220,12 +223,23 @@ export function PostsPage({ search }: { search: PostSearch }) {
               The post and its three translations are removed. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {remove.isError ? (
+            <p role="alert" className="text-destructive text-sm">
+              The post could not be deleted. {(remove.error as Error).message}
+            </p>
+          ) : null}
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (pendingDelete) remove.mutate(pendingDelete.id)
-                setPendingDelete(null)
+              disabled={remove.isPending}
+              onClick={(event) => {
+                // The dialog stays open until the server confirms. Closing it
+                // first showed the row vanishing on a failure that never
+                // happened, and nothing else would ever have caught it.
+                event.preventDefault()
+                if (pendingDelete) {
+                  remove.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) })
+                }
               }}
             >
               Delete post
