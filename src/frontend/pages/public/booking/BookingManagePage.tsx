@@ -251,7 +251,7 @@ function ReschedulePanel({
         <p className="text-foreground/58 text-sm leading-7">{copy.manage.rescheduleBody}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,17rem)] lg:justify-center">
         <BookingCalendar
           month={month}
           today={today}
@@ -269,7 +269,7 @@ function ReschedulePanel({
           }}
         />
 
-        <div className="border-border flex min-h-48 flex-col gap-4 rounded-[1.4rem] border p-5">
+        <div className="border-border flex min-h-48 flex-col gap-4 rounded-[1.4rem] border p-5 lg:h-full lg:min-h-0">
           {slots.isPending ? (
             <p className="text-foreground/55 text-sm">{copy.calendar.loading}</p>
           ) : slots.isError ? (

@@ -120,7 +120,7 @@ export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string })
             />
           </div>
         ) : (
-          <div className="grid w-full max-w-3xl gap-6 lg:grid-cols-[minmax(0,20rem)_1fr]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,17rem)] lg:justify-center">
             <div className="flex flex-col gap-4">
               <BookingCalendar
                 month={month}
@@ -138,7 +138,7 @@ export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string })
               <TimezoneSelect value={timezone} onChange={setTimezone} />
             </div>
 
-            <div className="surface-card flex flex-col gap-5 rounded-[1.75rem] p-6 sm:p-8">
+            <div className="surface-card flex flex-col gap-5 rounded-[1.75rem] p-6 sm:p-7 lg:h-full lg:min-h-0">
               {slots.isPending ? (
                 <p className="text-foreground/55 py-12 text-sm">{copy.calendar.loading}</p>
               ) : slots.isError ? (
@@ -262,7 +262,7 @@ function Confirmation({ booking, timezone }: { booking: PublicBooking; timezone:
   const copy = getBookingCopy(language).confirmed
 
   return (
-    <div className="surface-card flex flex-col gap-5 rounded-[1.75rem] p-6 sm:p-8">
+    <div className="surface-card flex flex-col gap-5 rounded-[1.75rem] p-6 sm:p-7 lg:h-full lg:min-h-0">
       <span className="brand-mark text-primary w-fit">
         <Check aria-hidden="true" className="size-5" />
       </span>

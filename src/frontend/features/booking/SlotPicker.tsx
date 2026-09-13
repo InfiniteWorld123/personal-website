@@ -32,7 +32,7 @@ export function SlotPicker({
   const copy = getBookingCopy(language)
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-foreground text-base font-semibold">{formatDay(day, language)}</p>
         <p className="text-foreground/50 text-xs">
@@ -47,7 +47,11 @@ export function SlotPicker({
         // far pushes the confirm button off the screen on a phone, so the
         // times scroll inside their own box and everything around them stays
         // where the visitor last saw it.
-        <div className="slot-scroll -me-1 max-h-[22rem] overflow-x-hidden overflow-y-auto pe-1">
+        // On a wide screen the box takes the height the calendar column
+        // already has — `basis-0` keeps it out of the row's own measurement,
+        // so the times can never be what makes the row tall. Stacked on a
+        // phone there is no column to match, so it falls back to a cap.
+        <div className="slot-scroll -me-1 max-h-[22rem] overflow-x-hidden overflow-y-auto pe-1 lg:max-h-none lg:min-h-0 lg:flex-1 lg:basis-0">
           {/* One column, the way every booking page a visitor has used before
               lists times: read down, not across. A grid of pills spread over a
               wide card put seven times in a row and left the rest of the card

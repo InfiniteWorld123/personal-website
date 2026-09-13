@@ -93,6 +93,27 @@ describe('the visitor letter', () => {
     expect(mail.html).toContain('BK-ABC123')
   })
 
+  it('tells the client why it was called off, when a reason was given', async () => {
+    const mail = await captureMail(() =>
+      sendVisitorBookingMail(
+        { ...input, cancellationReason: 'Ich muss an dem Tag verreisen. Entschuldige!' },
+        true,
+      ),
+    )
+
+    expect(mail.html).toContain('Grund')
+    expect(mail.html).toContain('Ich muss an dem Tag verreisen.')
+    expect(mail.text).toContain('Grund: Ich muss an dem Tag verreisen.')
+  })
+
+  it('says nothing about a reason on a booking that stands', async () => {
+    const mail = await captureMail(() =>
+      sendVisitorBookingMail({ ...input, cancellationReason: 'unused' }, false),
+    )
+
+    expect(mail.html).not.toContain('unused')
+  })
+
   it('offers a new time instead of a dead link once it is cancelled', async () => {
     const mail = await captureMail(() =>
       sendVisitorBookingMail({ ...input, manageToken: 'plain-token' }, true),

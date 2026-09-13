@@ -23,6 +23,7 @@ type Copy = {
   duration: string
   where: string
   reference: string
+  reason: string
   manage: string
   bookAgain: string
   minutes: string
@@ -40,6 +41,7 @@ const COPY: Record<BookingLanguage, Copy> = {
     duration: 'Dauer',
     where: 'Wo',
     reference: 'Referenz',
+    reason: 'Grund',
     manage: 'Termin ansehen oder absagen',
     bookAgain: 'Neuen Termin buchen',
     minutes: 'Minuten',
@@ -55,6 +57,7 @@ const COPY: Record<BookingLanguage, Copy> = {
     duration: 'Duration',
     where: 'Where',
     reference: 'Reference',
+    reason: 'Reason',
     manage: 'View or cancel this booking',
     bookAgain: 'Book a new time',
     minutes: 'minutes',
@@ -70,6 +73,7 @@ const COPY: Record<BookingLanguage, Copy> = {
     duration: 'المدة',
     where: 'المكان',
     reference: 'الرقم المرجعي',
+    reason: 'السبب',
     manage: 'عرض الموعد أو إلغاؤه',
     bookAgain: 'احجز موعداً جديداً',
     minutes: 'دقيقة',
@@ -341,6 +345,13 @@ export const sendVisitorBookingMail = async (
         { label: copy.duration, value: `${input.durationMinutes} ${escapeHtml(copy.minutes)}` },
         { label: copy.where, value: escapeHtml(input.locationLabel) },
         { label: copy.reference, value: escapeHtml(input.reference) },
+        {
+          label: copy.reason,
+          value:
+            cancelled && input.cancellationReason
+              ? escapeHtml(input.cancellationReason).replaceAll('\n', '<br />')
+              : '',
+        },
       ],
       actions,
       signOff: copy.signOff,
@@ -354,6 +365,7 @@ export const sendVisitorBookingMail = async (
       `${copy.duration}: ${input.durationMinutes} ${copy.minutes}`,
       `${copy.where}: ${input.locationLabel}`,
       `${copy.reference}: ${input.reference}`,
+      cancelled && input.cancellationReason ? `${copy.reason}: ${input.cancellationReason}` : '',
       '',
       cancelled ? `${copy.bookAgain}: ${site}/${input.language}/booking` : manage && `${copy.manage}: ${manage}`,
       '',

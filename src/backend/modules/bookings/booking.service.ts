@@ -841,13 +841,19 @@ export const rescheduleBookingByToken = async (
     return { previous: managed, created, type: managed.type, typeName: managed.typeName }
   })
 
-  const oldMail = {
-    ...mailInputFor(previous.row, type.duration_minutes, typeName),
-    cancellationReason: 'Verschoben — der neue Termin steht in der nächsten Mail.',
-  }
+  const oldMail = mailInputFor(previous.row, type.duration_minutes, typeName)
   const mail = mailInputFor(created, type.duration_minutes, typeName, token)
 
-  await Promise.all([sendVisitorBookingMail(oldMail, true), sendOwnerBookingMail(oldMail, true)])
+  // The note is for the owner only: the visitor is the one who moved it, and
+  // is about to read the new time in the very next mail — in their own
+  // language, which this German line is not.
+  await Promise.all([
+    sendVisitorBookingMail(oldMail, true),
+    sendOwnerBookingMail(
+      { ...oldMail, cancellationReason: 'Verschoben — der neue Termin steht in der nächsten Mail.' },
+      true,
+    ),
+  ])
   await Promise.all([sendVisitorBookingMail(mail, false), sendOwnerBookingMail(mail, false)])
 
   return toPublicBooking(created, type, typeName, token)
