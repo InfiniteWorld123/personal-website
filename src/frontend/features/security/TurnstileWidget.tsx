@@ -161,22 +161,29 @@ export function TurnstileWidget({
     }
   }, [action, language, resetKey, retryKey])
 
+  // A check that passes has nothing to say: it reserves no height, prints no
+  // "complete" line, and on an invisible site key it is not on the page at
+  // all. Words appear only when the visitor has to do something about it.
+  const needsAttention = state === 'error' || state === 'expired'
+
   return (
-    <div className="flex min-h-20 w-full flex-col gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <div ref={containerRef} className="min-h-[65px] w-full" />
-      <p aria-live="polite" className="text-foreground/58 text-xs">
-        {labels[state]}
-      </p>
-      {state === 'error' || state === 'expired' ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={() => setRetryKey((value) => value + 1)}
-        >
-          {labels.retry}
-        </Button>
+    <div className="flex w-full flex-col gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      <div ref={containerRef} className="w-full empty:hidden" />
+      {needsAttention ? (
+        <>
+          <p aria-live="polite" className="text-foreground/58 text-xs">
+            {labels[state]}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => setRetryKey((value) => value + 1)}
+          >
+            {labels.retry}
+          </Button>
+        </>
       ) : null}
     </div>
   )

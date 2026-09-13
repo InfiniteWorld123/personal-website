@@ -10,6 +10,11 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+/**
+ * A check that passes says nothing: no status line, no reserved height. The
+ * widget only speaks when the visitor has to act, which is why the passing
+ * states are asserted through the token callback rather than through text.
+ */
 describe('Turnstile UI states', () => {
   it('covers ready, verified, expired, error, retry, and Arabic direction', async () => {
     let options: Record<string, unknown> | undefined
@@ -34,23 +39,27 @@ describe('Turnstile UI states', () => {
       />,
     )
 
-    expect(await screen.findByText('يرجى إكمال فحص الأمان.')).toBeTruthy()
+    await act(async () => {})
+    expect(options?.sitekey).toBeTruthy()
     expect(container.firstElementChild?.getAttribute('dir')).toBe('rtl')
+    // Waiting and ready are silent: nothing to read, nothing to do.
+    expect(container.textContent).toBe('')
 
     act(() => (options?.callback as (token: string) => void)('verified-token'))
-    expect(screen.getByText('اكتمل فحص الأمان.')).toBeTruthy()
     expect(onTokenChange).toHaveBeenLastCalledWith('verified-token')
+    expect(container.textContent).toBe('')
 
     act(() => (options?.['expired-callback'] as () => void)())
     expect(screen.getByText('انتهت صلاحية فحص الأمان.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'إعادة المحاولة' })).toBeTruthy()
+    expect(onTokenChange).toHaveBeenLastCalledWith(null)
 
     act(() => (options?.['error-callback'] as () => void)())
     expect(screen.getByText('تم حظر فحص الأمان أو تعذّر تحميله.')).toBeTruthy()
   })
 
   it('discards a failed script and can load a fresh one on retry', async () => {
-    render(
+    const { container } = render(
       <TurnstileWidget
         action="contact_submit"
         language="en"
@@ -75,11 +84,16 @@ describe('Turnstile UI states', () => {
       remove: vi.fn(),
       reset: vi.fn(),
     }
-    act(() => freshScript?.dispatchEvent(new Event('load')))
-    expect(await screen.findByText('Please complete the security check.')).toBeTruthy()
+    await act(async () => {
+      freshScript?.dispatchEvent(new Event('load'))
+    })
+    // Loaded and waiting for the visitor: the error and its retry are gone.
+    expect(container.textContent).toBe('')
   })
 
   it('keeps verified when a cached widget responds during render', async () => {
+    const onTokenChange = vi.fn()
+
     window.turnstile = {
       render: (_container, options) => {
         options.callback('instant-token')
@@ -89,15 +103,17 @@ describe('Turnstile UI states', () => {
       reset: vi.fn(),
     }
 
-    render(
+    const { container } = render(
       <TurnstileWidget
         action="admin_login"
         language="de"
         resetKey={0}
-        onTokenChange={vi.fn()}
+        onTokenChange={onTokenChange}
       />,
     )
 
-    expect(await screen.findByText('Sicherheitsprüfung abgeschlossen.')).toBeTruthy()
+    await act(async () => {})
+    expect(onTokenChange).toHaveBeenLastCalledWith('instant-token')
+    expect(container.textContent).toBe('')
   })
 })
