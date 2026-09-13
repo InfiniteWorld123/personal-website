@@ -3058,3 +3058,44 @@ body.dark::after {
   border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   background: color-mix(in srgb, var(--primary) 6%, transparent);
 }
+
+/* ── A time you pick, not a button you press ─────────────────
+   The slot chips are a radio group: they carry no lift, no glow and no lean
+   towards the pointer, because the site's motion belongs to the one button
+   that takes the visitor forward — and a value that moves after you choose it
+   reads as unsettled. Colour is the only thing that changes here. */
+.time-chip {
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.time-chip:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--primary);
+}
+
+.time-chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.time-chip.is-selected,
+.time-chip.is-selected:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.dark .time-chip {
+  border-color: color-mix(in srgb, var(--foreground) 22%, transparent);
+}

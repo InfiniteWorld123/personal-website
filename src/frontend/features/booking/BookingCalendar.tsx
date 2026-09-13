@@ -99,13 +99,13 @@ export function BookingCalendar({
               onClick={() => onSelectDay(day)}
               className={cn(
                 'tabular relative flex aspect-square items-center justify-center rounded-full',
-                'text-sm transition-[transform,background-color,color] duration-200',
+                'text-sm transition-[background-color,color] duration-200',
                 'focus-visible:ring-primary/50 focus-visible:ring-2 focus-visible:outline-none',
                 isAvailable
-                  ? 'text-foreground hover:bg-secondary cursor-pointer font-semibold hover:-translate-y-0.5'
+                  ? 'text-foreground hover:bg-secondary cursor-pointer font-semibold'
                   : 'text-foreground/25 cursor-not-allowed',
                 // The selected day carries the same blue the primary buttons do.
-                isSelected && 'booking-day-selected text-white hover:-translate-y-0',
+                isSelected && 'booking-day-selected text-white',
               )}
             >
               {Number(day.slice(8, 10))}

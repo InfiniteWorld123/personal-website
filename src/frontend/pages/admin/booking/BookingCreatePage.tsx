@@ -289,18 +289,18 @@ export function BookingCreatePage() {
                 book it anyway.
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div role="radiogroup" aria-label="Free times" className="flex flex-wrap gap-2">
                 {daySlots.map((free) => (
-                  <Button
+                  <button
                     key={free.startsAt}
                     type="button"
-                    variant={free.startsAt === slot ? 'default' : 'outline'}
-                    aria-pressed={free.startsAt === slot}
-                    className={cn('tabular rounded-full')}
+                    role="radio"
+                    aria-checked={free.startsAt === slot}
+                    className={cn('time-chip tabular', free.startsAt === slot && 'is-selected')}
                     onClick={() => setSlot(free.startsAt)}
                   >
                     {formatSlot(free.startsAt, timezone)}
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
