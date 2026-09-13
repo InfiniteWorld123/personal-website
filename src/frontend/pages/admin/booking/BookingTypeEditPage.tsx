@@ -30,21 +30,13 @@ const EMPTY: BookingTypeWriteInput = {
   isActive: true,
   sortOrder: 0,
   translations: {
-    de: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
-    en: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
-    ar: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
+    de: { name: '', description: '' },
+    en: { name: '', description: '' },
+    ar: { name: '', description: '' },
   },
 }
 
 const LANGUAGE_LABELS = { de: 'German', en: 'English', ar: 'Arabic' } as const
-
-/** The four lines of the letter a call type may say in its own words. */
-const MAIL_FIELDS = [
-  { key: 'confirmedSubject', placeholder: 'Confirmation subject' },
-  { key: 'confirmedIntro', placeholder: 'Confirmation opening line' },
-  { key: 'cancelledSubject', placeholder: 'Cancellation subject' },
-  { key: 'cancelledIntro', placeholder: 'Cancellation opening line' },
-] as const
 
 export function BookingTypeEditPage({ id }: { id?: string }) {
   const navigate = useNavigate()
@@ -302,41 +294,8 @@ export function BookingTypeEditPage({ id }: { id?: string }) {
                 })
               }
             />
-
-            <details className="border-border rounded-lg border px-3 py-2">
-              <summary className="text-muted-foreground cursor-pointer text-xs">
-                Email wording — leave empty for the default
-              </summary>
-
-              <div className="mt-3 flex flex-col gap-2">
-                {MAIL_FIELDS.map((field) => (
-                  <Input
-                    key={field.key}
-                    placeholder={field.placeholder}
-                    dir={language === 'ar' ? 'rtl' : 'ltr'}
-                    value={form.translations[language][field.key]}
-                    onChange={(event) =>
-                      set({
-                        translations: {
-                          ...form.translations,
-                          [language]: {
-                            ...form.translations[language],
-                            [field.key]: event.currentTarget.value,
-                          },
-                        },
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            </details>
           </div>
         ))}
-
-        <p className="text-muted-foreground text-xs">
-          The subject is also the heading of the letter. The opening line follows the greeting, so
-          it reads "Hi Katrin, <span className="italic">your line here</span>".
-        </p>
       </section>
 
       {mutation.isError ? (

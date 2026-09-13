@@ -94,21 +94,10 @@ export const BookingSlugSchema = v.pipe(
 /* Booking types — admin                                                      */
 /* -------------------------------------------------------------------------- */
 
-/**
- * One language of a call type. Name and description are required: it is a few
- * words.
- *
- * The four mail fields are not. Left empty, the confirmation and the
- * cancellation keep the wording the site ships — which is the right default,
- * because filling them in with today's text would freeze it.
- */
+/** One language of a call type. All three are required: it is a few words. */
 const BookingTypeTranslationSchema = v.object({
   name: trimmed('A name is required', 120),
   description: optionalText(600),
-  confirmedSubject: optionalText(160),
-  confirmedIntro: optionalText(600),
-  cancelledSubject: optionalText(160),
-  cancelledIntro: optionalText(600),
 })
 
 export type BookingTypeTranslationInput = v.InferOutput<typeof BookingTypeTranslationSchema>

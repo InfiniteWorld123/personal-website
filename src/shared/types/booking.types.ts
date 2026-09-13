@@ -69,15 +69,7 @@ export type PublicBooking = {
 /* Admin                                                                      */
 /* -------------------------------------------------------------------------- */
 
-export type AdminBookingTypeTranslation = {
-  name: string
-  description: string
-  /** Empty means the built-in wording. See `0007_booking_mail_copy.sql`. */
-  confirmedSubject: string
-  confirmedIntro: string
-  cancelledSubject: string
-  cancelledIntro: string
-}
+export type AdminBookingTypeTranslation = { name: string; description: string }
 
 export type AdminBookingType = {
   id: string

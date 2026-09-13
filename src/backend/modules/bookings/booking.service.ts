@@ -8,7 +8,6 @@ import {
 import { enforceRateLimit } from '#/backend/shared/rate-limit'
 import type {
   AdminAvailability,
-  AdminBookingTypeTranslation,
   AdminBookingDetail,
   AdminBookingList,
   AdminBookingType,
@@ -338,57 +337,6 @@ const LOCATION_FALLBACK: Record<TypeRow['location_kind'], string> = {
   IN_PERSON: 'In person',
 }
 
-/**
- * The wording this call type was given for this language, if any. Read by
- * booking id, because every path that sends a letter has the booking in hand
- * and not always the type.
- *
- * After the commit and never inside it: a letter that cannot find its words
- * falls back to the ones the site ships, and no mail lookup may hold a
- * transaction open or fail a booking.
- */
-const loadMailWording = async (
-  bookingId: string,
-  language: BookingLanguage,
-): Promise<BookingMailInput['wording']> => {
-  let row:
-    | {
-        confirmed_subject: string
-        confirmed_intro: string
-        cancelled_subject: string
-        cancelled_intro: string
-      }
-    | undefined
-
-  try {
-    const result = await getDb().query<NonNullable<typeof row>>(
-      `SELECT t.confirmed_subject, t.confirmed_intro, t.cancelled_subject, t.cancelled_intro
-         FROM booking_type_translations t
-         JOIN bookings b ON b.booking_type_id = t.booking_type_id
-        WHERE b.id = $1 AND t.language = $2;`,
-      [bookingId, language],
-    )
-
-    row = result.rows[0]
-  } catch (error) {
-    // A booking that is already committed must not fail because the letter
-    // could not look up its own wording — including on a database where
-    // `0007_booking_mail_copy.sql` has not run yet.
-    console.error('[booking] mail wording lookup failed', {
-      name: error instanceof Error ? error.name : 'UnknownError',
-    })
-  }
-
-  return row
-    ? {
-        confirmedSubject: row.confirmed_subject,
-        confirmedIntro: row.confirmed_intro,
-        cancelledSubject: row.cancelled_subject,
-        cancelledIntro: row.cancelled_intro,
-      }
-    : undefined
-}
-
 const mailInputFor = (
   booking: BookingRow,
   durationMinutes: number,
@@ -662,10 +610,7 @@ export const createBooking = async (
 
   // After the commit, never inside it: the record is the thing that matters,
   // and a mail failure must not roll a confirmed booking back.
-  const mail = {
-    ...mailInputFor(booking, type.duration_minutes, typeName, token),
-    wording: await loadMailWording(booking.id, input.language),
-  }
+  const mail = mailInputFor(booking, type.duration_minutes, typeName, token)
 
   await Promise.all([sendVisitorBookingMail(mail, false), sendOwnerBookingMail(mail, false)])
 
@@ -813,11 +758,7 @@ export const cancelBookingByToken = async (
     return managed
   })
 
-  const mail = {
-    ...mailInputFor(row, type.duration_minutes, typeName),
-    cancellationReason: input.reason,
-    wording: await loadMailWording(row.id, row.language),
-  }
+  const mail = { ...mailInputFor(row, type.duration_minutes, typeName), cancellationReason: input.reason }
 
   await Promise.all([sendVisitorBookingMail(mail, true), sendOwnerBookingMail(mail, true)])
 
@@ -900,9 +841,8 @@ export const rescheduleBookingByToken = async (
     return { previous: managed, created, type: managed.type, typeName: managed.typeName }
   })
 
-  const wording = await loadMailWording(created.id, created.language)
-  const oldMail = { ...mailInputFor(previous.row, type.duration_minutes, typeName), wording }
-  const mail = { ...mailInputFor(created, type.duration_minutes, typeName, token), wording }
+  const oldMail = mailInputFor(previous.row, type.duration_minutes, typeName)
+  const mail = mailInputFor(created, type.duration_minutes, typeName, token)
 
   // The note is for the owner only: the visitor is the one who moved it, and
   // is about to read the new time in the very next mail — in their own
@@ -988,13 +928,7 @@ export const createBookingAsAdmin = async (
   // Only the client is written to: the owner is the one who just made this,
   // and a notification about his own action is noise in the inbox that the
   // real ones have to compete with.
-  await sendVisitorBookingMail(
-    {
-      ...mailInputFor(booking, type.duration_minutes, typeName, token),
-      wording: await loadMailWording(booking.id, input.language),
-    },
-    false,
-  )
+  await sendVisitorBookingMail(mailInputFor(booking, type.duration_minutes, typeName, token), false)
 
   return toPublicBooking(booking, type, typeName, token)
 }
@@ -1007,7 +941,7 @@ export const createBookingAsAdmin = async (
 const FOREIGN_KEY_VIOLATION = '23503'
 
 type AdminTypeRow = TypeRow & {
-  translations: Array<{ language: BookingLanguage } & AdminBookingTypeTranslation> | null
+  translations: Array<{ language: BookingLanguage; name: string; description: string }> | null
   upcoming_count: string
   created_at: Date
   updated_at: Date
@@ -1030,11 +964,14 @@ const toAdminBookingType = (row: AdminTypeRow): AdminBookingType => ({
   isActive: row.is_active,
   sortOrder: row.sort_order,
   translations: {
-    de: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
-    en: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
-    ar: { name: '', description: '', confirmedSubject: '', confirmedIntro: '', cancelledSubject: '', cancelledIntro: '' },
+    de: { name: '', description: '' },
+    en: { name: '', description: '' },
+    ar: { name: '', description: '' },
     ...Object.fromEntries(
-      (row.translations ?? []).map(({ language, ...copy }) => [language, copy]),
+      (row.translations ?? []).map((entry) => [
+        entry.language,
+        { name: entry.name, description: entry.description },
+      ]),
     ),
   } as AdminBookingType['translations'],
   upcomingCount: Number(row.upcoming_count),
@@ -1046,9 +983,7 @@ const ADMIN_TYPE_SELECT = `
   SELECT ${TYPE_COLUMNS},
          (
            SELECT json_agg(json_build_object(
-             'language', t.language, 'name', t.name, 'description', t.description,
-             'confirmedSubject', t.confirmed_subject, 'confirmedIntro', t.confirmed_intro,
-             'cancelledSubject', t.cancelled_subject, 'cancelledIntro', t.cancelled_intro))
+             'language', t.language, 'name', t.name, 'description', t.description))
              FROM booking_type_translations t WHERE t.booking_type_id = bt.id
          ) AS translations,
          (
@@ -1091,20 +1026,9 @@ const writeTypeTranslations = async (
     const copy = translations[language]
 
     await db.query(
-      `INSERT INTO booking_type_translations
-         (booking_type_id, language, name, description,
-          confirmed_subject, confirmed_intro, cancelled_subject, cancelled_intro)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
-      [
-        typeId,
-        language,
-        copy.name,
-        copy.description,
-        copy.confirmedSubject,
-        copy.confirmedIntro,
-        copy.cancelledSubject,
-        copy.cancelledIntro,
-      ],
+      `INSERT INTO booking_type_translations (booking_type_id, language, name, description)
+       VALUES ($1, $2, $3, $4);`,
+      [typeId, language, copy.name, copy.description],
     )
   }
 }
@@ -1518,7 +1442,6 @@ export const cancelBookingAsAdmin = async (
     typeName: detail.bookingTypeName,
     locationLabel: detail.locationValue ?? LOCATION_FALLBACK[detail.locationKind],
     cancellationReason: input.reason,
-    wording: await loadMailWording(id, detail.language),
   }
 
   await sendVisitorBookingMail(mail, true)

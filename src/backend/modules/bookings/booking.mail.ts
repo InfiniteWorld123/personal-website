@@ -99,18 +99,6 @@ export type BookingMailInput = {
   manageToken?: string
   /** What the visitor typed when they cancelled, if they typed anything. */
   cancellationReason?: string
-  /**
-   * What this call type says in this language, when it has been given its own
-   * words in the admin. Any field left empty falls back to the wording the
-   * site ships — which is why these are checked one by one rather than as a
-   * block.
-   */
-  wording?: {
-    confirmedSubject: string
-    confirmedIntro: string
-    cancelledSubject: string
-    cancelledIntro: string
-  }
 }
 
 const escapeHtml = (value: string) =>
@@ -322,13 +310,6 @@ export const sendVisitorBookingMail = async (
   const site = env.BASE_URL.replace(/\/$/, '')
   const align = input.language === 'ar' ? 'right' : 'left'
 
-  const subject =
-    (cancelled ? input.wording?.cancelledSubject : input.wording?.confirmedSubject) ||
-    (cancelled ? copy.cancelledSubject : copy.confirmedSubject)
-  const opening =
-    (cancelled ? input.wording?.cancelledIntro : input.wording?.confirmedIntro) ||
-    (cancelled ? copy.cancelledIntro : copy.confirmedIntro)
-
   const calendar = buildCalendarEvent({
     reference: input.reference,
     startsAt: input.startsAt,
@@ -354,11 +335,11 @@ export const sendVisitorBookingMail = async (
 
   await send({
     to: [input.visitorEmail],
-    subject,
+    subject: cancelled ? copy.cancelledSubject : copy.confirmedSubject,
     html: layout({
       language: input.language,
-      heading: subject,
-      intro: `${copy.greeting} ${input.visitorName}, ${opening}`,
+      heading: cancelled ? copy.cancelledSubject : copy.confirmedSubject,
+      intro: `${copy.greeting} ${input.visitorName}, ${cancelled ? copy.cancelledIntro : copy.confirmedIntro}`,
       rows: [
         { label: copy.when, value: `${escapeHtml(when)}<br /><span style="font-weight:400;color:${BRAND.muted}">${escapeHtml(input.visitorTimezone)}</span>` },
         { label: copy.duration, value: `${input.durationMinutes} ${escapeHtml(copy.minutes)}` },
@@ -378,7 +359,7 @@ export const sendVisitorBookingMail = async (
     text: plainText([
       `${copy.greeting} ${input.visitorName},`,
       '',
-      opening,
+      cancelled ? copy.cancelledIntro : copy.confirmedIntro,
       '',
       `${copy.when}: ${when} (${input.visitorTimezone})`,
       `${copy.duration}: ${input.durationMinutes} ${copy.minutes}`,
