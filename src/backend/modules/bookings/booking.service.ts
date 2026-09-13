@@ -1355,6 +1355,10 @@ export const getBookingForAdmin = async (id: string): Promise<AdminBookingDetail
       cancellation_reason: string
       rescheduled_from_reference: string | null
       created_at: Date
+      lead_company: string | null
+      lead_service_interest: string | null
+      lead_budget_band: string | null
+      lead_timeline: string | null
     }
   >(
     `SELECT b.id, b.reference, b.starts_at, b.ends_at, b.status, b.visitor_name,
@@ -1365,8 +1369,11 @@ export const getBookingForAdmin = async (id: string): Promise<AdminBookingDetail
             b.created_at,
             COALESCE(${ADMIN_TYPE_NAME}, '') AS booking_type_name,
             (SELECT prev.reference FROM bookings prev WHERE prev.id = b.rescheduled_from_id)
-              AS rescheduled_from_reference
+              AS rescheduled_from_reference,
+            l.company AS lead_company, l.service_interest AS lead_service_interest,
+            l.budget_band AS lead_budget_band, l.timeline AS lead_timeline
        FROM bookings b
+       LEFT JOIN leads l ON l.id = b.lead_id
       WHERE b.id = $1;`,
     [id],
   )
@@ -1401,6 +1408,14 @@ export const getBookingForAdmin = async (id: string): Promise<AdminBookingDetail
     cancellationReason: row.cancellation_reason,
     rescheduledFromReference: row.rescheduled_from_reference,
     createdAt: row.created_at.toISOString(),
+    lead: row.lead_id
+      ? {
+          company: row.lead_company ?? '',
+          serviceInterest: row.lead_service_interest ?? '',
+          budgetBand: row.lead_budget_band ?? '',
+          timeline: row.lead_timeline ?? '',
+        }
+      : null,
   }
 }
 

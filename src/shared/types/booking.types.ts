@@ -154,4 +154,15 @@ export type AdminBookingDetail = AdminBookingListItem & {
   cancellationReason: string
   rescheduledFromReference: string | null
   createdAt: string
+  /**
+   * What is known about the person rather than the appointment. It lives on
+   * the lead, which is where a second booking from the same address finds it
+   * again — so it is read here, never copied.
+   */
+  lead: {
+    company: string
+    serviceInterest: string
+    budgetBand: string
+    timeline: string
+  } | null
 }

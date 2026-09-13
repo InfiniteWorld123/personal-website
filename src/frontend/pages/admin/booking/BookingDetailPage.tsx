@@ -82,6 +82,14 @@ export function BookingDetailPage({ id }: { id: string }) {
         <Row label="Email" value={detail.visitorEmail} ltr />
         <Row label="Phone" value={detail.visitorPhone ?? '—'} ltr />
         <Row label="Language" value={detail.language.toUpperCase()} />
+        {/* On the lead, not on the booking: it belongs to the person, and a
+            second booking from the same address finds it again. */}
+        {detail.lead?.company ? <Row label="Company" value={detail.lead.company} /> : null}
+        {detail.lead?.serviceInterest ? (
+          <Row label="About" value={detail.lead.serviceInterest} />
+        ) : null}
+        {detail.lead?.budgetBand ? <Row label="Budget" value={detail.lead.budgetBand} /> : null}
+        {detail.lead?.timeline ? <Row label="Timeline" value={detail.lead.timeline} /> : null}
         <Row
           label="Held from — to (with buffers)"
           value={`${format(detail.blockedStartsAt, BERLIN)} — ${format(detail.blockedEndsAt, BERLIN)}`}
@@ -97,14 +105,16 @@ export function BookingDetailPage({ id }: { id: string }) {
         ) : null}
       </dl>
 
-      {detail.visitorNote ? (
-        <div className="border-border flex flex-col gap-2 rounded-lg border p-6">
-          <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
-            What they wrote
-          </p>
+      <div className="border-border flex flex-col gap-2 rounded-lg border p-6">
+        <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
+          What it is about
+        </p>
+        {detail.visitorNote ? (
           <p className="text-sm leading-7 whitespace-pre-wrap">{detail.visitorNote}</p>
-        </div>
-      ) : null}
+        ) : (
+          <p className="text-muted-foreground text-sm">Nothing was written.</p>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2">
         {isOpen && isPast ? (
