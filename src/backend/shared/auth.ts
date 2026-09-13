@@ -83,7 +83,15 @@ export const auth = betterAuth({
       provider: 'cloudflare-turnstile',
       secretKey: turnstileSecret,
       endpoints: ['/sign-in/email'],
-      expectedAction: 'admin_login',
+      /**
+       * Demanded in production, waived everywhere else — the same trade
+       * `isTurnstileResponseValid` already makes, and for the same reason:
+       * Cloudflare's testing keys answer `success` without echoing the action,
+       * so requiring it locked the owner out of his own admin on every machine
+       * without real keys. Production has real keys, which do echo it, and the
+       * hostname is enforced there too.
+       */
+      expectedAction: process.env.NODE_ENV === 'production' ? 'admin_login' : undefined,
       allowedHostnames:
         process.env.NODE_ENV === 'production' ? getTurnstileAllowedHostnames() : undefined,
     }),
