@@ -5,7 +5,9 @@ import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
 import { Textarea } from '#/frontend/components/ui/textarea'
+import { getContent } from '#/frontend/content'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import { cn } from '#/frontend/lib/utils'
 import type { BookingCreateInput } from '#/shared/validation/booking.validation'
 import { getBookingCopy } from './booking-copy'
 import { TurnstileWidget } from '#/frontend/features/security/TurnstileWidget'
@@ -37,6 +39,9 @@ export function BookingForm({
 }) {
   const { language } = useLanguage()
   const copy = getBookingCopy(language).form
+  // The same three lists the contact form offers, from one place: the
+  // questions are the same question, and two copies would drift apart.
+  const { form: contactForm } = getContent(language).contact
   const [errors, setErrors] = useState<FieldErrors>({})
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
@@ -97,15 +102,15 @@ export function BookingForm({
         </Field>
 
         <Field id="booking-project-type" label={copy.projectType} hint={copy.optional}>
-          <Input id="booking-project-type" name="projectType" />
+          <Select id="booking-project-type" name="projectType" options={contactForm.projectTypes} />
         </Field>
 
         <Field id="booking-budget" label={copy.budget} hint={copy.optional}>
-          <Input id="booking-budget" name="budget" />
+          <Select id="booking-budget" name="budget" options={contactForm.budgets} />
         </Field>
 
         <Field id="booking-timeline" label={copy.timeline} hint={copy.optional}>
-          <Input id="booking-timeline" name="timeline" />
+          <Select id="booking-timeline" name="timeline" options={contactForm.timelines} />
         </Field>
       </div>
 
@@ -147,6 +152,34 @@ export function BookingForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+function Select({
+  id,
+  name,
+  options,
+}: {
+  id: string
+  name: string
+  options: Array<{ value: string; label: string }>
+}) {
+  return (
+    <select
+      id={id}
+      name={name}
+      defaultValue={options[0]?.label}
+      className={cn(
+        'border-input bg-background h-9 w-full rounded-lg border px-3 text-sm shadow-xs',
+        'focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-3',
+      )}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.label}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   )
 }
 

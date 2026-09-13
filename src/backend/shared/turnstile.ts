@@ -7,6 +7,8 @@ export type TurnstileResponse = {
   success?: boolean
   hostname?: string
   action?: string
+  /** Cloudflare marks an answer that came from one of its testing keys. */
+  metadata?: { result_with_testing_key?: boolean }
 }
 
 const TEST_SECRET = '1x0000000000000000000000000000000AA'
@@ -27,11 +29,22 @@ export const isTurnstileResponseValid = (
   action: TurnstileAction,
   enforceHostname = process.env.NODE_ENV === 'production',
 ): boolean => {
+  if (result.success !== true) return false
+
+  /**
+   * The testing keys answer `success` without echoing the action and with
+   * `example.com` as the hostname, so a machine with no keys of its own — a
+   * development checkout, a preview — would fail every booking and every
+   * contact submission at the last step. It is only ever accepted where the
+   * hostname is not enforced, and the hostname is enforced in production.
+   */
+  if (result.metadata?.result_with_testing_key === true && !enforceHostname) return true
+
   const hostnameAllowed =
     !enforceHostname ||
     (Boolean(result.hostname) && getTurnstileAllowedHostnames().includes(result.hostname!.toLowerCase()))
 
-  return result.success === true && result.action === action && hostnameAllowed
+  return result.action === action && hostnameAllowed
 }
 
 const getSecret = (): string => {

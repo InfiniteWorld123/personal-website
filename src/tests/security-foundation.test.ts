@@ -114,6 +114,19 @@ describe('Turnstile verification', () => {
     ).toBe(true)
   })
 
+  it('takes the testing key only where the hostname is not enforced', () => {
+    // What Cloudflare actually answers for a dummy token: no action, and
+    // `example.com` as the hostname.
+    const testingKey = {
+      success: true,
+      hostname: 'example.com',
+      metadata: { result_with_testing_key: true },
+    } as const
+
+    expect(isTurnstileResponseValid(testingKey, 'booking_create', false)).toBe(true)
+    expect(isTurnstileResponseValid(testingKey, 'booking_create', true)).toBe(false)
+  })
+
   it('rejects missing tokens without calling Cloudflare', async () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
