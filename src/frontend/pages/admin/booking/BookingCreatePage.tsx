@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { ArrowLeft, CalendarPlus, Check } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
@@ -9,13 +9,13 @@ import { Label } from '#/frontend/components/ui/label'
 import { Switch } from '#/frontend/components/ui/switch'
 import { Textarea } from '#/frontend/components/ui/textarea'
 import {
-  adminBookingTypesQuery,
+  bookingTypesQuery,
   slotsQuery,
   useCreateBookingAsAdmin,
 } from '#/frontend/features/booking/booking-queries'
 import { dayIn, instantFromZoned } from '#/frontend/features/booking/booking-time'
 import { cn } from '#/frontend/lib/utils'
-import type { PublicBooking } from '#/shared/types/booking.types'
+import type { PublicBooking, PublicBookingType } from '#/shared/types/booking.types'
 import { BOOKING_LANGUAGES, type BookingLanguage } from '#/shared/validation/booking.validation'
 
 /** The owner's own clock, and the default for a client who has no other. */
@@ -29,6 +29,8 @@ const LANGUAGE_LABELS: Record<BookingLanguage, string> = {
 
 const TIMEZONES: string[] =
   typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [BERLIN]
+
+const typeLabel = (type: PublicBookingType) => `${type.name} · ${type.durationMinutes} min`
 
 const formatSlot = (instant: string, timeZone: string) =>
   new Intl.DateTimeFormat('de-DE', { timeZone, hour: '2-digit', minute: '2-digit' }).format(
@@ -45,7 +47,10 @@ const formatSlot = (instant: string, timeZone: string) =>
  * it, so the conversation does not have to come back through the owner.
  */
 export function BookingCreatePage() {
-  const types = useQuery(adminBookingTypesQuery())
+  // The public list, not the admin one: this page needs exactly what a visitor
+  // would be offered — the active types, named, with their length and price —
+  // and nothing about how they are configured.
+  const types = useQuery(bookingTypesQuery('de'))
   const create = useCreateBookingAsAdmin()
 
   const [slug, setSlug] = useState('')
@@ -62,10 +67,7 @@ export function BookingCreatePage() {
   const [note, setNote] = useState('')
   const [created, setCreated] = useState<PublicBooking | null>(null)
 
-  const active = useMemo(
-    () => (types.data ?? []).filter((type) => type.isActive),
-    [types.data],
-  )
+  const active = types.data ?? []
   const selectedType = active.find((type) => type.slug === slug) ?? active[0]
 
   // Only asked for while it is the way the time is being picked.
@@ -177,6 +179,19 @@ export function BookingCreatePage() {
 
       {types.isPending ? (
         <p className="text-muted-foreground text-sm">Loading call types…</p>
+      ) : types.isError ? (
+        <div className="border-destructive/40 bg-destructive/5 flex flex-col items-start gap-3 rounded-xl border p-5">
+          <div>
+            <p className="text-destructive text-sm font-medium">The call types could not be loaded.</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {(types.error as Error).message} — if the database is behind the code, run the
+              migrations and try again.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => void types.refetch()}>
+            Try again
+          </Button>
+        </div>
       ) : active.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           There is no active call type to book.{' '}
@@ -190,25 +205,45 @@ export function BookingCreatePage() {
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold">The call</h2>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="type" label="Call type">
-                <select
-                  id="type"
-                  value={selectedType?.slug ?? ''}
-                  onChange={(event) => {
-                    setSlug(event.currentTarget.value)
-                    setSlot(null)
-                  }}
-                  className="border-border bg-background h-9 rounded-md border px-2 text-sm"
-                >
-                  {active.map((type) => (
-                    <option key={type.slug} value={type.slug}>
-                      {type.translations.de.name || type.slug} · {type.durationMinutes} min
-                    </option>
-                  ))}
-                </select>
-              </Field>
+            {active.length === 1 ? (
+              <p className="text-muted-foreground text-sm">
+                <span className="text-foreground font-medium">
+                  {typeLabel(active[0]!)}
+                </span>{' '}
+                — the only active call type.
+              </p>
+            ) : (
+              <div role="radiogroup" aria-label="Call type" className="grid gap-2 sm:grid-cols-2">
+                {active.map((type) => (
+                  <button
+                    key={type.slug}
+                    type="button"
+                    role="radio"
+                    aria-checked={type.slug === selectedType?.slug}
+                    onClick={() => {
+                      setSlug(type.slug)
+                      setSlot(null)
+                    }}
+                    className={cn(
+                      'flex flex-col items-start gap-1 rounded-xl border p-4 text-start transition-colors',
+                      type.slug === selectedType?.slug
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40',
+                    )}
+                  >
+                    <span className="text-sm font-medium">{type.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {type.durationMinutes} min ·{' '}
+                      {type.priceCents === 0
+                        ? 'free'
+                        : `${(type.priceCents / 100).toFixed(0)} ${type.currency}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field id="language" label="Write to them in">
                 <select
                   id="language"

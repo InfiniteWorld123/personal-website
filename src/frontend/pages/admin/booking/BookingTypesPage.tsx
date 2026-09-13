@@ -62,8 +62,17 @@ export function BookingTypesPage() {
       {types.isPending ? (
         <p className="text-muted-foreground py-12 text-center text-sm">Loading call types…</p>
       ) : types.isError ? (
-        <div className="border-destructive/40 bg-destructive/5 rounded-lg border p-6">
-          <p className="text-destructive text-sm">{(types.error as Error).message}</p>
+        <div className="border-destructive/40 bg-destructive/5 flex flex-col items-start gap-3 rounded-lg border p-6">
+          <div>
+            <p className="text-destructive text-sm font-medium">{(types.error as Error).message}</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              If the database is behind the code, run <code className="text-xs">bun run db:migrate</code>{' '}
+              and try again.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => void types.refetch()}>
+            Try again
+          </Button>
         </div>
       ) : types.data.length === 0 ? (
         <div className="border-border flex flex-col items-center gap-3 rounded-lg border border-dashed p-12 text-center">
