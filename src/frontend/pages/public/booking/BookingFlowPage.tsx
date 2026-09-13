@@ -120,7 +120,7 @@ export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string })
             />
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[20rem_18rem] lg:justify-center">
+          <div className="grid w-full max-w-3xl gap-6 lg:grid-cols-[minmax(0,20rem)_1fr]">
             <div className="flex flex-col gap-4">
               <BookingCalendar
                 month={month}
