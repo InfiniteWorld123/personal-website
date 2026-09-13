@@ -90,6 +90,20 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
     // written in, so it travels with the message rather than being guessed.
     data.set('language', language)
 
+    /*
+     * The words the visitor read, not the option ids behind them. A `<select>`
+     * posts its value, so the inbox was filing enquiries as "website",
+     * "3000-6000" and "weeks" — unreadable in the list, and unreadable again
+     * in the notification mail. Bookings already store the label; this makes
+     * the two doors agree.
+     */
+    const labelFor = (options: Array<{ value: string; label: string }>, value: string) =>
+      options.find((option) => option.value === value)?.label ?? value
+
+    data.set('projectType', labelFor(copy.projectTypes, String(data.get('projectType') ?? '')))
+    data.set('budget', labelFor(copy.budgets, String(data.get('budget') ?? '')))
+    data.set('timeline', labelFor(copy.timelines, String(data.get('timeline') ?? '')))
+
     setStatus('sending')
 
     try {

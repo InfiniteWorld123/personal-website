@@ -77,7 +77,7 @@ describe('the reading pane with everything on', () => {
     expect(screen.getByText('Dienstag passt.')).toBeTruthy()
     expect(screen.getByText('Weiß genau, was sie wollen.')).toBeTruthy()
     expect(screen.getByText(/Arrived/)).toBeTruthy()
-    expect(screen.getByPlaceholderText('Write your reply…')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Antwort schreiben…')).toBeTruthy()
   })
 
   it('offers all five stages, with the current one pressed', () => {
@@ -155,10 +155,21 @@ describe('what the pane refuses to pretend', () => {
     expect((screen.getByRole('button', { name: /Send reply/ }) as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('writes an Arabic message right to left', () => {
+  it('prompts, prefills and signs in the language the visitor wrote in', () => {
+    show({}, lead({ language: 'ar' }))
+
+    expect(screen.getByPlaceholderText('اكتب ردّك…')).toBeTruthy()
+    // English on the button, Arabic in what it inserts.
+    expect(screen.getByRole('button', { name: 'Ask about budget' })).toBeTruthy()
+    expect(screen.getByText(/تحياتي/)).toBeTruthy()
+  })
+
+  it('lets what a person wrote choose its own direction', () => {
+    // Not `rtl` from the lead's language: an Arabic budget on a German lead
+    // was rendering its words in reverse. `auto` reads the value itself.
     show({}, lead({ language: 'ar', message: 'السلام عليكم، نريد نظام طلبات.' }))
 
-    expect(screen.getByText('السلام عليكم، نريد نظام طلبات.').getAttribute('dir')).toBe('rtl')
+    expect(screen.getByText('السلام عليكم، نريد نظام طلبات.').getAttribute('dir')).toBe('auto')
   })
 
   it('names the call this person booked', () => {

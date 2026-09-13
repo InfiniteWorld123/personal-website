@@ -8,6 +8,7 @@ import {
   type Row,
 } from '#/backend/shared/mail'
 import { env } from '#/shared/env'
+import { LEAD_SIGN_OFF } from '#/shared/lead-copy'
 import type { LeadLanguage, LeadSource } from '#/shared/validation/lead.validation'
 import { replyAddressFor } from './lead.inbound'
 
@@ -21,22 +22,19 @@ import { replyAddressFor } from './lead.inbound'
  * mail-only endpoint could lose.
  */
 
-type ReplyCopy = { greeting: string; signOff: string; fallbackSubject: string }
+type ReplyCopy = { greeting: string; fallbackSubject: string }
 
 const COPY: Record<LeadLanguage, ReplyCopy> = {
   de: {
     greeting: 'Hallo',
-    signOff: 'Beste Grüße,\nYaman Warda\nDigitale Systeme · yamanwarda.de',
     fallbackSubject: 'Deine Anfrage',
   },
   en: {
     greeting: 'Hi',
-    signOff: 'Best,\nYaman Warda\nDigital systems · yamanwarda.de',
     fallbackSubject: 'Your enquiry',
   },
   ar: {
     greeting: 'مرحباً',
-    signOff: 'تحياتي،\nيمان وردة\nأنظمة رقمية · yamanwarda.de',
     fallbackSubject: 'بخصوص رسالتك',
   },
 }
@@ -173,14 +171,14 @@ export const sendLeadReplyMail = async (
         body: multiline(input.body),
         rows: [],
         actions: '',
-        signOff: input.withSignature ? copy.signOff : '',
+        signOff: input.withSignature ? LEAD_SIGN_OFF[input.language] : '',
       }),
       text: plainText([
         `${copy.greeting} ${input.toName},`,
         '',
         input.body,
         input.withSignature ? '' : false,
-        input.withSignature ? copy.signOff : false,
+        input.withSignature ? LEAD_SIGN_OFF[input.language] : false,
       ]),
     },
     'inbox',

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Check, MailWarning } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Button } from '#/frontend/components/ui/button'
 import { Switch } from '#/frontend/components/ui/switch'
 import { inboxSettingsQuery, useSaveInboxPreferences } from '#/frontend/features/inbox/inbox-queries'
@@ -64,6 +65,28 @@ const GROUPS: Array<{
   },
 ]
 
+/**
+ * The prose is one flex item, not many. Written as `flex` with the words and
+ * the `<code>` chips as siblings, every variable name became its own flex item
+ * and the sentence came apart across the box.
+ */
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <div className="border-border text-muted-foreground flex items-start gap-2 rounded-lg border border-dashed p-3 text-sm">
+      <MailWarning aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <p className="leading-6">{children}</p>
+    </div>
+  )
+}
+
+function Key({ children }: { children: ReactNode }) {
+  return (
+    <code className="bg-muted text-foreground rounded px-1 py-0.5 text-[0.7rem] whitespace-nowrap">
+      {children}
+    </code>
+  )
+}
+
 export function InboxSettingsPage() {
   const settings = useQuery(inboxSettingsQuery())
   const save = useSaveInboxPreferences()
@@ -94,21 +117,18 @@ export function InboxSettingsPage() {
       </div>
 
       {settings.data && !settings.data.canSendMail ? (
-        <p className="border-border text-muted-foreground flex items-start gap-2 rounded-lg border border-dashed p-3 text-sm">
-          <MailWarning aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          Replies cannot be sent from here yet: <code className="text-xs">RESEND_API_KEY</code> and{' '}
-          <code className="text-xs">EMAIL_FROM</code> are not set. Messages are still stored.
-        </p>
+        <Notice>
+          Replies cannot be sent from here yet: <Key>RESEND_API_KEY</Key> and <Key>EMAIL_FROM</Key>{' '}
+          are not set. Messages are still stored.
+        </Notice>
       ) : null}
 
       {settings.data && !settings.data.canReceiveMail ? (
-        <p className="border-border text-muted-foreground flex items-start gap-2 rounded-lg border border-dashed p-3 text-sm">
-          <MailWarning aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        <Notice>
           Their answers arrive in your own mailbox, not here. To bring them in, point an address on
-          the domain at <code className="text-xs">/api/inbound-email</code> and set{' '}
-          <code className="text-xs">INBOUND_MAIL_ADDRESS</code> and{' '}
-          <code className="text-xs">INBOUND_MAIL_SECRET</code>.
-        </p>
+          the domain at <Key>/api/inbound-email</Key> and set <Key>INBOUND_MAIL_ADDRESS</Key> and{' '}
+          <Key>INBOUND_MAIL_SECRET</Key>.
+        </Notice>
       ) : null}
 
       {settings.isPending ? (

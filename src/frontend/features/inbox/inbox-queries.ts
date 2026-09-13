@@ -27,6 +27,12 @@ export const leadsQuery = (filter: LeadFilterInput) =>
   queryOptions({
     queryKey: ['inbox', 'list', filter.tab, filter.search, filter.page, filter.withBookings],
     queryFn: () => fetchLeads(filter),
+    /**
+     * An inbox that only shows what was there when the page loaded is not an
+     * inbox. Same minute as the badge in the sidebar, so the number and the
+     * list never disagree; the open message is untouched by a refetch.
+     */
+    refetchInterval: 60_000,
   })
 
 export const leadQuery = (id: string | undefined) =>

@@ -91,6 +91,25 @@ describe('contact behavior is preserved', () => {
     expect(screen.getByText(copy.errors.message)).toBeTruthy()
     expect(fetch).not.toHaveBeenCalled()
   })
+  it('sends the words the visitor read, not the option ids', async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 201 })
+    vi.stubGlobal('fetch', fetch)
+    render(<ContactForm copy={copy} language="en" />)
+    fireEvent.change(document.querySelector('#name')!, { target: { value: 'Test Person' } })
+    fireEvent.change(document.querySelector('#email')!, { target: { value: 'test@example.com' } })
+    fireEvent.change(document.querySelector('#message')!, { target: { value: 'Local test message, never sent.' } })
+    fireEvent.change(document.querySelector('#budget')!, { target: { value: copy.budgets[2].value } })
+    fireEvent.click(screen.getByRole('button', { name: copy.submit }))
+
+    await screen.findByRole('status')
+    const body = fetch.mock.calls[0][1].body as FormData
+
+    // "3000-6000" would reach the inbox as "3000-6000" and read as machinery.
+    expect(body.get('budget')).toBe(copy.budgets[2].label)
+    expect(body.get('projectType')).toBe(copy.projectTypes[0].label)
+    expect(body.get('language')).toBe('en')
+  })
+
   it.each([true, false])('keeps the %s response state with a mocked transport', async ok => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, status: ok ? 200 : 500 }))
     render(<ContactForm copy={copy} language="en" />)

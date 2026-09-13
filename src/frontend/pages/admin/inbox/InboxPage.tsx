@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Archive, Paperclip, Search, Settings2, ShieldAlert } from 'lucide-react'
+import { Archive, ArrowLeft, Paperclip, Search, Settings2, ShieldAlert, X } from 'lucide-react'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
@@ -27,6 +27,27 @@ import {
 import { LeadReadingPane } from './LeadReadingPane'
 import { formatBerlin, formatRelative, initialsOf, STATUS_LABEL, STATUS_TONE } from './inbox-format'
 
+/**
+ * Wide enough for the list and the message side by side. Below it they would
+ * stack, so the phone shows one at a time with a way back — scrolling past the
+ * whole list to reach the message you tapped is not a reading pane.
+ */
+const useIsWide = () => {
+  const [wide, setWide] = useState(true)
+
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1024px)')
+    const update = () => setWide(query.matches)
+
+    update()
+    query.addEventListener('change', update)
+
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  return wide
+}
+
 const TAB_LABEL: Record<LeadTab, string> = {
   open: 'Open',
   unread: 'Unread',
@@ -35,6 +56,20 @@ const TAB_LABEL: Record<LeadTab, string> = {
   archived: 'Archived',
   junk: 'Junk',
   all: 'All',
+}
+
+/**
+ * What an empty list says. "Nothing matches that" is only true when something
+ * was searched for; on an empty Unread tab it reads like a fault.
+ */
+const EMPTY_LABEL: Record<LeadTab, string> = {
+  open: 'No messages yet.',
+  unread: 'Nothing unread — you are through them all.',
+  new: 'Nothing new right now.',
+  closed: 'Nothing closed yet.',
+  archived: 'Nothing archived.',
+  junk: 'No junk. Good.',
+  all: 'No messages yet.',
 }
 
 /** Junk earns its tab only when the owner keeps that button. */
@@ -50,6 +85,7 @@ export function InboxPage({ search }: { search: InboxSearch }) {
   const leads = useQuery(leadsQuery(filter))
   const items = useMemo(() => leads.data?.items ?? [], [leads.data])
 
+  const isWide = useIsWide()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [draftSearch, setDraftSearch] = useState(search.search ?? '')
   const replyRef = useRef<HTMLTextAreaElement>(null)
@@ -68,9 +104,11 @@ export function InboxPage({ search }: { search: InboxSearch }) {
   // mail links straight to one — so the list follows the selection, not the
   // other way round.
   useEffect(() => {
-    if (!openId && items.length > 0) setSearch({ lead: items[0].id })
+    // Only where both columns are on screen: on a phone this would open the
+    // first message before the owner had picked one.
+    if (isWide && !openId && items.length > 0) setSearch({ lead: items[0].id })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, items])
+  }, [openId, items, isWide])
 
   // Opening a message is what marks it read. Done here rather than in the pane
   // so it happens once per selection, not once per render of the pane.
@@ -152,7 +190,8 @@ export function InboxPage({ search }: { search: InboxSearch }) {
 
       <div className="flex flex-wrap items-center gap-2">
         {preferences.filters ? (
-          <div className="bg-muted flex gap-1 rounded-lg p-1">
+          /* Seven tabs do not fit a phone. They scroll rather than being cut. */
+          <div className="bg-muted flex max-w-full gap-1 overflow-x-auto rounded-lg p-1">
             {tabsFor(preferences.junk).map((tab) => (
               <button
                 key={tab}
@@ -160,7 +199,7 @@ export function InboxPage({ search }: { search: InboxSearch }) {
                 aria-pressed={(search.tab ?? 'open') === tab}
                 onClick={() => setSearch({ tab: tab === 'open' ? undefined : tab, page: undefined })}
                 className={cn(
-                  'rounded-md px-3 py-1 text-xs transition-colors',
+                  'rounded-md px-3 py-1 text-xs whitespace-nowrap transition-colors',
                   (search.tab ?? 'open') === tab
                     ? 'bg-card text-foreground font-medium shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',
@@ -174,31 +213,41 @@ export function InboxPage({ search }: { search: InboxSearch }) {
         ) : null}
 
         {preferences.search ? (
+          /*
+           * One control, one border. The search box used to be an Input inside
+           * a bordered box, which drew two rounded outlines around the same
+           * field and put the focus ring inside a second frame.
+           */
           <form
-            className="flex min-w-[12rem] flex-1 items-center gap-2"
+            className="relative min-w-[14rem] flex-1"
             onSubmit={(event) => {
               event.preventDefault()
               setSearch({ search: draftSearch.trim() || undefined, page: undefined })
             }}
           >
-            <div className="border-border flex flex-1 items-center gap-2 rounded-lg border px-3">
-              <Search aria-hidden="true" className="text-muted-foreground size-4" />
-              <Input
-                value={draftSearch}
-                onChange={(event) => setDraftSearch(event.currentTarget.value)}
-                placeholder="Search name, email, message…"
-                className="h-9 border-0 px-0 shadow-none focus-visible:ring-0"
-              />
-            </div>
-            {hasActiveInboxFilters(search) ? (
-              <Button
+            <Search
+              aria-hidden="true"
+              className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
+            />
+            <Input
+              value={draftSearch}
+              onChange={(event) => setDraftSearch(event.currentTarget.value)}
+              placeholder="Search name, email, message…"
+              aria-label="Search messages"
+              className="h-9 ps-9 pe-9"
+            />
+            {draftSearch || hasActiveInboxFilters(search) ? (
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearch({ search: undefined, tab: undefined, page: undefined })}
+                aria-label="Clear the search"
+                onClick={() => {
+                  setDraftSearch('')
+                  setSearch({ search: undefined, tab: undefined, page: undefined })
+                }}
+                className="text-muted-foreground hover:text-foreground absolute end-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full"
               >
-                Clear
-              </Button>
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
             ) : null}
           </form>
         ) : null}
@@ -246,14 +295,32 @@ export function InboxPage({ search }: { search: InboxSearch }) {
       ) : null}
 
       <div className="border-border grid min-h-[32rem] overflow-hidden rounded-xl border lg:grid-cols-[22rem_minmax(0,1fr)]">
-        <div className="border-border max-h-[44rem] overflow-y-auto lg:border-e">
+        <div
+          className={cn(
+            'border-border max-h-[44rem] overflow-y-auto lg:border-e',
+            !isWide && openId && 'hidden',
+          )}
+        >
           {leads.isPending ? (
-            <p className="text-muted-foreground p-6 text-center text-sm">Loading messages…</p>
+            // Rows rather than a sentence: the list keeps its shape, so nothing
+            // jumps when the messages arrive.
+            <div aria-busy="true" aria-label="Loading messages">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="border-border flex gap-2 border-b px-3 py-3">
+                  <div className="bg-muted size-8 shrink-0 animate-pulse rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
+                    <div className="bg-muted h-3 w-4/5 animate-pulse rounded" />
+                    <div className="bg-muted h-3 w-1/3 animate-pulse rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : leads.isError ? (
             <p className="text-destructive p-6 text-center text-sm">{(leads.error as Error).message}</p>
           ) : items.length === 0 ? (
             <p className="text-muted-foreground p-6 text-center text-sm">
-              {hasActiveInboxFilters(search) ? 'Nothing matches that.' : 'No messages yet.'}
+              {search.search ? `Nothing matches “${search.search}”.` : EMPTY_LABEL[search.tab ?? 'open']}
             </p>
           ) : (
             items.map((item) => (
@@ -276,7 +343,22 @@ export function InboxPage({ search }: { search: InboxSearch }) {
           )}
         </div>
 
-        <div className="max-h-[44rem] min-w-0 overflow-y-auto">
+        <div
+          className={cn(
+            'max-h-[44rem] min-w-0 overflow-y-auto',
+            !isWide && !openId && 'hidden',
+          )}
+        >
+          {!isWide && openId ? (
+            <button
+              type="button"
+              onClick={() => setSearch({ lead: undefined })}
+              className="text-muted-foreground hover:text-foreground border-border flex w-full items-center gap-2 border-b px-4 py-3 text-sm"
+            >
+              <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+              All messages
+            </button>
+          ) : null}
           {lead.isPending && openId ? (
             <p className="text-muted-foreground p-6 text-sm">Loading message…</p>
           ) : lead.data ? (
@@ -395,7 +477,12 @@ function LeadRow({
           </span>
         </div>
 
-        <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs" dir={item.language === 'ar' ? 'rtl' : undefined}>
+        {/*
+          `dir="auto"` rather than a guess from the lead's language: the value
+          decides its own direction from its first letter. An Arabic budget in
+          an English row was rendering its words in reverse order.
+        */}
+        <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs" dir="auto">
           {item.subject}
           {showSnippet && item.preview ? ` — ${item.preview}` : ''}
         </p>
@@ -412,10 +499,14 @@ function LeadRow({
             </Badge>
           ) : null}
           {showBadges && item.budget ? (
-            <Badge variant="outline" className="text-[0.65rem]">{item.budget}</Badge>
+            <Badge variant="outline" dir="auto" className="max-w-[12rem] truncate text-[0.65rem]">
+              {item.budget}
+            </Badge>
           ) : null}
           {showBadges && item.timeline ? (
-            <Badge variant="outline" className="text-[0.65rem]">{item.timeline}</Badge>
+            <Badge variant="outline" dir="auto" className="max-w-[12rem] truncate text-[0.65rem]">
+              {item.timeline}
+            </Badge>
           ) : null}
           <Badge variant="outline" className={cn('text-[0.65rem]', STATUS_TONE[item.status])}>
             {STATUS_LABEL[item.status]}
