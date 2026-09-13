@@ -7,6 +7,7 @@ import { parseInput } from '#/backend/shared/validate'
 import { assertTurnstile } from '#/backend/shared/turnstile'
 import {
   AdminBookingCancelSchema,
+  AdminBookingCreateSchema,
   AvailabilityExceptionWriteSchema,
   AvailabilityRulesWriteSchema,
   BOOKING_LANGUAGES,
@@ -22,6 +23,7 @@ import {
 import * as v from 'valibot'
 import {
   cancelBookingAsAdmin,
+  createBookingAsAdmin,
   cancelBookingByToken,
   createAvailabilityException,
   createBooking,
@@ -170,6 +172,15 @@ export const adminBookingRoutes = new Elysia({ prefix: '/booking' })
 
     return responseOk({ data: { deleted: true }, message: 'Entry removed' })
   })
+  .post('/bookings', async ({ body, status }) =>
+    status(
+      HttpStatusCode.CREATED,
+      responseOk({
+        data: await createBookingAsAdmin(parseInput(AdminBookingCreateSchema, body)),
+        message: 'Booking created',
+      }),
+    ),
+  )
   .get('/bookings', async ({ query }) =>
     responseOk({
       data: await listBookingsForAdmin(parseInput(BookingFilterSchema, query)),

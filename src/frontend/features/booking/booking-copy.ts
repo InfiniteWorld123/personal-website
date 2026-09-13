@@ -70,6 +70,12 @@ export type BookingCopy = {
     status: string
     cancelHeading: string
     cancelBody: string
+    /** The quiet way into cancelling, so the page does not lead with it. */
+    cancelInstead: string
+    /** Offered inside the cancel panel, before the confirm button. */
+    rescheduleInstead: string
+    keepBooking: string
+    bookAgain: string
     cancelReason: string
     cancelConfirm: string
     cancelling: string
@@ -155,6 +161,10 @@ const de: BookingCopy = {
     status: 'Status',
     cancelHeading: 'Termin absagen',
     cancelBody: 'Kein Problem. Sag kurz Bescheid, dann wird die Zeit wieder frei.',
+    cancelInstead: 'Ich kann doch nicht',
+    rescheduleInstead: 'Du musst nicht absagen — such dir einfach eine andere Zeit aus.',
+    keepBooking: 'Termin behalten',
+    bookAgain: 'Neuen Termin buchen',
     cancelReason: 'Grund',
     cancelConfirm: 'Termin absagen',
     cancelling: 'Wird abgesagt…',
@@ -240,6 +250,10 @@ const en: BookingCopy = {
     when: 'When',
     status: 'Status',
     cancelHeading: 'Cancel this booking',
+    cancelInstead: 'I cannot make it',
+    rescheduleInstead: 'You do not have to cancel — pick another time instead.',
+    keepBooking: 'Keep the booking',
+    bookAgain: 'Book a new time',
     cancelBody: 'No problem. Let me know and the time goes back on the calendar.',
     cancelReason: 'Reason',
     cancelConfirm: 'Cancel booking',
@@ -326,6 +340,10 @@ const ar: BookingCopy = {
     when: 'الموعد',
     status: 'الحالة',
     cancelHeading: 'إلغاء الموعد',
+    cancelInstead: 'لا أستطيع الحضور',
+    rescheduleInstead: 'لست مضطراً للإلغاء — يمكنك اختيار وقت آخر بدلاً من ذلك.',
+    keepBooking: 'الإبقاء على الموعد',
+    bookAgain: 'احجز موعداً جديداً',
     cancelBody: 'لا مشكلة. أخبرني فقط، ويعود الوقت متاحاً.',
     cancelReason: 'السبب',
     cancelConfirm: 'إلغاء الموعد',

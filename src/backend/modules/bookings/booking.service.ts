@@ -20,6 +20,7 @@ import {
   BOOKING_PAGE_SIZE,
   OWNER_TIMEZONE,
   type AdminBookingCancelInput,
+  type AdminBookingCreateInput,
   type AvailabilityExceptionWriteInput,
   type AvailabilityRulesWriteInput,
   type BookingCancelInput,
@@ -757,7 +758,7 @@ export const cancelBookingByToken = async (
     return managed
   })
 
-  const mail = mailInputFor(row, type.duration_minutes, typeName)
+  const mail = { ...mailInputFor(row, type.duration_minutes, typeName), cancellationReason: input.reason }
 
   await Promise.all([sendVisitorBookingMail(mail, true), sendOwnerBookingMail(mail, true)])
 
@@ -840,13 +841,90 @@ export const rescheduleBookingByToken = async (
     return { previous: managed, created, type: managed.type, typeName: managed.typeName }
   })
 
-  const oldMail = mailInputFor(previous.row, type.duration_minutes, typeName)
+  const oldMail = {
+    ...mailInputFor(previous.row, type.duration_minutes, typeName),
+    cancellationReason: 'Verschoben — der neue Termin steht in der nächsten Mail.',
+  }
   const mail = mailInputFor(created, type.duration_minutes, typeName, token)
 
   await Promise.all([sendVisitorBookingMail(oldMail, true), sendOwnerBookingMail(oldMail, true)])
   await Promise.all([sendVisitorBookingMail(mail, false), sendOwnerBookingMail(mail, false)])
 
   return toPublicBooking(created, type, typeName, token)
+}
+
+/**
+ * A call the owner places himself: on the phone with somebody who would
+ * rather be sent a time than look for one, or after an email that ended in
+ * "just book me in".
+ *
+ * It is the same booking as any other — same record, same reference, same
+ * confirmation with the calendar file and the link to move or cancel it — so
+ * the client can manage it without ever writing to him again. What it skips
+ * is what the public form needs and the owner does not: the bot check, the
+ * rate limits, the honeypot, and, when he says so, the published hours.
+ */
+export const createBookingAsAdmin = async (
+  input: AdminBookingCreateInput,
+): Promise<PublicBooking> => {
+  const startsAt = Date.parse(input.startsAt)
+
+  if (Number.isNaN(startsAt)) throw validationError('That is not a valid time')
+  if (startsAt < Date.now()) throw validationError('That time has already passed')
+
+  const token = createManageToken()
+  const tokenHash = await hashManageToken(token)
+
+  const { booking, type, typeName } = await withTransaction(async (db) => {
+    const ownerDay = dayInZone(startsAt, OWNER_TIMEZONE)
+    await lockKeys(db, [`booking-day:${ownerDay}`, `booking-email:${input.email.toLowerCase()}`])
+
+    const type = await loadActiveType(input.bookingTypeSlug)
+
+    // Off-hours is the owner's call to make; a double booking never is. That
+    // one is held by `bookings_no_overlap`, which this cannot reach past.
+    if (!input.anyTime) await assertSlotIsOffered(type, startsAt, Date.now())
+
+    const leadId = await attachLead({
+      ...input,
+      phone: input.phone ?? '',
+      serviceInterest: '',
+      budgetBand: '',
+      timeline: '',
+      website: '',
+    })
+
+    const created = await insertBooking(
+      {
+        type,
+        leadId,
+        startsAt,
+        visitor: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone ?? '',
+          timezone: input.timezone,
+          note: input.note,
+          language: input.language,
+        },
+      },
+      tokenHash,
+    )
+
+    const translation = await getDb().query<{ name: string }>(
+      'SELECT name FROM booking_type_translations WHERE booking_type_id = $1 AND language = $2;',
+      [type.id, input.language],
+    )
+
+    return { booking: created, type, typeName: translation.rows[0]?.name ?? type.slug }
+  })
+
+  // Only the client is written to: the owner is the one who just made this,
+  // and a notification about his own action is noise in the inbox that the
+  // real ones have to compete with.
+  await sendVisitorBookingMail(mailInputFor(booking, type.duration_minutes, typeName, token), false)
+
+  return toPublicBooking(booking, type, typeName, token)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1357,6 +1435,7 @@ export const cancelBookingAsAdmin = async (
     language: detail.language,
     typeName: detail.bookingTypeName,
     locationLabel: detail.locationValue ?? LOCATION_FALLBACK[detail.locationKind],
+    cancellationReason: input.reason,
   }
 
   await sendVisitorBookingMail(mail, true)

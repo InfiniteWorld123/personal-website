@@ -4,6 +4,7 @@ import {
   cancelBookingAsAdmin,
   createAvailabilityException,
   createBooking,
+  createBookingAsAdmin,
   createBookingType,
   deleteAvailabilityException,
   deleteBookingType,
@@ -166,6 +167,16 @@ export const useDeleteAvailabilityException = () => {
 
   return useMutation({
     mutationFn: (id: string) => deleteAvailabilityException(id),
+    onSuccess: () => invalidateAdminBooking(queryClient),
+  })
+}
+
+/** Placing a call from the admin. The client is emailed exactly as always. */
+export const useCreateBookingAsAdmin = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createBookingAsAdmin,
     onSuccess: () => invalidateAdminBooking(queryClient),
   })
 }

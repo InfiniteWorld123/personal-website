@@ -3033,3 +3033,28 @@ body.dark::after {
 .dark .booking-aside {
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
 }
+
+/* The times list scrolls inside the card once a day has more of them than the
+   card should grow to hold. A thin rail, so the box does not turn into a
+   window frame. */
+.slot-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 35%, transparent) transparent;
+  overscroll-behavior: contain;
+}
+
+.slot-scroll::-webkit-scrollbar {
+  width: 0.4rem;
+}
+
+.slot-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 32%, transparent);
+}
+
+/* The offer to move a call instead of cancelling it. Blue, because it is the
+   way out, not the warning. */
+.cancel-offer {
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}

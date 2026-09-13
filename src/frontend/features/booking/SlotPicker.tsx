@@ -36,19 +36,25 @@ export function SlotPicker({
       {slots.length === 0 ? (
         <p className="text-foreground/55 py-6 text-sm">{copy.calendar.noneThisDay}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {slots.map((slot) => (
-            <Button
-              key={slot.startsAt}
-              type="button"
-              variant={slot.startsAt === selected ? 'default' : 'outline'}
-              aria-pressed={slot.startsAt === selected}
-              className="tabular rounded-full"
-              onClick={() => onSelect(slot.startsAt)}
-            >
-              {formatTime(slot.startsAt, timezone, language)}
-            </Button>
-          ))}
+        // A full working day is sixteen half-hour times. Growing the card that
+        // far pushes the confirm button off the screen on a phone, so the
+        // times scroll inside their own box and everything around them stays
+        // where the visitor last saw it.
+        <div className="slot-scroll -me-1 max-h-64 overflow-y-auto pe-1">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {slots.map((slot) => (
+              <Button
+                key={slot.startsAt}
+                type="button"
+                variant={slot.startsAt === selected ? 'default' : 'outline'}
+                aria-pressed={slot.startsAt === selected}
+                className="tabular w-full rounded-full"
+                onClick={() => onSelect(slot.startsAt)}
+              >
+                {formatTime(slot.startsAt, timezone, language)}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
     </div>

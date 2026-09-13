@@ -274,6 +274,39 @@ export const BookingCreateSchema = v.object({
 
 export type BookingCreateInput = v.InferOutput<typeof BookingCreateSchema>
 
+/**
+ * What the owner sends when they place a call themselves — on the phone, in a
+ * meeting, or because somebody asked by email. No security token and no
+ * honeypot: this endpoint is behind the admin session. No qualifying answers
+ * either; the owner already has the answers, and the note carries the rest.
+ */
+export const AdminBookingCreateSchema = v.object({
+  bookingTypeSlug: BookingSlugSchema,
+  startsAt: InstantSchema,
+  timezone: TimezoneSchema,
+  /** The language the client is written to in. */
+  language: v.optional(v.picklist(BOOKING_LANGUAGES), 'de'),
+  name: trimmed('A name is required', 120),
+  email: v.pipe(
+    v.string('An email address is required'),
+    v.trim(),
+    v.toLowerCase(),
+    v.nonEmpty('An email address is required'),
+    v.email('That does not look like an email address'),
+    v.maxLength(254, 'That email address is too long'),
+  ),
+  phone: v.nullish(v.pipe(v.optional(v.string(), ''), v.trim(), v.maxLength(40)), ''),
+  company: optionalText(160),
+  note: optionalText(2000),
+  /**
+   * Place it outside the published hours. The overlap constraint still holds:
+   * the owner can work late, but not be in two calls at once.
+   */
+  anyTime: v.optional(v.boolean(), false),
+})
+
+export type AdminBookingCreateInput = v.InferOutput<typeof AdminBookingCreateSchema>
+
 /** The opaque token from the emailed link, not the booking id. */
 export const BookingTokenSchema = v.pipe(
   v.string('A link token is required'),

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CalendarClock, Clock3, Settings2 } from 'lucide-react'
+import { CalendarClock, CalendarPlus, Clock3, Settings2 } from 'lucide-react'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
@@ -66,6 +66,12 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
         </div>
 
         <div className="flex gap-2">
+          <Button asChild>
+            <Link to="/admin/bookings/new">
+              <CalendarPlus aria-hidden="true" />
+              New booking
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/admin/bookings/availability">
               <Clock3 aria-hidden="true" />

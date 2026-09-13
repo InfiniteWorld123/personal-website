@@ -124,3 +124,53 @@ export const formatSlotLabel = (instant: string, timeZone: string, language: Lan
 
   return `${date} · ${formatTime(instant, timeZone, language)}`
 }
+
+/**
+ * How far the given zone is from UTC at that instant, in milliseconds.
+ * Formatting the instant *in* the zone and reading the result back as if it
+ * were UTC is the only way to ask this without a timezone library.
+ */
+const zoneOffsetMs = (instant: Date, timeZone: string): number => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(instant)
+
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? '0')
+
+  const asIfUtc = Date.UTC(
+    read('year'),
+    read('month') - 1,
+    read('day'),
+    read('hour') % 24,
+    read('minute'),
+    read('second'),
+  )
+
+  return asIfUtc - instant.getTime()
+}
+
+/**
+ * `2026-09-17` + `18:00` as read on a clock in `timeZone`, as a UTC instant.
+ *
+ * Two passes: the first offset is taken at the naive instant, which lands
+ * within an hour of the real one, and the second at that corrected instant —
+ * which is what makes the hour after a daylight-saving change come out right.
+ */
+export const instantFromZoned = (day: string, time: string, timeZone: string): string => {
+  const naive = Date.parse(`${day}T${time.length === 5 ? time : `${time}:00`}Z`)
+
+  if (Number.isNaN(naive)) return ''
+
+  const first = naive - zoneOffsetMs(new Date(naive), timeZone)
+  const exact = naive - zoneOffsetMs(new Date(first), timeZone)
+
+  return new Date(exact).toISOString()
+}

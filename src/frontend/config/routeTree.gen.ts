@@ -41,6 +41,7 @@ import { Route as AdminBlogTagsRouteImport } from './../routes/admin.blog.tags'
 import { Route as AdminBookingsIndexRouteImport } from './../routes/admin.bookings.index'
 import { Route as AdminBookingsIdRouteImport } from './../routes/admin.bookings.$id'
 import { Route as AdminBookingsAvailabilityRouteImport } from './../routes/admin.bookings.availability'
+import { Route as AdminBookingsNewRouteImport } from './../routes/admin.bookings.new'
 import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
@@ -210,6 +211,11 @@ const AdminBookingsAvailabilityRoute =
     path: '/bookings/availability',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminBookingsNewRoute = AdminBookingsNewRouteImport.update({
+  id: '/bookings/new',
+  path: '/bookings/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
+  '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
+  '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog': typeof LangBlogIndexRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/admin/blog/tags': typeof AdminBlogTagsRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
+  '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/admin/blog/tags'
     | '/admin/bookings/$id'
     | '/admin/bookings/availability'
+    | '/admin/bookings/new'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/admin/blog/tags'
     | '/admin/bookings/$id'
     | '/admin/bookings/availability'
+    | '/admin/bookings/new'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog'
@@ -479,6 +490,7 @@ export interface FileRouteTypes {
     | '/admin/blog/tags'
     | '/admin/bookings/$id'
     | '/admin/bookings/availability'
+    | '/admin/bookings/new'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -732,6 +744,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsAvailabilityRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/bookings/new': {
+      id: '/admin/bookings/new'
+      path: '/bookings/new'
+      fullPath: '/admin/bookings/new'
+      preLoaderRoute: typeof AdminBookingsNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/projects/': {
       id: '/admin/projects/'
       path: '/projects'
@@ -829,6 +848,7 @@ interface AdminRouteChildren {
   AdminBlogTagsRoute: typeof AdminBlogTagsRoute
   AdminBookingsIdRoute: typeof AdminBookingsIdRoute
   AdminBookingsAvailabilityRoute: typeof AdminBookingsAvailabilityRoute
+  AdminBookingsNewRoute: typeof AdminBookingsNewRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
   AdminProjectsNewRoute: typeof AdminProjectsNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
@@ -846,6 +866,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBlogTagsRoute: AdminBlogTagsRoute,
   AdminBookingsIdRoute: AdminBookingsIdRoute,
   AdminBookingsAvailabilityRoute: AdminBookingsAvailabilityRoute,
+  AdminBookingsNewRoute: AdminBookingsNewRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
   AdminProjectsNewRoute: AdminProjectsNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,

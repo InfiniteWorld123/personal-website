@@ -35,6 +35,7 @@ export function BookingManagePage({ reference, token }: { reference: string; tok
   const booking = useQuery(bookingQuery(reference, token))
   const cancel = useCancelBooking(reference, token)
   const [reason, setReason] = useState('')
+  const [isCancelling, setIsCancelling] = useState(false)
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [rescheduled, setRescheduled] = useState<PublicBooking | null>(null)
 
@@ -88,19 +89,30 @@ export function BookingManagePage({ reference, token }: { reference: string; tok
             </dl>
 
             {status === 'CANCELLED' ? (
-              <p className="text-foreground/58 text-sm">{copy.manage.cancelled}</p>
+              <div className="flex flex-col items-start gap-4">
+                <p className="text-foreground/58 text-sm">{copy.manage.cancelled}</p>
+                {/* A cancelled booking is not the end of the conversation. */}
+                <Button asChild className="rounded-full">
+                  <Link to="/$lang/booking" params={{ lang: language }}>
+                    <CalendarClock aria-hidden="true" className="size-4" />
+                    {copy.manage.bookAgain}
+                  </Link>
+                </Button>
+              </div>
             ) : isPast ? (
               <p className="text-foreground/58 text-sm">{copy.manage.alreadyPast}</p>
             ) : null}
 
             {canManage ? (
               <>
+                {/* Moving a call keeps it; cancelling ends it. So moving is the
+                    button, and cancelling is a line underneath that opens the
+                    panel — which itself offers the other way out first. */}
                 <div className="border-border flex flex-col gap-3 border-t pt-6">
                   <p className="text-foreground text-base font-semibold">{copy.manage.rescheduleHeading}</p>
                   <p className="text-foreground/58 text-sm leading-7">{copy.manage.rescheduleBody}</p>
                   <Button
                     type="button"
-                    variant="outline"
                     className="w-fit rounded-full"
                     onClick={() => setIsRescheduling(true)}
                   >
@@ -109,44 +121,83 @@ export function BookingManagePage({ reference, token }: { reference: string; tok
                   </Button>
                 </div>
 
-                <div className="border-border flex flex-col gap-4 border-t pt-6">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-foreground text-base font-semibold">{copy.manage.cancelHeading}</p>
-                    <p className="text-foreground/58 text-sm leading-7">{copy.manage.cancelBody}</p>
+                {isCancelling ? (
+                  <div className="border-border flex flex-col gap-4 border-t pt-6">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-foreground text-base font-semibold">{copy.manage.cancelHeading}</p>
+                      <p className="text-foreground/58 text-sm leading-7">{copy.manage.cancelBody}</p>
+                    </div>
+
+                    <div className="cancel-offer flex flex-wrap items-center gap-3 rounded-[1.2rem] p-4">
+                      <p className="text-foreground/70 m-0 flex-1 text-sm leading-7">
+                        {copy.manage.rescheduleInstead}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => setIsRescheduling(true)}
+                      >
+                        <CalendarClock aria-hidden="true" className="size-4" />
+                        {copy.manage.rescheduleHeading}
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="cancel-reason" className="text-sm font-medium">
+                        {copy.manage.cancelReason}
+                        <span className="text-foreground/45 ms-2 text-xs font-normal">
+                          {copy.form.optional}
+                        </span>
+                      </Label>
+                      <Textarea
+                        id="cancel-reason"
+                        rows={3}
+                        value={reason}
+                        onChange={(event) => setReason(event.currentTarget.value)}
+                      />
+                    </div>
+
+                    {cancel.isError ? (
+                      <p role="alert" className="text-destructive text-sm">
+                        {(cancel.error as Error).message}
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="text-destructive border-destructive/40 hover:bg-destructive/5 hover:text-destructive rounded-full"
+                        disabled={cancel.isPending}
+                        onClick={() => cancel.mutate({ reason })}
+                      >
+                        <CalendarX aria-hidden="true" className="size-4" />
+                        {cancel.isPending ? copy.manage.cancelling : copy.manage.cancelConfirm}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="rounded-full"
+                        disabled={cancel.isPending}
+                        onClick={() => {
+                          setIsCancelling(false)
+                          setReason('')
+                        }}
+                      >
+                        {copy.manage.keepBooking}
+                      </Button>
+                    </div>
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="cancel-reason" className="text-sm font-medium">
-                      {copy.manage.cancelReason}
-                      <span className="text-foreground/45 ms-2 text-xs font-normal">
-                        {copy.form.optional}
-                      </span>
-                    </Label>
-                    <Textarea
-                      id="cancel-reason"
-                      rows={3}
-                      value={reason}
-                      onChange={(event) => setReason(event.currentTarget.value)}
-                    />
-                  </div>
-
-                  {cancel.isError ? (
-                    <p role="alert" className="text-destructive text-sm">
-                      {(cancel.error as Error).message}
-                    </p>
-                  ) : null}
-
-                  <Button
+                ) : (
+                  <button
                     type="button"
-                    variant="outline"
-                    className="w-fit rounded-full"
-                    disabled={cancel.isPending}
-                    onClick={() => cancel.mutate({ reason })}
+                    className="link-underline-slide text-foreground/50 hover:text-destructive w-fit text-sm font-medium"
+                    onClick={() => setIsCancelling(true)}
                   >
-                    <CalendarX aria-hidden="true" className="size-4" />
-                    {cancel.isPending ? copy.manage.cancelling : copy.manage.cancelConfirm}
-                  </Button>
-                </div>
+                    {copy.manage.cancelInstead}
+                  </button>
+                )}
               </>
             ) : null}
           </div>

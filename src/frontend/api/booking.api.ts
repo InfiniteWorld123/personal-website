@@ -9,6 +9,7 @@ import type {
 } from '#/shared/types/booking.types'
 import type {
   AdminBookingCancelInput,
+  AdminBookingCreateInput,
   AvailabilityExceptionWriteInput,
   AvailabilityRulesWriteInput,
   BookingCancelInput,
@@ -221,6 +222,11 @@ export async function fetchAdminBookings(filter: BookingFilterInput): Promise<Ad
 
 export async function fetchAdminBooking(id: string): Promise<AdminBookingDetail> {
   return normaliseDetail(unwrap<AdminBookingDetail>(await api().admin.booking.bookings({ id }).get()))
+}
+
+/** A call the owner places himself. Same record, same confirmation mail. */
+export async function createBookingAsAdmin(input: AdminBookingCreateInput): Promise<PublicBooking> {
+  return normaliseBooking(unwrap<PublicBooking>(await api().admin.booking.bookings.post(input)))
 }
 
 export async function cancelBookingAsAdmin(
