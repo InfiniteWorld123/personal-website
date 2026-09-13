@@ -7,7 +7,24 @@ const requestBodyLimits: Array<{ path: string; bytes: number }> = [
   { path: '/api/contact', bytes: 6 * 1024 * 1024 },
   { path: '/api/auth/sign-in/email', bytes: 32 * 1024 },
   { path: '/api/booking/bookings', bytes: 64 * 1024 },
+  { path: '/api/inbound-email', bytes: 1024 * 1024 },
 ]
+
+/**
+ * Endpoints a machine calls, never a browser.
+ *
+ * The origin rule is a CSRF defence: it stops another site from making a
+ * visitor's browser post here with the visitor's cookies attached. A mail
+ * forwarder sends no `Origin` header at all, so the rule would refuse every
+ * reply a client writes — which is exactly what happened the first time one
+ * was tried.
+ *
+ * Exempting these is safe because they read no cookies and carry no session:
+ * `/api/inbound-email` believes nothing that is not signed with
+ * `INBOUND_MAIL_SECRET`, which no web page can produce. The body limit above
+ * still applies.
+ */
+const signedWebhookPaths = new Set(['/api/inbound-email'])
 
 const noStorePath = (pathname: string): boolean =>
   pathname.startsWith('/admin') ||
@@ -23,7 +40,9 @@ export const validateMutationRequest = (
     return null
   }
 
-  if (request.headers.get('origin') !== url.origin) return 'FORBIDDEN_ORIGIN'
+  if (!signedWebhookPaths.has(url.pathname) && request.headers.get('origin') !== url.origin) {
+    return 'FORBIDDEN_ORIGIN'
+  }
 
   const limit = requestBodyLimits.find(({ path }) => url.pathname === path)
   const contentLength = Number(request.headers.get('content-length'))

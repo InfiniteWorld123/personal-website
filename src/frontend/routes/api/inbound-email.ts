@@ -113,17 +113,21 @@ export const Route = createFileRoute('/api/inbound-email')({
 
           if (!text.trim()) return Response.json({ message: 'Empty letter.' }, { status: 202 })
 
-          const { matched } = await recordInboundReply({
+          const { matched, recorded } = await recordInboundReply({
             token,
             body: text,
             subject: asText(payload.subject),
             externalId: asText(payload.messageId) || asText(payload['message-id']) || null,
           })
 
-          return Response.json(
-            { message: matched ? 'Reply recorded.' : 'No conversation matched.' },
-            { status: matched ? 201 : 202 },
-          )
+          // A forwarder that delivers the same letter twice is told plainly
+          // that the second one changed nothing, rather than being told it
+          // wrote a reply it did not write.
+          if (!matched) return Response.json({ message: 'No conversation matched.' }, { status: 202 })
+
+          return recorded
+            ? Response.json({ message: 'Reply recorded.' }, { status: 201 })
+            : Response.json({ message: 'Already recorded.' }, { status: 200 })
         }),
     },
   },

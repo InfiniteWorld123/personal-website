@@ -36,11 +36,13 @@ const FilterQuerySchema = v.pipe(
     tab: v.optional(v.string()),
     search: v.optional(v.string()),
     page: v.optional(v.string()),
+    withBookings: v.optional(v.string()),
   }),
   v.transform((query) => ({
     tab: query.tab,
     search: query.search,
     page: query.page ? Number(query.page) : undefined,
+    withBookings: query.withBookings === undefined ? undefined : query.withBookings !== 'false',
   })),
 )
 

@@ -46,6 +46,37 @@ describe('request security', () => {
     ).toBeNull()
   })
 
+  it('lets a signed webhook through without an origin, and nothing else', () => {
+    // A mail forwarder sends no Origin header. This endpoint authenticates the
+    // caller by signature instead, and reads no cookies.
+    expect(
+      validateMutationRequest(
+        new Request('https://yamanwarda.de/api/inbound-email', { method: 'POST' }),
+      ),
+    ).toBeNull()
+    expect(
+      validateMutationRequest(
+        new Request('https://yamanwarda.de/api/inbound-email/other', { method: 'POST' }),
+      ),
+    ).toBe('FORBIDDEN_ORIGIN')
+    expect(
+      validateMutationRequest(
+        new Request('https://yamanwarda.de/api/admin/leads/bulk', { method: 'POST' }),
+      ),
+    ).toBe('FORBIDDEN_ORIGIN')
+  })
+
+  it('holds the inbound webhook to its own body limit', () => {
+    expect(
+      validateMutationRequest(
+        new Request('https://yamanwarda.de/api/inbound-email', {
+          method: 'POST',
+          headers: { 'content-length': String(2 * 1024 * 1024) },
+        }),
+      ),
+    ).toBe('BODY_TOO_LARGE')
+  })
+
   it('rejects oversized known request bodies before parsing', () => {
     expect(
       validateMutationRequest(

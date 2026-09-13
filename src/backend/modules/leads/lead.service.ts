@@ -359,6 +359,8 @@ const buildLeadFilter = (filter: LeadFilterInput): { where: string; values: unkn
       clauses.push('l.is_junk = false')
   }
 
+  if (!filter.withBookings) clauses.push(`l.source <> 'BOOKING'`)
+
   if (filter.search) {
     values.push(`%${filter.search}%`)
     const placeholder = `$${values.length}`
@@ -703,7 +705,7 @@ export const recordInboundReply = async (input: {
   body: string
   subject: string
   externalId: string | null
-}): Promise<{ matched: boolean }> => {
+}): Promise<{ matched: boolean; recorded: boolean }> => {
   const db = getDb()
   const found = await db.query<{ id: string }>(
     `SELECT id FROM leads WHERE reply_token = $1 LIMIT 1;`,
@@ -711,7 +713,7 @@ export const recordInboundReply = async (input: {
   )
   const id = found.rows[0]?.id
 
-  if (!id) return { matched: false }
+  if (!id) return { matched: false, recorded: false }
 
   const body = stripQuotedReply(input.body)
 
@@ -724,7 +726,7 @@ export const recordInboundReply = async (input: {
 
   // A provider that delivers the same webhook twice must not mark a lead
   // unread twice, nor write the answer twice.
-  if (inserted.rowCount === 0) return { matched: true }
+  if (inserted.rowCount === 0) return { matched: true, recorded: false }
 
   await db.query(
     `UPDATE leads SET read_at = NULL, archived_at = NULL, updated_at = CURRENT_TIMESTAMP
@@ -733,7 +735,7 @@ export const recordInboundReply = async (input: {
   )
   await recordEvent(db, id, 'INBOUND')
 
-  return { matched: true }
+  return { matched: true, recorded: true }
 }
 
 /* -------------------------------------------------------------------------- */

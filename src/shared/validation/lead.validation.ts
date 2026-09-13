@@ -67,6 +67,11 @@ export const LeadFilterSchema = v.object({
   tab: v.optional(v.picklist(LEAD_TABS), 'open'),
   search: optionalText(120),
   page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 1),
+  /**
+   * Whether calls booked on the site share the list. Sent by the page from the
+   * owner's own switch, so the count under the list matches what he can see.
+   */
+  withBookings: v.optional(v.boolean(), true),
 })
 
 export type LeadFilterInput = v.InferOutput<typeof LeadFilterSchema>
