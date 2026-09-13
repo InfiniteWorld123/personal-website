@@ -1,9 +1,19 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
+import { captcha } from 'better-auth/plugins'
 import * as v from 'valibot'
+import { env } from '#/shared/env'
 import { PasswordSchema } from '#/shared/validation/auth.validation'
 import { getDb, livePool } from '../db/client'
+import { consumeRateLimit } from './rate-limit'
+import { getTurnstileAllowedHostnames } from './turnstile'
+
+const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA'
+
+const turnstileSecret =
+  env.TURNSTILE_SECRET_KEY ??
+  (process.env.NODE_ENV !== 'production' ? TURNSTILE_TEST_SECRET : 'missing-production-secret')
 
 const passwordFieldByPath = new Map<string, string>([
   ['/reset-password', 'newPassword'],
@@ -22,23 +32,26 @@ const validatePassword = (value: unknown) => {
   }
 }
 
-/**
- * Only the seeded administrator may authenticate. Checked before the password
- * is verified so a non-admin address never reaches the credential path.
- */
-const isAdminEmail = async (value: unknown) => {
-  if (typeof value !== 'string') return false
-
-  const result = await getDb().query<{ role: string }>(
-    `SELECT role FROM "user" WHERE email = $1 LIMIT 1;`,
-    [value.trim().toLowerCase()],
-  )
-
-  return result.rows[0]?.role === 'ADMIN'
-}
-
 export const auth = betterAuth({
   database: livePool,
+  advanced: {
+    ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] },
+  },
+  rateLimit: {
+    enabled: true,
+    customRules: {
+      '/sign-in/email': { window: 15 * 60, max: 10 },
+    },
+    customStorage: {
+      consume: async (key, rule) =>
+        consumeRateLimit(getDb(), {
+          scope: 'auth-login',
+          identity: key,
+          limit: rule.max,
+          windowSeconds: rule.window,
+        }),
+    },
+  },
   user: {
     additionalFields: {
       role: {
@@ -60,17 +73,20 @@ export const auth = betterAuth({
 
       const body = context.body as Record<string, unknown>
 
-      if (context.path === '/sign-in/email' && !(await isAdminEmail(body.email))) {
-        throw APIError.fromStatus('UNAUTHORIZED', {
-          code: 'INVALID_EMAIL_OR_PASSWORD',
-          message: 'Invalid administrator credentials',
-        })
-      }
-
       const passwordField = passwordFieldByPath.get(context.path)
 
       if (passwordField) validatePassword(body[passwordField])
     }),
   },
-  plugins: [tanstackStartCookies()],
+  plugins: [
+    captcha({
+      provider: 'cloudflare-turnstile',
+      secretKey: turnstileSecret,
+      endpoints: ['/sign-in/email'],
+      expectedAction: 'admin_login',
+      allowedHostnames:
+        process.env.NODE_ENV === 'production' ? getTurnstileAllowedHostnames() : undefined,
+    }),
+    tanstackStartCookies(),
+  ],
 })

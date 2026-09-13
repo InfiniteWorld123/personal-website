@@ -30,15 +30,24 @@ import { Route as RssDeDotxmlRouteImport } from './../routes/rss.de[.]xml'
 import { Route as RssEnDotxmlRouteImport } from './../routes/rss.en[.]xml'
 import { Route as LangBlogIndexRouteImport } from './../routes/$lang.blog.index'
 import { Route as LangBlogSlugRouteImport } from './../routes/$lang.blog.$slug'
+import { Route as LangBookingIndexRouteImport } from './../routes/$lang.booking.index'
+import { Route as LangBookingSlugRouteImport } from './../routes/$lang.booking.$slug'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
 import { Route as AdminBlogIndexRouteImport } from './../routes/admin.blog.index'
 import { Route as AdminBlogIdRouteImport } from './../routes/admin.blog.$id'
 import { Route as AdminBlogNewRouteImport } from './../routes/admin.blog.new'
 import { Route as AdminBlogTagsRouteImport } from './../routes/admin.blog.tags'
+import { Route as AdminBookingsIndexRouteImport } from './../routes/admin.bookings.index'
+import { Route as AdminBookingsIdRouteImport } from './../routes/admin.bookings.$id'
+import { Route as AdminBookingsAvailabilityRouteImport } from './../routes/admin.bookings.availability'
 import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
+import { Route as LangBookingManageReferenceRouteImport } from './../routes/$lang.booking.manage.$reference'
+import { Route as AdminBookingsTypesIndexRouteImport } from './../routes/admin.bookings.types.index'
+import { Route as AdminBookingsTypesIdRouteImport } from './../routes/admin.bookings.types.$id'
+import { Route as AdminBookingsTypesNewRouteImport } from './../routes/admin.bookings.types.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -145,6 +154,16 @@ const LangBlogSlugRoute = LangBlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => LangRoute,
 } as any)
+const LangBookingIndexRoute = LangBookingIndexRouteImport.update({
+  id: '/booking/',
+  path: '/booking/',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangBookingSlugRoute = LangBookingSlugRouteImport.update({
+  id: '/booking/$slug',
+  path: '/booking/$slug',
+  getParentRoute: () => LangRoute,
+} as any)
 const LangWorkIndexRoute = LangWorkIndexRouteImport.update({
   id: '/work/',
   path: '/work/',
@@ -175,6 +194,22 @@ const AdminBlogTagsRoute = AdminBlogTagsRouteImport.update({
   path: '/blog/tags',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
+  id: '/bookings/',
+  path: '/bookings/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsIdRoute = AdminBookingsIdRouteImport.update({
+  id: '/bookings/$id',
+  path: '/bookings/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsAvailabilityRoute =
+  AdminBookingsAvailabilityRouteImport.update({
+    id: '/bookings/availability',
+    path: '/bookings/availability',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -188,6 +223,27 @@ const AdminProjectsIdRoute = AdminProjectsIdRouteImport.update({
 const AdminProjectsNewRoute = AdminProjectsNewRouteImport.update({
   id: '/projects/new',
   path: '/projects/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const LangBookingManageReferenceRoute =
+  LangBookingManageReferenceRouteImport.update({
+    id: '/booking/manage/$reference',
+    path: '/booking/manage/$reference',
+    getParentRoute: () => LangRoute,
+  } as any)
+const AdminBookingsTypesIndexRoute = AdminBookingsTypesIndexRouteImport.update({
+  id: '/bookings/types/',
+  path: '/bookings/types/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsTypesIdRoute = AdminBookingsTypesIdRouteImport.update({
+  id: '/bookings/types/$id',
+  path: '/bookings/types/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsTypesNewRoute = AdminBookingsTypesNewRouteImport.update({
+  id: '/bookings/types/new',
+  path: '/bookings/types/new',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -212,16 +268,25 @@ export interface FileRoutesByFullPath {
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
+  '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/blog/tags': typeof AdminBlogTagsRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
+  '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
+  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -242,16 +307,25 @@ export interface FileRoutesByTo {
   '/$lang': typeof LangIndexRoute
   '/admin': typeof AdminIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
+  '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/blog/tags': typeof AdminBlogTagsRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog': typeof LangBlogIndexRoute
+  '/$lang/booking': typeof LangBookingIndexRoute
   '/$lang/work': typeof LangWorkIndexRoute
   '/admin/blog': typeof AdminBlogIndexRoute
+  '/admin/bookings': typeof AdminBookingsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
+  '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
+  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/admin/bookings/types': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -275,16 +349,25 @@ export interface FileRoutesById {
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
+  '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/blog/tags': typeof AdminBlogTagsRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
+  '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
+  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -309,16 +392,25 @@ export interface FileRouteTypes {
     | '/$lang/'
     | '/admin/'
     | '/$lang/blog/$slug'
+    | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/blog/tags'
+    | '/admin/bookings/$id'
+    | '/admin/bookings/availability'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
+    | '/$lang/booking/'
     | '/$lang/work/'
     | '/admin/blog/'
+    | '/admin/bookings/'
     | '/admin/projects/'
+    | '/$lang/booking/manage/$reference'
+    | '/admin/bookings/types/$id'
+    | '/admin/bookings/types/new'
+    | '/admin/bookings/types/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -339,16 +431,25 @@ export interface FileRouteTypes {
     | '/$lang'
     | '/admin'
     | '/$lang/blog/$slug'
+    | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/blog/tags'
+    | '/admin/bookings/$id'
+    | '/admin/bookings/availability'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog'
+    | '/$lang/booking'
     | '/$lang/work'
     | '/admin/blog'
+    | '/admin/bookings'
     | '/admin/projects'
+    | '/$lang/booking/manage/$reference'
+    | '/admin/bookings/types/$id'
+    | '/admin/bookings/types/new'
+    | '/admin/bookings/types'
   id:
     | '__root__'
     | '/'
@@ -371,16 +472,25 @@ export interface FileRouteTypes {
     | '/$lang/'
     | '/admin/'
     | '/$lang/blog/$slug'
+    | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/blog/tags'
+    | '/admin/bookings/$id'
+    | '/admin/bookings/availability'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
+    | '/$lang/booking/'
     | '/$lang/work/'
     | '/admin/blog/'
+    | '/admin/bookings/'
     | '/admin/projects/'
+    | '/$lang/booking/manage/$reference'
+    | '/admin/bookings/types/$id'
+    | '/admin/bookings/types/new'
+    | '/admin/bookings/types/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -545,6 +655,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangBlogSlugRouteImport
       parentRoute: typeof LangRoute
     }
+    '/$lang/booking/': {
+      id: '/$lang/booking/'
+      path: '/booking'
+      fullPath: '/$lang/booking/'
+      preLoaderRoute: typeof LangBookingIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/booking/$slug': {
+      id: '/$lang/booking/$slug'
+      path: '/booking/$slug'
+      fullPath: '/$lang/booking/$slug'
+      preLoaderRoute: typeof LangBookingSlugRouteImport
+      parentRoute: typeof LangRoute
+    }
     '/$lang/work/': {
       id: '/$lang/work/'
       path: '/work'
@@ -587,6 +711,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogTagsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/bookings/': {
+      id: '/admin/bookings/'
+      path: '/bookings'
+      fullPath: '/admin/bookings/'
+      preLoaderRoute: typeof AdminBookingsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/$id': {
+      id: '/admin/bookings/$id'
+      path: '/bookings/$id'
+      fullPath: '/admin/bookings/$id'
+      preLoaderRoute: typeof AdminBookingsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/availability': {
+      id: '/admin/bookings/availability'
+      path: '/bookings/availability'
+      fullPath: '/admin/bookings/availability'
+      preLoaderRoute: typeof AdminBookingsAvailabilityRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/projects/': {
       id: '/admin/projects/'
       path: '/projects'
@@ -608,6 +753,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProjectsNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/$lang/booking/manage/$reference': {
+      id: '/$lang/booking/manage/$reference'
+      path: '/booking/manage/$reference'
+      fullPath: '/$lang/booking/manage/$reference'
+      preLoaderRoute: typeof LangBookingManageReferenceRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/admin/bookings/types/': {
+      id: '/admin/bookings/types/'
+      path: '/bookings/types'
+      fullPath: '/admin/bookings/types/'
+      preLoaderRoute: typeof AdminBookingsTypesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/types/$id': {
+      id: '/admin/bookings/types/$id'
+      path: '/bookings/types/$id'
+      fullPath: '/admin/bookings/types/$id'
+      preLoaderRoute: typeof AdminBookingsTypesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/types/new': {
+      id: '/admin/bookings/types/new'
+      path: '/bookings/types/new'
+      fullPath: '/admin/bookings/types/new'
+      preLoaderRoute: typeof AdminBookingsTypesNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -621,9 +794,12 @@ interface LangRouteChildren {
   LangStackRoute: typeof LangStackRoute
   LangIndexRoute: typeof LangIndexRoute
   LangBlogSlugRoute: typeof LangBlogSlugRoute
+  LangBookingSlugRoute: typeof LangBookingSlugRoute
   LangWorkSlugRoute: typeof LangWorkSlugRoute
   LangBlogIndexRoute: typeof LangBlogIndexRoute
+  LangBookingIndexRoute: typeof LangBookingIndexRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
+  LangBookingManageReferenceRoute: typeof LangBookingManageReferenceRoute
 }
 
 const LangRouteChildren: LangRouteChildren = {
@@ -636,9 +812,12 @@ const LangRouteChildren: LangRouteChildren = {
   LangStackRoute: LangStackRoute,
   LangIndexRoute: LangIndexRoute,
   LangBlogSlugRoute: LangBlogSlugRoute,
+  LangBookingSlugRoute: LangBookingSlugRoute,
   LangWorkSlugRoute: LangWorkSlugRoute,
   LangBlogIndexRoute: LangBlogIndexRoute,
+  LangBookingIndexRoute: LangBookingIndexRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,
+  LangBookingManageReferenceRoute: LangBookingManageReferenceRoute,
 }
 
 const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
@@ -648,10 +827,16 @@ interface AdminRouteChildren {
   AdminBlogIdRoute: typeof AdminBlogIdRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminBlogTagsRoute: typeof AdminBlogTagsRoute
+  AdminBookingsIdRoute: typeof AdminBookingsIdRoute
+  AdminBookingsAvailabilityRoute: typeof AdminBookingsAvailabilityRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
   AdminProjectsNewRoute: typeof AdminProjectsNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
+  AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
   AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
+  AdminBookingsTypesIdRoute: typeof AdminBookingsTypesIdRoute
+  AdminBookingsTypesNewRoute: typeof AdminBookingsTypesNewRoute
+  AdminBookingsTypesIndexRoute: typeof AdminBookingsTypesIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -659,10 +844,16 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBlogIdRoute: AdminBlogIdRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
   AdminBlogTagsRoute: AdminBlogTagsRoute,
+  AdminBookingsIdRoute: AdminBookingsIdRoute,
+  AdminBookingsAvailabilityRoute: AdminBookingsAvailabilityRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
   AdminProjectsNewRoute: AdminProjectsNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,
+  AdminBookingsIndexRoute: AdminBookingsIndexRoute,
   AdminProjectsIndexRoute: AdminProjectsIndexRoute,
+  AdminBookingsTypesIdRoute: AdminBookingsTypesIdRoute,
+  AdminBookingsTypesNewRoute: AdminBookingsTypesNewRoute,
+  AdminBookingsTypesIndexRoute: AdminBookingsTypesIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -684,10 +875,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from '../../start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

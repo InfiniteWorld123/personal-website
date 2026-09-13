@@ -17,6 +17,28 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: personal_platform_test
+          POSTGRES_USER: platform
+          POSTGRES_PASSWORD: platform_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U platform -d personal_platform_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://platform:platform_test_password@127.0.0.1:5432/personal_platform_test
+      TEST_DATABASE_URL: postgresql://platform:platform_test_password@127.0.0.1:5432/personal_platform_test
+      BETTER_AUTH_SECRET: ci-only-better-auth-secret-that-is-at-least-32-characters
+      BETTER_AUTH_URL: http://localhost:3000
+      BASE_URL: http://localhost:3000
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      RATE_LIMIT_SECRET: ci-only-rate-limit-secret-that-is-at-least-32-characters
     steps:
       - uses: actions/checkout@v4
 
@@ -32,10 +54,18 @@ jobs:
       - run: bun install --frozen-lockfile
 
       # A broken build must never reach the live site.
+      - run: bun run db:migrate
       - run: bun run typecheck
       - run: bun run test
 
+      - name: Require the production Turnstile site key
+        run: test -n "$VITE_TURNSTILE_SITE_KEY"
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+
       - run: bun run build:cf
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
 
       - run: bunx wrangler deploy --config .output/server/wrangler.json
         env:

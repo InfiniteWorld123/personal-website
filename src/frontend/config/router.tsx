@@ -1,9 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
+  const globalContext = getGlobalStartContext() as { nonce?: string } | undefined
   /**
    * One client per router, so a server render never shares a cache between
    * two visitors. Admin data is refetched on focus by default; the retry is
@@ -20,6 +22,7 @@ export function getRouter() {
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     context: { queryClient },
+    ssr: globalContext?.nonce ? { nonce: globalContext.nonce } : undefined,
   })
 
   setupRouterSsrQueryIntegration({ router, queryClient })

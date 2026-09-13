@@ -8,6 +8,8 @@ export type AppErrorCode =
   | 'VALIDATION_ERROR'
   | 'BAD_REQUEST'
   | 'RATE_LIMITED'
+  | 'BOT_CHECK_FAILED'
+  | 'FORBIDDEN_ORIGIN'
   | 'INTERNAL_ERROR'
 
 type AppErrorOptions = {
@@ -52,6 +54,16 @@ export const rateLimitedError = make(
   HttpStatusCode.TOO_MANY_REQUESTS,
   'RATE_LIMITED',
   'Too many requests',
+)
+export const botCheckFailedError = make(
+  HttpStatusCode.FORBIDDEN,
+  'BOT_CHECK_FAILED',
+  'Security verification failed',
+)
+export const forbiddenOriginError = make(
+  HttpStatusCode.FORBIDDEN,
+  'FORBIDDEN_ORIGIN',
+  'Request origin is not allowed',
 )
 export const internalError = make(
   HttpStatusCode.INTERNAL_SERVER_ERROR,

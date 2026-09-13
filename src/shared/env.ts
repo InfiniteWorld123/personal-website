@@ -23,6 +23,11 @@ export const env = {
   DATABASE_URL: getEnvVar('DATABASE_URL'),
   BASE_URL: getEnvVar('BASE_URL'),
 
+  /** Server-only Turnstile key. Production requests fail closed when absent. */
+  TURNSTILE_SECRET_KEY: getOptionalEnvVar('TURNSTILE_SECRET_KEY'),
+  /** Independent HMAC key for privacy-preserving distributed rate-limit keys. */
+  RATE_LIMIT_SECRET: getOptionalEnvVar('RATE_LIMIT_SECRET'),
+
   /** Used only by the admin seed command. Never read at request time. */
   ADMIN_NAME: getOptionalEnvVar('ADMIN_NAME'),
   ADMIN_EMAIL: getOptionalEnvVar('ADMIN_EMAIL'),

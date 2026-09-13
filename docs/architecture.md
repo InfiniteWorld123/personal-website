@@ -16,7 +16,7 @@ TanStack Start / Nitro
   |  /api/*  (forwarded by the /api/$ route)
   v
 Elysia
-  |  Valibot validation -> controller -> service
+  |  Valibot validation -> service
   v
 pg.Pool · parameterized SQL
   v
@@ -36,7 +36,7 @@ src/
 │   │   ├── seed/
 │   │   ├── migrate.ts
 │   │   └── pool.ts
-│   ├── modules/              # each: *.route.ts · *.controller.ts · *.service.ts
+│   ├── modules/              # each: *.route.ts · *.service.ts
 │   │   ├── auth/  admin/
 │   │   ├── content/  projects/  services/  posts/
 │   │   ├── leads/  bookings/  availability/
@@ -63,11 +63,16 @@ Organized by business module. Every request follows one direction:
 ```text
 HTTP request
   -> Elysia route + Valibot validation
-  -> controller
   -> service (business rules)
   -> parameterized SQL
   -> shared response, or centralized AppError handling
 ```
+
+There is no controller layer. This file described one until 12 Sep 2026, but
+no module has ever had one: the route is already thin — it parses with a
+shared schema, calls one service function, and wraps the result — and a layer
+between it and the service would only forward. Documentation corrected to the
+code (D25).
 
 `/api/*` is public. `/api/admin/*` requires a valid session with the `ADMIN`
 role. Public responses are explicit projections, never raw rows.
@@ -101,7 +106,8 @@ code. See `decisions.md` D12.
 Availability rules live in this database. Slots are generated server-side in the
 visitor's IANA timezone and validated again on submit to prevent double-booking
 under concurrency. Confirmation email carries an `.ics` attachment and signed
-cancel/reschedule links. Reminders run through `pg-boss` on the same PostgreSQL
+cancel/reschedule links. The management token expires at the appointment start
+and is revoked when it is used. Reminders run through `pg-boss` on the same PostgreSQL
 instance.
 
 Booking v2 adds a Google Calendar `freebusy` query so the personal calendar

@@ -716,12 +716,12 @@ export const en: SiteContent = {
       meta: {
         title: 'Privacy · Yaman Warda',
         description:
-          'What yamanwarda.de processes: server logs, the contact form, and one strictly necessary cookie. No tracking, no advertising.',
+          'What yamanwarda.de processes: server logs, forms, security checks, and strictly necessary cookies. No tracking, no advertising.',
       },
       eyebrow: 'Privacy',
       title: 'Privacy policy',
       intro:
-        'This site collects as little as it can. There are no analytics tools, no advertising networks, and no cross-site tracking. What is actually processed is listed here in full. The German version is the binding one.',
+        'This site collects as little as it can. There are no analytics tools, no advertising networks, and no cross-site tracking. What is actually processed is listed here in full. The German version is the binding one. This version is a technical draft, not legal advice or a legal guarantee.',
       sections: [
         {
           title: 'Controller',
@@ -734,7 +734,11 @@ export const en: SiteContent = {
         },
         {
           title: 'Hosting and server logs',
-          body: 'This site is hosted by Vercel Inc. and served from their European region. When you open a page, the provider processes technically necessary data such as your IP address, the date and time, the URL requested, the volume of data transferred, the referrer, and your browser identification. The legal basis is Art. 6 (1) (f) GDPR: the legitimate interest in delivering the site securely and reliably. A data processing agreement is in place with the provider.',
+          body: 'This site is delivered through Cloudflare Workers and Cloudflare’s network. When you open a page, Cloudflare processes technically necessary connection and security data, in particular your IP address, date and time, the requested path, transferred data volume, and browser information. The legal basis is Art. 6 (1) (f) GDPR: my legitimate interest in secure, fast, and reliable delivery. Processing on my behalf is governed by the data-protection terms agreed with Cloudflare.',
+        },
+        {
+          title: 'Protection against automated abuse (Cloudflare Turnstile)',
+          body: 'I use Cloudflare Turnstile when someone signs in to the administration area or submits the contact or booking form. It processes technical signals such as IP address, browser and device information, and the result of the security check to distinguish people from automated attacks. The result is verified on the server and is not used for advertising. The legal basis is Art. 6 (1) (f) GDPR: my legitimate interest in protecting accounts, forms, and stored data against abuse.',
         },
         {
           title: 'Contact form and email',
@@ -742,7 +746,7 @@ export const en: SiteContent = {
         },
         {
           title: 'Cookies',
-          body: 'This site sets exactly one cookie, named "lang". It remembers for one year which language you chose, so you do not have to set it on every visit. It contains no identifier that could be used to recognise you and is not sent to any third party. The legal basis is § 25 (2) no. 2 TDDDG and Art. 6 (1) (f) GDPR. No consent banner is required for this, which is why there is none.',
+          body: 'The public site uses only technically necessary settings, such as the selected language. The private administration area additionally uses necessary session cookies for sign-in. These cookies are not used for advertising or cross-site tracking. The legal basis is § 25 (2) no. 2 TDDDG and Art. 6 (1) (f) GDPR. A consent banner is not provided for these necessary functions.',
         },
         {
           title: 'What does not happen',
@@ -769,7 +773,7 @@ export const en: SiteContent = {
           body: 'If what this site processes changes, this policy changes with it. The date below tells you when it was last revised.',
         },
       ],
-      updated: 'Last updated: 10 September 2026',
+      updated: 'Last updated: 13 September 2026',
     },
   },
 

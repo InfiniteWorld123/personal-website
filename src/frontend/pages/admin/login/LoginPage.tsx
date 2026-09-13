@@ -12,6 +12,7 @@ import {
 } from '#/frontend/components/ui/card'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
+import { TurnstileWidget } from '#/frontend/features/security/TurnstileWidget'
 
 export function LoginPage({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter()
@@ -19,14 +20,18 @@ export function LoginPage({ redirectTo }: { redirectTo?: string }) {
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
+    if (!turnstileToken) return
+
     setIsSubmitting(true)
 
     try {
-      await signIn({ email, password })
+      await signIn({ email, password, turnstileToken })
       await router.invalidate()
       await router.navigate({ to: redirectTo ?? '/admin' })
     } catch (error) {
@@ -38,6 +43,8 @@ export function LoginPage({ redirectTo }: { redirectTo?: string }) {
       )
     } finally {
       setIsSubmitting(false)
+      setTurnstileToken(null)
+      setTurnstileResetKey((value) => value + 1)
     }
   }
 
@@ -82,7 +89,14 @@ export function LoginPage({ redirectTo }: { redirectTo?: string }) {
               </p>
             ) : null}
 
-            <Button type="submit" disabled={isSubmitting}>
+            <TurnstileWidget
+              action="admin_login"
+              language="en"
+              resetKey={turnstileResetKey}
+              onTokenChange={setTurnstileToken}
+            />
+
+            <Button type="submit" disabled={isSubmitting || !turnstileToken}>
               {isSubmitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>

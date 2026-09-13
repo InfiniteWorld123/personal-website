@@ -73,17 +73,32 @@ lead. There is one inbox, not two.
 
 ## Bookings
 
+Implemented in `0004_bookings.sql`.
+
 | Table | Purpose |
 | --- | --- |
-| `booking_types` | Call types: duration, buffer, notice period, is_active |
-| `availability_rules` | Weekday windows in Europe/Berlin |
-| `availability_exceptions` | Blocked dates and one-off openings |
-| `bookings` | `starts_at`/`ends_at` (timestamptz), visitor timezone, `booking_type_id`, `lead_id`, `status`, cancel token |
+| `booking_types` | Call types: duration, buffers, notice period, booking window, slot interval, daily cap, location, price, is_active |
+| `booking_type_translations` | Name and description per language, as posts and projects carry theirs |
+| `availability_rules` | Weekly windows as minutes from midnight on the owner's clock |
+| `availability_exceptions` | `BLOCK` takes time away, `OPEN` adds it on a day the week has none |
+| `bookings` | `starts_at`/`ends_at`, the blocked span around them, visitor timezone, `booking_type_id`, `lead_id`, `status`, cancel token hash |
 
 **Invariants**
-- A unique constraint plus a transactional check prevents overlapping bookings.
+- Overlap is refused by the database, not by application code: `bookings` carries
+  an `EXCLUDE USING gist (blocked_slot WITH &&) WHERE (status = 'CONFIRMED')`.
+  Two visitors submitting in the same millisecond cannot both win (D27).
+- The weekly schedule stores **minutes on a wall clock**, never instants. An
+  instant would move the owner's working day by an hour twice a year (D26).
 - `visitor_timezone` is stored as an IANA name, never an offset.
-- Cancel and reschedule links carry a signed token, not a guessable id.
+- Buffers, price, and location are **copied onto the booking** at booking time.
+  Changing a setting later must not rewrite what an existing booking held.
+- Rescheduling cancels and re-inserts, linked by `rescheduled_from_id`. A
+  booking row is never moved in place.
+- Cancel and reschedule links carry a random token; only its SHA-256 digest is
+  stored, so a database copy hands out no links. Each token expires when its
+  appointment starts and is revoked immediately after cancel/reschedule.
+- `booking_types` is referenced `ON DELETE RESTRICT`: removing a call type must
+  never take the record of the calls held with it.
 - Qualifying answers collected at booking time land on the `lead`, so the call is
   never entered cold.
 

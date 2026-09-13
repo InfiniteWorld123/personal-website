@@ -566,8 +566,8 @@ html[lang="ar"] .font-heading {
 }
 
 /* ── Site header ───────────────────────────────────────────── */
-.site-header {
-  border-bottom: 1px solid var(--border);
+.site-header-shell {
+  border: 1px solid var(--border);
   background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
   backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(16, 23, 47, 0.05);
@@ -886,6 +886,65 @@ html[lang="ar"] .font-heading {
 .btn-glow-nav:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(53, 92, 255, 0.1);
+}
+
+/* ── Nav capsule ─────────────────────────────────────────────
+   The nav links are grouped the same way the theme toggle is, so the header
+   reads as three blocks rather than one long line. Inside a capsule the
+   active link cannot be a tint of the capsule's own fill — it would be a
+   shade on a shade — so it is lifted onto the card colour instead. */
+
+/* ── One capsule for five links ──────────────────────────────
+   On the wide bar the lifted pill is a single element that slides between
+   the links instead of each link owning a background: it follows the
+   pointer and returns to the current page when the pointer leaves, so the
+   header answers a hover before the page does.
+
+   It is absent until measured (`data-indicator`), because a pill parked at
+   width 0 in the corner is worse than no pill at all. */
+.nav-capsule {
+  position: relative;
+}
+
+.nav-capsule > a {
+  position: relative;
+}
+
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  width: 0;
+  height: calc(100% - 0.5rem);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow:
+    0 1px 2px rgba(16, 23, 47, 0.07),
+    0 4px 14px rgba(53, 92, 255, 0.12);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-capsule[data-indicator="on"] .nav-indicator {
+  opacity: 1;
+}
+
+html.motion .nav-indicator {
+  transition:
+    transform 340ms var(--ease-out-soft),
+    width 340ms var(--ease-out-soft),
+    opacity 200ms ease;
+}
+
+.dark .nav-indicator {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.dark .nav-capsule {
+  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
+  background: color-mix(in srgb, var(--card) 82%, var(--foreground) 5%);
 }
 
 /* Circular icon buttons */
@@ -2219,20 +2278,45 @@ html.motion .site-header-inner {
   transition: height 300ms var(--ease-out-soft);
 }
 
-html.motion .site-header {
-  transition: box-shadow 300ms var(--ease-out-soft);
-}
-
 .site-header.is-scrolled .site-header-inner {
   height: 3.5rem;
 }
 
-.site-header.is-scrolled {
-  box-shadow: 0 10px 30px rgba(16, 23, 47, 0.08);
+/* ── The header is a capsule, not a ledge ────────────────────
+   It floats over the page from the first pixel, with the page passing
+   underneath it on every side. Scrolling changes its height, nothing else:
+   the width and the radius stay put, so no edge travels while you read. */
+.site-header {
+  padding: 0.7rem 1rem 0.3rem;
 }
 
-.dark .site-header.is-scrolled {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+.site-header-shell {
+  position: relative;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+html.motion .site-header-shell {
+  transition: box-shadow 320ms var(--ease-out-soft);
+}
+
+.site-header.is-scrolled .site-header-shell {
+  box-shadow: 0 12px 34px rgba(53, 92, 255, 0.18);
+}
+
+.dark .site-header.is-scrolled .site-header-shell {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 12px 36px rgba(53, 92, 255, 0.18);
+}
+
+/* The progress line cannot run to the capsule's edge — it would cut across
+   the rounded corners — so it pulls in and takes its own radius. */
+.site-header .route-progress {
+  inset-inline: 2rem;
+  bottom: 0.25rem;
+  border-radius: 999px;
 }
 
 /* ── Primary buttons: the arrow rides in a white disc ────────
@@ -2490,14 +2574,14 @@ html.motion .route-progress {
 /* ── A glassier header ───────────────────────────────────────
    More of the page shows through, and the saturation boost keeps the blue
    underneath from going grey as it passes behind. */
-.site-header {
+.site-header-shell {
   background: color-mix(in srgb, var(--background) 52%, transparent);
   backdrop-filter: blur(26px) saturate(180%);
-  border-bottom-color: color-mix(in srgb, var(--primary) 16%, transparent);
-  box-shadow: 0 8px 30px rgba(16, 23, 47, 0.07);
+  border-color: color-mix(in srgb, var(--primary) 16%, transparent);
+  box-shadow: 0 8px 30px rgba(53, 92, 255, 0.10);
 }
 
-.dark .site-header {
+.dark .site-header-shell {
   background: color-mix(in srgb, var(--background) 58%, transparent);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
 }
@@ -2855,4 +2939,35 @@ body.dark::after {
   .post-grid { grid-template-columns: 1fr; }
   .post-card { padding: 1.4rem; }
   .post-body { font-size: 0.98rem; }
+}
+
+/* ── Booking calendar ────────────────────────────────────────
+   The chosen day wears the same blue the primary buttons do, so the calendar
+   reads as part of the site rather than as a widget dropped into it. Only the
+   fill lives here; the lift, the ring, and the pill shape all come from the
+   button treatment the rest of the page already uses. */
+.booking-day-selected {
+  background-image: linear-gradient(118deg, #2b4ffa 0%, #4d7bff 52%, #59a7ff 100%);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--primary) 70%, transparent);
+}
+
+.booking-day-selected:hover {
+  background-image: linear-gradient(118deg, #2543e6 0%, #4470f5 52%, #4d9bff 100%);
+}
+
+/* The step rail above the booking flow. A finished step keeps the blue; the
+   ones still ahead stay quiet so the eye lands on the current one. */
+.booking-step[data-state="done"] .booking-step-dot {
+  background: var(--primary);
+  color: #fff;
+}
+
+.booking-step[data-state="current"] .booking-step-dot {
+  background-image: linear-gradient(118deg, #2b4ffa 0%, #4d7bff 52%, #59a7ff 100%);
+  color: #fff;
+}
+
+.booking-step[data-state="todo"] .booking-step-dot {
+  background: var(--secondary);
+  color: color-mix(in srgb, var(--foreground) 45%, transparent);
 }

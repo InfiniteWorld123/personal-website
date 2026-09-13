@@ -20,7 +20,8 @@
     "db:down": "docker compose down",
     "db:migrate": "bun src/backend/db/migrate.ts",
     "db:seed:admin": "bun src/backend/db/seed/seed-admin.ts",
-    "db:seed:projects": "bun src/backend/db/seed/seed-projects.ts"
+    "db:seed:projects": "bun src/backend/db/seed/seed-projects.ts",
+    "db:seed:booking": "bun src/backend/db/seed/seed-booking.ts"
   },
   "dependencies": {
     "@elysia/eden": "^1.4.10",
@@ -71,7 +72,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.5",
+    "vitest": "^4.1.11",
     "wrangler": "^4.131.1"
   }
 }

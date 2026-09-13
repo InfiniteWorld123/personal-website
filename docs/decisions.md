@@ -638,3 +638,117 @@ three files name each other in their comments for that reason.
 before inserting. `javascript:` and `data:` parse as perfectly valid URLs, so
 a URL check is not the test — the protocol is. The same rule runs server-side,
 because the client's copy of it is a courtesy, not a boundary.
+
+### D25
+
+**There is no controller layer, and the documentation now says so.**
+
+*12 Sep 2026.*
+
+`architecture.md` described every module as `*.route.ts · *.controller.ts ·
+*.service.ts`. No module has ever had a controller: `posts`, `projects`, and
+now `bookings` are a route file and a service file.
+
+The route is already thin. It parses the request with a schema from
+`shared/validation`, calls one service function, and wraps the result in the
+shared envelope. A controller between the two would forward arguments and
+nothing else.
+
+The owner was asked which side to correct and chose the documentation. Should
+a module ever grow a genuine orchestration layer, adding one file is cheap;
+adding one to every module now would be ceremony.
+
+### D26
+
+**The weekly schedule is stored as wall-clock minutes, not as instants.**
+
+*12 Sep 2026.*
+
+`availability_rules` holds `weekday` and `starts_at_minute` / `ends_at_minute`
+— minutes from midnight — together with one IANA zone name, `Europe/Berlin`,
+which lives in `shared/validation/booking.validation.ts` as `OWNER_TIMEZONE`.
+
+**Why not a timestamp.** "Every Monday at 09:00" is a statement about a clock
+face, not about a point on the timeline. Stored as an instant it is
+09:00 + whatever offset applied on the day it was written, and on the last
+Sunday in March and October Germany changes that offset. The owner's whole
+working day would silently move by an hour, twice a year, and the first
+symptom would be a visitor arriving when nobody is there.
+
+**What it costs.** Every slot has to be converted from a wall-clock reading to
+an instant at generation time, and two readings do not convert cleanly:
+
+- On the spring-forward night the clock jumps 02:00 → 03:00, so 02:30 never
+  happens. `instantForWallTime` returns `null` and the generator skips it.
+  Offering that slot would confirm a meeting at a time that is not on anybody's
+  calendar.
+- On the autumn night 02:30 happens twice. The later reading is taken,
+  deterministically, so the slot exists exactly once.
+
+Both are covered in `src/tests/availability.test.ts` against the real 2026
+dates. The conversion is built on `Intl` rather than a date library, because
+`Intl` is already in every runtime this application uses — including a Worker
+— and the project carries no date library today.
+
+`bookings` itself stores instants, as every other table does. It is the
+*rule* that is a wall clock; the booking is a moment.
+
+### D27
+
+**Double booking is refused by Postgres, not by application code.**
+
+*12 Sep 2026.*
+
+```sql
+EXCLUDE USING gist (blocked_slot WITH &&) WHERE (status = 'CONFIRMED')
+```
+
+`blocked_slot` is a generated `tstzrange` over the meeting plus its buffers.
+Two confirmed bookings whose spans touch cannot both exist. The loser gets
+SQLSTATE `23P01`, which `booking.service.ts` turns into a 409 the visitor can
+act on.
+
+**Why not a check in the service.** Reading the calendar and then inserting is
+two statements, and two visitors can interleave between them. Closing that
+needs a lock — a table lock, an advisory lock, or `SERIALIZABLE` with a retry
+loop — and all three are more machinery than a constraint, and all three are
+one forgotten call site away from being bypassed. The constraint cannot be
+bypassed, because it is not a code path.
+
+**The service still checks the schedule before inserting**, in
+`assertSlotIsOffered`. That is a different question: the constraint answers
+"is this time free", the check answers "would I ever have offered this time".
+A request that never opened the calendar fails the second while passing the
+first, so both are needed.
+
+**Not scoped to the booking type**, deliberately: one person cannot be on two
+calls at once, whatever kind they are.
+
+**One implementation note.** `blocked_starts_at` and `blocked_ends_at` are
+ordinary columns written by the service, and only the range over them is
+generated. Computing them in the generated column — `starts_at - interval` —
+does not work: `timestamptz + interval` is `STABLE` rather than `IMMUTABLE`,
+and Postgres refuses it in a stored generated column.
+
+### D28
+
+**Booking writes are serialized around the business limits that SQL cannot express alone.**
+
+*12 Sep 2026.*
+
+Postgres' exclusion constraint is the final authority on overlap (D27), but it
+does not express the daily booking cap, matching a returning visitor to one
+lead, or a one-use management token. A booking transaction therefore takes
+stable advisory locks for the owner's local day and the normalized visitor
+email. This makes those decisions serial across tabs and application instances
+without a process-local mutex.
+
+Public booking attempts have an atomic, shared rate budget keyed by SHA-256
+digests. On the Cloudflare Worker path, the same budget also keys on the
+Cloudflare-authored client IP; Node development intentionally does not trust a
+spoofable forwarded header. Management-token actions have their own short
+budget and lock the booking row before changing it.
+
+The token itself expires at the booking start and is revoked on cancellation
+or rescheduling. The new booking receives a new token. This limits the time in
+which a leaked email URL can reveal a visitor's data or change their booking.

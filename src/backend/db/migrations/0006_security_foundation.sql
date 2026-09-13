@@ -1,0 +1,6 @@
+ALTER TABLE booking_rate_limits RENAME TO request_rate_limits;
+
+ALTER TABLE request_rate_limits
+  RENAME CONSTRAINT booking_rate_limits_count_check TO request_rate_limits_count_check;
+
+ALTER INDEX booking_rate_limits_window_idx RENAME TO request_rate_limits_window_idx;

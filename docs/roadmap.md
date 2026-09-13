@@ -62,13 +62,28 @@ review of the story section's copy and illustration.
 status pipeline and private notes, and replying to a lead from the admin.
 🔒 **Security checkpoint** — public write endpoint, rate limiting, spam.
 
-## [ ] B5 — Booking
+## [~] B5 — Booking
 *Model: Opus 5 · high*
 Booking types, availability rules, timezone-correct slot generation, overlap
 prevention, confirmation email with `.ics`, signed cancel/reschedule links,
 qualifying questions on the lead, `/admin/bookings`, reminders via `pg-boss`.
 Google Calendar sync is a follow-up block, not part of this one.
 🔒 **Security checkpoint** — signed tokens, public booking endpoint.
+
+Built 12 Sep 2026, ahead of B4 at the owner's request, who chose to build the
+booking system rather than rent one from Cal.com or Calendly. `0004_bookings.sql`
+carries the `leads` table too, because a booking attaches to a lead and
+retrofitting that key later is worse than creating the table early — the leads
+admin, the pipeline, and the contact form writing to it are still B4.
+
+Two decisions were taken during the block and are recorded: the weekly schedule
+is stored as wall-clock minutes rather than instants (D26), and double booking
+is prevented by a Postgres exclusion constraint rather than in application code
+(D27).
+
+Open: reminder emails, which need a Cloudflare Cron Trigger and therefore a
+deploy; and nothing links to `/booking` from the site yet — the primary CTA
+still points at `/contact`, and moving it is the owner's call.
 
 ## [ ] B6 — Content management
 *Model: Sonnet 5 · medium*

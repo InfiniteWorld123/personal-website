@@ -1,14 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "yamanwarda",
-  "compatibility_date": "2026-09-01",
+  "compatibility_date": "2026-09-13",
 
   // `pg`, `AsyncLocalStorage`, and the crypto used by Better Auth all need the
   // Node compatibility layer. Nitro adds this flag on its own when it writes
   // the deployed config; it is stated here so the value is visible in the repo.
   "compatibility_flags": ["nodejs_compat"],
 
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  },
 
   // Off since the domain went live on 11 Sep 2026. A `*.workers.dev` address
   // would be a second, crawlable copy of the whole site competing with it in

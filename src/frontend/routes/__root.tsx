@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, useRouter, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { ReactNode } from 'react'
@@ -48,16 +48,18 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const language = languageFromPathname(pathname) ?? defaultLanguage
+  const nonce = typeof router.options.ssr === 'object' ? router.options.ssr.nonce : undefined
 
   useMotionPreference()
 
   return (
     <html lang={language} dir={directionFor(language)} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
       <body className="min-h-screen">

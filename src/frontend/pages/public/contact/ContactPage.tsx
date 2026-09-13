@@ -74,7 +74,7 @@ export function ContactPage() {
         </div>
 
         <div className="contact-form-card rounded-[1.75rem] p-6 sm:p-9">
-          <ContactForm copy={contact.form} />
+          <ContactForm copy={contact.form} language={language} />
         </div>
       </Container>
     </section>

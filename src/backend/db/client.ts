@@ -54,7 +54,9 @@ const resolveHyperdriveUrl = (): Promise<void> =>
   (hyperdriveResolution ??= (async () => {
     try {
       const specifier = ['cloudflare', 'workers'].join(':')
-      const workerModule = (await import(specifier)) as { env?: Record<string, unknown> }
+      const workerModule = (await import(/* @vite-ignore */ specifier)) as {
+        env?: Record<string, unknown>
+      }
       const binding = workerModule.env?.HYPERDRIVE as { connectionString?: string } | undefined
 
       hyperdriveUrl = binding?.connectionString

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { handleError } from '#/backend/shared/error-handler'
-import { notFoundError } from '#/backend/shared/error'
+import { notFoundError, rateLimitedError } from '#/backend/shared/error'
 
 /**
  * Elysia derives its `code` from the thrown error's own `code` field, so an
@@ -15,9 +15,10 @@ const run = (code: string, error: unknown) => {
   }
 
   // The handler only reads these three fields.
-  ;(handleError as unknown as (context: unknown) => unknown)({ code, error, status })
+  const set = { headers: {} as Record<string, string> }
+  ;(handleError as unknown as (context: unknown) => unknown)({ code, error, set, status })
 
-  return captured as { status: number; body: { message: string; code: string } }
+  return { ...(captured as { status: number; body: { message: string; code: string } }), headers: set.headers }
 }
 
 describe('the central error handler', () => {
@@ -33,5 +34,12 @@ describe('the central error handler', () => {
 
     expect(result.status).toBe(404)
     expect(result.body.message).toBe('Route not found')
+  })
+
+  it('adds Retry-After to rate-limit responses', () => {
+    const result = run('AppError', rateLimitedError('Wait', { retryAfter: 42.1 }))
+
+    expect(result.status).toBe(429)
+    expect(result.headers['Retry-After']).toBe('43')
   })
 })

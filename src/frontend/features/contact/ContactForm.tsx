@@ -7,6 +7,8 @@ import { Label } from '#/frontend/components/ui/label'
 import { Textarea } from '#/frontend/components/ui/textarea'
 import type { ContactCopy } from '#/frontend/content/types'
 import { site } from '#/frontend/content/site'
+import { TurnstileWidget } from '#/frontend/features/security/TurnstileWidget'
+import type { Language } from '#/frontend/i18n/language'
 import { cn } from '#/frontend/lib/utils'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
@@ -37,11 +39,13 @@ export function attachmentAccepted(file: { name: string; type: string; size: num
  * optional, so a visitor who only wants to write a sentence still can.
  * Posts to the legacy contact endpoint until the leads module lands in B4.
  */
-export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
+export function ContactForm({ copy, language }: { copy: ContactCopy['form']; language: Language }) {
   const [status, setStatus] = useState<Status>('idle')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [attachment, setAttachment] = useState<File | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0)
 
   const clearAttachment = () => {
     setAttachment(null)
@@ -77,7 +81,9 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
     if (attachment && !attachmentAccepted(attachment)) nextErrors.attachment = copy.errors.attachment
 
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0 || !turnstileToken) return
+
+    data.set('cf-turnstile-response', turnstileToken)
 
     setStatus('sending')
 
@@ -91,6 +97,9 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
       clearAttachment()
     } catch {
       setStatus('error')
+    } finally {
+      setTurnstileToken(null)
+      setTurnstileResetKey((value) => value + 1)
     }
   }
 
@@ -177,6 +186,18 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
         </div>
       </Field>
 
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="contact-website">Website</label>
+        <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
+      </div>
+
+      <TurnstileWidget
+        action="contact_submit"
+        language={language}
+        resetKey={turnstileResetKey}
+        onTokenChange={setTurnstileToken}
+      />
+
       {status === 'error' ? (
         <p role="alert" className="text-destructive text-sm">
           {copy.error}
@@ -186,7 +207,7 @@ export function ContactForm({ copy }: { copy: ContactCopy['form'] }) {
       <Button
         type="submit"
         size="lg"
-        disabled={status === 'sending'}
+        disabled={status === 'sending' || !turnstileToken}
         className="mt-1 w-fit rounded-full bg-primary px-7 text-primary-foreground"
       >
         {status === 'sending' ? copy.sending : copy.submit}

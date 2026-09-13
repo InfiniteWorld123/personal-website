@@ -716,12 +716,12 @@ export const de: SiteContent = {
       meta: {
         title: 'Datenschutzerklärung · Yaman Warda',
         description:
-          'Welche Daten yamanwarda.de verarbeitet: Server-Logs, das Kontaktformular und ein einziges technisch notwendiges Cookie. Kein Tracking, keine Werbung.',
+          'Welche Daten yamanwarda.de verarbeitet: Server-Logs, Formulare, Sicherheitsprüfungen und technisch notwendige Cookies. Kein Tracking, keine Werbung.',
       },
       eyebrow: 'Datenschutz',
       title: 'Datenschutzerklärung',
       intro:
-        'Diese Website erhebt so wenig wie möglich. Es gibt keine Analyse-Tools, keine Werbenetzwerke und kein Tracking über Seiten hinweg. Was tatsächlich verarbeitet wird, steht hier vollständig.',
+        'Diese Website erhebt so wenig wie möglich. Es gibt keine Analyse-Tools, keine Werbenetzwerke und kein Tracking über Seiten hinweg. Was tatsächlich verarbeitet wird, steht hier vollständig. Diese Fassung ist ein technischer Entwurf und keine Rechtsberatung oder rechtliche Garantie.',
       sections: [
         {
           title: 'Verantwortlicher',
@@ -734,7 +734,11 @@ export const de: SiteContent = {
         },
         {
           title: 'Server-Logs beim Hosting',
-          body: 'Diese Website wird bei der Vercel Inc. gehostet, ausgeliefert über deren europäische Region. Beim Aufruf einer Seite verarbeitet der Anbieter technisch notwendige Daten wie IP-Adresse, Datum und Uhrzeit, aufgerufene URL, übertragene Datenmenge, Referrer und Browserkennung. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: das berechtigte Interesse an einer sicheren und funktionsfähigen Auslieferung der Website. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag.',
+          body: 'Diese Website wird über Cloudflare Workers und das Netzwerk von Cloudflare ausgeliefert. Beim Aufruf einer Seite verarbeitet Cloudflare technisch notwendige Verbindungs- und Sicherheitsdaten, insbesondere IP-Adresse, Datum und Uhrzeit, aufgerufenen Pfad, übertragene Datenmenge und Browserinformationen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: mein berechtigtes Interesse an einer sicheren, schnellen und zuverlässigen Auslieferung. Für die Verarbeitung im Auftrag gelten die mit Cloudflare vereinbarten Datenschutzbedingungen.',
+        },
+        {
+          title: 'Schutz vor automatisiertem Missbrauch (Cloudflare Turnstile)',
+          body: 'Beim Anmelden in die Verwaltung sowie beim Absenden des Kontakt- oder Buchungsformulars nutze ich Cloudflare Turnstile. Der Dienst verarbeitet technische Signale wie IP-Adresse, Browser- und Geräteinformationen sowie das Ergebnis der Sicherheitsprüfung, um Menschen von automatisierten Angriffen zu unterscheiden. Das Prüfergebnis wird serverseitig kontrolliert; es wird nicht für Werbung eingesetzt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: mein berechtigtes Interesse, Konten, Formulare und gespeicherte Daten vor Missbrauch zu schützen.',
         },
         {
           title: 'Kontaktformular und E-Mail',
@@ -742,7 +746,7 @@ export const de: SiteContent = {
         },
         {
           title: 'Cookies',
-          body: 'Diese Website setzt ein einziges Cookie mit dem Namen "lang". Es speichert für ein Jahr, welche Sprache du gewählt hast, damit du sie nicht bei jedem Besuch neu einstellst. Es enthält keine Kennung, mit der du wiedererkannt werden könntest, und wird an keinen Dritten übermittelt. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG und Art. 6 Abs. 1 lit. f DSGVO. Ein Einwilligungsbanner ist dafür nicht erforderlich, weshalb es hier auch keines gibt.',
+          body: 'Die öffentliche Website setzt nur technisch notwendige Einstellungen, etwa für die gewählte Sprache. Im nicht öffentlichen Verwaltungsbereich werden zusätzlich notwendige Sitzungs-Cookies für die Anmeldung verwendet. Diese Cookies dienen weder Werbung noch seitenübergreifendem Tracking. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG sowie Art. 6 Abs. 1 lit. f DSGVO. Ein Einwilligungsbanner ist für diese notwendigen Funktionen nicht vorgesehen.',
         },
         {
           title: 'Was nicht passiert',
@@ -769,7 +773,7 @@ export const de: SiteContent = {
           body: 'Ändert sich, was diese Website verarbeitet, ändert sich auch diese Erklärung. Das Datum unten sagt dir, wann sie zuletzt angepasst wurde.',
         },
       ],
-      updated: 'Stand: 10. September 2026',
+      updated: 'Stand: 13. September 2026',
     },
   },
 

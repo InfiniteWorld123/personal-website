@@ -12,6 +12,16 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, params, children, ...props }: any) => <a href={to.replace('$lang', params.lang).replace('$slug', params.slug ?? '')} {...props}>{children}</a>,
 }))
 vi.mock('#/frontend/hooks/use-prefers-reduced-motion', () => ({ usePrefersReducedMotion: () => true }))
+vi.mock('#/frontend/features/security/TurnstileWidget', async () => {
+  const { useEffect } = await import('react')
+
+  return {
+    TurnstileWidget: ({ onTokenChange }: { onTokenChange: (token: string) => void }) => {
+      useEffect(() => onTokenChange('verified-test-token'), [onTokenChange])
+      return <div data-testid="turnstile" />
+    },
+  }
+})
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 const work = getContent('en').work
@@ -74,7 +84,7 @@ describe('contact behavior is preserved', () => {
   it('validates without sending invalid requests', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
-    render(<ContactForm copy={copy} />)
+    render(<ContactForm copy={copy} language="en" />)
     fireEvent.click(screen.getByRole('button', { name: copy.submit }))
     expect(screen.getByText(copy.errors.name)).toBeTruthy()
     expect(screen.getByText(copy.errors.email)).toBeTruthy()
@@ -83,7 +93,7 @@ describe('contact behavior is preserved', () => {
   })
   it.each([true, false])('keeps the %s response state with a mocked transport', async ok => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, status: ok ? 200 : 500 }))
-    render(<ContactForm copy={copy} />)
+    render(<ContactForm copy={copy} language="en" />)
     fireEvent.change(document.querySelector('#name')!, { target: { value: 'Test Person' } })
     fireEvent.change(document.querySelector('#email')!, { target: { value: 'test@example.com' } })
     fireEvent.change(document.querySelector('#message')!, { target: { value: 'Local test message, never sent.' } })

@@ -109,13 +109,24 @@ const toResponseError = (error: unknown): NormalizedError => {
   })
 }
 
-export const handleError: ErrorHandler<{ AppError: AppError }> = ({ code, error, status }) => {
+export const handleError: ErrorHandler<{ AppError: AppError }> = ({ code, error, set, status }) => {
   // Answered first on purpose. Elysia derives `code` from the error's own
   // `code` field, and ours uses `NOT_FOUND` — the same name Elysia gives an
   // unmatched route. Checked in the other order, every "that post does not
   // exist" reached the client as "Route not found" instead.
   if (isAppError(error)) {
     const appResponse = toResponseError(error)
+
+    if (error.code === 'RATE_LIMITED') {
+      const retryAfter =
+        typeof error.details === 'object' && error.details && 'retryAfter' in error.details
+          ? Number(error.details.retryAfter)
+          : Number.NaN
+
+      if (Number.isFinite(retryAfter) && retryAfter > 0) {
+        set.headers['Retry-After'] = String(Math.ceil(retryAfter))
+      }
+    }
 
     return status(appResponse.status, appResponse.body)
   }

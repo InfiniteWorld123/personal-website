@@ -29,11 +29,14 @@ export class AuthRequestError extends Error {
 
 const authClient = createAuthClient()
 
-export async function signIn(input: { email: string; password: string }) {
-  const { data, error } = await authClient.signIn.email({
-    email: input.email,
-    password: input.password,
-  })
+export async function signIn(input: { email: string; password: string; turnstileToken: string }) {
+  const { data, error } = await authClient.signIn.email(
+    {
+      email: input.email,
+      password: input.password,
+    },
+    { headers: { 'x-captcha-response': input.turnstileToken } },
+  )
 
   if (error) throw new AuthRequestError(error, 'Sign in failed')
 
