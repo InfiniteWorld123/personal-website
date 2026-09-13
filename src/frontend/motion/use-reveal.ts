@@ -13,8 +13,14 @@ const SCOPE_ATTRIBUTE = 'data-reveal-scope'
  * The resting DOM state is the finished page: the hidden state only exists
  * under `html.motion`, which is never set for visitors who prefer reduced
  * motion or who have no JavaScript.
+ *
+ * `ready` is for a section that is not in the tree on the first render —
+ * one that waits for data before it renders anything. Without it the effect
+ * runs once against an empty ref, nothing is ever observed, and the section
+ * arrives hidden and stays hidden. Pass whatever value changes when the
+ * content appears.
  */
-export function useReveal<T extends HTMLElement = HTMLElement>() {
+export function useReveal<T extends HTMLElement = HTMLElement>(ready?: unknown) {
   const ref = useRef<T>(null)
 
   useEffect(() => {
@@ -50,7 +56,7 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
 
     observer.observe(scope)
     return () => observer.disconnect()
-  }, [])
+  }, [ready])
 
   return ref
 }

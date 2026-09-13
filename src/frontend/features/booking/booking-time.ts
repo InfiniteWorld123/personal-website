@@ -95,3 +95,32 @@ export const monthGrid = (month: string): Array<string | null> => {
 
   return cells
 }
+
+/** `YYYY-MM-DD`, `amount` days later. Plain-date arithmetic, never an offset. */
+export const addDays = (day: string, amount: number): string =>
+  new Date(Date.parse(`${day}T00:00:00.000Z`) + amount * 86_400_000).toISOString().slice(0, 10)
+
+/**
+ * "Do. 14:00" — the shortest form that still says which day. Used where a
+ * single free time is quoted outside the calendar, so the visitor can judge
+ * it at a glance before deciding to open the booking page at all.
+ */
+export const formatShortSlot = (instant: string, timeZone: string, language: Language): string =>
+  new Intl.DateTimeFormat(LOCALES[language], {
+    timeZone,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(instant))
+
+/** "Do. 17. Sep · 14:00" — a slot offered as its own button. */
+export const formatSlotLabel = (instant: string, timeZone: string, language: Language): string => {
+  const date = new Intl.DateTimeFormat(LOCALES[language], {
+    timeZone,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(instant))
+
+  return `${date} · ${formatTime(instant, timeZone, language)}`
+}

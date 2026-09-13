@@ -1,4 +1,5 @@
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
+import { BookingBand } from '#/frontend/features/booking/BookingBand'
 import { getContent } from '#/frontend/content'
 import type { ProjectEntry } from '#/frontend/features/work/project-list'
 import type { PublicPostSummary } from '#/shared/types/post.types'
@@ -18,6 +19,9 @@ import { WorkSection } from './WorkSection'
  * landing page; their content and components stay for their own pages.
  * The writing section sits after the process and disappears when nothing is
  * published, so the page never advertises an empty blog.
+ * The booking band follows the process for the same reason the closing call
+ * to action ends the page: asking for a call before the visitor has seen how
+ * the work runs is asking twice in one screen.
  */
 export function HomePage({
   entries,
@@ -35,6 +39,7 @@ export function HomePage({
       <ServicesSection copy={home.services} services={services.items} language={language} />
       <WorkSection copy={home.work} work={work} language={language} entries={entries} />
       <ProcessSection copy={home.process} />
+      <BookingBand />
       <BlogSection blog={blog} language={language} posts={posts} />
       <HomeFaqSection copy={faq} />
       <CtaBand title={home.cta.title} body={home.cta.body} button={home.cta.button} alt={home.cta.alt} />

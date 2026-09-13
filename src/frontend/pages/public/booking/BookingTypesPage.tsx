@@ -5,6 +5,7 @@ import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
+import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import { bookingTypesQuery } from '#/frontend/features/booking/booking-queries'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal, useTilt } from '#/frontend/motion'
@@ -13,6 +14,7 @@ import type { PublicBookingType } from '#/shared/types/booking.types'
 export function BookingTypesPage() {
   const { language } = useLanguage()
   const copy = getBookingCopy(language)
+  const entry = getBookingEntryCopy(language)
   const types = useQuery(bookingTypesQuery(language))
   const ref = useReveal<HTMLElement>()
 
@@ -51,6 +53,19 @@ export function BookingTypesPage() {
             </div>
           )}
         </div>
+
+        {/* Neither door is a dead end: whoever would rather write finds the
+            form from here instead of going back to the menu. */}
+        <p className="text-foreground/55 text-sm">
+          {entry.toContact.question}{' '}
+          <Link
+            to="/$lang/contact"
+            params={{ lang: language }}
+            className="link-underline-slide text-primary font-semibold"
+          >
+            {entry.toContact.link}
+          </Link>
+        </p>
       </Container>
     </section>
   )

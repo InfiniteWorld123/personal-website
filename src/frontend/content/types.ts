@@ -234,8 +234,6 @@ export type ContactCopy = {
     companyOptional: string
     phone: string
     phoneOptional: string
-    preferred: string
-    preferredOptions: Array<{ value: string; label: string }>
     projectType: string
     projectTypes: Array<{ value: string; label: string }>
     budget: string

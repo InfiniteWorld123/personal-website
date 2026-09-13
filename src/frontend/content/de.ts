@@ -9,7 +9,7 @@ export const de: SiteContent = {
       { label: 'Über mich', to: '/$lang/about' },
       { label: 'Kontakt', to: '/$lang/contact' },
     ],
-    cta: 'Gespräch anfragen',
+    cta: 'Termin buchen',
     menu: { open: 'Menü öffnen', close: 'Menü schließen', navigation: 'Hauptnavigation' },
     language: { label: 'Sprache', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Helles Design', dark: 'Dunkles Design', system: 'Systemdesign', label: 'Design' },
@@ -44,8 +44,8 @@ export const de: SiteContent = {
       staticLine: 'ENTWICKLER',
       headline: 'Dein direkter Partner für digitale Projekte.',
       sub: 'Ich höre zu, plane klar und baue etwas, das du wirklich nutzen kannst.',
-      cta: 'Gespräch anfragen',
-      secondary: 'Was ich gebaut habe',
+      cta: 'Termin buchen',
+      secondary: 'Nachricht schreiben',
       availability: 'In Erfurt zu Hause · remote für dich',
     },
     story: {
@@ -506,11 +506,6 @@ export const de: SiteContent = {
       companyOptional: 'optional',
       phone: 'Telefon',
       phoneOptional: 'optional',
-      preferred: 'Wie erreiche ich dich am liebsten?',
-      preferredOptions: [
-        { value: 'email', label: 'E-Mail' },
-        { value: 'call', label: 'Anruf' },
-      ],
       projectType: 'Worum geht es? (optional)',
       projectTypes: [
         { value: 'unsure', label: 'Noch nicht sicher' },

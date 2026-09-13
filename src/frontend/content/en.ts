@@ -9,7 +9,7 @@ export const en: SiteContent = {
       { label: 'About', to: '/$lang/about' },
       { label: 'Contact', to: '/$lang/contact' },
     ],
-    cta: 'Request a call',
+    cta: 'Book a call',
     menu: { open: 'Open menu', close: 'Close menu', navigation: 'Main navigation' },
     language: { label: 'Language', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'Light theme', dark: 'Dark theme', system: 'System theme', label: 'Theme' },
@@ -44,8 +44,8 @@ export const en: SiteContent = {
       staticLine: 'DEVELOPER',
       headline: 'Your direct partner for digital projects.',
       sub: 'I listen, plan clearly, and build something you can genuinely use.',
-      cta: 'Request a call',
-      secondary: 'What I’ve built',
+      cta: 'Book a call',
+      secondary: 'Write a message',
       availability: 'At home in Erfurt · working with you remotely',
     },
     story: {
@@ -505,11 +505,6 @@ export const en: SiteContent = {
       companyOptional: 'optional',
       phone: 'Phone',
       phoneOptional: 'optional',
-      preferred: 'How should I reach you?',
-      preferredOptions: [
-        { value: 'email', label: 'Email' },
-        { value: 'call', label: 'Call' },
-      ],
       projectType: 'What is it about? (optional)',
       projectTypes: [
         { value: 'unsure', label: 'Not sure yet' },

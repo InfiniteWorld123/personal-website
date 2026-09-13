@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, Github, MapPin } from 'lucide-react'
+import { ArrowRight, CalendarDays, Github, MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
@@ -7,6 +7,8 @@ import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent, serviceOrder, site } from '#/frontend/content'
+import { NextSlotLine } from '#/frontend/features/booking/NextSlotLine'
+import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import type { HomeCopy } from '#/frontend/content/types'
 import { usePrefersReducedMotion } from '#/frontend/hooks/use-prefers-reduced-motion'
 import { useLanguage } from '#/frontend/i18n/language-provider'
@@ -25,6 +27,7 @@ import { cn } from '#/frontend/lib/utils'
 export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
   const { language, isRtl } = useLanguage()
   const { services, shell } = getContent(language)
+  const entry = getBookingEntryCopy(language)
 
   const item = (index: number) => ({ 'data-hero-item': '', style: { '--hero-i': index } as CSSProperties })
 
@@ -85,22 +88,32 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               {copy.sub}
             </p>
 
+            {/* Two doors, not one: the filled button leads, and the outlined
+                one catches everybody who is not ready to put a call in their
+                calendar yet. The line under them is what makes the first one
+                credible — a time that is actually free. */}
             <div {...item(9)} className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-full px-7">
-                <Link to="/$lang/contact" params={{ lang: language }}>
+                <Link to="/$lang/booking" params={{ lang: language }}>
+                  <CalendarDays className="size-4" />
                   {copy.cta}
                   <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-7">
-                <Link to="/$lang/work" params={{ lang: language }}>
+                <Link to="/$lang/contact" params={{ lang: language }}>
                   {copy.secondary}
                   <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
             </div>
 
-            <div {...item(10)} className="mt-8 flex flex-wrap items-center gap-3">
+            <div {...item(10)}>
+              <NextSlotLine />
+              <p className="mt-3 max-w-xl text-sm leading-7 text-foreground/48">{entry.reassure}</p>
+            </div>
+
+            <div {...item(11)} className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 asChild
                 variant="ghost"
@@ -121,7 +134,7 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </div>
 
             {/* The three service lines as pills, each a shortcut into its detail. */}
-            <div {...item(11)} className="mt-7 flex flex-wrap gap-2">
+            <div {...item(12)} className="mt-7 flex flex-wrap gap-2">
               {serviceOrder.map((slug) => (
                 <Link
                   key={slug}

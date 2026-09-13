@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent, ReactNode } from 'react'
-import { ArrowRight, Paperclip, X } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { ArrowRight, CalendarDays, Paperclip, X } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
 import { Textarea } from '#/frontend/components/ui/textarea'
 import type { ContactCopy } from '#/frontend/content/types'
 import { site } from '#/frontend/content/site'
+import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import { TurnstileWidget } from '#/frontend/features/security/TurnstileWidget'
 import type { Language } from '#/frontend/i18n/language'
 import { cn } from '#/frontend/lib/utils'
@@ -132,7 +134,7 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
         </Field>
       </div>
 
-      <ChannelChoice label={copy.preferred} options={copy.preferredOptions} />
+      <CallInstead language={language} />
 
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-3">
         <Field label={copy.projectType} htmlFor="projectType">
@@ -249,34 +251,26 @@ function Field({
 }
 
 /**
- * Visible channel choices keep a visitor in control of the reply without
- * turning a short project request into paperwork.
+ * What used to be a radio pair — email or a call — is now the two doors of
+ * the site itself: this form is answered by email, and a call is a time the
+ * visitor picks in the calendar. Asking here and then answering by email
+ * anyway was the contradiction this replaces.
  */
-function ChannelChoice({
-  label,
-  options,
-}: {
-  label: string
-  options: Array<{ value: string; label: string }>
-}) {
+function CallInstead({ language }: { language: Language }) {
+  const entry = getBookingEntryCopy(language)
+
   return (
-    <fieldset className="contact-channel-group border-0 p-0">
-      <legend className="contact-channel-legend text-sm font-medium leading-none">{label}</legend>
-      <div className="contact-channels flex flex-wrap gap-2">
-        {options.map((option, index) => (
-          <label key={option.value} className="contact-channel cursor-pointer rounded-full px-4 py-2 text-sm font-semibold">
-            <input
-              type="radio"
-              name="preferred"
-              value={option.value}
-              defaultChecked={index === 0}
-              className="sr-only"
-            />
-            {option.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
+    <p className="text-muted-foreground m-0 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      <CalendarDays aria-hidden="true" className="size-4 text-primary" />
+      {entry.toBooking.question}{' '}
+      <Link
+        to="/$lang/booking"
+        params={{ lang: language }}
+        className="link-underline-slide text-primary font-semibold"
+      >
+        {entry.toBooking.link}
+      </Link>
+    </p>
   )
 }
 

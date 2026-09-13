@@ -2,6 +2,7 @@ import { Languages, Mail, MapPin } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { getContent, site } from '#/frontend/content'
+import { BookingAside } from '#/frontend/features/booking/BookingAside'
 import { ContactForm } from '#/frontend/features/contact/ContactForm'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal, useTilt } from '#/frontend/motion'
@@ -23,6 +24,11 @@ export function ContactPage() {
             <h1 className="section-title mt-5 text-display-lg text-foreground"><SplitWords text={contact.title} /></h1>
             <p data-reveal className="hero-copy mt-5 text-base leading-8 sm:text-[1.05rem]">{contact.intro}</p>
           </div>
+
+          {/* The faster route, offered once and above the details: whoever
+              lands here has already decided to get in touch, and the form is
+              still right beside it for whoever would rather write. */}
+          <BookingAside />
 
           <div className="flex flex-col gap-3">
             <p className="text-base font-semibold text-foreground">{contact.aside.title}</p>

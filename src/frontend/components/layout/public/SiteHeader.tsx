@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { ArrowRight, Menu } from 'lucide-react'
+import { ArrowRight, CalendarDays, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/frontend/components/ui/button'
 import { Separator } from '#/frontend/components/ui/separator'
@@ -14,6 +14,7 @@ import {
 } from '#/frontend/components/ui/sheet'
 import type { ShellCopy } from '#/frontend/content/types'
 import { site } from '#/frontend/content/site'
+import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { useNavIndicator, useScrolled } from '#/frontend/motion'
 import { cn } from '#/frontend/lib/utils'
@@ -24,6 +25,7 @@ import { ThemeToggle } from './ThemeToggle'
 
 export function SiteHeader({ copy }: { copy: ShellCopy }) {
   const { language, isRtl } = useLanguage()
+  const entry = getBookingEntryCopy(language)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const scrolled = useScrolled()
@@ -91,7 +93,8 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
               asChild
               className="hidden h-10 rounded-full bg-primary px-5 text-primary-foreground md:inline-flex"
             >
-              <Link to="/$lang/contact" params={{ lang: language }}>
+              <Link to="/$lang/booking" params={{ lang: language }}>
+                <CalendarDays className="size-4" />
                 {copy.cta}
                 <ArrowRight className="btn-arrow rtl:-scale-x-100" />
               </Link>
@@ -136,12 +139,17 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
               {site.email}
             </p>
             <SheetClose asChild>
-              <Button
-                asChild
-                className="w-full rounded-full"
-              >
+              <Button asChild className="w-full rounded-full">
+                <Link to="/$lang/booking" params={{ lang: language }}>
+                  <CalendarDays className="size-4" />
+                  {entry.cta}
+                </Link>
+              </Button>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button asChild variant="outline" className="w-full rounded-full">
                 <Link to="/$lang/contact" params={{ lang: language }}>
-                  {copy.cta}
+                  {entry.write}
                 </Link>
               </Button>
             </SheetClose>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, CalendarCheck, Check } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
@@ -24,7 +24,7 @@ import type { PublicBooking } from '#/shared/types/booking.types'
 
 type Step = 'time' | 'details' | 'done'
 
-export function BookingFlowPage({ slug }: { slug: string }) {
+export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string }) {
   const { language } = useLanguage()
   const copy = getBookingCopy(language)
   const ref = useReveal<HTMLElement>()
@@ -34,9 +34,13 @@ export function BookingFlowPage({ slug }: { slug: string }) {
   const [timezone, setTimezone] = useState(detectTimezone)
   const today = useMemo(() => dayIn(new Date(), timezone), [timezone])
 
-  const [month, setMonth] = useState(() => startOfMonth(today))
-  const [selectedDay, setSelectedDay] = useState<string | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  // A time carried in from elsewhere on the site (`?slot=`). It opens the
+  // calendar on that day with that time chosen; the visitor still confirms.
+  const invited = useMemo(() => (slot ? dayIn(new Date(slot), timezone) : null), [slot, timezone])
+
+  const [month, setMonth] = useState(() => startOfMonth(invited ?? today))
+  const [selectedDay, setSelectedDay] = useState<string | null>(invited)
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(slot ?? null)
   const [step, setStep] = useState<Step>('time')
   const [confirmed, setConfirmed] = useState<PublicBooking | null>(null)
 
@@ -53,6 +57,14 @@ export function BookingFlowPage({ slug }: { slug: string }) {
   )
 
   const daySlots = days.find((day) => day.date === selectedDay)?.slots ?? []
+
+  // Somebody else may have taken the invited time between the link being
+  // rendered and this page loading, so it is only kept once the calendar has
+  // actually offered it. The day stays selected either way.
+  useEffect(() => {
+    if (!slots.isSuccess || !selectedSlot) return
+    if (!daySlots.some((offered) => offered.startsAt === selectedSlot)) setSelectedSlot(null)
+  }, [slots.isSuccess, selectedSlot, daySlots])
 
   const handleMonthChange = (next: string) => {
     setMonth(next)

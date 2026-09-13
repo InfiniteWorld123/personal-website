@@ -9,7 +9,7 @@ export const ar: SiteContent = {
       { label: 'من أنا', to: '/$lang/about' },
       { label: 'تواصل', to: '/$lang/contact' },
     ],
-    cta: 'اطلب مكالمة',
+    cta: 'احجز موعداً',
     menu: { open: 'فتح القائمة', close: 'إغلاق القائمة', navigation: 'القائمة الرئيسية' },
     language: { label: 'اللغة', names: { de: 'Deutsch', en: 'English', ar: 'العربية' } },
     theme: { light: 'الوضع الفاتح', dark: 'الوضع الداكن', system: 'وضع النظام', label: 'المظهر' },
@@ -44,8 +44,8 @@ export const ar: SiteContent = {
       staticLine: 'مطوّر',
       headline: 'شريكك المباشر للمشاريع الرقمية.',
       sub: 'أستمع إليك، وأخطط بوضوح، وأبني شيئًا يمكنك استخدامه فعلاً.',
-      cta: 'اطلب مكالمة',
-      secondary: 'شاهد ما بنيته',
+      cta: 'احجز موعداً',
+      secondary: 'أرسل رسالة',
       availability: 'من إرفورت · أعمل معك عن بُعد',
     },
     story: {
@@ -504,11 +504,6 @@ export const ar: SiteContent = {
       companyOptional: 'اختياري',
       phone: 'الهاتف',
       phoneOptional: 'اختياري',
-      preferred: 'كيف تفضّل أن أتواصل معك؟',
-      preferredOptions: [
-        { value: 'email', label: 'البريد الإلكتروني' },
-        { value: 'call', label: 'مكالمة' },
-      ],
       projectType: 'ما نوع المشروع؟ (اختياري)',
       projectTypes: [
         { value: 'unsure', label: 'لم أحدد بعد' },
