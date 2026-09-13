@@ -82,6 +82,40 @@ describe('the owner notification', () => {
   })
 })
 
+describe('wording a call type was given', () => {
+  const wording = {
+    confirmedSubject: 'Wir sprechen am Donnerstag',
+    confirmedIntro: 'ich habe die Zeit geblockt und freue mich darauf.',
+    cancelledSubject: 'Das Gespräch fällt aus',
+    cancelledIntro: 'der Termin ist aus dem Kalender.',
+  }
+
+  it('replaces the subject, the heading, and the opening line', async () => {
+    const mail = await captureMail(() => sendVisitorBookingMail({ ...input, wording }, false))
+
+    expect(mail.subject).toBe('Wir sprechen am Donnerstag')
+    expect(mail.html).toContain('Wir sprechen am Donnerstag')
+    expect(mail.html).toContain('Hallo Katrin Vogel, ich habe die Zeit geblockt')
+    expect(mail.html).not.toContain('Dein Termin ist bestätigt')
+  })
+
+  it('takes the cancellation wording only on a cancellation', async () => {
+    const mail = await captureMail(() => sendVisitorBookingMail({ ...input, wording }, true))
+
+    expect(mail.subject).toBe('Das Gespräch fällt aus')
+    expect(mail.html).not.toContain('Wir sprechen am Donnerstag')
+  })
+
+  it('falls back field by field, so one empty line is not four', async () => {
+    const mail = await captureMail(() =>
+      sendVisitorBookingMail({ ...input, wording: { ...wording, confirmedIntro: '' } }, false),
+    )
+
+    expect(mail.subject).toBe('Wir sprechen am Donnerstag')
+    expect(mail.html).toContain('dein Termin steht')
+  })
+})
+
 describe('the visitor letter', () => {
   it('offers the management link while the booking stands', async () => {
     const mail = await captureMail(() =>
