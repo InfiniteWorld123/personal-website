@@ -36,8 +36,21 @@ export const env = {
   /** Added in later blocks. Optional so B1 runs without them. */
   RESEND_API_KEY: getOptionalEnvVar('RESEND_API_KEY'),
   EMAIL_FROM: getOptionalEnvVar('EMAIL_FROM'),
-  /** Where contact-form messages are delivered. Replaced by the leads module in B4. */
+  /** Where the inbox's notification mail is delivered. */
   CONTACT_TO_EMAIL: getOptionalEnvVar('CONTACT_TO_EMAIL'),
+
+  /**
+   * Inbound replies (B4). `INBOUND_MAIL_ADDRESS` is the address outbound
+   * replies carry as Reply-To — it must contain a `+`, e.g.
+   * `reply+token@yamanwarda.de`, because the token is written into that slot.
+   * `INBOUND_MAIL_SECRET` is the shared secret the receiving webhook checks
+   * before it believes a letter.
+   *
+   * Both optional: without them the inbox still stores, still notifies, and
+   * still sends replies — it simply cannot take an answer back, and says so.
+   */
+  INBOUND_MAIL_ADDRESS: getOptionalEnvVar('INBOUND_MAIL_ADDRESS'),
+  INBOUND_MAIL_SECRET: getOptionalEnvVar('INBOUND_MAIL_SECRET'),
 
   /**
    * Cloudflare R2, the image store (D21, superseding the Cloudinary choice in

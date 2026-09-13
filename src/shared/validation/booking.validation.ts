@@ -28,14 +28,6 @@ export const EXCEPTION_KINDS = ['BLOCK', 'OPEN'] as const
 
 export type ExceptionKind = (typeof EXCEPTION_KINDS)[number]
 
-export const LEAD_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'WON', 'LOST'] as const
-
-export type LeadStatus = (typeof LEAD_STATUSES)[number]
-
-export const LEAD_SOURCES = ['CONTACT_FORM', 'BOOKING', 'MANUAL'] as const
-
-export type LeadSource = (typeof LEAD_SOURCES)[number]
-
 /** Minutes in a day, the upper bound of every window in the schedule. */
 export const MINUTES_PER_DAY = 1440
 

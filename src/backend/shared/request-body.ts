@@ -6,20 +6,22 @@ export class RequestBodyTooLargeError extends Error {
 }
 
 /**
- * Reads a multipart body through a hard byte ceiling. `Content-Length` is only
- * an early hint: a streaming client may omit it or lie about it, so the stream
- * itself is counted before `formData()` is allowed to allocate the payload.
+ * Reads a body through a hard byte ceiling. `Content-Length` is only an early
+ * hint: a streaming client may omit it or lie about it, so the stream itself
+ * is counted before anything is allowed to allocate the payload.
  */
-export const readFormDataWithinLimit = async (
+const readBytesWithinLimit = async (
   request: Request,
   maxBytes: number,
-): Promise<FormData> => {
+  // `Uint8Array<ArrayBuffer>`, not the looser `ArrayBufferLike`: only the
+  // former is a `BodyInit`, and widening it here breaks the caller below.
+): Promise<Uint8Array<ArrayBuffer>> => {
   const declaredLength = Number(request.headers.get('content-length'))
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
     throw new RequestBodyTooLargeError()
   }
 
-  if (!request.body) return new FormData()
+  if (!request.body) return new Uint8Array(0)
 
   const reader = request.body.getReader()
   const chunks: Uint8Array[] = []
@@ -49,8 +51,26 @@ export const readFormDataWithinLimit = async (
     offset += chunk.byteLength
   }
 
+  return bytes
+}
+
+export const readFormDataWithinLimit = async (
+  request: Request,
+  maxBytes: number,
+): Promise<FormData> => {
+  const bytes = await readBytesWithinLimit(request, maxBytes)
   const contentType = request.headers.get('content-type')
   const headers = contentType ? { 'Content-Type': contentType } : undefined
 
   return new Response(bytes, { headers }).formData()
 }
+
+/**
+ * The same ceiling for a body that has to be read as raw text — a signed
+ * webhook, where the signature covers the exact bytes received and re-encoding
+ * a parsed object would change them.
+ */
+export const readTextWithinLimit = async (
+  request: Request,
+  maxBytes: number,
+): Promise<string> => new TextDecoder().decode(await readBytesWithinLimit(request, maxBytes))

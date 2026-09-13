@@ -39,7 +39,7 @@ export function attachmentAccepted(file: { name: string; type: string; size: num
  * timeline are asked up front so every conversation starts with context.
  * Phone, preferred channel, and one attachment were added in D17 — all three
  * optional, so a visitor who only wants to write a sentence still can.
- * Posts to the legacy contact endpoint until the leads module lands in B4.
+ * The post lands in the inbox (B4), which stores it before anything is sent.
  */
 export function ContactForm({ copy, language }: { copy: ContactCopy['form']; language: Language }) {
   const [status, setStatus] = useState<Status>('idle')
@@ -86,6 +86,9 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
     if (Object.keys(nextErrors).length > 0 || !turnstileToken) return
 
     data.set('cf-turnstile-response', turnstileToken)
+    // The page the visitor wrote on decides which language the reply is
+    // written in, so it travels with the message rather than being guessed.
+    data.set('language', language)
 
     setStatus('sending')
 

@@ -398,6 +398,10 @@ const attachLead = async (input: BookingCreateServiceInput): Promise<string> => 
               service_interest = CASE WHEN service_interest = '' THEN $5 ELSE service_interest END,
               budget_band = CASE WHEN budget_band = '' THEN $6 ELSE budget_band END,
               timeline = CASE WHEN timeline = '' THEN $7 ELSE timeline END,
+              -- Back to the top of the inbox (B4). Someone who books is
+              -- waiting for an answer, even if their last message was filed.
+              read_at = NULL,
+              archived_at = NULL,
               updated_at = CURRENT_TIMESTAMP
         WHERE id = $1;`,
       [
