@@ -47,15 +47,15 @@ export function SlotPicker({
         // far pushes the confirm button off the screen on a phone, so the
         // times scroll inside their own box and everything around them stays
         // where the visitor last saw it.
-        <div className="slot-scroll -me-1 max-h-64 overflow-x-hidden overflow-y-auto pe-1">
-          {/* The column count follows the card, not the window. A breakpoint
-              grid put three Arabic times — "09:00 ص" is wider than "09:00" —
-              into a narrow card on a wide screen, and they spilled over its
-              edge. */}
+        <div className="slot-scroll -me-1 max-h-[22rem] overflow-x-hidden overflow-y-auto pe-1">
+          {/* One column, the way every booking page a visitor has used before
+              lists times: read down, not across. A grid of pills spread over a
+              wide card put seven times in a row and left the rest of the card
+              empty, which reads as a layout that broke rather than a list. */}
           <div
             role="radiogroup"
             aria-label={formatDay(day, language)}
-            className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2"
+            className="grid grid-cols-1 gap-2"
           >
             {slots.map((slot) => (
               <button
