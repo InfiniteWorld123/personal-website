@@ -40,7 +40,7 @@ export const adminNavigation: AdminNavigationItem[] = [
      * happened to a lead, not a separate calendar app. What did not move is
      * the calendar's own configuration — availability and call types are
      * settings for the hours, not for the people, and they stay under
-     * Bookings where the settings page links to them.
+     * Calendar, where the lead settings page links to them.
      */
     label: 'Leads',
     to: '/admin/inbox',
@@ -55,7 +55,13 @@ export const adminNavigation: AdminNavigationItem[] = [
       { label: 'Settings', to: '/admin/leads/settings', icon: Settings2, available: true },
     ],
   },
-  { label: 'Bookings', to: '/admin/bookings', icon: CalendarRange, available: true },
+  /**
+   * Named for what is left in it. The booked calls themselves are read under
+   * Leads, beside the people who booked them; what stays here is the calendar
+   * — the owner's hours, and the kinds of call that may be booked in them.
+   * The route is unchanged: this is the label, not the section.
+   */
+  { label: 'Calendar', to: '/admin/bookings', icon: CalendarRange, available: true },
   { label: 'Content', to: '/admin/content', icon: FileText, available: false },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
   { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },
