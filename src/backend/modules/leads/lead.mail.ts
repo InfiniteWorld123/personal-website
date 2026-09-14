@@ -8,7 +8,8 @@ import {
   type Row,
 } from '#/backend/shared/mail'
 import { env } from '#/shared/env'
-import { LEAD_SIGN_OFF } from '#/shared/lead-copy'
+import { richTextToHtml } from '#/backend/shared/rich-text-html'
+import type { RichTextDoc } from '#/shared/validation/rich-text'
 import type { LeadLanguage, LeadSource } from '#/shared/validation/lead.validation'
 import { replyAddressFor } from './lead.inbound'
 
@@ -141,11 +142,15 @@ export type LeadReplyMailInput = {
   to: string
   toName: string
   subject: string
+  /** The letter as plain text — the part a client that refuses HTML reads. */
   body: string
+  /** The same letter with its formatting, when it was written in the editor. */
+  doc: RichTextDoc | null
   language: LeadLanguage
   /** Threads their answer back onto this lead, when inbound mail is set up. */
   replyToken: string | null
-  withSignature: boolean
+  /** The sign-off to append, already resolved, or null to append none. */
+  signature: string | null
 }
 
 /**
@@ -168,17 +173,18 @@ export const sendLeadReplyMail = async (
         language: input.language,
         heading: subject,
         intro: `${copy.greeting} ${input.toName},`,
-        body: multiline(input.body),
+        // The document when there is one, escaped text when there is not.
+        body: input.doc ? richTextToHtml(input.doc) : multiline(input.body),
         rows: [],
         actions: '',
-        signOff: input.withSignature ? LEAD_SIGN_OFF[input.language] : '',
+        signOff: input.signature ?? '',
       }),
       text: plainText([
         `${copy.greeting} ${input.toName},`,
         '',
         input.body,
-        input.withSignature ? '' : false,
-        input.withSignature ? LEAD_SIGN_OFF[input.language] : false,
+        input.signature ? '' : false,
+        input.signature || false,
       ]),
     },
     'inbox',

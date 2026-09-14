@@ -174,9 +174,10 @@ describe('the reply mail', () => {
         toName: 'أحمد الحسن',
         subject: 'بخصوص نظام الطلبات',
         body: 'أهلاً، نعم نعمل بالعربية.',
+        doc: null,
         language: 'ar',
         replyToken: 'abc123',
-        withSignature: true,
+        signature: 'تحياتي،\nيمان وردة',
       }),
     )
 
@@ -188,6 +189,55 @@ describe('the reply mail', () => {
     expect(mail.text).toContain('مرحباً أحمد الحسن,')
   })
 
+  it('sends the formatted letter as HTML and the same words as text', async () => {
+    const mail = await captureMail(() =>
+      sendLeadReplyMail({
+        to: 'l.brandt@brandt-soehne.de',
+        toName: 'Lena Brandt',
+        subject: 'Ihr Projekt',
+        body: 'Guten Tag,\n\nzwei Punkte:\nTermin\nBudget',
+        doc: {
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [
+              { type: 'text', text: 'Guten Tag, ' },
+              { type: 'text', text: 'zwei Punkte', marks: [{ type: 'bold' }] },
+              { type: 'text', text: ':' },
+            ] },
+            { type: 'bulletList', content: [
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Termin' }] }] },
+              { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Budget' }] }] },
+            ] },
+          ],
+        },
+        language: 'de',
+        replyToken: null,
+        signature: null,
+      }),
+    )
+
+    expect(mail.html).toContain('<strong>zwei Punkte</strong>')
+    expect(mail.html).toContain('<ul')
+    expect(mail.html).toContain('<li')
+    // The plain part is the same letter without the markup.
+    expect(mail.text).toContain('Termin')
+    expect(String(mail.text)).not.toContain('<strong>')
+  })
+
+  it('never lets a link the schema refuses reach the letter', async () => {
+    const mail = await captureMail(() =>
+      sendLeadReplyMail({
+        to: 'x@example.com', toName: 'X', subject: 'S', body: 'klick',
+        doc: { type:'doc', content:[{ type:'paragraph', content:[
+          { type:'text', text:'klick', marks:[{ type:'link', attrs:{ href:'javascript:alert(1)' } }] }] }] },
+        language: 'de', replyToken: null, signature: null,
+      }),
+    )
+
+    expect(String(mail.html)).not.toContain('javascript:')
+    expect(mail.html).toContain('klick')
+  })
+
   it('leaves the signature off when that switch is off', async () => {
     const mail = await captureMail(() =>
       sendLeadReplyMail({
@@ -195,9 +245,10 @@ describe('the reply mail', () => {
         toName: 'Tom Feldmann',
         subject: '',
         body: 'Dienstag 10:00 passt.',
+        doc: null,
         language: 'de',
         replyToken: null,
-        withSignature: false,
+        signature: null,
       }),
     )
 

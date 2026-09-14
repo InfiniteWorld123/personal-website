@@ -7,12 +7,15 @@ import type {
   AdminLeadListItem,
   InboxSettings,
 } from '#/shared/types/lead.types'
+import { richTextToPlainText, type RichTextDoc } from '#/shared/validation/rich-text'
+import { LEAD_SIGN_OFF } from '#/shared/lead-copy'
 import {
   DEFAULT_INBOX_PREFERENCES,
   LEAD_PAGE_SIZE,
   readInboxPreferences,
   type ContactSubmitInput,
   type InboxPreferences,
+  type InboxSignatures,
   type LeadBulkInput,
   type LeadFilterInput,
   type LeadLanguage,
@@ -436,8 +439,15 @@ export const getLeadForAdmin = async (id: string): Promise<AdminLeadDetail> => {
   const row = await loadLead(db, id)
 
   const [messages, notes, events, bookings] = await Promise.all([
-    db.query<{ id: string; direction: 'IN' | 'OUT'; subject: string; body: string; sent_at: Date }>(
-      `SELECT id, direction, subject, body, sent_at FROM lead_messages
+    db.query<{
+      id: string
+      direction: 'IN' | 'OUT'
+      subject: string
+      body: string
+      body_rich: RichTextDoc | null
+      sent_at: Date
+    }>(
+      `SELECT id, direction, subject, body, body_rich, sent_at FROM lead_messages
         WHERE lead_id = $1 ORDER BY sent_at, id;`,
       [id],
     ),
@@ -474,6 +484,9 @@ export const getLeadForAdmin = async (id: string): Promise<AdminLeadDetail> => {
       direction: message.direction,
       subject: message.subject,
       body: message.body,
+      // Only a reply written here can be rich; anything inbound is plain text
+      // written by someone else, and is never rendered as markup.
+      rich: message.direction === 'OUT' ? message.body_rich : null,
       sentAt: message.sent_at.toISOString(),
     })),
     notes: notes.rows.map((note) => ({
@@ -662,23 +675,32 @@ export const replyToLead = async (
   }
 
   const preferences = await readPreferences(db)
+  const signatures = await readSignatures(db)
   const subject = input.subject.trim() || subjectFor(lead)
+
+  // The document is the letter; `body` is the same words without formatting,
+  // which is what search, the list preview, and a plain-text mail client read.
+  const plain = input.doc ? richTextToPlainText(input.doc) : input.body
 
   const { accepted } = await sendLeadReplyMail({
     to: lead.email,
     toName: lead.name,
     subject,
-    body: input.body,
+    body: plain,
+    doc: input.doc ?? null,
     language: lead.language,
     replyToken,
-    withSignature: preferences.signature,
+    signature: preferences.signature
+      ? signatures[lead.language]?.trim() || LEAD_SIGN_OFF[lead.language]
+      : null,
   })
 
   if (!accepted) throw internalError('The reply could not be sent')
 
   await db.query(
-    `INSERT INTO lead_messages (lead_id, direction, subject, body) VALUES ($1, 'OUT', $2, $3);`,
-    [id, subject, input.body],
+    `INSERT INTO lead_messages (lead_id, direction, subject, body, body_rich)
+     VALUES ($1, 'OUT', $2, $3, $4::jsonb);`,
+    [id, subject, plain, input.doc ? JSON.stringify(input.doc) : null],
   )
 
   // Answering is the act that moves a lead along, so the status follows the
@@ -742,6 +764,41 @@ export const recordInboundReply = async (input: {
 /* Settings                                                                   */
 /* -------------------------------------------------------------------------- */
 
+const INBOX_SIGNATURES_KEY = 'inbox_signatures'
+
+const EMPTY_SIGNATURES: InboxSignatures = { de: '', en: '', ar: '' }
+
+const readSignatures = async (db: Db): Promise<InboxSignatures> => {
+  const result = await db.query<{ value: unknown }>(
+    `SELECT value FROM app_settings WHERE "key" = $1;`,
+    [INBOX_SIGNATURES_KEY],
+  )
+  const stored = result.rows[0]?.value
+
+  if (typeof stored !== 'object' || stored === null) return EMPTY_SIGNATURES
+
+  const row = stored as Record<string, unknown>
+
+  return {
+    de: typeof row.de === 'string' ? row.de : '',
+    en: typeof row.en === 'string' ? row.en : '',
+    ar: typeof row.ar === 'string' ? row.ar : '',
+  }
+}
+
+export const saveInboxSignatures = async (
+  signatures: InboxSignatures,
+): Promise<InboxSettings> => {
+  await getDb().query(
+    `INSERT INTO app_settings ("key", value, updated_at)
+     VALUES ($1, $2::jsonb, CURRENT_TIMESTAMP)
+     ON CONFLICT ("key") DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;`,
+    [INBOX_SIGNATURES_KEY, JSON.stringify(signatures)],
+  )
+
+  return getInboxSettings()
+}
+
 const readPreferences = async (db: Db): Promise<InboxPreferences> => {
   const result = await db.query<{ value: unknown }>(
     `SELECT value FROM app_settings WHERE "key" = $1;`,
@@ -753,6 +810,7 @@ const readPreferences = async (db: Db): Promise<InboxPreferences> => {
 
 export const getInboxSettings = async (): Promise<InboxSettings> => ({
   preferences: await readPreferences(getDb()),
+  signatures: await readSignatures(getDb()),
   canSendMail: Boolean(env.RESEND_API_KEY && env.EMAIL_FROM),
   canReceiveMail: inboundIsConfigured(),
 })

@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { RichTextDocSchema, type RichTextDoc } from './rich-text'
 
 /**
  * The three languages the site publishes. Written out here rather than
@@ -87,6 +88,12 @@ export type LeadNoteWriteInput = v.InferOutput<typeof LeadNoteWriteSchema>
 export const LeadReplySchema = v.object({
   subject: optionalText(160),
   body: trimmed('A reply cannot be empty', 8000),
+  /**
+   * The formatted letter, when it was written in the editor. `body` carries
+   * the same words as plain text — search reads that, and a mail client that
+   * refuses HTML gets it.
+   */
+  doc: v.optional(RichTextDocSchema),
 })
 
 export type LeadReplyInput = v.InferOutput<typeof LeadReplySchema>
@@ -105,6 +112,21 @@ export const LeadBulkSchema = v.object({
 })
 
 export type LeadBulkInput = v.InferOutput<typeof LeadBulkSchema>
+
+/**
+ * The sign-off appended to a reply, one per language, editable from the
+ * settings page. Stored beside the switches rather than in code, because the
+ * owner asked to be able to change it without a deploy.
+ */
+export const InboxSignaturesSchema = v.object({
+  de: optionalText(400),
+  en: optionalText(400),
+  ar: optionalText(400),
+})
+
+export type InboxSignatures = v.InferOutput<typeof InboxSignaturesSchema>
+
+export type { RichTextDoc }
 
 /**
  * Every switch the inbox offers, and the shape the settings page writes.

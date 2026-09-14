@@ -95,3 +95,12 @@ const renderNode = (node: RichTextNode): ReactNode => {
 export function PostBody({ doc }: { doc: RichTextDoc }) {
   return <div className="post-body">{renderNodes(doc.content)}</div>
 }
+
+/**
+ * The same renderer without the article's typography, for a document that is
+ * not an article — a reply in the inbox thread. Same guarantee: nothing the
+ * schema does not name reaches the screen.
+ */
+export function RichTextView({ doc, className }: { doc: RichTextDoc; className?: string }) {
+  return <div className={className}>{renderNodes(doc.content)}</div>
+}

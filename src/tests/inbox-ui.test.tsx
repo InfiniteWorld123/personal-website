@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { LeadReadingPane } from '#/frontend/pages/admin/inbox/LeadReadingPane'
@@ -46,8 +46,8 @@ const lead = (overrides: Partial<AdminLeadDetail> = {}): AdminLeadDetail => ({
   notifiedAt: '2026-09-13T07:12:04.000Z',
   readAt: null,
   messages: [
-    { id: 'm1', direction: 'OUT', subject: 'Website', body: 'Passt Dienstag 10:00?', sentAt: '2026-09-13T09:00:00.000Z' },
-    { id: 'm2', direction: 'IN', subject: 'Re', body: 'Dienstag passt.', sentAt: '2026-09-13T10:00:00.000Z' },
+    { id: 'm1', direction: 'OUT', subject: 'Website', body: 'Passt Dienstag 10:00?', rich: null, sentAt: '2026-09-13T09:00:00.000Z' },
+    { id: 'm2', direction: 'IN', subject: 'Re', body: 'Dienstag passt.', rich: null, sentAt: '2026-09-13T10:00:00.000Z' },
   ],
   notes: [{ id: 'n1', body: 'Weiß genau, was sie wollen.', createdAt: '2026-09-13T09:30:00.000Z' }],
   events: [{ id: 'e1', kind: 'ARRIVED', detail: 'Contact form', createdAt: '2026-09-13T07:12:00.000Z' }],
@@ -60,24 +60,45 @@ const show = (preferences: Partial<InboxPreferences> = {}, detail = lead(), canS
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <LeadReadingPane
         lead={detail}
-        preferences={{ ...DEFAULT_INBOX_PREFERENCES, ...preferences }}
-        canSendMail={canSendMail}
-        canReceiveMail
+        settings={{
+          preferences: { ...DEFAULT_INBOX_PREFERENCES, ...preferences },
+          signatures: { de: '', en: '', ar: '' },
+          canSendMail,
+          canReceiveMail: true,
+        }}
       />
     </QueryClientProvider>,
   )
 
 describe('the reading pane with everything on', () => {
-  it('shows the facts, the attachment, the thread, the notes, and the history', () => {
+  it('shows the letter, the facts, the attachment and the thread', () => {
     show()
 
     expect(screen.getByText('Brandt & Söhne')).toBeTruthy()
     expect(screen.getByText(/briefing\.pdf/)).toBeTruthy()
     expect(screen.getByText('Passt Dienstag 10:00?')).toBeTruthy()
     expect(screen.getByText('Dienstag passt.')).toBeTruthy()
+  })
+
+  it('keeps the notes and the history behind their own buttons', () => {
+    show()
+
+    // Hidden until asked for: the pane is for reading the letter.
+    expect(screen.queryByText('Weiß genau, was sie wollen.')).toBeNull()
+    expect(screen.queryByText(/Arrived/)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Notes/ }))
     expect(screen.getByText('Weiß genau, was sie wollen.')).toBeTruthy()
-    expect(screen.getByText(/Arrived/)).toBeTruthy()
-    expect(screen.getByPlaceholderText('Antwort schreiben…')).toBeTruthy()
+  })
+
+  it('opens the reply window only when there is a reply to write', () => {
+    show()
+
+    expect(screen.queryByRole('button', { name: 'Bold' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Bullet list' })).toBeTruthy()
   })
 
   it('offers all five stages, with the current one pressed', () => {
@@ -117,26 +138,29 @@ describe('every switch removes what it names', () => {
 
   it('notes', () => {
     show({ notes: false })
-    expect(screen.queryByText('Weiß genau, was sie wollen.')).toBeNull()
+    expect(screen.queryByRole('button', { name: /Notes/ })).toBeNull()
   })
 
   it('history', () => {
     show({ history: false })
-    expect(screen.queryByText(/Arrived/)).toBeNull()
+    expect(screen.queryByRole('button', { name: /History/ })).toBeNull()
   })
 
   it('signature', () => {
     show({ signature: false })
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
     expect(screen.queryByText(/Digitale Systeme/)).toBeNull()
   })
 
   it('snippets', () => {
     show({ snippets: false })
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
     expect(screen.queryByRole('button', { name: 'Propose a call' })).toBeNull()
   })
 
   it('the language hint', () => {
     show({ languageHint: false })
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
     expect(screen.queryByText(/they wrote in it/)).toBeNull()
   })
 
@@ -150,18 +174,37 @@ describe('what the pane refuses to pretend', () => {
   it('says replies cannot be sent when mail is not configured', () => {
     show({}, lead(), false)
 
-    const box = screen.getByPlaceholderText(/Email is not configured/) as HTMLTextAreaElement
-    expect(box.disabled).toBe(true)
-    expect((screen.getByRole('button', { name: /Send reply/ }) as HTMLButtonElement).disabled).toBe(true)
+    const button = screen.getByRole('button', { name: /Email is not configured/ }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
   })
 
-  it('prompts, prefills and signs in the language the visitor wrote in', () => {
+  it('writes, prefills and signs in the language the visitor wrote in', () => {
     show({}, lead({ language: 'ar' }))
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
 
-    expect(screen.getByPlaceholderText('اكتب ردّك…')).toBeTruthy()
-    // English on the button, Arabic in what it inserts.
+    // English on the button, Arabic in what it inserts and in the sign-off.
     expect(screen.getByRole('button', { name: 'Ask about budget' })).toBeTruthy()
     expect(screen.getByText(/تحياتي/)).toBeTruthy()
+  })
+
+  it('prefers a stored signature over the one in code', () => {
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <LeadReadingPane
+          lead={lead()}
+          settings={{
+            preferences: DEFAULT_INBOX_PREFERENCES,
+            signatures: { de: 'Herzlich,\nYaman', en: '', ar: '' },
+            canSendMail: true,
+            canReceiveMail: true,
+          }}
+        />
+      </QueryClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Write a reply/ }))
+
+    expect(screen.getByText(/Herzlich/)).toBeTruthy()
+    expect(screen.queryByText(/Digitale Systeme/)).toBeNull()
   })
 
   it('lets what a person wrote choose its own direction', () => {

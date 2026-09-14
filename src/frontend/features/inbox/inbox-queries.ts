@@ -9,6 +9,7 @@ import {
   fetchUnreadLeadCount,
   replyToLead,
   saveInboxPreferences,
+  saveInboxSignatures,
   setLeadArchived,
   setLeadJunk,
   setLeadRead,
@@ -17,6 +18,7 @@ import {
 import type { AdminLeadDetail } from '#/shared/types/lead.types'
 import type {
   InboxPreferences,
+  InboxSignatures,
   LeadBulkInput,
   LeadFilterInput,
   LeadReplyInput,
@@ -107,6 +109,17 @@ export const useLeadBulkAction = () => {
     mutationFn: (input: LeadBulkInput) => applyLeadBulkAction(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['inbox'] })
+    },
+  })
+}
+
+export const useSaveInboxSignatures = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (signatures: InboxSignatures) => saveInboxSignatures(signatures),
+    onSuccess: (settings) => {
+      queryClient.setQueryData(['inbox', 'settings'], settings)
     },
   })
 }

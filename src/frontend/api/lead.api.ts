@@ -1,6 +1,7 @@
 import type { AdminLeadDetail, AdminLeadList, InboxSettings } from '#/shared/types/lead.types'
 import type {
   InboxPreferences,
+  InboxSignatures,
   LeadBulkInput,
   LeadFilterInput,
   LeadReplyInput,
@@ -100,4 +101,8 @@ export async function fetchInboxSettings(): Promise<InboxSettings> {
 
 export async function saveInboxPreferences(preferences: InboxPreferences): Promise<InboxSettings> {
   return unwrap<InboxSettings>(await api().admin.leads.settings.put(preferences))
+}
+
+export async function saveInboxSignatures(signatures: InboxSignatures): Promise<InboxSettings> {
+  return unwrap<InboxSettings>(await api().admin.leads.settings.signatures.put(signatures))
 }

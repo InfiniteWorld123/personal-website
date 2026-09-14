@@ -4,12 +4,14 @@ import { responseOk } from '#/backend/shared/response'
 import { parseInput } from '#/backend/shared/validate'
 import {
   InboxPreferencesSchema,
+  InboxSignaturesSchema,
   LeadBulkSchema,
   LeadFilterSchema,
   LeadNoteWriteSchema,
   LeadReplySchema,
   LeadStatusWriteSchema,
   type InboxPreferences,
+  type InboxSignatures,
 } from '#/shared/validation/lead.validation'
 import * as v from 'valibot'
 import {
@@ -23,6 +25,7 @@ import {
   markLeadRead,
   replyToLead,
   saveInboxPreferences,
+  saveInboxSignatures,
   setLeadArchived,
   setLeadJunk,
   setLeadStatus,
@@ -74,6 +77,12 @@ export const adminLeadRoutes = new Elysia({ prefix: '/leads' })
         parseInput(InboxPreferencesSchema, body) as InboxPreferences,
       ),
       message: 'Inbox settings saved',
+    }),
+  )
+  .put('/settings/signatures', async ({ body }) =>
+    responseOk({
+      data: await saveInboxSignatures(parseInput(InboxSignaturesSchema, body) as InboxSignatures),
+      message: 'Signatures saved',
     }),
   )
   .post('/bulk', async ({ body }) =>

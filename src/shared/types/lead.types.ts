@@ -1,5 +1,7 @@
+import type { RichTextDoc } from '#/shared/validation/rich-text'
 import type {
   InboxPreferences,
+  InboxSignatures,
   LeadDirection,
   LeadLanguage,
   LeadSource,
@@ -47,6 +49,8 @@ export type AdminLeadMessage = {
   direction: LeadDirection
   subject: string
   body: string
+  /** The formatted letter, for replies written in the editor. */
+  rich: RichTextDoc | null
   sentAt: string
 }
 
@@ -79,6 +83,8 @@ export type AdminLeadDetail = AdminLeadListItem & {
 
 export type InboxSettings = {
   preferences: InboxPreferences
+  /** One sign-off per language, as stored. Empty means "use the default". */
+  signatures: InboxSignatures
   /**
    * Whether replies can actually be sent from here, and whether an inbound
    * address is configured. The page says so plainly rather than offering a

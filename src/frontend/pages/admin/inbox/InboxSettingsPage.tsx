@@ -1,11 +1,23 @@
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Check, MailWarning } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '#/frontend/components/ui/button'
 import { Switch } from '#/frontend/components/ui/switch'
-import { inboxSettingsQuery, useSaveInboxPreferences } from '#/frontend/features/inbox/inbox-queries'
-import type { InboxPreferenceKey, InboxPreferences } from '#/shared/validation/lead.validation'
+import { Textarea } from '#/frontend/components/ui/textarea'
+import {
+  inboxSettingsQuery,
+  useSaveInboxPreferences,
+  useSaveInboxSignatures,
+} from '#/frontend/features/inbox/inbox-queries'
+import { LEAD_SIGN_OFF } from '#/shared/lead-copy'
+import type {
+  InboxPreferenceKey,
+  InboxPreferences,
+  InboxSignatures,
+  LeadLanguage,
+} from '#/shared/validation/lead.validation'
 
 /**
  * The inbox ships with everything on. This page is where each piece goes away
@@ -87,6 +99,74 @@ function Key({ children }: { children: ReactNode }) {
   )
 }
 
+const LANGUAGE_NAME: Record<LeadLanguage, string> = {
+  de: 'German',
+  en: 'English',
+  ar: 'Arabic',
+}
+
+/**
+ * The sign-off, one per language, in the owner's own words. Left empty it
+ * falls back to the one in code, which is what the letters used before this
+ * page existed.
+ */
+function SignatureSection({ stored }: { stored: InboxSignatures }) {
+  const save = useSaveInboxSignatures()
+  const [draft, setDraft] = useState<InboxSignatures>(stored)
+
+  // A save elsewhere, or the first load, replaces what is on screen — but not
+  // while there are unsaved edits in it.
+  useEffect(() => {
+    if (!save.isPending) setDraft(stored)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stored])
+
+  const changed = (['de', 'en', 'ar'] as const).some((key) => draft[key] !== stored[key])
+
+  return (
+    <section className="border-border overflow-hidden rounded-xl border">
+      <div className="bg-muted/50 border-border border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Signature</h2>
+        <p className="text-muted-foreground text-xs">
+          Appended to every reply, in the language it is written in. Leave one empty to use the
+          default.
+        </p>
+      </div>
+      <div className="flex flex-col gap-4 p-4">
+        {(['de', 'en', 'ar'] as const).map((language) => (
+          <label key={language} className="block">
+            <span className="text-muted-foreground text-[0.65rem] tracking-widest uppercase">
+              {LANGUAGE_NAME[language]}
+            </span>
+            <Textarea
+              value={draft[language]}
+              onChange={(event) => setDraft({ ...draft, [language]: event.currentTarget.value })}
+              placeholder={LEAD_SIGN_OFF[language]}
+              dir={language === 'ar' ? 'rtl' : 'ltr'}
+              rows={3}
+              className="mt-1"
+            />
+          </label>
+        ))}
+        <div className="flex items-center gap-3">
+          <Button size="sm" disabled={!changed || save.isPending} onClick={() => save.mutate(draft)}>
+            {save.isPending ? 'Saving…' : 'Save signatures'}
+          </Button>
+          {save.isSuccess && !changed ? (
+            <span className="text-muted-foreground flex items-center gap-1 text-xs">
+              <Check aria-hidden="true" className="size-3.5" />
+              Saved
+            </span>
+          ) : null}
+          {save.isError ? (
+            <span className="text-destructive text-xs">{(save.error as Error).message}</span>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function InboxSettingsPage() {
   const settings = useQuery(inboxSettingsQuery())
   const save = useSaveInboxPreferences()
@@ -137,6 +217,7 @@ export function InboxSettingsPage() {
         <p className="text-destructive text-sm">{(settings.error as Error).message}</p>
       ) : preferences ? (
         <div className="flex flex-col gap-5">
+          {settings.data ? <SignatureSection stored={settings.data.signatures} /> : null}
           {GROUPS.map((group) => (
             <section key={group.title} className="border-border overflow-hidden rounded-xl border">
               <div className="bg-muted/50 border-border border-b px-4 py-3">
