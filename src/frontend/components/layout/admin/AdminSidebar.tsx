@@ -4,6 +4,16 @@ import { inboxSettingsQuery, unreadLeadsQuery } from '#/frontend/features/inbox/
 import { cn } from '#/frontend/lib/utils'
 import { adminNavigation, type AdminNavigationItem } from './admin-navigation'
 
+/**
+ * Is this section the one being used?
+ *
+ * True for the section's own path and for every lens under it, so walking
+ * between lenses never collapses the list that offers them.
+ */
+const isInSection = (item: AdminNavigationItem, pathname: string): boolean =>
+  pathname.startsWith(item.to) ||
+  (item.children ?? []).some((child) => pathname.startsWith(child.to))
+
 export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   /**
    * The one number worth carrying on every admin page: a message can arrive
@@ -29,14 +39,24 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {adminNavigation.map((item) => (
         <div key={item.to} className="flex flex-col gap-1">
-          <NavRow item={item} unreadCount={unreadCount} onNavigate={onNavigate} />
+          <NavRow
+            item={item}
+            unreadCount={unreadCount}
+            onNavigate={onNavigate}
+            isOpenSection={isInSection(item, pathname)}
+          />
 
           {/*
             The lenses appear under the section while that section is the one
-            being used: one record, read three ways, rather than three entries
-            competing in the sidebar.
+            being used: one record, read several ways, rather than several
+            entries competing in the sidebar.
+
+            A section counts as open when the page is the section's own landing
+            *or any of its lenses*. Matching only the section's own path folded
+            the list away the moment a lens was opened — the lenses closed the
+            menu that led to them.
           */}
-          {item.children && pathname.startsWith(item.to) ? (
+          {item.children && isInSection(item, pathname) ? (
             <div className="ms-5 flex flex-col gap-0.5 ps-1">
               {item.children.map((child) => (
                 <NavRow key={child.to} item={child} unreadCount={0} onNavigate={onNavigate} isLens />
@@ -54,11 +74,14 @@ function NavRow({
   unreadCount,
   onNavigate,
   isLens,
+  isOpenSection,
 }: {
   item: AdminNavigationItem
   unreadCount: number
   onNavigate?: () => void
   isLens?: boolean
+  /** The section holding the open page, even when a lens rather than it is active. */
+  isOpenSection?: boolean
 }) {
   const Icon = item.icon
   const size = isLens ? 'px-3 py-1.5 text-[0.82rem]' : 'px-3 py-2 text-sm'
@@ -85,6 +108,10 @@ function NavRow({
       onClick={onNavigate}
       className={cn(
         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+        // Its lenses are showing but a lens, not it, is the active page. It
+        // still names where you are, so it reads as present rather than as
+        // one more thing you are not on.
+        isOpenSection && !isLens && 'text-foreground font-medium',
         'focus-visible:ring-ring flex items-center gap-3 rounded-md',
         'transition-colors focus-visible:ring-2 focus-visible:outline-none',
         size,
