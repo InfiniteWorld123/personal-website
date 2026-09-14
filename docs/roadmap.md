@@ -56,11 +56,34 @@ owner), and the `platform` → `main` merge.
 Open: a new logo or brand mark (the owner asked for one that lasts), and a
 review of the story section's copy and illustration.
 
-## [ ] B4 — Leads and inbox
+## [x] B4 — Leads and inbox
 *Model: Sonnet 5 · medium*
 `leads` schema, contact form writing to the database, `/admin/leads` with the
 status pipeline and private notes, and replying to a lead from the admin.
 🔒 **Security checkpoint** — public write endpoint, rate limiting, spam.
+
+Built in three rounds, all from live prototypes the owner chose from. The inbox
+on 13 Sep 2026; formatted replies the same day; the pipeline on 14 Sep 2026.
+
+The third round is the one that made it a system rather than two tools sharing a
+table. `0010_lead_system.sql` adds `services` — the vocabulary the contact form,
+the call types and the board now share — two stages (`PROPOSAL`, `HOLD`), and
+the fields the second question needs: a value, a follow-up date, a next step and
+a loss reason. `/admin/leads` carries five lenses on the same records (inbox,
+pipeline, today, calls, all) plus a settings page where every switch and every
+timing is a value in one `app_settings` row.
+
+Nine automation rules ship on `auto`, the owner's own choice. Four decisions
+were taken and are recorded: odds derived from the stage (D29), the history
+written by every module rather than owned by the inbox (D30), time-based rules
+swept lazily on read instead of on a cron (D31), and an automatic close that
+announces itself with an undo (D32).
+
+Open: `0010_lead_system.sql` has been applied to the local database only and
+still needs running against Neon. The morning mail is built and switchable but
+nothing sends it until the worker is deployed with a cron trigger — the same
+deploy the B5 reminders are waiting on. The board has not been checked in a
+browser by Claude, which cannot sign in to the admin.
 
 ## [~] B5 — Booking
 *Model: Opus 5 · high*

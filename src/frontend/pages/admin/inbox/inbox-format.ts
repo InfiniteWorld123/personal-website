@@ -42,6 +42,8 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
   NEW: 'New',
   CONTACTED: 'Contacted',
   QUALIFIED: 'Qualified',
+  PROPOSAL: 'Proposal sent',
+  HOLD: 'On hold',
   WON: 'Won',
   LOST: 'Lost',
 }
@@ -50,6 +52,8 @@ export const STATUS_TONE: Record<LeadStatus, string> = {
   NEW: 'border-primary/40 text-primary',
   CONTACTED: '',
   QUALIFIED: 'border-primary/30 text-primary',
+  PROPOSAL: 'border-amber-500/40 text-amber-600 dark:text-amber-400',
+  HOLD: 'text-muted-foreground',
   WON: 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400',
   LOST: 'text-muted-foreground',
 }

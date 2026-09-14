@@ -50,7 +50,16 @@ const lead = (overrides: Partial<AdminLeadDetail> = {}): AdminLeadDetail => ({
     { id: 'm2', direction: 'IN', subject: 'Re', body: 'Dienstag passt.', rich: null, sentAt: '2026-09-13T10:00:00.000Z' },
   ],
   notes: [{ id: 'n1', body: 'Weiß genau, was sie wollen.', createdAt: '2026-09-13T09:30:00.000Z' }],
-  events: [{ id: 'e1', kind: 'ARRIVED', detail: 'Contact form', createdAt: '2026-09-13T07:12:00.000Z' }],
+  events: [
+    {
+      id: 'e1',
+      kind: 'ARRIVED',
+      detail: 'Contact form',
+      createdAt: '2026-09-13T07:12:00.000Z',
+      source: 'inbox',
+      isAutomatic: false,
+    },
+  ],
   bookings: [],
   ...overrides,
 })

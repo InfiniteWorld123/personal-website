@@ -32,8 +32,10 @@ The key set is defined in code. The admin edits values, never keys or structure.
 | `project_translations` | Title, summary, problem, approach, outcome, per language |
 | `project_images` | Cloudinary keys, alt text, ordering, one cover flag |
 | `project_tech` | Technologies used, for the stack listing |
-| `services` | Offer lines derived from `docs/services/`. `slug`, `is_active` |
-| `service_translations` | Name, promise, description, deliverables, per language |
+
+`services` was planned here and was built under **Leads** instead: it turned out
+to be the vocabulary the lead system needed to answer "how many shops did I
+sell?", and one table with two homes in this document is one table too many.
 
 Case study fields are structured (problem / approach / outcome / result) rather
 than one free-text blob, so writing them is filling defined fields.
@@ -61,15 +63,52 @@ back in UTC as a plain day.
 
 ## Leads and conversations
 
+Implemented across `0004_bookings.sql` (the table), `0007_leads_inbox.sql` (the
+inbox) and `0010_lead_system.sql` (the pipeline).
+
 | Table | Purpose |
 | --- | --- |
-| `leads` | Every inbound contact. Source, service interest, budget band, timeline, message, `status`, `referrer_id` |
+| `leads` | Every inbound contact. Source, service, value, stage, follow-up date, next step, loss reason |
 | `lead_notes` | Private notes written in the admin |
 | `lead_messages` | Threaded email exchange: direction (in/out), body, sent_at |
+| `lead_events` | What happened to this lead, in order, and whether a rule did it |
+| `services` | The three offers, from `docs/services/`. Slug, start price, accent |
+| `service_translations` | Name, promise, description, deliverables, per language |
 
-`status`: `NEW` → `CONTACTED` → `QUALIFIED` → `WON` / `LOST`.
-A booking creates or attaches to a lead. A contact form creates or attaches to a
-lead. There is one inbox, not two.
+`status`: `NEW` → `CONTACTED` → `QUALIFIED` → `PROPOSAL` → `WON` / `LOST`, with
+`HOLD` off to one side. A booking creates or attaches to a lead. A contact form
+creates or attaches to a lead. There is one inbox, not two.
+
+**Invariants**
+- `services` is the **one vocabulary**. Before it, the same idea had three: free
+  text on `leads.service_interest`, a name on a booking type, and Markdown in
+  `docs/services/`. "How many shops did I sell?" had no answer because nothing
+  agreed on what a shop was. `booking_types.service_id` and `leads.service_id`
+  both point at it; both are nullable, because a short introductory call belongs
+  to no single service and inventing one would be reported later as fact.
+- `service_interest` is **kept** beside `service_id`. It is what the visitor
+  actually typed, and overwriting a person's words with an id loses evidence.
+- Money is integer cents beside its own currency, as everywhere else.
+  `value_cents` is nullable: "not valued yet" is a different fact from "worth
+  nothing", and only the second belongs in a total.
+- The **odds are derived from the stage**, never typed per lead
+  (`STAGE_WEIGHT` in `shared/validation/pipeline.validation.ts`). Asking the
+  owner to guess a percentage per enquiry produces numbers nobody trusts.
+- A lead is closed **with a reason or not at all**: `leads_lost_pair_check`
+  enforces `(status = 'LOST') = (lost_reason IS NOT NULL)`. The "why I lose"
+  figure is the cheapest column in the schema and the most valuable answer, and
+  it is only worth reading if every row carries one.
+- `stage_changed_at` is denormalised from `lead_events` on purpose: "eleven days
+  in this stage" is read on every card of every render, and a per-card subquery
+  is the wrong price for it.
+- **Every module writes the history.** `lead_events` is reached through
+  `backend/modules/leads/lead.events.ts`, not through the inbox — the booking
+  service, the board and the rules all append to it. Where an event came from is
+  derived from its kind rather than stored; `is_automatic` marks the lines
+  nobody decided.
+- Preferences for the whole section live in one `app_settings` row, so a new
+  switch is a value rather than a migration. See `0007`'s note on the same
+  trade for the inbox.
 
 ## Bookings
 

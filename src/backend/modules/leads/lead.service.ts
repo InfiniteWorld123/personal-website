@@ -24,6 +24,7 @@ import {
   type LeadStatus,
 } from '#/shared/validation/lead.validation'
 import { env } from '#/shared/env'
+import { eventSource, recordEvent, type LeadEventKind } from './lead.events'
 import { createReplyToken, inboundIsConfigured, stripQuotedReply } from './lead.inbound'
 import { sendLeadNotificationMail, sendLeadReplyMail } from './lead.mail'
 
@@ -151,32 +152,6 @@ const LEAD_FROM = `FROM leads l
 /* -------------------------------------------------------------------------- */
 /* Events                                                                     */
 /* -------------------------------------------------------------------------- */
-
-type LeadEventKind =
-  | 'ARRIVED'
-  | 'NOTIFIED'
-  | 'OPENED'
-  | 'STATUS'
-  | 'REPLIED'
-  | 'INBOUND'
-  | 'NOTE'
-  | 'ARCHIVED'
-  | 'UNARCHIVED'
-  | 'JUNK'
-  | 'NOT_JUNK'
-
-const recordEvent = async (
-  db: Db,
-  leadId: string,
-  kind: LeadEventKind,
-  detail = '',
-): Promise<void> => {
-  await db.query(`INSERT INTO lead_events (lead_id, kind, detail) VALUES ($1, $2, $3);`, [
-    leadId,
-    kind,
-    detail,
-  ])
-}
 
 /* -------------------------------------------------------------------------- */
 /* The public door: the contact form                                          */
@@ -455,8 +430,8 @@ export const getLeadForAdmin = async (id: string): Promise<AdminLeadDetail> => {
       `SELECT id, body, created_at FROM lead_notes WHERE lead_id = $1 ORDER BY created_at DESC;`,
       [id],
     ),
-    db.query<{ id: string; kind: string; detail: string; created_at: Date }>(
-      `SELECT id, kind, detail, created_at FROM lead_events WHERE lead_id = $1
+    db.query<{ id: string; kind: string; detail: string; created_at: Date; is_automatic: boolean }>(
+      `SELECT id, kind, detail, created_at, is_automatic FROM lead_events WHERE lead_id = $1
         ORDER BY created_at DESC, id LIMIT 40;`,
       [id],
     ),
@@ -499,6 +474,10 @@ export const getLeadForAdmin = async (id: string): Promise<AdminLeadDetail> => {
       kind: event.kind,
       detail: event.detail,
       createdAt: event.created_at.toISOString(),
+      // Which screen it happened on, and whether anybody decided it. Both are
+      // what turn a list of lines into one readable story.
+      source: eventSource(event.kind as LeadEventKind),
+      isAutomatic: event.is_automatic,
     })),
     bookings: bookings.rows.map((booking) => ({
       id: booking.id,

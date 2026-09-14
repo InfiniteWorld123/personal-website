@@ -65,6 +65,14 @@ export type AdminLeadEvent = {
   kind: string
   detail: string
   createdAt: string
+  /**
+   * Which lens the event came from. Derived from the kind rather than stored,
+   * and shown as a badge so one strip reads as one story told by three
+   * screens instead of a pile of lines from nowhere.
+   */
+  source: 'inbox' | 'calls' | 'pipeline'
+  /** Written by a rule rather than by the owner. */
+  isAutomatic: boolean
 }
 
 export type AdminLeadDetail = AdminLeadListItem & {

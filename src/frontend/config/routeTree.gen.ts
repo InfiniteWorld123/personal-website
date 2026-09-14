@@ -45,6 +45,11 @@ import { Route as AdminBookingsAvailabilityRouteImport } from './../routes/admin
 import { Route as AdminBookingsNewRouteImport } from './../routes/admin.bookings.new'
 import { Route as AdminInboxIndexRouteImport } from './../routes/admin.inbox.index'
 import { Route as AdminInboxSettingsRouteImport } from './../routes/admin.inbox.settings'
+import { Route as AdminLeadsAllRouteImport } from './../routes/admin.leads.all'
+import { Route as AdminLeadsCallsRouteImport } from './../routes/admin.leads.calls'
+import { Route as AdminLeadsPipelineRouteImport } from './../routes/admin.leads.pipeline'
+import { Route as AdminLeadsSettingsRouteImport } from './../routes/admin.leads.settings'
+import { Route as AdminLeadsTodayRouteImport } from './../routes/admin.leads.today'
 import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
@@ -234,6 +239,31 @@ const AdminInboxSettingsRoute = AdminInboxSettingsRouteImport.update({
   path: '/inbox/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLeadsAllRoute = AdminLeadsAllRouteImport.update({
+  id: '/leads/all',
+  path: '/leads/all',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsCallsRoute = AdminLeadsCallsRouteImport.update({
+  id: '/leads/calls',
+  path: '/leads/calls',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsPipelineRoute = AdminLeadsPipelineRouteImport.update({
+  id: '/leads/pipeline',
+  path: '/leads/pipeline',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsSettingsRoute = AdminLeadsSettingsRouteImport.update({
+  id: '/leads/settings',
+  path: '/leads/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsTodayRoute = AdminLeadsTodayRouteImport.update({
+  id: '/leads/today',
+  path: '/leads/today',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -302,6 +332,11 @@ export interface FileRoutesByFullPath {
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/all': typeof AdminLeadsAllRoute
+  '/admin/leads/calls': typeof AdminLeadsCallsRoute
+  '/admin/leads/pipeline': typeof AdminLeadsPipelineRoute
+  '/admin/leads/settings': typeof AdminLeadsSettingsRoute
+  '/admin/leads/today': typeof AdminLeadsTodayRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -345,6 +380,11 @@ export interface FileRoutesByTo {
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/all': typeof AdminLeadsAllRoute
+  '/admin/leads/calls': typeof AdminLeadsCallsRoute
+  '/admin/leads/pipeline': typeof AdminLeadsPipelineRoute
+  '/admin/leads/settings': typeof AdminLeadsSettingsRoute
+  '/admin/leads/today': typeof AdminLeadsTodayRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog': typeof LangBlogIndexRoute
@@ -391,6 +431,11 @@ export interface FileRoutesById {
   '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
   '/admin/bookings/new': typeof AdminBookingsNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/all': typeof AdminLeadsAllRoute
+  '/admin/leads/calls': typeof AdminLeadsCallsRoute
+  '/admin/leads/pipeline': typeof AdminLeadsPipelineRoute
+  '/admin/leads/settings': typeof AdminLeadsSettingsRoute
+  '/admin/leads/today': typeof AdminLeadsTodayRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -438,6 +483,11 @@ export interface FileRouteTypes {
     | '/admin/bookings/availability'
     | '/admin/bookings/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/all'
+    | '/admin/leads/calls'
+    | '/admin/leads/pipeline'
+    | '/admin/leads/settings'
+    | '/admin/leads/today'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -481,6 +531,11 @@ export interface FileRouteTypes {
     | '/admin/bookings/availability'
     | '/admin/bookings/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/all'
+    | '/admin/leads/calls'
+    | '/admin/leads/pipeline'
+    | '/admin/leads/settings'
+    | '/admin/leads/today'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog'
@@ -526,6 +581,11 @@ export interface FileRouteTypes {
     | '/admin/bookings/availability'
     | '/admin/bookings/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/all'
+    | '/admin/leads/calls'
+    | '/admin/leads/pipeline'
+    | '/admin/leads/settings'
+    | '/admin/leads/today'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -809,6 +869,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInboxSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/leads/all': {
+      id: '/admin/leads/all'
+      path: '/leads/all'
+      fullPath: '/admin/leads/all'
+      preLoaderRoute: typeof AdminLeadsAllRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/calls': {
+      id: '/admin/leads/calls'
+      path: '/leads/calls'
+      fullPath: '/admin/leads/calls'
+      preLoaderRoute: typeof AdminLeadsCallsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/pipeline': {
+      id: '/admin/leads/pipeline'
+      path: '/leads/pipeline'
+      fullPath: '/admin/leads/pipeline'
+      preLoaderRoute: typeof AdminLeadsPipelineRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/settings': {
+      id: '/admin/leads/settings'
+      path: '/leads/settings'
+      fullPath: '/admin/leads/settings'
+      preLoaderRoute: typeof AdminLeadsSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/today': {
+      id: '/admin/leads/today'
+      path: '/leads/today'
+      fullPath: '/admin/leads/today'
+      preLoaderRoute: typeof AdminLeadsTodayRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/projects/': {
       id: '/admin/projects/'
       path: '/projects'
@@ -908,6 +1003,11 @@ interface AdminRouteChildren {
   AdminBookingsAvailabilityRoute: typeof AdminBookingsAvailabilityRoute
   AdminBookingsNewRoute: typeof AdminBookingsNewRoute
   AdminInboxSettingsRoute: typeof AdminInboxSettingsRoute
+  AdminLeadsAllRoute: typeof AdminLeadsAllRoute
+  AdminLeadsCallsRoute: typeof AdminLeadsCallsRoute
+  AdminLeadsPipelineRoute: typeof AdminLeadsPipelineRoute
+  AdminLeadsSettingsRoute: typeof AdminLeadsSettingsRoute
+  AdminLeadsTodayRoute: typeof AdminLeadsTodayRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
   AdminProjectsNewRoute: typeof AdminProjectsNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
@@ -928,6 +1028,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBookingsAvailabilityRoute: AdminBookingsAvailabilityRoute,
   AdminBookingsNewRoute: AdminBookingsNewRoute,
   AdminInboxSettingsRoute: AdminInboxSettingsRoute,
+  AdminLeadsAllRoute: AdminLeadsAllRoute,
+  AdminLeadsCallsRoute: AdminLeadsCallsRoute,
+  AdminLeadsPipelineRoute: AdminLeadsPipelineRoute,
+  AdminLeadsSettingsRoute: AdminLeadsSettingsRoute,
+  AdminLeadsTodayRoute: AdminLeadsTodayRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
   AdminProjectsNewRoute: AdminProjectsNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,

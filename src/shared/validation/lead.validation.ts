@@ -10,7 +10,21 @@ export const LEAD_LANGUAGES = ['de', 'en', 'ar'] as const
 
 export type LeadLanguage = (typeof LEAD_LANGUAGES)[number]
 
-export const LEAD_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'WON', 'LOST'] as const
+/**
+ * The pipeline, in order. `PROPOSAL` and `HOLD` joined the five that shipped
+ * in `0010_lead_system.sql`: a number on the table is the stage deals die in
+ * silently, and a lead parked until January has to leave the follow-up list
+ * without pretending to be lost. The database enforces the same seven.
+ */
+export const LEAD_STATUSES = [
+  'NEW',
+  'CONTACTED',
+  'QUALIFIED',
+  'PROPOSAL',
+  'HOLD',
+  'WON',
+  'LOST',
+] as const
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number]
 

@@ -752,3 +752,90 @@ budget and lock the booking row before changing it.
 The token itself expires at the booking start and is revoked on cancellation
 or rescheduling. The new booking receives a new token. This limits the time in
 which a leaked email URL can reveal a visitor's data or change their booking.
+
+### D29
+
+**The pipeline's odds are derived from the stage, never typed per lead.**
+
+*14 Sep 2026.*
+
+A board where every card carries a hand-entered probability produces a pipeline
+figure nobody believes, because nobody remembers what last month's guesses
+meant. `STAGE_WEIGHT` maps each of the seven stages to a fixed weight, and the
+owner's only input is the judgement he is already making: which column a card
+sits in.
+
+The weights rise towards the sale and `LOST` is zero. `HOLD` is deliberately
+low — a deal parked until January is real, but counting it at half would make a
+quiet quarter look busy.
+
+Two stages joined the five that shipped with `0004`. `PROPOSAL` is the moment a
+number is on the table, which is where deals die silently while nobody chases;
+folding it into `QUALIFIED` means the board cannot say who is waiting on a
+price. `HOLD` takes a dormant lead out of the follow-up list without pretending
+it was lost, which is what keeps that list short enough to be read.
+
+### D30
+
+**Every module writes the lead's history; the inbox does not own it.**
+
+*14 Sep 2026.*
+
+`bookings.lead_id` has pointed at the person since `0004`, and the booking
+service wrote nothing into `lead_events` — the writer was a private function
+inside the inbox service, so only the inbox could tell a story. Someone who
+wrote, booked a call and then cancelled it read as a single line: "a message
+arrived".
+
+The writer moved to `backend/modules/leads/lead.events.ts`, which imports
+nothing from the inbox. Booking creation, cancellation, rescheduling and the
+admin's own cancellation all append there, inside the transaction that did the
+work.
+
+Which screen an event came from is **derived from its kind**, not stored: the
+kind already knows, and a column would be one more thing a writer could get
+wrong. `is_automatic` is stored, because whether a person decided something is
+not derivable and is the one fact the owner must always be able to see.
+
+### D31
+
+**Time-based rules sweep lazily on read, not on a schedule.**
+
+*14 Sep 2026.*
+
+Two of the nine automation rules are about time passing rather than about a
+request: a call whose hour has gone by, and a lead that has been silent for a
+fortnight. The obvious implementation is a Cloudflare Cron Trigger, which needs
+a deploy the owner runs himself — and the reminder emails from B5 have been
+waiting on exactly that deploy since 12 Sep. Shipping the best feature of the
+lead system in the same state would have meant shipping it switched off.
+
+`runDueAutomation` is therefore called when the board or Today is read. Each
+rule is one indexed statement whose `WHERE` excludes what it has already done,
+so the sweep is idempotent and reading a page twice changes nothing. A cron can
+call the same function later without a line changing inside it.
+
+A rule in `suggest` mode owns no row at all. The same predicate the `auto` path
+uses is evaluated on read and rendered in Today with one accept button, so
+there is a single implementation of "what happens" per rule rather than two
+that drift. Dismissing a suggestion pushes the follow-up date out instead of
+writing a hidden "no" nobody can find later.
+
+### D32
+
+**An automatic close announces itself and can be undone.**
+
+*14 Sep 2026.*
+
+The owner chose every rule on `auto`, including the one that closes a silent
+lead as `LOST`. That rule is the only one that decides something against the
+owner's interest without him present, and a lead closed quietly is a client he
+never learns he lost.
+
+`leads.auto_closed_at` records that a rule rather than a person did it. Today
+carries such a lead for a day with an **Undo**, the card says "Closed by a
+rule", and the history line is marked automatic. Any hand-made stage change
+clears the stamp, because by then he has seen it.
+
+The automation is exactly what was asked for. The stamp is the price of being
+able to trust it.
