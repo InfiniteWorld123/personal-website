@@ -42,7 +42,13 @@ export function HomePage({
       <BookingBand />
       <BlogSection blog={blog} language={language} posts={posts} />
       <HomeFaqSection copy={faq} />
-      <CtaBand title={home.cta.title} body={home.cta.body} button={home.cta.button} alt={home.cta.alt} />
+      <CtaBand
+        title={home.cta.title}
+        body={home.cta.body}
+        button={home.cta.button}
+        alt={home.cta.alt}
+        keyBase="home.cta"
+      />
     </>
   )
 }

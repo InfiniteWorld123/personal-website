@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from '#/frontend/components/ui/sheet'
 import type { ShellCopy } from '#/frontend/content/types'
+import { getSite } from '#/frontend/content'
 import { site } from '#/frontend/content/site'
 import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import { useLanguage } from '#/frontend/i18n/language-provider'
@@ -136,7 +137,7 @@ export function SiteHeader({ copy }: { copy: ShellCopy }) {
           <Separator />
           <SheetFooter className="gap-3">
             <p className="text-sm leading-6 text-muted-foreground" dir="ltr">
-              {site.email}
+              {getSite().email}
             </p>
             <SheetClose asChild>
               <Button asChild className="w-full rounded-full">

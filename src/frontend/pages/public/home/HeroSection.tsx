@@ -6,7 +6,9 @@ import { Container } from '#/frontend/components/layout/public/Container'
 import { PortraitBlob } from '#/frontend/components/layout/public/PortraitBlob'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
-import { getContent, serviceOrder, site } from '#/frontend/content'
+import { getContent, getSite, serviceOrder, site } from '#/frontend/content'
+import { E } from '#/frontend/features/content/E'
+import { useResolvedList } from '#/frontend/features/content/content-overlay'
 import { NextSlotLine } from '#/frontend/features/booking/NextSlotLine'
 import { getBookingEntryCopy } from '#/frontend/features/booking/booking-entry-copy'
 import type { HomeCopy } from '#/frontend/content/types'
@@ -27,7 +29,9 @@ import { cn } from '#/frontend/lib/utils'
 export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
   const { language, isRtl } = useLanguage()
   const { services, shell } = getContent(language)
+  const facts = getSite()
   const entry = getBookingEntryCopy(language)
+  const typed = useResolvedList('home.hero.typed[]', copy.typed)
 
   const item = (index: number) => ({ 'data-hero-item': '', style: { '--hero-i': index } as CSSProperties })
 
@@ -42,14 +46,14 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </Badge>
 
             <p {...item(1)} className="mt-7 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              {copy.greeting}
+              <E k="home.hero.greeting">{copy.greeting}</E>
             </p>
 
             <p
               {...item(2)}
               className="mt-4 text-[0.72rem] font-bold uppercase tracking-[0.36em] text-primary/70 rtl:tracking-normal"
             >
-              {copy.prefix}
+              <E k="home.hero.prefix">{copy.prefix}</E>
             </p>
 
             <h1
@@ -61,31 +65,35 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               {isRtl ? (
                 <span className="hero-title-arabic">
                   <HeroLine index={0}>
-                    <span className="hero-arabic-static">{copy.staticLine}</span>
+                    <span className="hero-arabic-static">
+                      <E k="home.hero.staticLine">{copy.staticLine}</E>
+                    </span>
                   </HeroLine>
                   <HeroLine index={1}>
                     <span className="hero-arabic-role">
-                      <TypingText key={language} words={copy.typed} />
+                      <TypingText key={language} words={typed} />
                     </span>
                   </HeroLine>
                 </span>
               ) : (
                 <>
                   <HeroLine index={0}>
-                    <TypingText key={language} words={copy.typed} />
+                    <TypingText key={language} words={typed} />
                   </HeroLine>
                   <HeroLine index={1}>
-                    <span className="hero-static-line">{copy.staticLine}</span>
+                    <span className="hero-static-line">
+                      <E k="home.hero.staticLine">{copy.staticLine}</E>
+                    </span>
                   </HeroLine>
                 </>
               )}
             </h1>
 
             <p {...item(7)} className="mt-6 max-w-xl text-lg font-semibold leading-8 text-foreground sm:text-xl">
-              {copy.headline}
+              <E k="home.hero.headline">{copy.headline}</E>
             </p>
             <p {...item(8)} className="hero-copy mt-3 max-w-xl text-base leading-8 sm:text-[1.05rem]">
-              {copy.sub}
+              <E k="home.hero.sub">{copy.sub}</E>
             </p>
 
             {/* Two doors, not one: the filled button leads, and the outlined
@@ -96,13 +104,13 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               <Button asChild size="lg" className="rounded-full px-7">
                 <Link to="/$lang/booking" params={{ lang: language }}>
                   <CalendarDays className="size-4" />
-                  {copy.cta}
+                  <E k="home.hero.cta">{copy.cta}</E>
                   <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-7">
                 <Link to="/$lang/contact" params={{ lang: language }}>
-                  {copy.secondary}
+                  <E k="home.hero.secondary">{copy.secondary}</E>
                   <ArrowRight className="btn-arrow rtl:-scale-x-100" />
                 </Link>
               </Button>
@@ -120,16 +128,16 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
                 size="icon"
                 className="btn-glow-icon rounded-full border border-border/60 bg-card text-foreground/70 hover:text-primary"
               >
-                <a href={site.github} target="_blank" rel="noreferrer" aria-label="GitHub">
+                <a href={facts.github} target="_blank" rel="noreferrer" aria-label="GitHub">
                   <Github />
                 </a>
               </Button>
               <a
-                href={`mailto:${site.email}`}
+                href={`mailto:${facts.email}`}
                 dir="ltr"
                 className="link-underline-slide text-sm font-medium text-foreground/48 hover:text-primary"
               >
-                {site.email}
+                {facts.email}
               </a>
             </div>
 

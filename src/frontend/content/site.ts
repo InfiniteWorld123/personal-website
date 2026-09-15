@@ -5,6 +5,11 @@ export const site = {
   name: 'Yaman Warda',
   url: 'https://yamanwarda.de',
   email: 'yamanwarda06@gmail.com',
+  /**
+   * Empty until the owner fills it in from `/admin/content`. Every place that
+   * shows it checks first, so an unset number is absent rather than blank.
+   */
+  phone: '',
   city: 'Erfurt',
   country: 'DE',
   github: 'https://github.com/InfiniteWorld123',

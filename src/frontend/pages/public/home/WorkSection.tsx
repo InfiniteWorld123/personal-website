@@ -12,7 +12,14 @@ export function WorkSection({ copy, work, language, entries }: { copy: HomeCopy[
   return <Section id="arbeiten">
     <Container className="flex flex-col gap-10">
       <div className="section-heading-row">
-        <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
+        <SectionHeading
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          sub={copy.sub}
+          eyebrowKey="home.work.eyebrow"
+          titleKey="home.work.title"
+          subKey="home.work.sub"
+        />
         <Button asChild variant="outline" className="rounded-full px-5"><Link to="/$lang/work" params={{ lang: language }}>{copy.all}<ArrowRight className="btn-arrow rtl:-scale-x-100" /></Link></Button>
       </div>
       <ProjectCarousel entries={entries.slice(0, 6)} work={work} language={language} />

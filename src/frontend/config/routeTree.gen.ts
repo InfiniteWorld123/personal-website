@@ -22,6 +22,7 @@ import { Route as LangImpressumRouteImport } from './../routes/$lang.impressum'
 import { Route as LangServicesRouteImport } from './../routes/$lang.services'
 import { Route as LangStackRouteImport } from './../routes/$lang.stack'
 import { Route as AdminIndexRouteImport } from './../routes/admin.index'
+import { Route as AdminContentRouteImport } from './../routes/admin.content'
 import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
@@ -121,6 +122,11 @@ const LangStackRoute = LangStackRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -361,6 +368,7 @@ export interface FileRoutesByTo {
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/$lang/impressum'
     | '/$lang/services'
     | '/$lang/stack'
+    | '/admin/content'
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/$lang/impressum'
     | '/$lang/services'
     | '/$lang/stack'
+    | '/admin/content'
     | '/admin/login'
     | '/api/$'
     | '/api/contact'
@@ -562,6 +573,7 @@ export interface FileRouteTypes {
     | '/$lang/impressum'
     | '/$lang/services'
     | '/$lang/stack'
+    | '/admin/content'
     | '/admin_/login'
     | '/api/$'
     | '/api/contact'
@@ -706,6 +718,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin_/login': {
@@ -995,6 +1014,7 @@ const LangRouteChildren: LangRouteChildren = {
 const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
 
 interface AdminRouteChildren {
+  AdminContentRoute: typeof AdminContentRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBlogIdRoute: typeof AdminBlogIdRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
@@ -1020,6 +1040,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminContentRoute: AdminContentRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBlogIdRoute: AdminBlogIdRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,

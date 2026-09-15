@@ -37,24 +37,45 @@ const rememberLanguage = (language: Language) => {
  *
  * Routes without a language segment (admin, api) fall back to German.
  */
-export function LanguageProvider({ children }: { children: ReactNode }) {
+export function LanguageProvider({
+  children,
+  language: forced,
+  onLanguageChange,
+}: {
+  children: ReactNode
+  /**
+   * Set only where a piece of the public site is rendered somewhere the URL
+   * does not carry a language — the content editor previews all three from
+   * `/admin/content`. A forced language deliberately leaves `<html lang>` and
+   * `dir` alone: the admin around the preview stays as it is.
+   */
+  language?: Language
+  onLanguageChange?: (language: Language) => void
+}) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const navigate = useNavigate()
 
-  const language = languageFromPathname(pathname) ?? defaultLanguage
+  const language = forced ?? languageFromPathname(pathname) ?? defaultLanguage
   const direction = directionFor(language)
 
   useEffect(() => {
+    if (forced) return
+
     document.documentElement.lang = language
     document.documentElement.dir = direction
-  }, [language, direction])
+  }, [forced, language, direction])
 
   const setLanguage = useCallback(
     (next: Language) => {
+      if (onLanguageChange) {
+        onLanguageChange(next)
+        return
+      }
+
       rememberLanguage(next)
       void navigate({ to: withLanguage(pathname, next), replace: true })
     },
-    [navigate, pathname],
+    [navigate, onLanguageChange, pathname],
   )
 
   const value = useMemo(

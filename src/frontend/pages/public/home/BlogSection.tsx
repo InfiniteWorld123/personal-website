@@ -30,7 +30,14 @@ export function BlogSection({
     <Section id="blog">
       <Container className="flex flex-col gap-10">
         <div className="section-heading-row">
-          <SectionHeading eyebrow={blog.home.eyebrow} title={blog.home.title} sub={blog.home.sub} />
+          <SectionHeading
+            eyebrow={blog.home.eyebrow}
+            title={blog.home.title}
+            sub={blog.home.sub}
+            eyebrowKey="blog.home.eyebrow"
+            titleKey="blog.home.title"
+            subKey="blog.home.sub"
+          />
           <Button asChild variant="outline" className="rounded-full px-5">
             <Link to="/$lang/blog" params={{ lang: language }} search={{}}>
               {blog.home.all}

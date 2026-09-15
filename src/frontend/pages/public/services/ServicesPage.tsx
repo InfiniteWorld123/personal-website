@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
-import { getContent, servicePrices } from '#/frontend/content'
+import { getContent, getServicePrices } from '#/frontend/content'
 import type { ServiceCopy, ServiceSlug } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
 import { useLanguage } from '#/frontend/i18n/language-provider'
@@ -74,7 +74,7 @@ function ServiceDetail({
             <SplitWords text={copy.name} />
           </h2>
           <p data-reveal className="text-primary tabular text-lg font-medium">
-            {fromLabel} {formatEuro(servicePrices[slug], language)}
+            {fromLabel} {formatEuro(getServicePrices()[slug], language)}
           </p>
           <p data-reveal className="text-muted-foreground leading-relaxed">
             {copy.short}

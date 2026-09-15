@@ -62,7 +62,7 @@ export const adminNavigation: AdminNavigationItem[] = [
    * The route is unchanged: this is the label, not the section.
    */
   { label: 'Calendar', to: '/admin/bookings', icon: CalendarRange, available: true },
-  { label: 'Content', to: '/admin/content', icon: FileText, available: false },
+  { label: 'Content', to: '/admin/content', icon: FileText, available: true },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
   { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },
 ]

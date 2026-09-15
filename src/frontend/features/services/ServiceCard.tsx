@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { E } from '#/frontend/features/content/E'
 import { ArrowRight, AppWindow, Globe2, ShoppingBag } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '#/frontend/components/ui/card'
@@ -16,12 +17,15 @@ export function ServiceCard({
   slug,
   copy,
   description,
+  descriptionKey,
   language,
   moreLabel,
 }: {
   slug: ServiceSlug
   copy: Pick<ServiceCopy, 'name'>
   description: string
+  /** Set on the home page, where the card copy is editable. */
+  descriptionKey?: string
   language: Language
   moreLabel: string
 }) {
@@ -41,7 +45,9 @@ export function ServiceCard({
         <CardTitle className="mt-2 text-[1.45rem] leading-snug text-foreground">{copy.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 px-7 pb-6">
-        <p className="m-0 text-sm leading-7 text-foreground/58">{description}</p>
+        <p className="m-0 text-sm leading-7 text-foreground/58">
+          {descriptionKey ? <E k={descriptionKey}>{description}</E> : description}
+        </p>
       </CardContent>
       <CardFooter className="rounded-b-[1.75rem] border-t border-border/30 bg-muted/25 px-7 py-5">
         <Button

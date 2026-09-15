@@ -1,4 +1,4 @@
-import { getContent, serviceOrder, servicePrices, site } from '#/frontend/content'
+import { getContent, getServicePrices, getSite, serviceOrder, site } from '#/frontend/content'
 import { type Language, languages, localeFor } from '#/frontend/i18n/language'
 import { absolute, pageUrl, socialCard } from './url'
 
@@ -42,7 +42,7 @@ const WEBSITE = `${site.url}/#website`
 
 const postalAddress = {
   '@type': 'PostalAddress',
-  addressLocality: site.city,
+  addressLocality: getSite().city,
   addressRegion: 'Thüringen',
   addressCountry: site.country,
 }
@@ -57,7 +57,8 @@ const spokenLanguages = languages.map((language) => localeFor(language))
 const AREA_SERVED = [{ '@type': 'Country', name: 'Germany' }, 'Worldwide (remote)']
 
 const priceRange = () => {
-  const amounts = serviceOrder.map((slug) => servicePrices[slug])
+  const prices = getServicePrices()
+  const amounts = serviceOrder.map((slug) => prices[slug])
   return `€${Math.min(...amounts)}–€${Math.max(...amounts)}`
 }
 
@@ -73,7 +74,7 @@ const offers = (language: Language) => {
     availability: 'https://schema.org/InStock',
     priceSpecification: {
       '@type': 'PriceSpecification',
-      minPrice: servicePrices[slug],
+      minPrice: getServicePrices()[slug],
       priceCurrency: 'EUR',
     },
     itemOffered: {
@@ -98,13 +99,13 @@ const siteNodes = (language: Language) => {
       name: site.name,
       url: pageUrl(language, '/about'),
       image: absolute(site.heroPortrait),
-      email: `mailto:${site.email}`,
+      email: `mailto:${getSite().email}`,
       jobTitle: home.hero.eyebrow,
       description: shell.footer.tagline,
       address: postalAddress,
       knowsLanguage: spokenLanguages,
       knowsAbout: site.knowsAbout,
-      sameAs: [site.github, site.linkedin],
+      sameAs: [getSite().github, getSite().linkedin],
       worksFor: { '@id': BUSINESS },
     },
     {
@@ -114,7 +115,7 @@ const siteNodes = (language: Language) => {
       description: shell.footer.tagline,
       url: pageUrl(language, '/'),
       image: absolute(socialCard(language)),
-      email: `mailto:${site.email}`,
+      email: `mailto:${getSite().email}`,
       founder: { '@id': PERSON },
       address: postalAddress,
       areaServed: AREA_SERVED,

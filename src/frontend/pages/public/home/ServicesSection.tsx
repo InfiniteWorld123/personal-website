@@ -23,7 +23,14 @@ export function ServicesSection({
   return (
     <Section id="leistungen">
       <Container className="flex flex-col gap-10">
-        <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
+        <SectionHeading
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          sub={copy.sub}
+          eyebrowKey="home.services.eyebrow"
+          titleKey="home.services.title"
+          subKey="home.services.sub"
+        />
         <div className="grid gap-5 md:grid-cols-3">
           {homeServiceOrder.map((slug) => (
             <ServiceCard
@@ -31,6 +38,7 @@ export function ServicesSection({
               slug={slug}
               copy={services[slug]}
               description={copy.cards[slug]}
+              descriptionKey={`home.services.cards.${slug}`}
               language={language}
               moreLabel={copy.more}
             />
