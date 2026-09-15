@@ -1,6 +1,7 @@
 import Image from '@tiptap/extension-image'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { EditorPromptBar } from '#/frontend/features/editor/EditorPromptBar'
 import {
   BoldIcon,
   CodeIcon,
@@ -19,8 +20,6 @@ import {
   UnlinkIcon,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { Button } from '#/frontend/components/ui/button'
-import { Input } from '#/frontend/components/ui/input'
 import { cn } from '#/frontend/lib/utils'
 import {
   isSafeHref,
@@ -70,56 +69,6 @@ function ToolbarButton({ label, icon, isActive, isDisabled, onClick }: ToolbarBu
 const HEADING_LEVELS = [2, 3, 4] as const
 
 /** A small bar that takes one or two values and hands them back on Apply. */
-function PromptBar({
-  fields,
-  submitLabel,
-  onSubmit,
-  onCancel,
-}: {
-  fields: Array<{ name: string; label: string; placeholder: string; value: string }>
-  submitLabel: string
-  onSubmit: (values: Record<string, string>) => void
-  onCancel: () => void
-}) {
-  const [values, setValues] = useState<Record<string, string>>(
-    Object.fromEntries(fields.map((field) => [field.name, field.value])),
-  )
-
-  return (
-    <div className="border-border bg-muted/30 flex flex-wrap items-end gap-2 border-b p-2">
-      {fields.map((field) => (
-        <div key={field.name} className="flex min-w-40 flex-1 flex-col gap-1">
-          <label htmlFor={`rt-${field.name}`} className="text-muted-foreground text-xs">
-            {field.label}
-          </label>
-          <Input
-            id={`rt-${field.name}`}
-            dir="ltr"
-            className="h-8"
-            value={values[field.name] ?? ''}
-            placeholder={field.placeholder}
-            onChange={(event) => setValues({ ...values, [field.name]: event.target.value })}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                onSubmit(values)
-              }
-
-              if (event.key === 'Escape') onCancel()
-            }}
-          />
-        </div>
-      ))}
-      <Button type="button" size="sm" className="h-8" onClick={() => onSubmit(values)}>
-        {submitLabel}
-      </Button>
-      <Button type="button" size="sm" variant="ghost" className="h-8" onClick={onCancel}>
-        Cancel
-      </Button>
-    </div>
-  )
-}
-
 function Toolbar({ editor }: { editor: Editor }) {
   const [prompt, setPrompt] = useState<'link' | 'image' | null>(null)
   const [issue, setIssue] = useState<string | null>(null)
@@ -250,7 +199,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       </div>
 
       {prompt === 'link' ? (
-        <PromptBar
+        <EditorPromptBar
           fields={[
             {
               name: 'href',
@@ -292,7 +241,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       ) : null}
 
       {prompt === 'image' ? (
-        <PromptBar
+        <EditorPromptBar
           fields={[
             { name: 'src', label: 'Image path', placeholder: '/images/posts/example.webp', value: '' },
             { name: 'alt', label: 'Alt text', placeholder: 'What the image shows', value: '' },

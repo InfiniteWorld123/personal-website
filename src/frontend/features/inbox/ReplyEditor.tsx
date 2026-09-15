@@ -1,5 +1,6 @@
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { EditorPromptBar } from '#/frontend/features/editor/EditorPromptBar'
 import {
   BoldIcon,
   ItalicIcon,
@@ -10,7 +11,7 @@ import {
   StrikethroughIcon,
   UnlinkIcon,
 } from 'lucide-react'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '#/frontend/lib/utils'
 import { isSafeHref, type RichTextDoc } from '#/shared/validation/rich-text'
 
@@ -61,9 +62,17 @@ function ToolButton({
 
 function Toolbar({ editor }: { editor: Editor }) {
   const linkActive = editor.isActive('link')
+  const [asking, setAsking] = useState(false)
+  const [issue, setIssue] = useState<string | null>(null)
+
+  const closeAsking = () => {
+    setAsking(false)
+    setIssue(null)
+  }
 
   return (
-    <div className="border-border flex flex-wrap items-center gap-0.5 border-b px-1.5 py-1">
+    <div className="border-border border-b">
+    <div className="flex flex-wrap items-center gap-0.5 px-1.5 py-1">
       <ToolButton label="Bold" icon={<BoldIcon className="size-3.5" />}
         active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
       <ToolButton label="Italic" icon={<ItalicIcon className="size-3.5" />}
@@ -85,30 +94,57 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => {
           if (linkActive) {
             editor.chain().focus().unsetLink().run()
-            return
-          }
-
-          const href = window.prompt('Link')?.trim()
-          // The schema drops an unsafe href anyway; refusing it here means the
-          // owner sees nothing happen rather than a link that vanishes later.
-          if (!href || !isSafeHref(href)) return
-
-          // `setLink` marks the selected text. With nothing selected there is
-          // nothing to mark, and the button appeared to do nothing at all —
-          // so write the address itself and link that.
-          if (editor.state.selection.empty) {
-            editor
-              .chain()
-              .focus()
-              .insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] })
-              .run()
 
             return
           }
 
-          editor.chain().focus().setLink({ href }).run()
+          setAsking(true)
         }}
       />
+    </div>
+
+      {asking ? (
+        <EditorPromptBar
+          fields={[
+            {
+              name: 'href',
+              label: 'Link address',
+              placeholder: 'https://example.com or /de/booking',
+              value: '',
+            },
+          ]}
+          submitLabel="Apply link"
+          onCancel={closeAsking}
+          onSubmit={({ href }) => {
+            const value = (href ?? '').trim()
+
+            // The same rule the server enforces, said early: `javascript:` and
+            // friends parse as valid URLs, so the protocol is what is checked.
+            if (!isSafeHref(value)) {
+              setIssue('A link must be http(s), mailto, or a path on this site.')
+
+              return
+            }
+
+            // `setLink` marks the selected text. With nothing selected there is
+            // nothing to mark, and the button appeared to do nothing at all —
+            // so write the address itself and link that.
+            if (editor.state.selection.empty) {
+              editor
+                .chain()
+                .focus()
+                .insertContent({ type: 'text', text: value, marks: [{ type: 'link', attrs: { href: value } }] })
+                .run()
+            } else {
+              editor.chain().focus().setLink({ href: value }).run()
+            }
+
+            closeAsking()
+          }}
+        />
+      ) : null}
+
+      {issue ? <p className="text-destructive px-2 pb-2 text-xs">{issue}</p> : null}
     </div>
   )
 }
