@@ -40,6 +40,24 @@ type HeadInput = {
  * per language plus x-default, Open Graph / Twitter cards, and the page's
  * JSON-LD graph.
  */
+/**
+ * The graph, ready to be written inside a `<script>` block.
+ *
+ * The router puts this string into the document as raw HTML, and
+ * `JSON.stringify` leaves `</script>` exactly as it found it — so a value
+ * carrying that sequence would close the block and everything after it would
+ * be parsed as markup. Every value here is written by the owner today, which
+ * is the only reason this was never an open door; it stops being true the
+ * first time a visitor's words reach a page's description.
+ *
+ * The three escapes are valid JSON and parse back to the same characters.
+ */
+export const toJsonLd = (graph: unknown): string =>
+  JSON.stringify(graph)
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026')
+
 export function buildHead({
   language,
   path,
@@ -117,7 +135,7 @@ export function buildHead({
     scripts: [
       {
         type: 'application/ld+json',
-        children: JSON.stringify(
+        children: toJsonLd(
           buildStructuredData({
             language,
             path,

