@@ -1,5 +1,9 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  // `workers/` holds standalone Cloudflare Workers with their own runtime
+  // types and their own tsconfig; type-checking them from here would demand
+  // the site's DOM lib and miss theirs.
+  "exclude": ["node_modules", ".output", "workers"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
