@@ -499,7 +499,17 @@ export function LeadReadingPane({
                   size="sm"
                   className="mt-2"
                   disabled={!note.trim() || addNote.isPending}
-                  onClick={() => addNote.mutate({ id: lead.id, body: note.trim() }, { onSuccess: () => setNote('') })}
+                  onClick={() =>
+                    addNote.mutate(
+                      { id: lead.id, body: note.trim() },
+                      {
+                        onSuccess: () => {
+                          setNote('')
+                          setPanel(null)
+                        },
+                      },
+                    )
+                  }
                 >
                   Save note
                 </Button>
