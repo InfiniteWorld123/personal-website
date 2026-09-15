@@ -272,7 +272,20 @@ function Toolbar({ editor }: { editor: Editor }) {
               return
             }
 
-            editor.chain().focus().extendMarkRange('link').setLink({ href: value }).run()
+            // `setLink` marks the selected text, and `extendMarkRange` only
+            // widens a selection that is already inside a link. With the caret
+            // sitting in plain text there is nothing to mark, so the address
+            // was swallowed and the button looked dead. Write it instead.
+            if (editor.state.selection.empty && !editor.isActive('link')) {
+              editor
+                .chain()
+                .focus()
+                .insertContent({ type: 'text', text: value, marks: [{ type: 'link', attrs: { href: value } }] })
+                .run()
+            } else {
+              editor.chain().focus().extendMarkRange('link').setLink({ href: value }).run()
+            }
+
             closePrompt()
           }}
         />
