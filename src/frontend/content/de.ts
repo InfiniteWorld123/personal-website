@@ -682,7 +682,7 @@ export const de: SiteContent = {
         },
         {
           title: 'Kontakt',
-          lines: ['E-Mail: yamanwarda06@gmail.com'],
+          lines: ['E-Mail: info@yamanwarda.de'],
         },
         {
           title: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
@@ -724,7 +724,7 @@ export const de: SiteContent = {
             'Mhd Yaman Warda',
             'Warschauer Str. 9',
             '99089 Erfurt, Deutschland',
-            'E-Mail: yamanwarda06@gmail.com',
+            'E-Mail: info@yamanwarda.de',
           ],
         },
         {

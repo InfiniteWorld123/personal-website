@@ -4,7 +4,7 @@ import type { ServiceSlug } from './types'
 export const site = {
   name: 'Yaman Warda',
   url: 'https://yamanwarda.de',
-  email: 'yamanwarda06@gmail.com',
+  email: 'info@yamanwarda.de',
   /**
    * Empty until the owner fills it in from `/admin/content`. Every place that
    * shows it checks first, so an unset number is absent rather than blank.
