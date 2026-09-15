@@ -10,7 +10,7 @@ import {
   StrikethroughIcon,
   UnlinkIcon,
 } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { cn } from '#/frontend/lib/utils'
 import { isSafeHref, type RichTextDoc } from '#/shared/validation/rich-text'
 
@@ -91,7 +91,22 @@ function Toolbar({ editor }: { editor: Editor }) {
           const href = window.prompt('Link')?.trim()
           // The schema drops an unsafe href anyway; refusing it here means the
           // owner sees nothing happen rather than a link that vanishes later.
-          if (href && isSafeHref(href)) editor.chain().focus().setLink({ href }).run()
+          if (!href || !isSafeHref(href)) return
+
+          // `setLink` marks the selected text. With nothing selected there is
+          // nothing to mark, and the button appeared to do nothing at all —
+          // so write the address itself and link that.
+          if (editor.state.selection.empty) {
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] })
+              .run()
+
+            return
+          }
+
+          editor.chain().focus().setLink({ href }).run()
         }}
       />
     </div>
@@ -124,18 +139,38 @@ export function ReplyEditor({
       }),
     ],
     content: value,
-    onUpdate: ({ editor: instance }) => onChange(instance.getJSON() as RichTextDoc),
+    onUpdate: ({ editor: instance }) => {
+      const doc = instance.getJSON() as RichTextDoc
+
+      emitted.current = doc
+      onChange(doc)
+    },
   })
+
+  /**
+   * The last document this editor produced itself. Anything else arriving in
+   * `value` came from the parent — a snippet button, a cleared draft — and has
+   * to be written into the editor, which otherwise never looks at the prop
+   * again after mount. Skipping our own echo is what keeps typing from
+   * resetting the document and throwing the cursor to the start.
+   */
+  const emitted = useRef<RichTextDoc | null>(null)
 
   // A draft belongs to the message it was started in. When the parent clears
   // the value — after sending, or on opening another message — the editor has
   // to follow, or the next reply starts with the last one still in it.
   useEffect(() => {
-    if (!editor) return
+    if (!editor || value === emitted.current) return
 
-    const isEmpty = value.content.length === 0
+    if (value.content.length === 0) {
+      if (!editor.isEmpty) editor.commands.clearContent()
 
-    if (isEmpty && !editor.isEmpty) editor.commands.clearContent()
+      return
+    }
+
+    emitted.current = value
+    editor.commands.setContent(value, { emitUpdate: false })
+    editor.commands.focus('end')
   }, [editor, value])
 
   return (
