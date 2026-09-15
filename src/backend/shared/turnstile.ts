@@ -84,7 +84,25 @@ export const assertTurnstile = async ({
     if (!response.ok) throw new Error(`Turnstile returned HTTP ${response.status}`)
 
     const result = (await response.json()) as TurnstileResponse
-    if (!isTurnstileResponseValid(result, action)) throw botCheckFailedError()
+
+    if (!isTurnstileResponseValid(result, action)) {
+      /*
+       * Say why. A refused check used to leave nothing behind, so the only
+       * way to tell a wrong secret from a wrong hostname from an expected
+       * action that never arrived was to guess — which cost an afternoon on
+       * the live site. None of these four values is a secret.
+       */
+      console.error('Turnstile refused a token', {
+        success: result.success,
+        expectedAction: action,
+        returnedAction: result.action,
+        returnedHostname: result.hostname,
+        allowedHostnames: getTurnstileAllowedHostnames(),
+        errorCodes: (result as { 'error-codes'?: string[] })['error-codes'],
+      })
+
+      throw botCheckFailedError()
+    }
   } catch (error) {
     if (isAppError(error)) throw error
 
