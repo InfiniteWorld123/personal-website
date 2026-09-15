@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import {
@@ -118,10 +118,19 @@ export function InboxPage({ search }: { search: InboxSearch }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, items, isWide])
 
-  // Opening a message is what marks it read. Once per selection, not once per
-  // render of the pane.
+  // Opening a message is what marks it read — once per selection, and never
+  // again while that selection stands. The guard is the whole point: "Unread"
+  // sets `isUnread` back to true, and without the ref this effect saw that as
+  // a freshly opened message and marked it read again in the same second. The
+  // button appeared to do nothing.
+  const autoReadId = useRef<string | null>(null)
+
   useEffect(() => {
-    if (lead.data?.isUnread) setRead.mutate({ id: lead.data.id, value: true })
+    const id = lead.data?.id
+    if (!id || autoReadId.current === id) return
+
+    autoReadId.current = id
+    if (lead.data?.isUnread) setRead.mutate({ id, value: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.data?.id, lead.data?.isUnread])
 
