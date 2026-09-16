@@ -1,12 +1,5 @@
 import { getDb, withTransaction, type Db } from '#/backend/db/client'
 import {
-  onCallBooked,
-  onCallCancelled,
-  onCallRescheduled,
-} from '#/backend/modules/leads/lead.automation'
-import { recordEvent } from '#/backend/modules/leads/lead.events'
-import { getLeadPreferences } from '#/backend/modules/leads/lead.preferences'
-import {
   conflictError,
   internalError,
   notFoundError,
@@ -618,10 +611,9 @@ export const createBooking = async (
 
     const typeLabel = translation.rows[0]?.name ?? type.slug
 
-    // The call writes itself into the person's history, inside the same
-    // transaction that created it. Before this, `lead_id` pointed at someone
-    // whose story stopped at "a message arrived".
-    await onCallBooked(db, leadId, await getLeadPreferences(db), `${typeLabel} · ${type.duration_minutes} min`)
+    // The booking still records *who* booked it — `lead_id` is set above, and
+    // the row in `leads` is untouched by the removal of the leads section. What
+    // is gone is the history line and the follow-up the old system wrote here.
 
     return { booking: created, type, typeName: typeLabel }
   })
@@ -773,13 +765,6 @@ export const cancelBookingByToken = async (
 
     if (!cancelled.rows[0]) throw conflictError('That call can no longer be cancelled')
 
-    await onCallCancelled(
-      db,
-      managed.leadId,
-      await getLeadPreferences(db),
-      input.reason ? `Cancelled · ${input.reason}` : 'Cancelled through their link',
-    )
-
     return managed
   })
 
@@ -861,15 +846,6 @@ export const rescheduleBookingByToken = async (
         rescheduledFromId: managed.row.id,
       },
       tokenHash,
-    )
-
-    // A move is one line in the history, not a cancellation and a booking:
-    // the person did not lose interest, they changed the hour.
-    await onCallRescheduled(
-      db,
-      managed.leadId,
-      await getLeadPreferences(db),
-      `Moved to ${new Date(startsAt).toISOString()}`,
     )
 
     return { previous: managed, created, type: managed.type, typeName: managed.typeName }
@@ -957,8 +933,6 @@ export const createBookingAsAdmin = async (
     )
 
     const typeLabel = translation.rows[0]?.name ?? type.slug
-
-    await onCallBooked(db, leadId, await getLeadPreferences(db), `${typeLabel} · booked by you`)
 
     return { booking: created, type, typeName: typeLabel }
   })
@@ -1479,18 +1453,6 @@ export const cancelBookingAsAdmin = async (
   if (!result.rows[0]) throw conflictError('That booking is not open to cancel')
 
   const detail = await getBookingForAdmin(id)
-
-  // Cancelled by the owner rather than by the visitor, so it earns a history
-  // line but never a follow-up: he already knows why he cancelled it.
-  if (detail.leadId) {
-    await recordEvent(
-      getDb(),
-      detail.leadId,
-      'CANCELLED',
-      input.reason ? `You cancelled · ${input.reason}` : 'You cancelled the call',
-      false,
-    )
-  }
 
   const mail: BookingMailInput = {
     reference: detail.reference,

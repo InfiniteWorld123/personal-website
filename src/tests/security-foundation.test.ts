@@ -79,7 +79,7 @@ describe('request security', () => {
     ).toBe('FORBIDDEN_ORIGIN')
     expect(
       validateMutationRequest(
-        new Request('https://yamanwarda.de/api/admin/leads/bulk', { method: 'POST' }),
+        new Request('https://yamanwarda.de/api/admin/projects', { method: 'POST' }),
       ),
     ).toBe('FORBIDDEN_ORIGIN')
   })

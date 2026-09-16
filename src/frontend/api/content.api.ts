@@ -13,7 +13,7 @@ import { unwrap } from './response'
 
 /**
  * Eden Treaty turns anything that parses as an ISO date into a `Date` — the
- * trap `lead.api.ts` documents. Timestamps here are rendered, so they are put
+ * trap `booking.api.ts` documents. Timestamps here are rendered, so they are put
  * back to strings on the way in.
  */
 const toInstant = <T extends string | null>(value: T): T =>

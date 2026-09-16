@@ -1,134 +1,43 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { withRequestScope } from '#/backend/db/client'
-import { readTextWithinLimit, RequestBodyTooLargeError } from '#/backend/shared/request-body'
-import {
-  inboundIsConfigured,
-  tokenFromRecipients,
-  verifyInboundSignature,
-} from '#/backend/modules/leads/lead.inbound'
-import { recordInboundReply } from '#/backend/modules/leads/lead.service'
 
 /**
- * Where a client's answer comes back in.
+ * Where a client's answer comes back in — **switched off while the lead system
+ * is rebuilt.**
  *
- * This is a public URL that writes into the owner's inbox, so it is deliberately
- * suspicious: it reads the raw bytes, checks an HMAC signature over exactly
- * those bytes, and only then looks at what they say. An unsigned, badly signed,
- * or unconfigured request is refused without touching the database.
+ * The route is kept for two reasons. The forwarder pointed at it stays pointed
+ * at a real URL instead of bouncing, and `src/start.ts` exempts exactly this
+ * path from the Origin check — an exemption that is easier to keep than to
+ * rediscover. A forwarder sends no Origin header, so without that exemption
+ * every client reply was refused with `FORBIDDEN_ORIGIN`.
  *
- * It stays a file route, like the contact endpoint, because the signature
- * covers the bytes received and anything that parses the body first would
- * change them.
+ * What the replacement has to do again, in this order, because the signature
+ * covers the bytes as received:
  *
- * The forwarder — a Cloudflare Email Worker, or a provider's inbound webhook —
- * is expected to POST JSON:
+ * 1. Refuse everything when the inbound address or secret is unset.
+ *    `INBOUND_MAIL_ADDRESS` must contain a `+` · `INBOUND_MAIL_SECRET`
+ * 2. Read the raw body under a 1 MB limit — never parse first, or the bytes
+ *    the signature covers are no longer the bytes being checked.
+ * 3. Verify an HMAC-SHA256 of that raw body, hex, against the header.
+ *    `x-inbound-signature`
+ * 4. Only then parse the JSON and pull the conversation token out of the
+ *    recipients, accepting-and-dropping what matches nothing so the forwarder
+ *    does not retry it forever.
+ * 5. Answer a letter delivered twice with 200 "Already recorded" rather than
+ *    claiming it wrote a reply it did not write.
+ *
+ * The expected payload was:
  *
  *   { "to": ["reply+<token>@domain"], "from": "…", "subject": "…",
  *     "text": "…", "messageId": "…" }
- *
- * with `x-inbound-signature: <hex HMAC-SHA256 of the body, keyed with
- * INBOUND_MAIL_SECRET>`.
  */
-
-const MAX_INBOUND_BYTES = 1024 * 1024
-
-type InboundPayload = {
-  to?: unknown
-  recipient?: unknown
-  subject?: unknown
-  text?: unknown
-  html?: unknown
-  messageId?: unknown
-  'message-id'?: unknown
-}
-
-const asStrings = (value: unknown): string[] => {
-  if (typeof value === 'string') return [value]
-  if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string')
-
-  return []
-}
-
-const asText = (value: unknown): string => (typeof value === 'string' ? value : '')
-
-/** A letter that only came as HTML still has to read as words in the thread. */
-const htmlToText = (html: string): string =>
-  html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-
 export const Route = createFileRoute('/api/inbound-email')({
   server: {
     handlers: {
-      POST: async ({ request }: { request: Request }) =>
-        withRequestScope(async () => {
-          if (!inboundIsConfigured()) {
-            return Response.json(
-              { message: 'Inbound email is not configured.' },
-              { status: 503 },
-            )
-          }
-
-          let raw: string
-          try {
-            raw = await readTextWithinLimit(request, MAX_INBOUND_BYTES)
-          } catch (error) {
-            if (error instanceof RequestBodyTooLargeError) {
-              return Response.json({ message: 'That letter is too large.' }, { status: 413 })
-            }
-            throw error
-          }
-
-          const signed = await verifyInboundSignature(
-            raw,
-            request.headers.get('x-inbound-signature'),
-          )
-
-          if (!signed) return Response.json({ message: 'Not signed.' }, { status: 401 })
-
-          let payload: InboundPayload
-          try {
-            payload = JSON.parse(raw) as InboundPayload
-          } catch {
-            return Response.json({ message: 'That is not JSON.' }, { status: 400 })
-          }
-
-          const token = tokenFromRecipients([
-            ...asStrings(payload.to),
-            ...asStrings(payload.recipient),
-          ])
-
-          // A signed letter addressed to nothing we know is accepted and
-          // dropped: the forwarder must not retry it forever.
-          if (!token) return Response.json({ message: 'No conversation matched.' }, { status: 202 })
-
-          const text = asText(payload.text) || htmlToText(asText(payload.html))
-
-          if (!text.trim()) return Response.json({ message: 'Empty letter.' }, { status: 202 })
-
-          const { matched, recorded } = await recordInboundReply({
-            token,
-            body: text,
-            subject: asText(payload.subject),
-            externalId: asText(payload.messageId) || asText(payload['message-id']) || null,
-          })
-
-          // A forwarder that delivers the same letter twice is told plainly
-          // that the second one changed nothing, rather than being told it
-          // wrote a reply it did not write.
-          if (!matched) return Response.json({ message: 'No conversation matched.' }, { status: 202 })
-
-          return recorded
-            ? Response.json({ message: 'Reply recorded.' }, { status: 201 })
-            : Response.json({ message: 'Already recorded.' }, { status: 200 })
-        }),
+      POST: async () =>
+        Response.json(
+          { message: 'Inbound email is not configured.', code: 'INBOUND_DISABLED' },
+          { status: 503 },
+        ),
     },
   },
 })

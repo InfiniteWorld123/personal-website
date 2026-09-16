@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { inboxSettingsQuery, unreadLeadsQuery } from '#/frontend/features/inbox/inbox-queries'
 import { cn } from '#/frontend/lib/utils'
 import { adminNavigation, type AdminNavigationItem } from './admin-navigation'
 
@@ -15,17 +13,6 @@ const isInSection = (item: AdminNavigationItem, pathname: string): boolean =>
   (item.children ?? []).some((child) => pathname.startsWith(child.to))
 
 export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  /**
-   * The one number worth carrying on every admin page: a message can arrive
-   * while the owner is editing a post, and nothing else would say so.
-   */
-  const settings = useQuery(inboxSettingsQuery())
-  const unread = useQuery({
-    ...unreadLeadsQuery(),
-    enabled: settings.data?.preferences.unreadCount !== false,
-  })
-  const unreadCount = settings.data?.preferences.unreadCount === false ? 0 : (unread.data?.unread ?? 0)
-
   const pathname = useRouterState({ select: (state) => state.location.pathname })
 
   return (
@@ -41,7 +28,6 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <div key={item.to} className="flex flex-col gap-1">
           <NavRow
             item={item}
-            unreadCount={unreadCount}
             onNavigate={onNavigate}
             isOpenSection={isInSection(item, pathname)}
           />
@@ -59,7 +45,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           {item.children && isInSection(item, pathname) ? (
             <div className="ms-5 flex flex-col gap-0.5 ps-1">
               {item.children.map((child) => (
-                <NavRow key={child.to} item={child} unreadCount={0} onNavigate={onNavigate} isLens />
+                <NavRow key={child.to} item={child} onNavigate={onNavigate} isLens />
               ))}
             </div>
           ) : null}
@@ -71,13 +57,11 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 function NavRow({
   item,
-  unreadCount,
   onNavigate,
   isLens,
   isOpenSection,
 }: {
   item: AdminNavigationItem
-  unreadCount: number
   onNavigate?: () => void
   isLens?: boolean
   /** The section holding the open page, even when a lens rather than it is active. */
@@ -120,11 +104,6 @@ function NavRow({
     >
       <Icon aria-hidden="true" className="size-4 shrink-0" />
       {item.label}
-      {item.to === '/admin/inbox' && unreadCount > 0 ? (
-        <span className="bg-primary text-primary-foreground ms-auto rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold">
-          {unreadCount}
-        </span>
-      ) : null}
     </Link>
   )
 }
