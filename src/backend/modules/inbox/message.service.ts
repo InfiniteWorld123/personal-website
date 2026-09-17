@@ -128,7 +128,7 @@ type Recipient = {
 const replyToAddress = async (person: Recipient): Promise<string | null> => {
   const address = env.INBOUND_MAIL_ADDRESS
 
-  if (!address || !address.includes('+')) return null
+  if (!address || !address.includes('@')) return null
 
   let token = person.reply_token
 
@@ -137,7 +137,25 @@ const replyToAddress = async (person: Recipient): Promise<string | null> => {
     await getDb().query('UPDATE leads SET reply_token = $2 WHERE id = $1;', [person.id, token])
   }
 
-  return address.replace('+', `+${token}`)
+  return withToken(address, token)
+}
+
+/**
+ * `reply@domain` or `reply+@domain`, plus a token, becomes
+ * `reply+<token>@domain`.
+ *
+ * Both spellings are accepted on purpose. The setting used to have to contain
+ * a `+` as a placeholder, and a perfectly reasonable `reply@yamanwarda.de`
+ * switched the whole inbound path off with nothing but a 503 to say why — a
+ * formatting demand on a configuration value, enforced in two places, with no
+ * error message anywhere near the person who typed it. Cloudflare matches the
+ * rule on the base address either way, so the shape was never load-bearing.
+ */
+export const withToken = (address: string, token: string): string => {
+  const at = address.indexOf('@')
+  const local = address.slice(0, at).split('+')[0]
+
+  return `${local}+${token}${address.slice(at)}`
 }
 
 const paragraphs = (text: string): string =>

@@ -145,7 +145,9 @@ export const Route = createFileRoute('/api/inbound-email')({
 
           // Refused outright rather than half-configured: a handler that
           // accepts letters it cannot thread is worse than one that is off.
-          if (!address || !address.includes('+') || !secret) {
+          // An address needs only to be an address — `reply@` and `reply+@`
+          // are both fine, and `withToken` writes the token into either.
+          if (!address || !address.includes('@') || !secret) {
             return json({ message: 'Inbound email is not configured.', code: 'INBOUND_DISABLED' }, 503)
           }
 
