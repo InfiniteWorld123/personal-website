@@ -85,11 +85,30 @@ describe('request security', () => {
   })
 
   it('holds the inbound webhook to its own body limit', () => {
-    expect(
+    const inbound = (bytes: number) =>
       validateMutationRequest(
         new Request('https://yamanwarda.de/api/inbound-email', {
           method: 'POST',
-          headers: { 'content-length': String(2 * 1024 * 1024) },
+          headers: { 'content-length': String(bytes) },
+        }),
+      )
+
+    // A letter carrying a ten-megabyte attachment, base64 inside the JSON,
+    // has to pass here: at the old one-megabyte ceiling every client file
+    // was refused with a 413 before the route saw it.
+    expect(inbound(20 * 1024 * 1024)).toBeNull()
+    expect(inbound(31 * 1024 * 1024)).toBe('BODY_TOO_LARGE')
+  })
+
+  it('caps a new letter from the admin with its files', () => {
+    expect(
+      validateMutationRequest(
+        new Request('https://yamanwarda.de/api/admin/inbox/compose', {
+          method: 'POST',
+          headers: {
+            origin: 'https://yamanwarda.de',
+            'content-length': String(26 * 1024 * 1024),
+          },
         }),
       ),
     ).toBe('BODY_TOO_LARGE')

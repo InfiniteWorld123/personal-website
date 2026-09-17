@@ -24,6 +24,16 @@
       ],
       "port": 3001,
       "autoPort": false
+    },
+    {
+      "name": "platform-cf",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "dev:cf"
+      ],
+      "port": 8788,
+      "autoPort": false
     }
   ]
 }

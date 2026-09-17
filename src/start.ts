@@ -7,7 +7,13 @@ const requestBodyLimits: Array<{ path: string; bytes: number }> = [
   { path: '/api/contact', bytes: 6 * 1024 * 1024 },
   { path: '/api/auth/sign-in/email', bytes: 32 * 1024 },
   { path: '/api/booking/bookings', bytes: 64 * 1024 },
-  { path: '/api/inbound-email', bytes: 1024 * 1024 },
+  // A letter with its files, base64 inside the JSON: 30 MB, matching the
+  // route's own ceiling. At the old megabyte every client attachment was
+  // refused here with a 413 before the route ever saw it.
+  { path: '/api/inbound-email', bytes: 30 * 1024 * 1024 },
+  // A new letter from the admin with its files. Each file is refused above
+  // ten on its own; this stops a handful of large ones being buffered together.
+  { path: '/api/admin/inbox/compose', bytes: 25 * 1024 * 1024 },
 ]
 
 /**

@@ -1,7 +1,6 @@
 import { Elysia } from 'elysia'
 import { adminGuard } from '#/backend/modules/admin/admin.guard'
 import { badRequestError } from '#/backend/shared/error'
-import { readFormDataWithinLimit } from '#/backend/shared/request-body'
 import { HttpStatusCode } from '#/backend/shared/http'
 import { responseOk } from '#/backend/shared/response'
 import { parseInput } from '#/backend/shared/validate'
@@ -33,12 +32,43 @@ import { getSettings, saveSignature, saveSnippets } from './settings.service'
 const id = (value: unknown) => parseInput(IdSchema, value)
 
 /**
- * One letter with its files. Twenty-five megabytes, read through a ceiling.
+ * Multipart bodies are read from Elysia's `body`, never from `request`.
  *
- * Each file is refused above ten on its own; this is the whole multipart body,
- * so a handful of large ones cannot be buffered into memory together.
+ * On Cloudflare `new Function` is forbidden, so Elysia runs without AOT and
+ * parses every body itself *before* the handler runs — which consumes the
+ * request stream. A handler that then calls `request.formData()` gets nothing,
+ * and this route answered "That message could not be read" to every letter on
+ * the live site while passing every test on the Node dev server, where AOT is
+ * on and the stream is left alone. The ceiling on the body's size lives in
+ * `start.ts`, on the Content-Length, before either of them sees it.
+ *
+ * Elysia hands a repeated field back as an array and a single one bare, and it
+ * parses a lone field that starts with `{` as JSON on its own initiative —
+ * so both shapes are accepted here rather than assumed.
  */
-const MAX_COMPOSE_BYTES = 25 * 1024 * 1024
+const filesFrom = (body: unknown): File[] => {
+  const field = (body as { file?: unknown } | null)?.file
+
+  return (Array.isArray(field) ? field : [field]).filter((file): file is File => file instanceof File)
+}
+
+export const readComposeForm = (body: unknown): { message: unknown; files: File[] } => {
+  const written = (body as { message?: unknown } | null)?.message
+
+  if (written === undefined || written === null) {
+    throw badRequestError('That message could not be read')
+  }
+
+  if (typeof written === 'string') {
+    try {
+      return { message: JSON.parse(written), files: filesFrom(body) }
+    } catch {
+      throw badRequestError('That message could not be read')
+    }
+  }
+
+  return { message: written, files: filesFrom(body) }
+}
 
 /**
  * The inbox. One section, behind the admin guard.
@@ -80,29 +110,13 @@ export const adminInboxRoutes = new Elysia({ prefix: '/inbox' })
    * that is on top of the fault it replaces, where the compose page uploaded
    * *after* sending and lost the file in silence.
    */
-  .post('/compose', async ({ request, status }) => {
-    const form = await readFormDataWithinLimit(request, MAX_COMPOSE_BYTES).catch(() => null)
-
-    if (!form) throw badRequestError('That message could not be read')
-
-    const written = form.get('message')
-
-    if (typeof written !== 'string') throw badRequestError('That message could not be read')
-
-    let parsed: unknown
-
-    try {
-      parsed = JSON.parse(written)
-    } catch {
-      throw badRequestError('That message could not be read')
-    }
-
-    const files = form.getAll('file').filter((file): file is File => file instanceof File)
+  .post('/compose', async ({ body, status }) => {
+    const { message, files } = readComposeForm(body)
 
     return status(
       HttpStatusCode.CREATED,
       responseOk({
-        data: await compose(parseInput(ComposeSchema, parsed), files),
+        data: await compose(parseInput(ComposeSchema, message), files),
         message: 'Message sent',
       }),
     )
@@ -187,11 +201,10 @@ export const adminInboxRoutes = new Elysia({ prefix: '/inbox' })
   })
 
   /* --------------------------------------------------------- attachments */
-  .post('/:personId/attachments', async ({ params, request, status }) => {
-    const form = await request.formData().catch(() => null)
-    const file = form?.get('file')
+  .post('/:personId/attachments', async ({ params, body, status }) => {
+    const [file] = filesFrom(body)
 
-    if (!(file instanceof File)) throw badRequestError('No file arrived')
+    if (!file) throw badRequestError('No file arrived')
 
     return status(
       HttpStatusCode.CREATED,
