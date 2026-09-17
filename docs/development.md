@@ -1,13 +1,12 @@
 # Local Development
 
-Requires Bun and Docker.
+Requires Bun. The database is Neon — there is no local database to start.
 
 ## First run
 
 ```bash
 cp .env.example .env          # then fill in the blanks
 bun install
-bun run db:up                 # PostgreSQL in Docker
 bun run db:migrate
 bun run db:seed:admin         # creates the single administrator
 bun run dev
@@ -29,15 +28,14 @@ bun run dev
 | `bun run build` | Production build; also regenerates the route tree |
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run test` | Vitest |
-| `bun run db:up` / `db:down` | Start / stop the local database |
 | `bun run db:migrate` | Apply pending migrations |
 | `bun run db:seed:admin` | Create or update the administrator |
 
 ## Notes
 
-- The database port is `POSTGRES_PORT` (default `5433`, not 5432) so it does not
-  collide with a PostgreSQL already installed on the host. It is bound to
-  `127.0.0.1` only.
+- `DATABASE_URL` is the Neon pooled connection string, the same one production
+  uses. `db:migrate` and the seeds therefore run against the live database —
+  there is no separate local copy to practise on.
 - Re-running `db:seed:admin` updates the existing administrator's name, email,
   and password. It never creates a second one — the database enforces that.
 - Migrations run in filename order inside a transaction. Never edit an applied
