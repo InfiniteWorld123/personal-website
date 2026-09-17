@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { AuthUser } from '#/frontend/api/auth.api'
+import { Toaster } from '#/frontend/components/feedback/Toaster'
 import { Sheet, SheetContent, SheetTitle } from '#/frontend/components/ui/sheet'
 import { AdminSidebar } from './AdminSidebar'
 import { AdminTopBar } from './AdminTopBar'
@@ -27,6 +28,12 @@ export function AdminShell({ user, children }: { user: AuthUser; children: React
         <AdminTopBar user={user} onOpenMenu={() => setIsMenuOpen(true)} />
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
+
+      {/*
+        Outside `main`, so a page that fills the whole viewport cannot scroll
+        its own notices out of sight or clip them at its edge.
+      */}
+      <Toaster />
     </div>
   )
 }

@@ -2888,6 +2888,16 @@ body.dark::after {
   line-height: 1.85;
 }
 
+/* The reply composer borrows the blog's editor, but a letter is not an
+   article: 22rem of blank canvas docks over the conversation and leaves a
+   sliver of the message being answered. It grows as you type instead. */
+.reply-editor .post-editor .tiptap {
+  min-height: 7rem;
+  padding: 0.875rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
 .post-editor .tiptap > * + * {
   margin-top: 1rem;
 }

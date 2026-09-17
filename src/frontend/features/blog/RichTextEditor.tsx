@@ -276,11 +276,18 @@ export function RichTextEditor({
   value,
   language,
   onChange,
+  label,
 }: {
   value: RichTextDoc
   /** Sets the writing direction, so the Arabic tab reads right to left. */
   language: 'de' | 'en' | 'ar'
   onChange: (doc: RichTextDoc) => void
+  /**
+   * What a screen reader calls this box. Without it the editor announces
+   * itself as an unnamed text field — tolerable beside a labelled tab in the
+   * blog, useless in a reply composer where it is the only one on screen.
+   */
+  label?: string
 }) {
   // One instance per language tab. Radix unmounts the tab that is not open,
   // so only the visible language holds an editor, and switching back rebuilds
@@ -311,6 +318,7 @@ export function RichTextEditor({
         editor={editor}
         dir={language === 'ar' ? 'rtl' : 'ltr'}
         className="post-editor"
+        aria-label={label}
       />
     </div>
   )

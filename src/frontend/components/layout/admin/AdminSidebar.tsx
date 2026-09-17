@@ -88,7 +88,7 @@ function NavRow({
   return (
     <Link
       to={item.to}
-      activeOptions={{ exact: item.to === '/admin' || Boolean(item.children) }}
+      activeOptions={{ exact: item.exact || item.to === '/admin' || Boolean(item.children) }}
       onClick={onNavigate}
       className={cn(
         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',

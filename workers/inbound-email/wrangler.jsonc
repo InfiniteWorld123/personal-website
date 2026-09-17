@@ -7,6 +7,13 @@
   // The endpoint is public information; the shared secret is not, and is set
   // once with: bunx wrangler secret put INBOUND_MAIL_SECRET
   "vars": {
-    "INBOUND_ENDPOINT": "https://yamanwarda.de/api/inbound-email"
+    "INBOUND_ENDPOINT": "https://yamanwarda.de/api/inbound-email",
+
+    // Every letter is also delivered here, exactly as it was before this
+    // Worker existed. The admin inbox is new and this address is how clients
+    // reach him: a bug here costs a client, a duplicate in Gmail costs
+    // nothing. Remove this line — and redeploy — once the admin has proven
+    // itself over a few real conversations.
+    "FORWARD_COPY_TO": "yamanwarda06@gmail.com"
   }
 }

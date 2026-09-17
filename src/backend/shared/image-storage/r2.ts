@@ -55,6 +55,20 @@ export const createR2Store = (config: R2Config): ImageStore => {
       if (!response.ok) await failed('upload', response)
     },
 
+    async get(key) {
+      const url = objectUrl(key)
+      const headers = await signRequest({ method: 'GET', url, headers: {}, credentials })
+      const response = await fetch(url, { method: 'GET', headers })
+
+      if (response.status === 404) return null
+      if (!response.ok) await failed('read', response)
+
+      return {
+        body: response.body,
+        contentType: response.headers.get('content-type') ?? 'application/octet-stream',
+      }
+    },
+
     async remove(key) {
       const url = objectUrl(key)
       const headers = await signRequest({ method: 'DELETE', url, headers: {}, credentials })

@@ -2,6 +2,7 @@ import {
   CalendarRange,
   FileText,
   FolderKanban,
+  Inbox,
   LayoutDashboard,
   Newspaper,
   Wallet,
@@ -17,11 +18,18 @@ export type AdminNavigationItem = {
   /**
    * Lenses on the same records, shown under the section while it is open —
    * one set of records read several ways, rather than several entries
-   * competing in the sidebar. Nothing uses this at the moment; it is kept
-   * because the sidebar still renders it and the next section that needs
-   * lenses gets them for free.
+   * competing in the sidebar. Leads is what it was kept for: one set of
+   * people, read as a conversation, as a board, or as a list of what is due.
    */
   children?: AdminNavigationItem[]
+  /**
+   * Highlight this row only on its own path.
+   *
+   * A section's landing page and its first lens share a URL — the inbox *is*
+   * `/admin/leads` — and without this the inbox lens stays lit while the
+   * pipeline is open, so the sidebar says you are in two places at once.
+   */
+  exact?: boolean
 }
 
 export const adminNavigation: AdminNavigationItem[] = [
@@ -33,6 +41,8 @@ export const adminNavigation: AdminNavigationItem[] = [
    * section.
    */
   { label: 'Calendar', to: '/admin/bookings', icon: CalendarRange, available: true },
+  /** Everyone who has written, and everything written back. */
+  { label: 'Inbox', to: '/admin/inbox', icon: Inbox, available: true },
   { label: 'Content', to: '/admin/content', icon: FileText, available: true },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
   { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },

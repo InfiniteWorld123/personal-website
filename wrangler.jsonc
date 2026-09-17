@@ -43,6 +43,23 @@
     }
   ],
 
+  // The media bucket, handed to the Worker directly.
+  //
+  // A binding rather than S3 credentials: a Worker that declares the bucket is
+  // given it, with no access key to create in the dashboard, none to store in
+  // an environment variable, and none to leak. Client attachments are served
+  // back through an admin-guarded route, so the bucket also stays private —
+  // its public `r2.dev` URL is switched off and should stay off.
+  //
+  // The signed S3 driver is still in the code for the Node dev server, which
+  // has no bindings; without keys there, files simply cannot be stored locally.
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "yamanwarda-media"
+    }
+  ],
+
   // `main` and `assets` are filled in by Nitro at build time from the preset —
   // do not set them here, they would be ignored with a warning.
 

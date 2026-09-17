@@ -42,4 +42,25 @@ describe('the central error handler', () => {
     expect(result.status).toBe(429)
     expect(result.headers['Retry-After']).toBe('43')
   })
+
+  /**
+   * A check constraint is the schema refusing a combination, which is the
+   * caller's fault, not the server's. It used to fall through to a bare 500
+   * called "An unexpected error occurred" — which is how "Lost" in the inbox
+   * came to look like a button that did nothing.
+   */
+  it('reports a refused check constraint as a client error', () => {
+    const result = run(
+      'UNKNOWN',
+      Object.assign(new Error('new row for relation "leads" violates check constraint'), {
+        code: '23514',
+        constraint: 'leads_lost_pair_check',
+        table: 'leads',
+      }),
+    )
+
+    expect(result.status).toBe(400)
+    expect(result.body.code).toBe('BAD_REQUEST')
+    expect(result.body.message).not.toBe('An unexpected error occurred')
+  })
 })

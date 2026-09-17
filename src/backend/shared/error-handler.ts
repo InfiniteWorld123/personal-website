@@ -97,6 +97,21 @@ const toResponseError = (error: unknown): NormalizedError => {
       })
     }
 
+    /*
+     * A check constraint refused the row. That is the schema catching a
+     * combination a service should have refused first, so it stays a client
+     * error — but it must arrive as a sentence. `leads_lost_pair_check` used
+     * to land here as a bare 500, which is how "Lost" in the inbox came to
+     * look like a button that did nothing at all.
+     */
+    if (postgresError?.code === '23514') {
+      return normalized({
+        status: HttpStatusCode.BAD_REQUEST,
+        message: 'That combination of values is not allowed',
+        code: 'BAD_REQUEST',
+      })
+    }
+
     console.error('Unhandled request error', error)
   } else {
     console.error('Unknown request error', error)

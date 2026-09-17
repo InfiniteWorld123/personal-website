@@ -179,6 +179,46 @@ export const richTextToPlainText = (doc: RichTextDoc): string => {
   return parts.join('').replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * The same document as a **letter**: paragraphs kept apart, line breaks kept.
+ *
+ * `richTextToPlainText` above is for reading time and excerpts, so it collapses
+ * every space into one and returns a single line. Sending a reply through it
+ * turned "Sehr geehrter Herr Ware / hiermit sende ich…" into
+ * "Sehr geehrter Herr Warehiermit sende ich…" — the plain-text part of the mail
+ * and the copy stored in the inbox were both unreadable, and neither matched
+ * what was actually typed.
+ */
+export const richTextToLetter = (doc: RichTextDoc): string => {
+  const block = (nodes: RichTextNode[]): string => {
+    let text = ''
+
+    for (const node of nodes) {
+      if (node.type === 'text') {
+        text += node.text
+        continue
+      }
+
+      // Shift+Enter. It carries no content, so anything that only walks
+      // children drops it and glues the two lines together.
+      if (node.type === 'hardBreak') {
+        text += '\n'
+        continue
+      }
+
+      if ('content' in node && node.content) text += block(node.content)
+    }
+
+    return text
+  }
+
+  return doc.content
+    .map((node) => ('content' in node && node.content ? block(node.content) : ''))
+    .join('\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 /** True once the writer has put something other than empty blocks in it. */
 export const isRichTextEmpty = (doc: RichTextDoc): boolean => richTextToPlainText(doc) === ''
 
