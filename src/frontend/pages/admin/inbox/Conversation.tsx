@@ -29,6 +29,11 @@ import {
 import type { Attachment, Message, Person } from '#/shared/types/inbox.types'
 import { cn } from '#/frontend/lib/utils'
 import { PersonPanel } from './PersonPanel'
+import { Section } from './Section'
+
+/** The enquiry lives on the person, not in `messages`, so it counts separately. */
+const messageCount = (person: Person): number =>
+  person.messages.length + (person.firstMessage.trim() === '' ? 0 : 1)
 
 export function Conversation({ personId }: { personId: string }) {
   const person = useQuery(personQuery(personId))
@@ -110,21 +115,30 @@ function Thread({ person }: { person: Person }) {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-3 p-4">
-          {person.firstMessage.trim() !== '' ? <FirstMessage person={person} /> : null}
+        {/*
+          Three bands of the same kind: the letters, the person, the notes.
 
-          {person.messages.map((message, index) => (
-            <MessageCard
-              key={message.id}
-              message={message}
-              person={person}
-              // The newest is open; everything before it folds to one line. He
-              // asked for this, and it is the one switch that makes the screen
-              // shorter instead of longer.
-              defaultOpen={index === person.messages.length - 1}
-            />
-          ))}
-        </div>
+          The letters fold **shut** by default, which is what he asked for
+          after nine one-line messages filled the screen before anything else
+          could be seen — with one exception, because a mailbox that hides a
+          letter nobody has read yet is not a mailbox: an unread conversation
+          opens itself.
+        */}
+        <Section title="Messages" count={messageCount(person)} defaultOpen={person.unread}>
+          <div className="flex flex-col gap-3">
+            {person.firstMessage.trim() !== '' ? <FirstMessage person={person} /> : null}
+
+            {person.messages.map((message, index) => (
+              <MessageCard
+                key={message.id}
+                message={message}
+                person={person}
+                // The newest is open; everything before it folds to one line.
+                defaultOpen={index === person.messages.length - 1}
+              />
+            ))}
+          </div>
+        </Section>
 
         <PersonPanel person={person} />
       </div>

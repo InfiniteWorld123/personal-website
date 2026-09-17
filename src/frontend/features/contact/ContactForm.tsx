@@ -35,8 +35,9 @@ export function attachmentAccepted(file: { name: string; type: string; size: num
 }
 
 /**
- * Qualifying contact form (decision D13): project type, budget band, and
- * timeline are asked up front so every conversation starts with context.
+ * Qualifying contact form (decision D13): project type and budget band are
+ * asked up front so every conversation starts with context. Timeline was
+ * dropped from this door in Sept 2026 — see the note beside the fields.
  * Phone, preferred channel, and one attachment were added in D17 — all three
  * optional, so a visitor who only wants to write a sentence still can.
  * The post lands in the inbox (B4), which stores it before anything is sent.
@@ -102,7 +103,6 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
 
     data.set('projectType', labelFor(copy.projectTypes, String(data.get('projectType') ?? '')))
     data.set('budget', labelFor(copy.budgets, String(data.get('budget') ?? '')))
-    data.set('timeline', labelFor(copy.timelines, String(data.get('timeline') ?? '')))
 
     setStatus('sending')
 
@@ -153,15 +153,21 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
 
       <CallInstead language={language} />
 
-      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-3">
+      {/*
+        Two questions, not three. "When should it be ready?" defaulted to "not
+        sure yet" and stayed there, so it bought a third dropdown's worth of
+        friction in front of the message box and told him nothing. The booking
+        form still asks it — that section is finished and is not touched — and
+        the column, the schema and the facts card all still carry it, so a
+        booking's answer is still shown and nothing has to be migrated back if
+        he wants it here again.
+      */}
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
         <Field label={copy.projectType} htmlFor="projectType">
           <Select id="projectType" name="projectType" options={copy.projectTypes} />
         </Field>
         <Field label={copy.budget} htmlFor="budget">
           <Select id="budget" name="budget" options={copy.budgets} />
-        </Field>
-        <Field label={copy.timeline} htmlFor="timeline" hint={copy.timelineHint} className="sm:col-span-2">
-          <Select id="timeline" name="timeline" options={copy.timelines} />
         </Field>
       </div>
 

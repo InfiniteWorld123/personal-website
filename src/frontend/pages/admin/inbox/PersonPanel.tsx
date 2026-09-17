@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronRight, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
@@ -13,6 +13,7 @@ import { LANGUAGE_LABEL, formatDateTime } from '#/frontend/features/inbox/inbox-
 import { INBOX_LANGUAGES, type InboxLanguage } from '#/shared/validation/inbox.validation'
 import type { Person } from '#/shared/types/inbox.types'
 import { cn } from '#/frontend/lib/utils'
+import { Section } from './Section'
 
 /**
  * Who this is, and what the owner wants to remember about them.
@@ -24,7 +25,7 @@ import { cn } from '#/frontend/lib/utils'
  */
 export function PersonPanel({ person }: { person: Person }) {
   return (
-    <div className="border-border mt-2 border-t">
+    <>
       <Section title="Details" count={person.phone ? 4 : 3} defaultOpen={false}>
         <Details person={person} />
       </Section>
@@ -32,42 +33,7 @@ export function PersonPanel({ person }: { person: Person }) {
       <Section title="Notes" count={person.notes.length} defaultOpen={person.notes.length > 0}>
         <Notes person={person} />
       </Section>
-
-    </div>
-  )
-}
-
-function Section({
-  title,
-  count,
-  defaultOpen = false,
-  children,
-}: {
-  title: string
-  count: number
-  defaultOpen?: boolean
-  children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-
-  return (
-    <section className="border-border border-b last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-start transition-colors"
-      >
-        <ChevronRight
-          aria-hidden="true"
-          className={cn('text-muted-foreground size-4', open && 'rotate-90')}
-        />
-        <span className="text-sm font-semibold">{title}</span>
-        <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
-      </button>
-
-      {open ? <div className="px-4 pb-4">{children}</div> : null}
-    </section>
+    </>
   )
 }
 
