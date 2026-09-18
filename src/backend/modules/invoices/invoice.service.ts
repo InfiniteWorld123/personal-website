@@ -1,4 +1,4 @@
-import { getDb } from '#/backend/db/client'
+import { getDb, withTransaction } from '#/backend/db/client'
 import { badRequestError, internalError, notFoundError } from '#/backend/shared/error'
 import { resolveObjectStore } from '#/backend/shared/image-storage'
 import type {
@@ -453,48 +453,72 @@ export const deleteInvoice = async (invoiceId: string): Promise<void> => {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Hands out the next number **and** stamps it onto the invoice, in one
- * statement.
+ * Hands out the next number **and** stamps it onto the invoice, under a lock
+ * that only one request can hold at a time.
  *
- * The `target` CTE is what makes it safe: when the invoice is not a draft the
- * select finds nothing, the insert into `invoice_numbers` gets no row to
- * insert, and no number is consumed. Split across two statements — allocate,
- * then write — a failure in between would burn a number for ever, which is the
- * single thing a gapless series cannot survive.
+ * The draft is taken with `FOR UPDATE` first, and that lock — not the `target`
+ * CTE — is what makes the act safe. Two clicks on `Issue`, or one click and one
+ * retry, arrive as two overlapping requests; under `READ COMMITTED` both would
+ * otherwise see the row as a draft, and a data-modifying CTE is not undone by
+ * the outer `UPDATE` matching nothing. Both would take a number, the second
+ * would overwrite the first's on the row, and the first number would belong to
+ * no document for ever — the one hole a gapless series cannot survive. Worse,
+ * the file frozen by the first request would still be sitting in the bucket
+ * under `pdf_key`, printing a number the row no longer holds.
+ *
+ * Blocked on the lock, the second request waits for the first to commit, then
+ * re-reads the row, finds it is no longer a draft, and returns without
+ * reaching the allocation at all. The caller sees `null` and says so.
+ *
+ * The `target` CTE stays, so the statement is still correct on its own: when
+ * the invoice is not a draft the select finds nothing, the insert gets no row,
+ * and no number is consumed. And allocation and stamping remain one statement,
+ * because split in two a failure in between would burn a number for ever.
+ *
+ * Exported for the concurrency test, which is the only way to prove the lock
+ * is doing the work the comment claims it does.
  */
-const allocateAndIssue = async (
+export const allocateAndIssue = async (
   invoiceId: string,
   dated: boolean,
-): Promise<string | null> => {
-  const result = await getDb().query<{ number: string }>(
-    `WITH target AS (
-        SELECT i.id, EXTRACT(YEAR FROM ${TODAY})::int AS year
-          FROM invoices i WHERE i.id = $1 AND i.status = 'DRAFT'
-     ), allocated AS (
-        INSERT INTO invoice_numbers (year, next)
-        SELECT t.year, 2 FROM target t
-        ON CONFLICT (year) DO UPDATE SET next = invoice_numbers.next + 1
-        RETURNING year, next - 1 AS seq
-     )
-     UPDATE invoices i
-        SET number = a.year || '-' || lpad(a.seq::text, 3, '0'),
-            number_year = a.year,
-            status = 'ISSUED',
-            issued_on = ${TODAY},
-            -- The term comes off the row being issued, never from anything
-            -- held in memory: a Worker does not keep module state between
-            -- requests, so a draft written on Monday and issued on Thursday
-            -- would silently fall back to the default.
-            due_on = CASE WHEN $2 THEN ${TODAY} + i.due_days ELSE NULL END,
-            updated_at = CURRENT_TIMESTAMP
-       FROM allocated a
-      WHERE i.id = $1
-      RETURNING i.number;`,
-    [invoiceId, dated],
-  )
+): Promise<string | null> =>
+  withTransaction(async (db) => {
+    const draft = await db.query<{ id: string }>(
+      "SELECT id FROM invoices WHERE id = $1 AND status = 'DRAFT' FOR UPDATE;",
+      [invoiceId],
+    )
 
-  return result.rows[0]?.number ?? null
-}
+    if (draft.rows.length === 0) return null
+
+    const result = await db.query<{ number: string }>(
+      `WITH target AS (
+          SELECT i.id, EXTRACT(YEAR FROM ${TODAY})::int AS year
+            FROM invoices i WHERE i.id = $1 AND i.status = 'DRAFT'
+       ), allocated AS (
+          INSERT INTO invoice_numbers (year, next)
+          SELECT t.year, 2 FROM target t
+          ON CONFLICT (year) DO UPDATE SET next = invoice_numbers.next + 1
+          RETURNING year, next - 1 AS seq
+       )
+       UPDATE invoices i
+          SET number = a.year || '-' || lpad(a.seq::text, 3, '0'),
+              number_year = a.year,
+              status = 'ISSUED',
+              issued_on = ${TODAY},
+              -- The term comes off the row being issued, never from anything
+              -- held in memory: a Worker does not keep module state between
+              -- requests, so a draft written on Monday and issued on Thursday
+              -- would silently fall back to the default.
+              due_on = CASE WHEN $2 THEN ${TODAY} + i.due_days ELSE NULL END,
+              updated_at = CURRENT_TIMESTAMP
+         FROM allocated a
+        WHERE i.id = $1
+        RETURNING i.number;`,
+      [invoiceId, dated],
+    )
+
+    return result.rows[0]?.number ?? null
+  })
 
 const storeKeyFor = (invoiceId: string, number: string): string =>
   `invoices/${number.replace(/[^\w-]/g, '')}-${invoiceId.slice(0, 8)}.pdf`

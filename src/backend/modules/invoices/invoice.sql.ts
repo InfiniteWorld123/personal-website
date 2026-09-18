@@ -167,7 +167,7 @@ export const clientLabel = (client: Pick<Client, 'company' | 'contactName'>): st
  *
  * A file linked to an outgoing message is the only evidence this system
  * accepts that something was sent. `invoices.sent_at` was a column until
- * `0017` and nothing wrote it once sending moved to the inbox — so rather than
+ * `0018` and nothing wrote it once sending moved to the inbox — so rather than
  * a flag somebody sets, "sent" is a join nobody can forget to keep true.
  */
 const SENT_LETTERS = `FROM lead_attachments a
