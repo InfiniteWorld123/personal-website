@@ -169,6 +169,10 @@ function FirstMessage({ person }: { person: Person }) {
         {person.firstMessage}
       </p>
 
+      {/* A document sent with the enquiry belongs to no letter, so it is shown
+          here. Before 18 Sep 2026 the form threw those files away entirely. */}
+      {person.firstMessageFiles.length > 0 ? <Files files={person.firstMessageFiles} /> : null}
+
       {person.facts.length > 0 ? (
         <dl className="border-border mt-4 grid gap-x-6 gap-y-2 border-t pt-3 text-xs sm:grid-cols-2">
           {person.facts.map((fact) => (
@@ -380,33 +384,6 @@ function Composer({ person }: { person: Person }) {
           label={`Reply to ${person.name}`}
         />
 
-        {files.length > 0 ? (
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {files.map((file) => (
-              <li
-                key={file.id}
-                className="border-border flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px]"
-              >
-                <Paperclip aria-hidden="true" className="size-3" />
-                <span dir="auto" className="max-w-40 truncate">
-                  {file.filename}
-                </span>
-                <span className="text-muted-foreground">{formatBytes(file.bytes)}</span>
-                <button
-                  type="button"
-                  onClick={() => setFiles((current) => current.filter((f) => f.id !== file.id))}
-                  aria-label={`Remove ${file.filename}`}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <X aria-hidden="true" className="size-3" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {uploadError ? <p className="text-destructive mt-2 text-[11px]">{uploadError}</p> : null}
-
         {snippets.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {snippets.map((snippet) => (
@@ -430,6 +407,44 @@ function Composer({ person }: { person: Person }) {
           </div>
         ) : null}
       </div>
+
+      {/*
+        Outside the editor, never inside it.
+        These chips used to sit under the text in the scrolling box, so a
+        letter long enough to fill it pushed them out of sight: attaching a
+        file looked exactly like attaching nothing, and the same document got
+        picked twice. A file the owner has added is now always on screen.
+      */}
+      {files.length > 0 || uploadError ? (
+        <div className="border-border shrink-0 border-t px-3 py-2">
+          {files.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {files.map((file) => (
+                <li
+                  key={file.id}
+                  className="border-border flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px]"
+                >
+                  <Paperclip aria-hidden="true" className="size-3 shrink-0" />
+                  <span dir="auto" className="max-w-40 truncate">
+                    {file.filename}
+                  </span>
+                  <span className="text-muted-foreground">{formatBytes(file.bytes)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFiles((current) => current.filter((f) => f.id !== file.id))}
+                    aria-label={`Remove ${file.filename}`}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X aria-hidden="true" className="size-3" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {uploadError ? <p className="text-destructive mt-2 text-[11px]">{uploadError}</p> : null}
+        </div>
+      ) : null}
 
       <div className="border-border flex flex-wrap items-center gap-2 border-t p-3">
         <Button onClick={send} disabled={reply.isPending || isRichTextEmpty(doc)}>

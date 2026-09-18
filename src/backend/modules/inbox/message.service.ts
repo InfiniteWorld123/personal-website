@@ -509,6 +509,36 @@ export const recordReply = async (input: {
  * a person with `source = 'MAIL'` — because he chose that **every** letter to
  * his address enters the inbox, not only the ones from his website.
  */
+/**
+ * Was this letter sent by the site itself?
+ *
+ * The site writes to its own address: the contact form sends a "go and look"
+ * notification to `CONTACT_TO_EMAIL`, which is `info@`. Once `info@` was
+ * pointed at the mail Worker on 18 Sep 2026 that notification came straight
+ * back in, matched no conversation, and was filed as a brand-new person —
+ * named after the provider's own bounce address, one junk row per enquiry,
+ * sitting in the inbox next to the real client it was telling him about.
+ *
+ * Matched on the domain, not just the address, because the envelope sender of
+ * a provider-sent mail is a per-message bounce address on a sending subdomain
+ * (`…@send.yamanwarda.de`) and never the `From:` header the reader sees.
+ *
+ * Nobody is lost to this: a letter from the site's own domain is the site, or
+ * it is the owner writing to himself.
+ */
+const isOurOwnMail = (address: string): boolean => {
+  const domain = address.slice(address.lastIndexOf('@') + 1)
+
+  if (domain === '') return false
+
+  const ours = [env.EMAIL_FROM, env.CONTACT_TO_EMAIL, env.INBOUND_MAIL_ADDRESS]
+    .map((value) => value?.trim().toLowerCase() ?? '')
+    .filter((value) => value.includes('@'))
+    .map((value) => value.slice(value.lastIndexOf('@') + 1))
+
+  return ours.some((own) => domain === own || domain.endsWith(`.${own}`))
+}
+
 export const recordMail = async (input: {
   from: string
   fromName: string
@@ -525,6 +555,7 @@ export const recordMail = async (input: {
   // Without a sender there is nobody to file it under, and a row keyed on
   // nothing would collect every unattributable letter into one fake person.
   if (address === '' || !address.includes('@')) return { recorded: false }
+  if (isOurOwnMail(address)) return { recorded: false }
   if (await alreadySeen(input.messageId)) return { recorded: false }
 
   const existing = await db.query<{ id: string }>(

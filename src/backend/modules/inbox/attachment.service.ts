@@ -149,6 +149,38 @@ export const storeAttachmentBytes = async (input: {
   return { id, filename, contentType, bytes: size, direction: input.direction, url: attachmentUrl(id) }
 }
 
+/**
+ * The files that belong to a person but to none of their letters.
+ *
+ * That is exactly one case: a document sent with a first enquiry, which has no
+ * row in `lead_messages` to hang from. Restricted to `IN` on purpose — an
+ * outgoing file with no message is one the owner uploaded into a reply he
+ * never sent, and it must not surface as something a client sent him.
+ */
+export const listUnlinkedIncomingFiles = async (personId: string): Promise<Attachment[]> => {
+  const result = await getDb().query<{
+    id: string
+    filename: string
+    content_type: string
+    bytes: number | string
+  }>(
+    `SELECT id, filename, content_type, bytes
+       FROM lead_attachments
+      WHERE lead_id = $1 AND message_id IS NULL AND direction = 'IN'
+      ORDER BY created_at;`,
+    [personId],
+  )
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    filename: row.filename,
+    contentType: row.content_type,
+    bytes: Number(row.bytes),
+    direction: 'IN' as const,
+    url: attachmentUrl(row.id),
+  }))
+}
+
 export const storeAttachment = async (input: {
   personId: string
   file: File

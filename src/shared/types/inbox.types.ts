@@ -70,6 +70,14 @@ export type Person = {
   source: PersonSource
   /** What they typed into the form. The first thing the thread shows. */
   firstMessage: string
+  /**
+   * Files that arrived with that first enquiry.
+   *
+   * A first message has no row in `lead_messages`, so its documents hang off
+   * the person instead and are shown beside it. Anything the owner uploaded
+   * but never sent is `OUT` and deliberately not here.
+   */
+  firstMessageFiles: Attachment[]
   /** The three qualifying answers the contact form collects, when it did. */
   facts: Array<{ label: string; value: string }>
   createdAt: string

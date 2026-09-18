@@ -3,7 +3,22 @@ import { internalError } from '#/backend/shared/error'
 import { button, escapeHtml, layout, plainText, sendMail, type MailLanguage } from '#/backend/shared/mail'
 import { env } from '#/shared/env'
 import type { ContactInput } from '#/shared/validation/inbox.validation'
+import { storeAttachmentBytes } from './attachment.service'
 import { TOUCH_PERSON } from './inbox.sql'
+
+/**
+ * What the form actually sends, bytes included.
+ *
+ * `content` is the file itself. It is here because keeping only `name` and
+ * `bytes` — which is what this took until 18 Sep 2026 — meant every document
+ * a client attached was read once for the type check and then thrown away.
+ */
+export type ContactAttachment = {
+  name: string
+  bytes: number
+  contentType: string
+  content: Uint8Array<ArrayBuffer>
+}
 
 /**
  * A message from the website's own form — one of the two doors into the inbox.
@@ -14,7 +29,7 @@ import { TOUCH_PERSON } from './inbox.sql'
  */
 export const recordContactMessage = async (
   input: ContactInput,
-  attachment: { name: string; bytes: number } | null,
+  attachment: ContactAttachment | null,
 ): Promise<{ personId: string; notified: boolean }> => {
   const db = getDb()
 
@@ -25,6 +40,13 @@ export const recordContactMessage = async (
 
   const found = existing.rows[0]?.id
   let personId = found
+  /*
+   * The letter this file belongs to, when there is one. A first enquiry has
+   * no row in `lead_messages` — its words live on the person and the thread
+   * renders them itself — so its file is filed against the person alone and
+   * the conversation shows it beside that first message.
+   */
+  let messageId: string | null = null
 
   if (found) {
     /*
@@ -56,11 +78,14 @@ export const recordContactMessage = async (
       ],
     )
 
-    await db.query(
+    const written = await db.query<{ id: string }>(
       `INSERT INTO lead_messages (lead_id, direction, subject, body, from_email, to_email)
-       VALUES ($1, 'IN', 'New message from the contact form', $2, $3, $4);`,
+       VALUES ($1, 'IN', 'New message from the contact form', $2, $3, $4)
+       RETURNING id;`,
       [found, input.message, input.email, env.CONTACT_TO_EMAIL ?? null],
     )
+
+    messageId = written.rows[0]?.id ?? null
   } else {
     const created = await db.query<{ id: string }>(
       `INSERT INTO leads
@@ -89,6 +114,8 @@ export const recordContactMessage = async (
 
   if (!personId) throw internalError('The message could not be stored')
 
+  if (attachment) await keepContactFile(personId, messageId, attachment, input.message)
+
   await db.query(TOUCH_PERSON, [personId])
 
   const notified = await notifyOwner(input, attachment, personId)
@@ -98,6 +125,47 @@ export const recordContactMessage = async (
   }
 
   return { personId, notified }
+}
+
+/**
+ * Keeps the document the sender attached.
+ *
+ * **Never allowed to fail the message.** The words are already stored by the
+ * time this runs, and a file the store refuses must cost a line in the letter,
+ * not the enquiry itself — so a failure is written into the body the same way
+ * an arriving mail records a refused attachment.
+ */
+const keepContactFile = async (
+  personId: string,
+  messageId: string | null,
+  attachment: ContactAttachment,
+  message: string,
+): Promise<void> => {
+  const db = getDb()
+
+  try {
+    await storeAttachmentBytes({
+      personId,
+      ...(messageId ? { messageId } : {}),
+      filename: attachment.name,
+      contentType: attachment.contentType,
+      bytes: attachment.content,
+      direction: 'IN',
+    })
+  } catch (error) {
+    console.error('[contact-attachment] refused', {
+      filename: attachment.name,
+      reason: error instanceof Error ? error.message : 'unknown',
+    })
+
+    const note = `${message}\n\n[Could not be kept: ${attachment.name}]`
+
+    if (messageId) {
+      await db.query('UPDATE lead_messages SET body = $2 WHERE id = $1;', [messageId, note])
+    } else {
+      await db.query('UPDATE leads SET message = $2 WHERE id = $1;', [personId, note])
+    }
+  }
 }
 
 /**

@@ -8,6 +8,7 @@ import type {
   PersonSource,
   PersonWriteInput,
 } from '#/shared/validation/inbox.validation'
+import { listUnlinkedIncomingFiles } from './attachment.service'
 import { listMessages } from './message.service'
 import { emptyToNull, toInt, toIsoRequired } from './inbox.sql'
 
@@ -168,7 +169,11 @@ export const getPerson = async (id: string): Promise<Person> => {
 
   if (!row) throw notFoundError('That person is not in the inbox')
 
-  const [messages, notes] = await Promise.all([listMessages(id), listNotes(id)])
+  const [messages, notes, firstMessageFiles] = await Promise.all([
+    listMessages(id),
+    listNotes(id),
+    listUnlinkedIncomingFiles(id),
+  ])
 
   // Only what the form actually collected. An empty row of labels with no
   // values reads as a broken screen.
@@ -189,6 +194,7 @@ export const getPerson = async (id: string): Promise<Person> => {
     language: row.language,
     source: row.source,
     firstMessage: row.message,
+    firstMessageFiles,
     facts,
     createdAt: toIsoRequired(row.created_at),
     starred: row.starred,

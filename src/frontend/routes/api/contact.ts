@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { withRequestScope } from '#/backend/db/client'
-import { recordContactMessage } from '#/backend/modules/inbox/contact.service'
+import {
+  type ContactAttachment,
+  recordContactMessage,
+} from '#/backend/modules/inbox/contact.service'
 import { getTrustedClientIp } from '#/backend/shared/client-ip'
 import {
   MAX_CONTACT_ATTACHMENT_BYTES,
@@ -111,7 +114,7 @@ export const Route = createFileRoute('/api/contact')({
             })
 
             const file = form.get('attachment')
-            let attachment: { name: string; bytes: number } | null = null
+            let attachment: ContactAttachment | null = null
 
             if (file instanceof File && file.size > 0) {
               if (file.size > MAX_CONTACT_ATTACHMENT_BYTES) {
@@ -119,13 +122,25 @@ export const Route = createFileRoute('/api/contact')({
               }
 
               // The declared type is the sender's claim; the bytes are the fact.
-              const probed = inspectContactAttachment(new Uint8Array(await file.arrayBuffer()))
+              const content = new Uint8Array(await file.arrayBuffer())
+              const probed = inspectContactAttachment(content)
 
               if (!probed) {
                 return failure('That kind of file cannot be sent here.', 'ATTACHMENT_REJECTED', 415)
               }
 
-              attachment = { name: file.name, bytes: file.size }
+              /*
+               * The bytes travel on, they are not merely inspected. Until
+               * 18 Sep 2026 only the name and the size were kept and the file
+               * itself was dropped here, so a client who attached a signed
+               * contract left no trace of it anywhere in the inbox.
+               */
+              attachment = {
+                name: file.name,
+                bytes: file.size,
+                contentType: probed.contentType,
+                content,
+              }
             }
 
             const { notified } = await recordContactMessage(input, attachment)
