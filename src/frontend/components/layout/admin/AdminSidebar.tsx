@@ -1,4 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { LeadsOverdueBadge } from '#/frontend/features/leads/LeadsOverdueBadge'
 import { cn } from '#/frontend/lib/utils'
 import { adminNavigation, type AdminNavigationItem } from './admin-navigation'
 
@@ -104,6 +105,7 @@ function NavRow({
     >
       <Icon aria-hidden="true" className="size-4 shrink-0" />
       {item.label}
+      {item.badge === 'leadsOverdue' ? <LeadsOverdueBadge /> : null}
     </Link>
   )
 }

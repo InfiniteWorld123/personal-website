@@ -48,6 +48,9 @@ import { Route as AdminInboxIndexRouteImport } from './../routes/admin.inbox.ind
 import { Route as AdminInboxPersonIdRouteImport } from './../routes/admin.inbox.$personId'
 import { Route as AdminInboxNewRouteImport } from './../routes/admin.inbox.new'
 import { Route as AdminInboxSettingsRouteImport } from './../routes/admin.inbox.settings'
+import { Route as AdminLeadsIndexRouteImport } from './../routes/admin.leads.index'
+import { Route as AdminLeadsPersonIdRouteImport } from './../routes/admin.leads.$personId'
+import { Route as AdminLeadsBoardRouteImport } from './../routes/admin.leads.board'
 import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
@@ -252,6 +255,21 @@ const AdminInboxSettingsRoute = AdminInboxSettingsRouteImport.update({
   path: '/inbox/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLeadsIndexRoute = AdminLeadsIndexRouteImport.update({
+  id: '/leads/',
+  path: '/leads/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsPersonIdRoute = AdminLeadsPersonIdRouteImport.update({
+  id: '/leads/$personId',
+  path: '/leads/$personId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsBoardRoute = AdminLeadsBoardRouteImport.update({
+  id: '/leads/board',
+  path: '/leads/board',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -323,6 +341,8 @@ export interface FileRoutesByFullPath {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
+  '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -331,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/inbox/': typeof AdminInboxIndexRoute
+  '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
@@ -369,6 +390,8 @@ export interface FileRoutesByTo {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
+  '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog': typeof LangBlogIndexRoute
@@ -377,6 +400,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
   '/admin/inbox': typeof AdminInboxIndexRoute
+  '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
@@ -418,6 +442,8 @@ export interface FileRoutesById {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
+  '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
@@ -426,6 +452,7 @@ export interface FileRoutesById {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/inbox/': typeof AdminInboxIndexRoute
+  '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
@@ -468,6 +495,8 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/$personId'
+    | '/admin/leads/board'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -476,6 +505,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/bookings/'
     | '/admin/inbox/'
+    | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
     | '/admin/bookings/types/$id'
@@ -514,6 +544,8 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/$personId'
+    | '/admin/leads/board'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog'
@@ -522,6 +554,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/bookings'
     | '/admin/inbox'
+    | '/admin/leads'
     | '/admin/projects'
     | '/$lang/booking/manage/$reference'
     | '/admin/bookings/types/$id'
@@ -562,6 +595,8 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/leads/$personId'
+    | '/admin/leads/board'
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/$lang/blog/'
@@ -570,6 +605,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/bookings/'
     | '/admin/inbox/'
+    | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
     | '/admin/bookings/types/$id'
@@ -866,6 +902,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInboxSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/leads/': {
+      id: '/admin/leads/'
+      path: '/leads'
+      fullPath: '/admin/leads/'
+      preLoaderRoute: typeof AdminLeadsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/$personId': {
+      id: '/admin/leads/$personId'
+      path: '/leads/$personId'
+      fullPath: '/admin/leads/$personId'
+      preLoaderRoute: typeof AdminLeadsPersonIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads/board': {
+      id: '/admin/leads/board'
+      path: '/leads/board'
+      fullPath: '/admin/leads/board'
+      preLoaderRoute: typeof AdminLeadsBoardRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/projects/': {
       id: '/admin/projects/'
       path: '/projects'
@@ -968,11 +1025,14 @@ interface AdminRouteChildren {
   AdminInboxPersonIdRoute: typeof AdminInboxPersonIdRoute
   AdminInboxNewRoute: typeof AdminInboxNewRoute
   AdminInboxSettingsRoute: typeof AdminInboxSettingsRoute
+  AdminLeadsPersonIdRoute: typeof AdminLeadsPersonIdRoute
+  AdminLeadsBoardRoute: typeof AdminLeadsBoardRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
   AdminProjectsNewRoute: typeof AdminProjectsNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
   AdminInboxIndexRoute: typeof AdminInboxIndexRoute
+  AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
   AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
   AdminBookingsTypesIdRoute: typeof AdminBookingsTypesIdRoute
   AdminBookingsTypesNewRoute: typeof AdminBookingsTypesNewRoute
@@ -991,11 +1051,14 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInboxPersonIdRoute: AdminInboxPersonIdRoute,
   AdminInboxNewRoute: AdminInboxNewRoute,
   AdminInboxSettingsRoute: AdminInboxSettingsRoute,
+  AdminLeadsPersonIdRoute: AdminLeadsPersonIdRoute,
+  AdminLeadsBoardRoute: AdminLeadsBoardRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
   AdminProjectsNewRoute: AdminProjectsNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminBookingsIndexRoute: AdminBookingsIndexRoute,
   AdminInboxIndexRoute: AdminInboxIndexRoute,
+  AdminLeadsIndexRoute: AdminLeadsIndexRoute,
   AdminProjectsIndexRoute: AdminProjectsIndexRoute,
   AdminBookingsTypesIdRoute: AdminBookingsTypesIdRoute,
   AdminBookingsTypesNewRoute: AdminBookingsTypesNewRoute,

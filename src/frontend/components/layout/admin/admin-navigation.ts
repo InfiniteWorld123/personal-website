@@ -2,6 +2,7 @@ import {
   CalendarRange,
   FileText,
   FolderKanban,
+  Handshake,
   Inbox,
   LayoutDashboard,
   Newspaper,
@@ -23,6 +24,11 @@ export type AdminNavigationItem = {
    */
   children?: AdminNavigationItem[]
   /**
+   * A live count drawn on the row, named rather than passed as a component so
+   * this file stays what it is: the description of the menu, not part of it.
+   */
+  badge?: 'leadsOverdue'
+  /**
    * Highlight this row only on its own path.
    *
    * A section's landing page and its first lens share a URL — the inbox *is*
@@ -43,6 +49,8 @@ export const adminNavigation: AdminNavigationItem[] = [
   { label: 'Calendar', to: '/admin/bookings', icon: CalendarRange, available: true },
   /** Everyone who has written, and everything written back. */
   { label: 'Inbox', to: '/admin/inbox', icon: Inbox, available: true },
+  /** Everyone worth selling to, and every deal open with them. */
+  { label: 'Leads', to: '/admin/leads', icon: Handshake, available: true, badge: 'leadsOverdue' },
   { label: 'Content', to: '/admin/content', icon: FileText, available: true },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
   { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },
