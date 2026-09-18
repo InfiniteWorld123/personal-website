@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { site } from '#/frontend/content/site'
+import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
+import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { BookingRoomPage } from '#/frontend/pages/public/booking/BookingRoomPage'
 
 /**
@@ -11,7 +14,17 @@ import { BookingRoomPage } from '#/frontend/pages/public/booking/BookingRoomPage
  * referrer header, and no analytics row.
  */
 export const Route = createFileRoute('/$lang/booking/room/$reference')({
-  head: () => ({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] }),
+  // Titled for the same reason the manage page is, and indexed for none.
+  head: ({ params }) => {
+    const language = isLanguage(params.lang) ? params.lang : defaultLanguage
+
+    return {
+      meta: [
+        { title: `${getBookingCopy(language).manage.heading} · ${site.name}` },
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
+    }
+  },
   component: BookingRoomRoute,
 })
 

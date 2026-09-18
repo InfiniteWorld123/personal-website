@@ -2,7 +2,9 @@ import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { PublicShell } from '#/frontend/components/layout/public/PublicShell'
 import { fetchPublishedContent } from '#/frontend/features/content/server/published-content'
 import { useContentOverrides } from '#/frontend/features/content/use-published-content'
-import { isLanguage } from '#/frontend/i18n/language'
+import { getContent } from '#/frontend/content'
+import { site } from '#/frontend/content/site'
+import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { NotFoundPage } from '#/frontend/pages/public/NotFoundPage'
 
 /**
@@ -20,6 +22,22 @@ export const Route = createFileRoute('/$lang')({
   loader: async () => ({ published: await fetchPublishedContent() }),
   component: LanguageLayout,
   notFoundComponent: LanguageNotFound,
+  /*
+   * A 404 with an empty `<title>` is a soft-404 signal and an unreadable tab.
+   * The wording is the page's own, already written in all three languages.
+   * `noindex` matters more than the title: without it a mistyped URL that
+   * still returns markup is a candidate for the index.
+   */
+  head: ({ params }) => {
+    const language = isLanguage(params.lang) ? params.lang : defaultLanguage
+
+    return {
+      meta: [
+        { title: `${getContent(language).notFound.title} · ${site.name}` },
+        { name: 'robots', content: 'noindex, follow' },
+      ],
+    }
+  },
 })
 
 function LanguageLayout() {

@@ -7,7 +7,13 @@ import { buildHead } from '#/frontend/lib/seo'
 import { WorkPage } from '#/frontend/pages/public/work/WorkPage'
 
 export const Route = createFileRoute('/$lang/work/')({
-  validateSearch: (search: Record<string, unknown>): { page?: number } => ({ page: parseProjectPage(search.page) }),
+  /* Same as the blog archive: a default that is written into the URL turns
+     every canonical and hreflang for this page into a redirect. */
+  validateSearch: (search: Record<string, unknown>): { page?: number } => {
+    const page = parseProjectPage(search.page)
+
+    return { page: page > 1 ? page : undefined }
+  },
   loader: async ({ params }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
 

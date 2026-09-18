@@ -1,0 +1,38 @@
+# Cache rules for everything served straight out of `public/`.
+#
+# Vite's own build output is fingerprinted, so it already gets long-lived
+# caching from its filename. The files placed here by hand never change name,
+# so without this they are revalidated on every visit — including the hero
+# portrait, which is the largest image on the site and the LCP element on every
+# page of it.
+#
+# Cloudflare Workers Assets reads this file, and Nitro copies `public/`
+# through verbatim, so it applies in both the dev preview and production.
+
+# Thirty days rather than a year, and deliberately not `immutable`: these
+# filenames do not change when the picture does, so a replaced portrait would
+# otherwise stay wrong in a visitor's cache until they cleared it. Rename the
+# file when you replace it and this can become a year.
+/images/*
+  Cache-Control: public, max-age=2592000
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# A day, not a year. These three cards are overwritten in place by a generator
+# that lives outside this repository, so a long life here would pin a stale
+# preview into every scraper that has seen it.
+/og/*
+  Cache-Control: public, max-age=86400
+
+/manifest.json
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/*.png
+  Cache-Control: public, max-age=604800
+
+/*.svg
+  Cache-Control: public, max-age=604800

@@ -33,7 +33,20 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     defaultPreload: 'intent',
-    defaultPreloadStaleTime: 0,
+    /*
+     * The router's own default, stated rather than inherited.
+     *
+     * It used to be 0, which marked preloaded data stale the moment it landed:
+     * hovering a link ran the route's loader — `fetchPublishedContent()`, a
+     * server-function round trip and a Neon query — and then threw the answer
+     * away, so the navigation fetched it again, and so did the next hover of
+     * the same link. Moving the pointer across the public nav bar cost one
+     * loader per link and reused none of them. Thirty seconds is shorter than
+     * anything on this site changes in, and it is what makes `preload: 'intent'`
+     * do the thing it exists to do. Admin freshness is React Query's business,
+     * not the router's, and it keeps its own `staleTime`.
+     */
+    defaultPreloadStaleTime: 30_000,
     context: { queryClient },
     ssr: globalContext?.nonce ? { nonce: globalContext.nonce } : undefined,
   })

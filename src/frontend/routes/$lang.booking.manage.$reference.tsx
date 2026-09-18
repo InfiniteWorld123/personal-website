@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
+import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
+import { site } from '#/frontend/content/site'
 import { BookingManagePage } from '#/frontend/pages/public/booking/BookingManagePage'
 
 /**
@@ -7,7 +10,20 @@ import { BookingManagePage } from '#/frontend/pages/public/booking/BookingManage
  * a search engine following it would put a live cancel link in an index.
  */
 export const Route = createFileRoute('/$lang/booking/manage/$reference')({
-  head: () => ({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] }),
+  // Not indexed, but still titled. The tab, the back button and every
+  // bookmark a visitor makes of the link in their confirmation mail read from
+  // `<title>`, and an empty one leaves them with the bare URL. The words are
+  // the page's own heading rather than anything written for search.
+  head: ({ params }) => {
+    const language = isLanguage(params.lang) ? params.lang : defaultLanguage
+
+    return {
+      meta: [
+        { title: `${getBookingCopy(language).manage.heading} · ${site.name}` },
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
+    }
+  },
   component: BookingManageRoute,
 })
 

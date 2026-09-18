@@ -1,9 +1,21 @@
 import { getContent, site } from '#/frontend/content'
-import { type Language, languages, localeFor } from '#/frontend/i18n/language'
+import { type Language, languages } from '#/frontend/i18n/language'
 import { buildStructuredData, type StructuredArticle, type StructuredProject } from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
 
 export { publicPath }
+
+/**
+ * Open Graph wants `language_TERRITORY`, and it is stricter than BCP 47.
+ *
+ * `localeFor` gives `ar` for Arabic, which is correct for `<html lang>`, for
+ * JSON-LD `inLanguage` and for the RSS `<language>` element — and invalid here.
+ * Facebook, LinkedIn and WhatsApp drop a malformed `og:locale` and fall back to
+ * `en_US`, so an Arabic page shared into an Arabic feed announced itself as
+ * English. That is the audience least likely to arrive by search and most
+ * likely to arrive through a shared link, so it is the worst one to get wrong.
+ */
+const OG_LOCALE: Record<Language, string> = { de: 'de_DE', en: 'en_GB', ar: 'ar_AR' }
 
 /**
  * The generated social cards are JPEG, but an article's cover is whatever was
@@ -83,7 +95,7 @@ export function buildHead({
       { name: 'robots', content: noIndex ? 'noindex, nofollow' : 'index, follow' },
       { property: 'og:type', content: article ? 'article' : 'website' },
       { property: 'og:site_name', content: site.name },
-      { property: 'og:locale', content: localeFor(language).replace('-', '_') },
+      { property: 'og:locale', content: OG_LOCALE[language] },
       // No `og:locale:alternate`: the head manager keeps one tag per property,
       // so only the last of the two would survive. The hreflang links below
       // are what search engines read anyway.

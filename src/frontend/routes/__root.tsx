@@ -34,6 +34,13 @@ export const Route = createRootRoute({
       { name: 'author', content: site.name },
       { name: 'theme-color', content: '#f5f6f8', media: '(prefers-color-scheme: light)' },
       { name: 'theme-color', content: '#0c111c', media: '(prefers-color-scheme: dark)' },
+      /*
+       * A floor, not a page's title. Every public page overrides this through
+       * `buildHead`; what it catches is the handful of routes that render
+       * without one — the 404s and the tokened booking links — which were
+       * shipping an empty `<title>` element.
+       */
+      { title: site.name },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
@@ -44,6 +51,10 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  /*
+   * Reached before a language segment exists, so it speaks the default one.
+   * Titled and noindexed for the same reasons as the per-language 404.
+   */
   notFoundComponent: () => <NotFoundPage />,
 })
 

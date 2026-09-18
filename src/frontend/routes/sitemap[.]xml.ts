@@ -5,7 +5,10 @@ import { fetchPublishedProjectSlugs } from '#/frontend/features/work/server/publ
 import { languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
 
-const staticPaths = ['/', '/services', '/work', '/blog', '/about', '/faq', '/stack', '/contact', '/impressum', '/datenschutz']
+// `/booking` is the page the whole site points at, and it was the only public
+// page the sitemap did not declare — found late and re-crawled least often,
+// which is the opposite of what a page meant to fill a calendar needs.
+const staticPaths = ['/', '/services', '/work', '/blog', '/about', '/faq', '/stack', '/booking', '/contact', '/impressum', '/datenschutz']
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;')
 
