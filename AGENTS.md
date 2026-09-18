@@ -54,11 +54,15 @@ Explicitly out of scope. Do not build, plan, or advertise these:
   Lead conversations are the only email surface. See `docs/decisions.md` D11.
 - A visual page builder or drag-and-drop layout editor.
   Content is editable; structure is code. See `docs/decisions.md` D12.
-- Client portals, customer logins, or any second user role.
+- Client portals, customer logins, or any second user role. A booked visitor
+  reaches their own call through the manage-link token, not an account.
 - Automated referral payouts or any programmatic movement of money out.
 - A legal accounting system. Invoicing is an operational tool, not bookkeeping.
 - Multi-currency, multi-country tax handling.
-- Real-time chat, notifications infrastructure, or mobile apps.
+- Real-time chat, notifications infrastructure, or mobile apps. The one
+  exception is the video call held inside a booking: it lives only for that
+  meeting's window, stores nothing, and is not a chat surface. See
+  `docs/decisions.md` D33.
 
 ## Backend Rules
 
@@ -104,6 +108,13 @@ Explicitly out of scope. Do not build, plan, or advertise these:
 - Preserve existing user changes. Avoid unrelated refactors.
 - Before completing a slice, run the relevant subset of: format, typecheck,
   tests, build, and a real runtime check.
+- `typecheck` and `test` must both be green before a slice is reported as done.
+  A Stop hook enforces this; do not work around it by deleting or skipping tests.
+- Every new behavior ships with a test that would fail without it. A service
+  rule, a validation boundary, or a money calculation with no test is unfinished.
+- When building or reshaping a user-facing surface, apply the `frontend-design`
+  skill rather than reaching for default component styling.
+- Leave no scratch files in `src/`. Temporary probes belong in the scratchpad.
 
 ## Missing or Conflicting Information
 
