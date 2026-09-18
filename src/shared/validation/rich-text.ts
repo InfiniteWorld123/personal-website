@@ -220,6 +220,24 @@ export const richTextToLetter = (doc: RichTextDoc): string => {
 }
 
 /** True once the writer has put something other than empty blocks in it. */
+/**
+ * Plain text back into a document the editor can open.
+ *
+ * The inverse of `richTextToPlainText`, and it exists for one caller: a letter
+ * the invoicing section writes as text and hands to the composer, which speaks
+ * only in nodes. One paragraph per line, including the empty ones, so the
+ * blank line he wrote between the greeting and the body survives — collapsing
+ * them would hand him a wall of text to re-space by hand.
+ */
+export const richTextFromPlainText = (text: string): RichTextDoc => ({
+  type: 'doc',
+  content: text.split('\n').map((line) =>
+    line === ''
+      ? { type: 'paragraph' as const }
+      : { type: 'paragraph' as const, content: [{ type: 'text' as const, text: line }] },
+  ),
+})
+
 export const isRichTextEmpty = (doc: RichTextDoc): boolean => richTextToPlainText(doc) === ''
 
 /**

@@ -7,6 +7,7 @@ import { Button } from '#/frontend/components/ui/button'
 import { inboxQuery, useSetStarred } from '#/frontend/features/inbox/inbox-queries'
 import { avatarHue, initialsOf, timeAgo } from '#/frontend/features/inbox/inbox-format'
 import { INBOX_LENSES, type InboxLens } from '#/shared/validation/inbox.validation'
+import type { LetterKind } from '#/shared/validation/invoice.validation'
 import type { InboxRow } from '#/shared/types/inbox.types'
 import { cn } from '#/frontend/lib/utils'
 import { Conversation } from './Conversation'
@@ -33,7 +34,17 @@ const LENS_LABEL: Record<InboxLens, string> = {
  * On a phone the two columns become one — the list, or the conversation, never
  * a squeezed pair. He works from his phone, so that is the primary layout.
  */
-export function InboxPage({ personId }: { personId: string | null }) {
+export function InboxPage({
+  personId,
+  letterFor = null,
+}: {
+  personId: string | null
+  /**
+   * A letter the invoicing section is handing over: which document the
+   * composer should open already written and already attached.
+   */
+  letterFor?: { invoiceId: string; kind: LetterKind } | null
+}) {
   const navigate = useNavigate()
   const [lens, setLens] = useState<InboxLens>('inbox')
   const [search, setSearch] = useState('')
@@ -124,7 +135,7 @@ export function InboxPage({ personId }: { personId: string | null }) {
 
         <div className={cn('min-h-0', personId ? 'block' : 'hidden lg:block')}>
           {personId ? (
-            <Conversation personId={personId} />
+            <Conversation personId={personId} letterFor={letterFor} />
           ) : (
             <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-10 text-center">
               <Mail aria-hidden="true" className="size-8 opacity-40" />

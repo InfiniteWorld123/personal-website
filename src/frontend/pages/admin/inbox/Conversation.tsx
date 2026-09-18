@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Archive, ArrowLeft, ChevronRight, CircleDot, Paperclip, Send, Star, X } from 'lucide-react'
 import { Button } from '#/frontend/components/ui/button'
 import { RichTextEditor } from '#/frontend/features/blog/RichTextEditor'
 import { uploadAttachment } from '#/frontend/api/inbox.api'
+import { letterQuery } from '#/frontend/features/invoices/invoice-queries'
+import type { LetterKind } from '#/shared/validation/invoice.validation'
 import {
   personQuery,
   settingsQuery,
@@ -23,6 +25,7 @@ import {
 import {
   emptyRichTextDoc,
   isRichTextEmpty,
+  richTextFromPlainText,
   richTextToLetter,
   type RichTextDoc,
 } from '#/shared/validation/rich-text'
@@ -35,7 +38,13 @@ import { Section } from './Section'
 const messageCount = (person: Person): number =>
   person.messages.length + (person.firstMessage.trim() === '' ? 0 : 1)
 
-export function Conversation({ personId }: { personId: string }) {
+export function Conversation({
+  personId,
+  letterFor = null,
+}: {
+  personId: string
+  letterFor?: { invoiceId: string; kind: LetterKind } | null
+}) {
   const person = useQuery(personQuery(personId))
 
   if (person.isPending) return <p className="text-muted-foreground p-6 text-sm">Loading…</p>
@@ -43,10 +52,16 @@ export function Conversation({ personId }: { personId: string }) {
     return <p className="text-muted-foreground p-6 text-sm">That person is no longer here.</p>
   }
 
-  return <Thread person={person.data} />
+  return <Thread person={person.data} letterFor={letterFor} />
 }
 
-function Thread({ person }: { person: Person }) {
+function Thread({
+  person,
+  letterFor,
+}: {
+  person: Person
+  letterFor: { invoiceId: string; kind: LetterKind } | null
+}) {
   const setRead = useSetRead(person.id)
   const setArchived = useSetArchived(person.id)
   const setStarred = useSetStarred(person.id)
@@ -143,7 +158,7 @@ function Thread({ person }: { person: Person }) {
         <PersonPanel person={person} />
       </div>
 
-      <Composer person={person} />
+      <Composer person={person} letterFor={letterFor} />
     </div>
   )
 }
@@ -305,7 +320,13 @@ function Files({ files }: { files: Attachment[] }) {
  * cursor". A composer that floats has none, so notes and details fold *below*
  * the thread rather than above the reply.
  */
-function Composer({ person }: { person: Person }) {
+function Composer({
+  person,
+  letterFor,
+}: {
+  person: Person
+  letterFor: { invoiceId: string; kind: LetterKind } | null
+}) {
   const [doc, setDoc] = useState<RichTextDoc>(emptyRichTextDoc)
   const [open, setOpen] = useState(false)
   const [files, setFiles] = useState<Array<{ id: string; filename: string; bytes: number }>>([])
@@ -315,6 +336,35 @@ function Composer({ person }: { person: Person }) {
 
   const settings = useQuery(settingsQuery())
   const reply = useReply(person.id)
+
+  /**
+   * A letter handed over by the invoicing section.
+   *
+   * The server has already put the invoice's PDF in this person's files, so all
+   * that arrives here is the text and the id of that file — and the composer
+   * opens on it exactly as if he had typed it and attached it himself.
+   *
+   * Seeded once, guarded by a ref rather than by the state it sets: without the
+   * guard, editing the draft and then any re-render would put the generated
+   * wording back over his own words.
+   */
+  const letter = useQuery(letterQuery(letterFor?.invoiceId ?? '', letterFor?.kind ?? 'INVOICE', Boolean(letterFor)))
+  const seeded = useRef<string | null>(null)
+
+  useEffect(() => {
+    const prepared = letter.data
+
+    if (!prepared || !letterFor) return
+
+    const key = `${letterFor.invoiceId}:${letterFor.kind}`
+
+    if (seeded.current === key) return
+
+    seeded.current = key
+    setDoc(richTextFromPlainText(prepared.body))
+    setFiles([prepared.attachment])
+    setOpen(true)
+  }, [letter.data, letterFor])
 
   const snippets = (settings.data?.snippets ?? []).filter(
     (snippet) => snippet.language === person.language,
