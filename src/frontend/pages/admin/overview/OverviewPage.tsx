@@ -14,7 +14,7 @@ const upcomingSections = [
   { title: 'Leads', description: 'Contact form and booking enquiries land here.', block: 'B4' },
   { title: 'Bookings', description: 'Scheduled calls and availability.', block: 'B5' },
   { title: 'Content', description: 'Page copy, projects, and services.', block: 'B6' },
-  { title: 'Revenue', description: 'Invoices, payments, and subscriptions.', block: 'B9' },
+  { title: 'Invoices', description: 'What is billed, what is paid, what is late.', block: 'B9' },
 ]
 
 export function OverviewPage() {

@@ -1,0 +1,405 @@
+import * as v from 'valibot'
+
+/**
+ * The contract for invoicing.
+ *
+ * Three rules from the lab run through all of it:
+ *
+ * - **The two kinds of money never meet.** `moneyKind` is required on every
+ *   invoice and no schema here lets a document carry both.
+ * - **A draft is editable; an issued invoice is not.** Nothing in this file
+ *   describes an edit to money on an issued document, because there is no such
+ *   act — the correction is a second document.
+ * - **Euros exist only in the form.** Everything behind it counts integer
+ *   cents, so nothing is rounded twice.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Vocabulary                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Three documents, not one with a sign on it.
+ *
+ * `CANCELLATION` voids an invoice whole — the wrong client, the wrong price,
+ * a duplicate. `CREDIT_NOTE` gives part of it back — a discount agreed after
+ * the fact, a line that was not delivered. He asked for both on day one, and
+ * they are genuinely different acts: one makes the original count for nothing,
+ * the other leaves it standing and reduces it.
+ */
+export const INVOICE_KINDS = ['INVOICE', 'CANCELLATION', 'CREDIT_NOTE'] as const
+
+export type InvoiceKind = (typeof INVOICE_KINDS)[number]
+
+export const INVOICE_KIND_LABEL: Record<InvoiceKind, string> = {
+  INVOICE: 'Invoice',
+  CANCELLATION: 'Cancellation',
+  CREDIT_NOTE: 'Credit note',
+}
+
+/** What the paper calls itself, in the language it was written in. */
+export const DOCUMENT_TITLE: Record<InvoiceLanguage, Record<InvoiceKind, string>> = {
+  de: { INVOICE: 'Rechnung', CANCELLATION: 'Stornorechnung', CREDIT_NOTE: 'Gutschrift' },
+  en: { INVOICE: 'Invoice', CANCELLATION: 'Cancellation', CREDIT_NOTE: 'Credit note' },
+}
+
+export const INVOICE_STATUSES = ['DRAFT', 'ISSUED', 'CANCELLED'] as const
+
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
+
+/**
+ * The state a row is in, which is not the state a person sees.
+ *
+ * `ISSUED` is one database status covering three different mornings: sent and
+ * waiting, sent and late, sent and settled. The screen derives those from the
+ * dates and the payments — see `settlementOf` — because they change by
+ * themselves as the calendar moves, and a stored flag would have to be
+ * rewritten by something that runs every night.
+ */
+export const SETTLEMENTS = ['DRAFT', 'OPEN', 'OVERDUE', 'PART', 'PAID', 'CANCELLED'] as const
+
+export type Settlement = (typeof SETTLEMENTS)[number]
+
+/**
+ * BUILD is paid once and ends. SUBSCRIPTION does not stop.
+ *
+ * *«التقسيط ينتهي. الاشتراك لا ينتهي.»* — the sentence the whole business
+ * rests on. This is the column that keeps the two apart on the screen, and the
+ * reason a setup fee and a care fee are two pieces of paper rather than two
+ * lines on one.
+ */
+export const MONEY_KINDS = ['BUILD', 'SUBSCRIPTION'] as const
+
+export type MoneyKind = (typeof MONEY_KINDS)[number]
+
+export const MONEY_KIND_LABEL: Record<MoneyKind, string> = {
+  BUILD: 'Build — paid once',
+  SUBSCRIPTION: 'Subscription — every month',
+}
+
+export const PAYMENT_METHODS = ['TRANSFER', 'CARD', 'CASH', 'PAYPAL', 'OTHER'] as const
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  TRANSFER: 'Bank transfer',
+  CARD: 'Card',
+  CASH: 'Cash',
+  PAYPAL: 'PayPal',
+  OTHER: 'Something else',
+}
+
+export const INVOICE_LANGUAGES = ['de', 'en'] as const
+
+export type InvoiceLanguage = (typeof INVOICE_LANGUAGES)[number]
+
+/**
+ * The two letters an invoice produces.
+ *
+ * Neither is sent from here. Both are handed to the inbox composer, where he
+ * reads them and presses send — his own design, and the reason a sent invoice
+ * now appears in the conversation with the person who received it.
+ */
+export const LETTER_KINDS = ['INVOICE', 'REMINDER'] as const
+
+export type LetterKind = (typeof LETTER_KINDS)[number]
+
+/** His answer: fourteen days. Seven reads as impatient, thirty is a month without money. */
+export const DEFAULT_DUE_DAYS = 14
+
+/* -------------------------------------------------------------------------- */
+/* Pieces                                                                     */
+/* -------------------------------------------------------------------------- */
+
+const trimmed = (message: string, max: number) =>
+  v.pipe(v.string(message), v.trim(), v.nonEmpty(message), v.maxLength(max, 'That text is too long'))
+
+const optionalText = (max: number) =>
+  v.pipe(v.optional(v.string(), ''), v.trim(), v.maxLength(max, 'That text is too long'))
+
+export const IdSchema = v.pipe(v.string(), v.uuid('That is not a valid id'))
+
+/**
+ * Money arrives as euros from a number input and is stored in cents.
+ *
+ * `Math.round` on the cent, not on the euro: `39.9 * 100` is `3989.999…` in
+ * binary floating point, and truncating it would quietly bill a client one
+ * cent less than the paper says.
+ */
+const euros = v.pipe(
+  v.optional(v.union([v.string(), v.number()]), 0),
+  v.transform((value) => Math.round(Number(value) * 100)),
+  v.number('That is not a number'),
+  v.integer(),
+  v.minValue(0, 'A price cannot be negative'),
+  v.maxValue(100_000_000, 'That is more than a million euros'),
+)
+
+/** A day he picked, never an instant inferred from one. */
+const day = v.pipe(v.string(), v.trim(), v.regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date'))
+
+const optionalDay = v.nullish(day)
+
+/* -------------------------------------------------------------------------- */
+/* The client                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Either a company or a person, never neither.
+ *
+ * The check sits `forward`ed onto `company` so the message lands on a field
+ * rather than at the top of the form, where it reads as "something is wrong"
+ * and he has to hunt for what.
+ */
+export const ClientWriteSchema = v.pipe(
+  v.object({
+    company: optionalText(160),
+    contactName: optionalText(120),
+    email: v.pipe(
+      v.optional(v.string(), ''),
+      v.trim(),
+      v.maxLength(200, 'That address is too long'),
+      v.check(
+        (value) => value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+        'That is not an email address',
+      ),
+    ),
+    phone: optionalText(60),
+    street: optionalText(160),
+    streetExtra: optionalText(160),
+    postcode: optionalText(20),
+    city: optionalText(120),
+    country: v.pipe(
+      v.optional(v.string(), 'DE'),
+      v.trim(),
+      v.toUpperCase(),
+      v.regex(/^[A-Z]{2}$/, 'Two letters, like DE or AT'),
+    ),
+    vatId: optionalText(40),
+    language: v.optional(v.picklist(INVOICE_LANGUAGES), 'de'),
+    notes: optionalText(2000),
+    /** The conversation this client came out of, when there was one. */
+    leadId: v.nullish(IdSchema),
+  }),
+  v.forward(
+    v.check(
+      (input) => input.company !== '' || input.contactName !== '',
+      'Give a company or a name',
+    ),
+    ['company'],
+  ),
+)
+
+export type ClientWriteInput = v.InferOutput<typeof ClientWriteSchema>
+
+/* -------------------------------------------------------------------------- */
+/* The invoice                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One line of the paper.
+ *
+ * `taxRate` is here and defaults to zero. Under `§19` every line he writes
+ * this year is zero, but the field exists so that crossing the threshold is a
+ * number typed into a form rather than a migration across rows that were
+ * correct when they were issued.
+ */
+export const InvoiceLineSchema = v.object({
+  description: trimmed('Say what it is', 200),
+  detail: optionalText(300),
+  quantity: v.pipe(
+    v.optional(v.union([v.string(), v.number()]), 1),
+    v.transform((value) => Math.round(Number(value) * 100) / 100),
+    v.number('That is not a number'),
+    v.minValue(0.01, 'At least a hundredth'),
+    v.maxValue(100_000, 'That is a very large quantity'),
+  ),
+  unitEuros: euros,
+  taxRate: v.pipe(
+    v.optional(v.union([v.string(), v.number()]), 0),
+    v.transform((value) => Number(value)),
+    v.number('That is not a number'),
+    v.minValue(0, 'A rate cannot be negative'),
+    v.maxValue(100, 'A rate cannot be over a hundred'),
+  ),
+})
+
+export type InvoiceLineInput = v.InferOutput<typeof InvoiceLineSchema>
+
+/**
+ * Writing a draft.
+ *
+ * There is no `status` and no `number` here on purpose: issuing is its own act
+ * with its own rules, and folding it into a save is how a document could
+ * quietly acquire a number without anything recording that it had.
+ *
+ * `dueDays` rather than a due date: he picks the term once (fourteen days) and
+ * the date is computed from the day it is actually issued. A date typed in
+ * while drafting is wrong the moment the draft sits overnight.
+ */
+export const InvoiceWriteSchema = v.pipe(
+  v.object({
+    clientId: IdSchema,
+    dealId: v.nullish(IdSchema),
+    moneyKind: v.optional(v.picklist(MONEY_KINDS), 'BUILD'),
+    language: v.optional(v.picklist(INVOICE_LANGUAGES), 'de'),
+    dueDays: v.pipe(
+      v.optional(v.union([v.string(), v.number()]), DEFAULT_DUE_DAYS),
+      v.transform((value) => Number(value)),
+      v.number(),
+      v.integer(),
+      v.minValue(0, 'Zero days or more'),
+      v.maxValue(90, 'More than ninety days is not a payment term'),
+    ),
+    serviceFrom: optionalDay,
+    serviceTo: optionalDay,
+    note: optionalText(600),
+    lines: v.pipe(
+      v.array(InvoiceLineSchema),
+      v.minLength(1, 'An invoice needs at least one line'),
+      v.maxLength(40, 'Forty lines is more than one page holds'),
+    ),
+  }),
+  v.forward(
+    v.check(
+      (input) => !input.serviceFrom || !input.serviceTo || input.serviceTo >= input.serviceFrom,
+      'The period ends before it starts',
+    ),
+    ['serviceTo'],
+  ),
+)
+
+export type InvoiceWriteInput = v.InferOutput<typeof InvoiceWriteSchema>
+
+/**
+ * Correcting an issued invoice.
+ *
+ * A cancellation takes nothing but a reason: it voids the original whole, so
+ * its lines are the original's lines with the sign flipped by meaning, not by
+ * arithmetic. A credit note takes its own lines, because giving part of
+ * something back is a decision about which part.
+ */
+export const CorrectionSchema = v.pipe(
+  v.object({
+    kind: v.picklist(['CANCELLATION', 'CREDIT_NOTE'] as const),
+    reason: trimmed('Say why', 300),
+    lines: v.optional(v.array(InvoiceLineSchema), []),
+  }),
+  v.forward(
+    v.check(
+      (input) => input.kind === 'CANCELLATION' || input.lines.length > 0,
+      'A credit note needs at least one line',
+    ),
+    ['lines'],
+  ),
+)
+
+export type CorrectionInput = v.InferOutput<typeof CorrectionSchema>
+
+/* -------------------------------------------------------------------------- */
+/* Money arriving                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A payment that actually landed.
+ *
+ * `receivedOn` is required and has no default of "today": the transfer he is
+ * recording on Thursday usually arrived on Tuesday, and that two-day
+ * difference decides which month it counts in — for his screen and for his
+ * tax return, which are the same figure by design.
+ */
+export const PaymentSchema = v.object({
+  amountEuros: v.pipe(euros, v.minValue(1, 'An amount is needed')),
+  method: v.optional(v.picklist(PAYMENT_METHODS), 'TRANSFER'),
+  receivedOn: day,
+  reference: optionalText(140),
+  note: optionalText(300),
+})
+
+export type PaymentInput = v.InferOutput<typeof PaymentSchema>
+
+/* -------------------------------------------------------------------------- */
+/* The list                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One filter over the settlements a person recognises, not over the database's
+ * three statuses. `OVERDUE` is the reason the section gets opened at all, so
+ * it is a thing he can ask for by name.
+ */
+export const InvoiceQuerySchema = v.object({
+  settlement: v.optional(v.union([v.picklist(SETTLEMENTS), v.literal('ALL')]), 'ALL'),
+  search: optionalText(120),
+  limit: v.pipe(
+    v.optional(v.union([v.string(), v.number()]), 200),
+    v.transform((value) => Number(value)),
+    v.number(),
+    v.integer(),
+    v.minValue(1),
+    v.maxValue(500),
+  ),
+})
+
+export type InvoiceQueryInput = v.InferOutput<typeof InvoiceQuerySchema>
+
+/* -------------------------------------------------------------------------- */
+/* Shared arithmetic                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a document is worth, from its lines.
+ *
+ * Here rather than in the service because the draft editor shows a running
+ * total while he types, and a second implementation on the client is a second
+ * rounding rule waiting to disagree with the paper.
+ *
+ * Tax is rounded per line, which is what `§14` expects and what every German
+ * accounting package does: rounding the sum instead can be a cent out on an
+ * invoice with several rates, and a cent out is a call from a Steuerberater.
+ */
+export const totalsOf = (
+  lines: Array<{ quantity: number; unitEuros: number; taxRate: number }>,
+): { netCents: number; taxCents: number; totalCents: number } => {
+  let netCents = 0
+  let taxCents = 0
+
+  for (const line of lines) {
+    const net = Math.round(line.quantity * line.unitEuros)
+
+    netCents += net
+    taxCents += Math.round((net * line.taxRate) / 100)
+  }
+
+  return { netCents, taxCents, totalCents: netCents + taxCents }
+}
+
+/**
+ * What a document *is*, right now, to someone looking at the screen.
+ *
+ * Derived on every read rather than stored, because two of the six answers
+ * change without anybody touching the row: an open invoice becomes overdue
+ * because a day passed, and only a payment makes it paid.
+ */
+export const settlementOf = (invoice: {
+  status: InvoiceStatus
+  dueOn: string | null
+  totalCents: number
+  paidCents: number
+  today: string
+}): Settlement => {
+  if (invoice.status === 'DRAFT') return 'DRAFT'
+  if (invoice.status === 'CANCELLED') return 'CANCELLED'
+  if (invoice.paidCents >= invoice.totalCents) return 'PAID'
+  if (invoice.paidCents > 0) return 'PART'
+
+  return invoice.dueOn && invoice.dueOn < invoice.today ? 'OVERDUE' : 'OPEN'
+}
+
+export const SETTLEMENT_LABEL: Record<Settlement, string> = {
+  DRAFT: 'Draft',
+  OPEN: 'Sent',
+  OVERDUE: 'Overdue',
+  PART: 'Part paid',
+  PAID: 'Paid',
+  CANCELLED: 'Cancelled',
+}

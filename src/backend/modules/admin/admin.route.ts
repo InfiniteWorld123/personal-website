@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { adminBookingRoutes } from '#/backend/modules/bookings/booking.route'
 import { adminContentRoutes } from '#/backend/modules/content/content.route'
 import { adminInboxRoutes } from '#/backend/modules/inbox/inbox.route'
+import { adminInvoiceRoutes } from '#/backend/modules/invoices/invoice.route'
 import { adminLeadRoutes } from '#/backend/modules/leads/lead.route'
 import { adminPostRoutes } from '#/backend/modules/posts/post.route'
 import { adminProjectRoutes } from '#/backend/modules/projects/project.route'
@@ -20,6 +21,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
   .use(adminContentRoutes)
   .use(adminInboxRoutes)
   .use(adminLeadRoutes)
+  .use(adminInvoiceRoutes)
   .get('/me', ({ adminUser }) =>
     responseOk({
       data: {

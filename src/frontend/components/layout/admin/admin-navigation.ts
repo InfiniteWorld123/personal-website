@@ -6,7 +6,7 @@ import {
   Inbox,
   LayoutDashboard,
   Newspaper,
-  Wallet,
+  ReceiptEuro,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -53,5 +53,12 @@ export const adminNavigation: AdminNavigationItem[] = [
   { label: 'Leads', to: '/admin/leads', icon: Handshake, available: true, badge: 'leadsOverdue' },
   { label: 'Content', to: '/admin/content', icon: FileText, available: true },
   { label: 'Blog', to: '/admin/blog', icon: Newspaper, available: true },
-  { label: 'Revenue', to: '/admin/revenue', icon: Wallet, available: false },
+  /**
+   * What he has billed, what has been paid, and what is late.
+   *
+   * This replaced the disabled `Revenue` entry on 18 Sep 2026. The old label
+   * promised analytics the platform has no tables for; this one names one
+   * thing the section actually does.
+   */
+  { label: 'Invoices', to: '/admin/invoices', icon: ReceiptEuro, available: true },
 ]

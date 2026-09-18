@@ -48,6 +48,10 @@ import { Route as AdminInboxIndexRouteImport } from './../routes/admin.inbox.ind
 import { Route as AdminInboxPersonIdRouteImport } from './../routes/admin.inbox.$personId'
 import { Route as AdminInboxNewRouteImport } from './../routes/admin.inbox.new'
 import { Route as AdminInboxSettingsRouteImport } from './../routes/admin.inbox.settings'
+import { Route as AdminInvoicesIndexRouteImport } from './../routes/admin.invoices.index'
+import { Route as AdminInvoicesInvoiceIdRouteImport } from './../routes/admin.invoices.$invoiceId'
+import { Route as AdminInvoicesClientsRouteImport } from './../routes/admin.invoices.clients'
+import { Route as AdminInvoicesNewRouteImport } from './../routes/admin.invoices.new'
 import { Route as AdminLeadsIndexRouteImport } from './../routes/admin.leads.index'
 import { Route as AdminLeadsPersonIdRouteImport } from './../routes/admin.leads.$personId'
 import { Route as AdminLeadsBoardRouteImport } from './../routes/admin.leads.board'
@@ -255,6 +259,26 @@ const AdminInboxSettingsRoute = AdminInboxSettingsRouteImport.update({
   path: '/inbox/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInvoicesIndexRoute = AdminInvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInvoicesInvoiceIdRoute = AdminInvoicesInvoiceIdRouteImport.update({
+  id: '/invoices/$invoiceId',
+  path: '/invoices/$invoiceId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInvoicesClientsRoute = AdminInvoicesClientsRouteImport.update({
+  id: '/invoices/clients',
+  path: '/invoices/clients',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInvoicesNewRoute = AdminInvoicesNewRouteImport.update({
+  id: '/invoices/new',
+  path: '/invoices/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLeadsIndexRoute = AdminLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
@@ -341,6 +365,9 @@ export interface FileRoutesByFullPath {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
+  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
+  '/admin/invoices/new': typeof AdminInvoicesNewRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -351,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/inbox/': typeof AdminInboxIndexRoute
+  '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
@@ -390,6 +418,9 @@ export interface FileRoutesByTo {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
+  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
+  '/admin/invoices/new': typeof AdminInvoicesNewRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -400,6 +431,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
   '/admin/inbox': typeof AdminInboxIndexRoute
+  '/admin/invoices': typeof AdminInvoicesIndexRoute
   '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
@@ -442,6 +474,9 @@ export interface FileRoutesById {
   '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
   '/admin/inbox/new': typeof AdminInboxNewRoute
   '/admin/inbox/settings': typeof AdminInboxSettingsRoute
+  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
+  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
+  '/admin/invoices/new': typeof AdminInvoicesNewRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -452,6 +487,7 @@ export interface FileRoutesById {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/admin/inbox/': typeof AdminInboxIndexRoute
+  '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
@@ -495,6 +531,9 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/clients'
+    | '/admin/invoices/new'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -505,6 +544,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/bookings/'
     | '/admin/inbox/'
+    | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
@@ -544,6 +584,9 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/clients'
+    | '/admin/invoices/new'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -554,6 +597,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/bookings'
     | '/admin/inbox'
+    | '/admin/invoices'
     | '/admin/leads'
     | '/admin/projects'
     | '/$lang/booking/manage/$reference'
@@ -595,6 +639,9 @@ export interface FileRouteTypes {
     | '/admin/inbox/$personId'
     | '/admin/inbox/new'
     | '/admin/inbox/settings'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/clients'
+    | '/admin/invoices/new'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -605,6 +652,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/bookings/'
     | '/admin/inbox/'
+    | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
@@ -902,6 +950,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInboxSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invoices/': {
+      id: '/admin/invoices/'
+      path: '/invoices'
+      fullPath: '/admin/invoices/'
+      preLoaderRoute: typeof AdminInvoicesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invoices/$invoiceId': {
+      id: '/admin/invoices/$invoiceId'
+      path: '/invoices/$invoiceId'
+      fullPath: '/admin/invoices/$invoiceId'
+      preLoaderRoute: typeof AdminInvoicesInvoiceIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invoices/clients': {
+      id: '/admin/invoices/clients'
+      path: '/invoices/clients'
+      fullPath: '/admin/invoices/clients'
+      preLoaderRoute: typeof AdminInvoicesClientsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invoices/new': {
+      id: '/admin/invoices/new'
+      path: '/invoices/new'
+      fullPath: '/admin/invoices/new'
+      preLoaderRoute: typeof AdminInvoicesNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/leads/': {
       id: '/admin/leads/'
       path: '/leads'
@@ -1025,6 +1101,9 @@ interface AdminRouteChildren {
   AdminInboxPersonIdRoute: typeof AdminInboxPersonIdRoute
   AdminInboxNewRoute: typeof AdminInboxNewRoute
   AdminInboxSettingsRoute: typeof AdminInboxSettingsRoute
+  AdminInvoicesInvoiceIdRoute: typeof AdminInvoicesInvoiceIdRoute
+  AdminInvoicesClientsRoute: typeof AdminInvoicesClientsRoute
+  AdminInvoicesNewRoute: typeof AdminInvoicesNewRoute
   AdminLeadsPersonIdRoute: typeof AdminLeadsPersonIdRoute
   AdminLeadsBoardRoute: typeof AdminLeadsBoardRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
@@ -1032,6 +1111,7 @@ interface AdminRouteChildren {
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
   AdminInboxIndexRoute: typeof AdminInboxIndexRoute
+  AdminInvoicesIndexRoute: typeof AdminInvoicesIndexRoute
   AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
   AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
   AdminBookingsTypesIdRoute: typeof AdminBookingsTypesIdRoute
@@ -1051,6 +1131,9 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInboxPersonIdRoute: AdminInboxPersonIdRoute,
   AdminInboxNewRoute: AdminInboxNewRoute,
   AdminInboxSettingsRoute: AdminInboxSettingsRoute,
+  AdminInvoicesInvoiceIdRoute: AdminInvoicesInvoiceIdRoute,
+  AdminInvoicesClientsRoute: AdminInvoicesClientsRoute,
+  AdminInvoicesNewRoute: AdminInvoicesNewRoute,
   AdminLeadsPersonIdRoute: AdminLeadsPersonIdRoute,
   AdminLeadsBoardRoute: AdminLeadsBoardRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
@@ -1058,6 +1141,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminBookingsIndexRoute: AdminBookingsIndexRoute,
   AdminInboxIndexRoute: AdminInboxIndexRoute,
+  AdminInvoicesIndexRoute: AdminInvoicesIndexRoute,
   AdminLeadsIndexRoute: AdminLeadsIndexRoute,
   AdminProjectsIndexRoute: AdminProjectsIndexRoute,
   AdminBookingsTypesIdRoute: AdminBookingsTypesIdRoute,
