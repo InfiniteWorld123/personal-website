@@ -1,7 +1,9 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { LeadsOverdueBadge } from '#/frontend/features/leads/LeadsOverdueBadge'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import { adminNavigation, type AdminNavigationItem } from './admin-navigation'
+import { queriesFor } from './admin-prefetch'
 
 /**
  * Is this section the one being used?
@@ -18,11 +20,11 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <nav aria-label="Admin sections" className="flex h-full flex-col gap-1 p-3">
-      <div className="px-3 pt-2 pb-4">
-        <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
+      <div className="px-3 pt-3 pb-5">
+        <p className="text-muted-foreground text-[0.68rem] font-medium tracking-[0.18em] uppercase">
           Platform
         </p>
-        <p className="text-foreground mt-1 text-sm font-semibold">Admin</p>
+        <p className="font-heading text-foreground mt-1 text-base font-semibold">Admin</p>
       </div>
 
       {adminNavigation.map((item) => (
@@ -68,14 +70,18 @@ function NavRow({
   /** The section holding the open page, even when a lens rather than it is active. */
   isOpenSection?: boolean
 }) {
+  const prefetch = usePrefetch()
   const Icon = item.icon
-  const size = isLens ? 'px-3 py-1.5 text-[0.82rem]' : 'px-3 py-2 text-sm'
+  const size = isLens ? 'px-3 py-1.5 text-[0.82rem]' : 'px-3 py-2.5 text-sm'
 
   if (!item.available) {
     return (
       <span
         aria-disabled="true"
-        className={cn('text-muted-foreground/50 flex cursor-not-allowed items-center gap-3 rounded-md', size)}
+        className={cn(
+          'text-muted-foreground/50 flex cursor-not-allowed items-center gap-3 rounded-xl',
+          size,
+        )}
       >
         <Icon aria-hidden="true" className="size-4 shrink-0" />
         {item.label}
@@ -91,17 +97,20 @@ function NavRow({
       to={item.to}
       activeOptions={{ exact: item.exact || item.to === '/admin' || Boolean(item.children) }}
       onClick={onNavigate}
+      // Pointing at a section starts the request it will make, so the click
+      // usually lands on data that is already here.
+      {...prefetch(...queriesFor(item.to))}
       className={cn(
         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         // Its lenses are showing but a lens, not it, is the active page. It
         // still names where you are, so it reads as present rather than as
         // one more thing you are not on.
         isOpenSection && !isLens && 'text-foreground font-medium',
-        'focus-visible:ring-ring flex items-center gap-3 rounded-md',
-        'transition-colors focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring flex items-center gap-3 rounded-xl',
+        'motion-safe:transition-colors focus-visible:ring-2 focus-visible:outline-none',
         size,
       )}
-      activeProps={{ className: 'bg-accent text-accent-foreground font-medium' }}
+      activeProps={{ className: 'bg-primary/10 text-primary font-medium' }}
     >
       <Icon aria-hidden="true" className="size-4 shrink-0" />
       {item.label}

@@ -2,8 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { AlertTriangle, Plus, Search, Users } from 'lucide-react'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
+import { StatCard, StatCardSkeleton } from '#/frontend/components/admin/StatCard'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import {
   SETTLEMENT_CLASS,
   SETTLEMENT_WEIGHT,
@@ -12,7 +16,13 @@ import {
   money,
   monthName,
 } from '#/frontend/features/invoices/invoice-format'
-import { invoicesQuery, sellerQuery } from '#/frontend/features/invoices/invoice-queries'
+import {
+  clientsQuery,
+  invoiceQuery,
+  invoicesQuery,
+  sellerQuery,
+} from '#/frontend/features/invoices/invoice-queries'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import type { InvoiceRow, InvoiceSummary } from '#/shared/types/invoice.types'
 import {
@@ -52,99 +62,82 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
  * saying what the number actually counts — because "this month" and "recurring"
  * are the two that a person could otherwise read as meaning something they do
  * not.
+ *
+ * The one filled card is what arrived, not what is late. Late is the alarm and
+ * it earns its colour only when it is above zero; what arrived is the figure he
+ * opens the section to see, whatever it says.
  */
 function Figures({ summary }: { summary: InvoiceSummary }) {
-  const cards = [
-    {
-      key: 'overdue',
-      label: 'Overdue',
-      value: money(summary.overdueCents, summary.currency),
-      note:
-        summary.overdueCount === 0
-          ? 'Nothing is late'
-          : `${summary.overdueCount} ${summary.overdueCount === 1 ? 'invoice' : 'invoices'}`,
-      tone: summary.overdueCents > 0 ? 'bad' : 'plain',
-    },
-    {
-      key: 'open',
-      label: 'Not paid yet',
-      value: money(summary.openCents, summary.currency),
-      note: 'Sent, still owed',
-      tone: 'plain',
-    },
-    {
-      key: 'count',
-      label: 'Open invoices',
-      value: String(summary.openCount),
-      note: summary.openCount === 0 ? 'All settled' : 'Waiting on a client',
-      tone: 'plain',
-    },
-    {
-      key: 'month',
-      label: `Arrived in ${monthName(summary.month)}`,
-      value: money(summary.thisMonthCents, summary.currency),
-      // Named rather than implied. It is counted by the day the money landed,
-      // which is also how his own tax return counts it.
-      note: 'By the day it reached the bank',
-      tone: 'plain',
-    },
-    {
-      key: 'mrr',
-      label: 'Every month',
-      value: money(summary.recurringCents, summary.currency),
-      note: 'Subscriptions only — no build money',
-      tone: 'accent',
-    },
-    {
-      key: 'tax',
-      label: 'Put aside for tax',
-      value: money(summary.taxPotCents, summary.currency),
-      // Said on the card itself, because a figure that looks like advice and
-      // is not is the one thing this admin must never do.
-      note: '30 % of what arrived — an estimate, not advice',
-      tone: 'warn',
-    },
-  ] as const
-
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-      {cards.map((card) => (
-        <div
-          key={card.key}
-          className={cn(
-            'rounded-xl border p-3',
-            card.tone === 'bad' && 'border-rose-500/40 bg-rose-500/5',
-            card.tone === 'accent' && 'border-primary/40 bg-primary/5',
-            card.tone === 'warn' && 'border-amber-500/40 bg-amber-500/5',
-            card.tone === 'plain' && 'border-border bg-card',
-          )}
-        >
-          <p className="text-muted-foreground text-xs">{card.label}</p>
-          <p
-            className={cn(
-              'tabular mt-0.5 text-xl font-semibold',
-              card.tone === 'bad' && 'text-rose-600 dark:text-rose-400',
-              card.tone === 'accent' && 'text-primary',
-              card.tone === 'warn' && 'text-amber-700 dark:text-amber-400',
-            )}
-          >
-            {card.value}
-          </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">{card.note}</p>
-        </div>
-      ))}
-    </div>
+    <section aria-label="Figures" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <StatCard
+        className="sm:col-span-2 xl:row-span-2 xl:justify-center"
+        foot="By the day it reached the bank"
+        label={`Arrived in ${monthName(summary.month)}`}
+        tone="brand"
+        value={money(summary.thisMonthCents, summary.currency)}
+      />
+
+      <StatCard
+        foot={
+          summary.overdueCount === 0
+            ? 'Nothing is late'
+            : `${summary.overdueCount} ${summary.overdueCount === 1 ? 'invoice' : 'invoices'}`
+        }
+        label="Overdue"
+        tone={summary.overdueCents > 0 ? 'alert' : 'plain'}
+        value={money(summary.overdueCents, summary.currency)}
+      />
+
+      <StatCard
+        foot="Sent, still owed"
+        label="Not paid yet"
+        value={money(summary.openCents, summary.currency)}
+      />
+
+      <StatCard
+        foot="Subscriptions only — no build money"
+        label="Every month"
+        value={money(summary.recurringCents, summary.currency)}
+      />
+
+      {/* Said on the card itself, because a figure that looks like advice and
+          is not is the one thing this admin must never do. */}
+      <StatCard
+        foot="30 % of what arrived — an estimate, not advice"
+        label="Put aside for tax"
+        value={money(summary.taxPotCents, summary.currency)}
+      />
+    </section>
+  )
+}
+
+function FiguresSkeleton() {
+  return (
+    <SkeletonScreen
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      label="Loading the figures"
+    >
+      <StatCardSkeleton className="sm:col-span-2 xl:row-span-2" />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+    </SkeletonScreen>
   )
 }
 
 function Row({ row }: { row: InvoiceRow }) {
+  const prefetch = usePrefetch()
   const owed = row.totalCents - row.paidCents
 
   return (
     <Link
       to="/admin/invoices/$invoiceId"
       params={{ invoiceId: row.id }}
-      className="hover:bg-muted/60 flex items-center gap-3 border-b px-3 py-3 transition-colors last:border-b-0"
+      // The document this row opens, fetched while the pointer is still on it.
+      {...prefetch(invoiceQuery(row.id))}
+      className="hover:bg-accent/50 focus-visible:ring-ring border-border/60 flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0 motion-safe:transition-colors focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none"
     >
       <span
         className={cn(
@@ -169,7 +162,9 @@ function Row({ row }: { row: InvoiceRow }) {
       </span>
 
       <span className="text-end">
-        <span className="tabular block text-sm font-semibold">{money(row.totalCents, row.currency)}</span>
+        <span className="tabular block text-sm font-semibold">
+          {money(row.totalCents, row.currency)}
+        </span>
         {row.paidCents > 0 && owed > 0 ? (
           <span className="tabular text-muted-foreground block text-[11px]">
             {money(owed, row.currency)} left
@@ -180,7 +175,29 @@ function Row({ row }: { row: InvoiceRow }) {
   )
 }
 
+/** The same rows, not yet arrived: pill, two lines, a figure at the end. */
+function RowsSkeleton() {
+  return (
+    <SkeletonScreen label="Loading the invoices">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div
+          className="border-border/60 flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0"
+          key={index}
+        >
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-3.5 w-44" />
+            <Skeleton className="mt-2 h-3 w-64" />
+          </div>
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ))}
+    </SkeletonScreen>
+  )
+}
+
 export function InvoicesPage() {
+  const prefetch = usePrefetch()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('ALL')
 
@@ -201,23 +218,25 @@ export function InvoicesPage() {
   })
 
   return (
-    <div className="flex w-full flex-col gap-5">
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
-
-        <div className="ms-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/invoices/clients">
-              <Users className="size-4" /> Clients
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to="/admin/invoices/new">
-              <Plus className="size-4" /> New invoice
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <AdminPage>
+      <PageHeader
+        title="Invoices"
+        description="What has been billed, what has been paid, and what is late."
+        actions={
+          <>
+            <Button asChild className="rounded-full" size="sm" variant="outline">
+              <Link to="/admin/invoices/clients" {...prefetch(clientsQuery(''))}>
+                <Users className="size-4" /> Clients
+              </Link>
+            </Button>
+            <Button asChild className="rounded-full" size="sm">
+              <Link to="/admin/invoices/new" {...prefetch(clientsQuery(''), sellerQuery())}>
+                <Plus className="size-4" /> New invoice
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/*
         Said before he starts, not when he presses Issue.
@@ -226,7 +245,7 @@ export function InvoicesPage() {
         is the kind of small cruelty this admin is supposed to avoid.
       */}
       {seller.data && !seller.data.ready ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
+        <Panel className="flex items-start gap-3 border border-amber-500/40 bg-amber-500/5 p-4 ring-0">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-sm">
             <span className="font-medium">Your own details are still placeholders.</span>{' '}
@@ -238,10 +257,10 @@ export function InvoicesPage() {
               and deploy. Drafts work; nothing can be issued until then.
             </span>
           </p>
-        </div>
+        </Panel>
       ) : null}
 
-      {list.data ? <Figures summary={list.data.summary} /> : null}
+      {list.isPending ? <FiguresSkeleton /> : list.data ? <Figures summary={list.data.summary} /> : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full max-w-xs">
@@ -250,7 +269,7 @@ export function InvoicesPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Client, number, or a line"
-            className="ps-8"
+            className="bg-panel ps-8"
           />
         </div>
 
@@ -261,10 +280,10 @@ export function InvoicesPage() {
               type="button"
               onClick={() => setFilter(option.value)}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs transition-colors',
+                'rounded-full border px-3 py-1 text-xs motion-safe:transition-colors',
                 filter === option.value
                   ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:border-primary/50',
+                  : 'border-border bg-panel text-muted-foreground hover:border-primary/50',
               )}
             >
               {option.label}
@@ -273,9 +292,9 @@ export function InvoicesPage() {
         </div>
       </div>
 
-      <div className="bg-card overflow-hidden rounded-xl border">
+      <Panel className="overflow-hidden">
         {list.isPending ? (
-          <p className="text-muted-foreground p-6 text-sm">Loading…</p>
+          <RowsSkeleton />
         ) : list.isError ? (
           /*
             Said, rather than shown as an empty list.
@@ -283,32 +302,34 @@ export function InvoicesPage() {
             person, and on a money screen the wrong one of those is the kind of
             quiet lie this admin exists not to tell.
           */
-          <div className="p-8 text-center">
-            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
-              The invoices could not be loaded.
-            </p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {list.error instanceof Error ? list.error.message : 'Something went wrong.'}
-            </p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => void list.refetch()}>
+          <PanelNote tone="error">
+            <div>
+              <p className="font-medium">The invoices could not be loaded.</p>
+              <p className="text-muted-foreground mt-1">
+                {list.error instanceof Error ? list.error.message : 'Something went wrong.'}
+              </p>
+            </div>
+            <Button onClick={() => void list.refetch()} size="sm" variant="outline">
               Try again
             </Button>
-          </div>
+          </PanelNote>
         ) : rows.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-sm font-medium">
-              {search || filter !== 'ALL' ? 'Nothing matches that.' : 'No invoices yet.'}
-            </p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {search || filter !== 'ALL'
-                ? 'Try a different filter.'
-                : 'The first one starts with a client and a line.'}
-            </p>
-          </div>
+          <PanelNote>
+            <div>
+              <p className="text-foreground font-medium">
+                {search || filter !== 'ALL' ? 'Nothing matches that.' : 'No invoices yet.'}
+              </p>
+              <p className="mt-1">
+                {search || filter !== 'ALL'
+                  ? 'Try a different filter.'
+                  : 'The first one starts with a client and a line.'}
+              </p>
+            </div>
+          </PanelNote>
         ) : (
           rows.map((row) => <Row key={row.id} row={row} />)
         )}
-      </div>
-    </div>
+      </Panel>
+    </AdminPage>
   )
 }

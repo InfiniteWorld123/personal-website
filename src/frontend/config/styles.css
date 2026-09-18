@@ -52,6 +52,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-panel-border: var(--panel-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -134,6 +137,18 @@
     0 2px 4px rgba(16, 23, 47, 0.07),
     0 16px 40px rgba(53, 92, 255, 0.14),
     0 0 52px rgba(var(--spot-rgb, 53, 92, 255), 0.13);
+
+  /* ── The admin's own ground ──────────────────────────────────
+     The public site is white, and its cards sit on it. The admin
+     is the opposite: a soft ground that cards float above, so the
+     eye reads a desk with things laid out on it rather than one
+     long document. The tint is the brand blue at the faintest
+     mixture that still separates from white — grey here would put
+     a second, colder family beside the identity. */
+  --canvas: #eff2f9;
+  --panel: #ffffff;
+  --panel-border: rgba(16, 23, 47, 0.07);
+  --radius-panel: 1.5rem;
 }
 
 .dark {
@@ -181,6 +196,13 @@
     0 2px 4px rgba(0, 0, 0, 0.45),
     0 26px 60px rgba(18, 40, 130, 0.5),
     0 0 52px rgba(var(--spot-rgb, 122, 162, 255), 0.22);
+
+  /* Same idea inverted: the ground goes *below* the page colour so
+     the panels are the lit surfaces rather than the holes. */
+  --canvas: #080b16;
+  --panel: #141a2d;
+  --panel-border: rgba(237, 243, 255, 0.09);
+  --radius-panel: 1.5rem;
 }
 
 /* ── Base ──────────────────────────────────────────────────── */
