@@ -144,8 +144,23 @@ export const getDb = (): Db => activeConnection.getStore() ?? getPool()
 /**
  * Runs `fn` on one connection inside BEGIN/COMMIT, rolling back on throw.
  * Every `getDb()` reached from `fn` — however deep — sees the same connection.
+ *
+ * Called from inside another transaction it **joins** that one rather than
+ * opening a second. Taking a second connection would be quietly catastrophic:
+ * it sees none of the outer transaction's uncommitted rows, so a service that
+ * writes a row and then calls a helper to finish it would find nothing there —
+ * and it would wait for ever on any row the outer transaction has locked,
+ * which is a deadlock with itself that no timeout in this codebase catches.
+ *
+ * There are no savepoints, so a nested failure is not contained: it propagates
+ * and the outermost transaction rolls the whole act back. That is the right
+ * answer here — every nested use is one business act, not a retryable step.
  */
 export const withTransaction = async <T>(fn: (db: Db) => Promise<T>): Promise<T> => {
+  const open = activeConnection.getStore()
+
+  if (open) return fn(open)
+
   const connection: PoolClient = await getPool().connect()
 
   try {

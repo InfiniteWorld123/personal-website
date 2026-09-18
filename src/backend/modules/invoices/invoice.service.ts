@@ -617,95 +617,137 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
  *
  * Both are new documents that take the next number in the series. Neither
  * edits a single byte of what was already sent, which is the entire point.
+ *
+ * The whole act is one transaction, and it opens by locking **the original**.
+ * The lock inside `allocateAndIssue` cannot help here: the row it takes is the
+ * correction this request inserted a moment ago, which no other request can
+ * even see, so it serialises nothing. Without a lock on the original, two
+ * clicks on `Credit note` both read `correctedBy` as empty, both pass the
+ * guard below, and both are numbered — two documents in a gapless series for
+ * one correction he made once, and `CREDITED_CENTS` then sums both, so an
+ * invoice nobody has paid a cent of quietly leaves the overdue list.
+ *
+ * One transaction also means a failure anywhere takes the correction row with
+ * it. Written outside one, a correction whose numbering failed stayed behind
+ * as a draft that the `already been cancelled` guard would match for ever —
+ * an invoice that could then never be cancelled at all.
  */
 export const correctInvoice = async (
   invoiceId: string,
   input: CorrectionInput,
 ): Promise<Invoice> => {
-  const original = await getInvoice(invoiceId)
+  const correctionId = await withTransaction(async (db) => {
+    const held = await db.query<{ id: string }>(
+      'SELECT id FROM invoices WHERE id = $1 FOR UPDATE;',
+      [invoiceId],
+    )
 
-  if (original.status !== 'ISSUED') {
-    throw badRequestError('Only an issued invoice can be cancelled or credited')
-  }
+    if (held.rows.length === 0) throw notFoundError('That invoice is not here')
 
-  if (original.kind !== 'INVOICE') {
-    throw badRequestError('A correction cannot itself be corrected')
-  }
+    // Read only once the row is held, so what the guards below see is what is
+    // still true when they act on it.
+    const original = await getInvoice(invoiceId)
 
-  if (input.kind === 'CANCELLATION' && original.correctedBy.some((c) => c.kind === 'CANCELLATION')) {
-    throw badRequestError(`${original.number} has already been cancelled`)
-  }
+    // Said before the general rule below, because it is the answer he needs.
+    // Once the lock serialises two clicks, the loser arrives here and finds
+    // the invoice already voided — and `Only an issued invoice can be
+    // cancelled` would be true and useless.
+    if (original.status === 'CANCELLED') {
+      throw badRequestError(`${original.number} has already been cancelled`)
+    }
 
-  // A cancellation mirrors the original exactly — it is the same document,
-  // voided — so its lines are the original's lines rather than anything typed
-  // again. A credit note carries only what is actually being given back.
-  const lines =
-    input.kind === 'CANCELLATION'
-      ? original.lines.map((line) => ({
-          description: line.description,
-          detail: line.detail,
-          quantity: line.quantity,
-          unitEuros: line.unitCents,
-          taxRate: line.taxRate,
-        }))
-      : input.lines
+    if (original.status !== 'ISSUED') {
+      throw badRequestError('Only an issued invoice can be cancelled or credited')
+    }
 
-  const totals = totalsOf(lines)
+    if (original.kind !== 'INVOICE') {
+      throw badRequestError('A correction cannot itself be corrected')
+    }
 
-  const created = await getDb().query<{ id: string }>(
-    `INSERT INTO invoices
-       (client_id, deal_id, kind, corrects_id, money_kind, language, note,
-        net_cents, tax_cents, total_cents)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`,
-    [
-      original.clientId,
-      original.dealId,
-      input.kind,
-      original.id,
-      original.moneyKind,
-      original.language,
-      input.reason,
-      totals.netCents,
-      totals.taxCents,
-      totals.totalCents,
-    ],
-  )
+    if (
+      input.kind === 'CANCELLATION' &&
+      original.correctedBy.some((c) => c.kind === 'CANCELLATION')
+    ) {
+      throw badRequestError(`${original.number} has already been cancelled`)
+    }
 
-  const correctionId = created.rows[0]!.id
-  const db = getDb()
+    // A cancellation mirrors the original exactly — it is the same document,
+    // voided — so its lines are the original's lines rather than anything typed
+    // again. A credit note carries only what is actually being given back.
+    const lines =
+      input.kind === 'CANCELLATION'
+        ? original.lines.map((line) => ({
+            description: line.description,
+            detail: line.detail,
+            quantity: line.quantity,
+            unitEuros: line.unitCents,
+            taxRate: line.taxRate,
+          }))
+        : input.lines
 
-  let position = 0
+    const totals = totalsOf(lines)
 
-  for (const line of lines) {
-    position += 1
-
-    await db.query(
-      `INSERT INTO invoice_lines
-         (invoice_id, position, description, detail, quantity, unit_cents, tax_rate)
-       VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+    const created = await db.query<{ id: string }>(
+      `INSERT INTO invoices
+         (client_id, deal_id, kind, corrects_id, money_kind, language, note,
+          net_cents, tax_cents, total_cents)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`,
       [
-        correctionId,
-        position,
-        line.description,
-        line.detail,
-        line.quantity,
-        line.unitEuros,
-        line.taxRate,
+        original.clientId,
+        original.dealId,
+        input.kind,
+        original.id,
+        original.moneyKind,
+        original.language,
+        input.reason,
+        totals.netCents,
+        totals.taxCents,
+        totals.totalCents,
       ],
     )
-  }
 
-  // A correction has no payment term: nobody owes anything on it.
-  const number = await allocateAndIssue(correctionId, false)
+    const draftId = created.rows[0]!.id
 
-  if (!number) throw internalError('The correction could not be numbered')
+    let position = 0
 
-  if (input.kind === 'CANCELLATION') {
-    await db.query("UPDATE invoices SET status = 'CANCELLED' WHERE id = $1;", [original.id])
-  }
+    for (const line of lines) {
+      position += 1
+
+      await db.query(
+        `INSERT INTO invoice_lines
+           (invoice_id, position, description, detail, quantity, unit_cents, tax_rate)
+         VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+        [
+          draftId,
+          position,
+          line.description,
+          line.detail,
+          line.quantity,
+          line.unitEuros,
+          line.taxRate,
+        ],
+      )
+    }
+
+    // A correction has no payment term: nobody owes anything on it.
+    const number = await allocateAndIssue(draftId, false)
+
+    if (!number) throw internalError('The correction could not be numbered')
+
+    if (input.kind === 'CANCELLATION') {
+      await db.query("UPDATE invoices SET status = 'CANCELLED' WHERE id = $1;", [original.id])
+    }
+
+    return draftId
+  })
 
   const correction = await getInvoice(correctionId)
 
+  // Outside the transaction on purpose: the correction is a fact the moment it
+  // is committed, and holding a row lock while a bucket in another datacentre
+  // is written would block every other correction for the length of a network
+  // round trip. A freeze that fails leaves the document reachable anyway —
+  // `documentBytes` draws it.
   await freezePdf(correction).catch(() => {})
 
   return correction
