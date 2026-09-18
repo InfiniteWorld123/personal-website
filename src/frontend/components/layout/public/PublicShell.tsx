@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { getContent } from '#/frontend/content'
+import { ChatWidget } from '#/frontend/features/chat/ChatWidget'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { useMagneticButtons } from '#/frontend/motion'
 import { SiteFooter } from './SiteFooter'
@@ -22,6 +23,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <SiteFooter copy={shell} />
+      {/* Outside `main`, and outside the key above: the assistant belongs to
+          the visit, not to the page, and must not be torn down and rebuilt
+          — losing the conversation — every time someone navigates (D34). */}
+      <ChatWidget />
     </div>
   )
 }

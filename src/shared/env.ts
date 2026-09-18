@@ -94,6 +94,26 @@ export const env = {
   CALL_ROOM_URL: getOptionalEnvVar('CALL_ROOM_URL'),
   TURN_KEY_ID: getOptionalEnvVar('TURN_KEY_ID'),
   TURN_KEY_API_TOKEN: getOptionalEnvVar('TURN_KEY_API_TOKEN'),
+
+  /**
+   * The assistant's rented brain (D34).
+   *
+   * `CHAT_PROVIDER` defaults to `off`, which answers from the knowledge file
+   * with no key, no account and no network call — the whole feature works
+   * that way, and every other provider falls back to it on any failure.
+   *
+   * Set it to a provider name with `CHAT_API_KEY` to rent a model. Two things
+   * to know before doing that on a **client's** site rather than this one: a
+   * free tier generally permits training on what it is sent, and comes with no
+   * `AVV`. Free is fine here and not fine there, which is the reason this is a
+   * variable instead of an import.
+   *
+   * `CHAT_MODEL` names the model within that provider; absent, the provider
+   * picks its own cheap default.
+   */
+  CHAT_PROVIDER: getOptionalEnvVar('CHAT_PROVIDER'),
+  CHAT_API_KEY: getOptionalEnvVar('CHAT_API_KEY'),
+  CHAT_MODEL: getOptionalEnvVar('CHAT_MODEL'),
 } as const
 
 export type EnvVariables = typeof env

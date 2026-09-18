@@ -873,3 +873,61 @@ twenty this site will actually hold.
 The signalling lives in its own Worker (`workers/call-room/`), for the reason
 the inbound-email Worker does: Nitro generates the site's Worker entry, and a
 Durable Object class has to be exported from one written by hand.
+
+### D34
+
+**The assistant answers from a closed book, and is a product before it is a feature.**
+
+*18 Sep 2026.*
+
+D33 listed "a chat widget on the public site" among the things that stay out,
+one day before the owner asked for exactly that. So the boundary is amended
+here rather than quietly ignored, the same way D33 amended `AGENTS.md`.
+
+What moved him is not conversion. It is that he wants to build every feature he
+intends to resell, and this is the first one whose shape matches the pricing
+model: a technical surcharge on top of a care tier, like booking at +30 € and
+login at +30 €, against 5–15 € of monthly provider cost. The recurring line is
+the business; a one-off widget would not have earned this entry.
+
+What is in scope: a bubble on the public pages that answers questions **only
+from a question-and-answer file in this repository**, in the language of the
+page it sits on, and hands the visitor to the existing contact details when it
+cannot. It is not a messaging surface. Nobody is on the other end, no human
+ever joins, there is no presence, no read receipt, no notification, and the
+visitor still has no account. D33's other exclusions all stand.
+
+**Three guards, because the model's sentences are read as the owner's
+promises.** They are enforced in code, not requested in a prompt:
+
+1. *Closed book.* Retrieval runs first. When nothing in the file matches, the
+   provider is never called — the fallback answer is returned directly. A model
+   that is not asked cannot invent.
+2. *No figure it was not given.* Every answer is scanned for currency amounts
+   and rejected if it names one the knowledge file does not contain. The owner
+   chose ranges-only pricing; this is what makes that choice true rather than
+   hopeful. See `assertNoInventedMoney`.
+3. *A ceiling per visitor and per address.* Chat is the first endpoint here
+   whose cost scales with how much a stranger types.
+
+**The brain is rented, and the rental is one line.** `CHAT_PROVIDER` selects an
+implementation behind a two-method interface, and `off` — the default — answers
+from the file alone with no network call and no key at all. This exists because
+the owner cannot pay today and free tiers generally train on what they are
+sent and come with no `AVV`. The combination that is actually unsafe is not
+"store conversations": it is storing them *and* sending them to a free tier.
+Free is therefore fine for this site and forbidden for a client's, and the
+swap is a setting rather than a rewrite.
+
+**Retention is 30 days, and the visitor is not identified.** Conversations are
+stored because the owner needs to know what people ask and where the assistant
+failed; that knowledge lives in this month, not in an archive. No IP address is
+written, and no name or address is ever requested — if one appears it is
+because the visitor typed it. Old rows are deleted on write, the way the
+rate-limit table already prunes itself.
+
+**The eleven settings are one exported object, not eleven decisions in the
+code.** The owner judged them in a prototype and will change his mind about
+some; more to the point, the client he sells this to will want different ones.
+A behaviour that lives in `CHAT_SETTINGS` is a sold configuration. A behaviour
+welded into a component is a rebuild.

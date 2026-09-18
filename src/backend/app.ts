@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { adminRoutes } from './modules/admin/admin.route'
 import { publicBookingRoutes } from './modules/bookings/booking.route'
 import { publicCallRoutes } from './modules/calls/call.route'
+import { publicChatRoutes } from './modules/chat/chat.route'
 import { publicPostRoutes } from './modules/posts/post.route'
 import { publicProjectRoutes } from './modules/projects/project.route'
 import { handleAuthRequest, isAuthRequest } from './modules/auth/auth.route'
@@ -37,6 +38,7 @@ export const app = new Elysia({ prefix: '/api', aot: supportsCodeGeneration })
   .use(publicPostRoutes)
   .use(publicBookingRoutes)
   .use(publicCallRoutes)
+  .use(publicChatRoutes)
   .get('/', () => responseOk({ data: { status: 'ok' }, message: 'API is running' }))
 
 export type App = typeof app
