@@ -14,8 +14,12 @@ import {
   Trash2,
   User,
 } from 'lucide-react'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
+import { adminBookingQuery } from '#/frontend/features/booking/booking-queries'
 import {
   LANGUAGE_LABEL,
   SOURCE_LABEL,
@@ -25,14 +29,17 @@ import {
   initialsOf,
   timeAgo,
 } from '#/frontend/features/inbox/inbox-format'
+import { personQuery } from '#/frontend/features/inbox/inbox-queries'
 import { money } from '#/frontend/features/leads/lead-format'
 import {
   useAddLine,
   useCreateDeal,
   useDeleteLine,
   leadFileQuery,
+  leadsQuery,
 } from '#/frontend/features/leads/lead-queries'
 import { useBlockOrder, type BlockKey } from '#/frontend/features/leads/use-block-order'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import type { LeadFile } from '#/shared/types/lead.types'
 import { DealCard } from './DealCard'
@@ -50,23 +57,31 @@ export function PersonFile({ personId }: { personId: string }) {
   const file = useQuery(leadFileQuery(personId))
   const { containerRef, order } = useBlockOrder(file.isSuccess)
 
-  if (file.isPending) return <p className="text-muted-foreground text-sm">Loading…</p>
+  // The waiting screen is drawn in **his** saved order, so the six blocks do
+  // not shuffle themselves the moment the file lands.
+  if (file.isPending) return <FileSkeleton order={order} />
 
   if (file.isError) {
     return (
-      <div className="flex flex-col gap-3">
-        <p role="alert" className="text-destructive text-sm">
-          {(file.error as Error).message}
-        </p>
-        <BackLink />
-      </div>
+      <AdminPage width="narrow">
+        <PageHeader back={<BackLink />} title="This file could not be opened." />
+
+        <Panel>
+          <PanelNote tone="error">
+            <p role="alert">{(file.error as Error).message}</p>
+            <Button onClick={() => void file.refetch()} size="sm" variant="outline">
+              Try again
+            </Button>
+          </PanelNote>
+        </Panel>
+      </AdminPage>
     )
   }
 
   // A real check rather than a `!`: a query can hand back no data without
   // being pending or failed — a refetch that was cancelled, for one — and the
   // assertion turned that into a blank screen with a stack trace on it.
-  if (!file.data) return <p className="text-muted-foreground text-sm">Loading…</p>
+  if (!file.data) return <FileSkeleton order={order} />
 
   const data = file.data
   const person = data.person
@@ -81,61 +96,129 @@ export function PersonFile({ personId }: { personId: string }) {
   }
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-4">
-      <BackLink />
-
-      <header className="flex flex-wrap items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="grid size-11 shrink-0 place-items-center rounded-xl text-sm font-semibold text-white"
-          style={{ backgroundColor: `hsl(${avatarHue(person.email)} 58% 45%)` }}
-        >
-          {initialsOf(person.name)}
-        </span>
-
-        <div className="min-w-0">
-          <h1 dir="auto" className="truncate text-xl font-semibold tracking-tight">
-            {person.name}
-          </h1>
-          <p dir="auto" className="text-muted-foreground truncate text-xs">
+    <AdminPage width="narrow">
+      <PageHeader
+        back={<BackLink />}
+        title={
+          <span className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="grid size-11 shrink-0 place-items-center rounded-2xl text-sm font-semibold text-white"
+              style={{ backgroundColor: `hsl(${avatarHue(person.email)} 58% 45%)` }}
+            >
+              {initialsOf(person.name)}
+            </span>
+            <span dir="auto" className="min-w-0 truncate">
+              {person.name}
+            </span>
+          </span>
+        }
+        description={
+          <span dir="auto" className="block truncate">
             {person.company ? `${person.company} · ` : ''}
             {person.email}
-          </p>
-        </div>
-
-        <Button asChild size="sm" variant="outline" className="ms-auto">
-          <Link to="/admin/inbox/$personId" params={{ personId }}>
-            <Mail aria-hidden="true" />
-            Write
-          </Link>
-        </Button>
-      </header>
+          </span>
+        }
+        actions={<WriteButton personId={person.id} />}
+      />
 
       {/*
         Fixed slots, moving contents — Swapy's own model. The slot ids never
         change; which block sits in which slot is what he drags, and what is
         remembered for next time.
       */}
-      <div ref={containerRef} className="flex flex-col gap-3">
+      <div ref={containerRef} className="flex flex-col gap-4">
         {order.map((key, index) => (
           <div key={`slot-${index}`} data-swapy-slot={`slot-${index}`}>
             {blocks[key]}
           </div>
         ))}
       </div>
-    </div>
+    </AdminPage>
+  )
+}
+
+/** The one action in the header: write to this person, in the inbox. */
+function WriteButton({ personId }: { personId: string }) {
+  const prefetch = usePrefetch()
+
+  return (
+    <Button asChild className="rounded-full" size="sm" variant="outline">
+      <Link to="/admin/inbox/$personId" params={{ personId }} {...prefetch(personQuery(personId))}>
+        <Mail aria-hidden="true" />
+        Write
+      </Link>
+    </Button>
   )
 }
 
 function BackLink() {
+  const prefetch = usePrefetch()
+
   return (
     <Link
       to="/admin/leads"
-      className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-1 text-xs"
+      // The list he came from, on the filter it opens itself with.
+      {...prefetch(leadsQuery('ALL', ''))}
+      className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex w-fit items-center gap-1 rounded-md text-xs motion-safe:transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <ArrowLeft aria-hidden="true" className="size-3.5" />
       All people
     </Link>
+  )
+}
+
+/** Roughly what each block will be worth in height once it has its contents. */
+const BLOCK_HEIGHT: Record<BlockKey, string> = {
+  deals: 'min-h-44',
+  person: 'min-h-36',
+  letters: 'min-h-32',
+  calls: 'min-h-20',
+  files: 'min-h-20',
+  history: 'min-h-32',
+}
+
+/**
+ * The file before it arrives: the same six blocks, in the same saved order, at
+ * about the heights they will have — so the screen does not rebuild itself
+ * under his eyes when the request comes back.
+ */
+function FileSkeleton({ order }: { order: BlockKey[] }) {
+  return (
+    <AdminPage width="narrow">
+      <SkeletonScreen className="flex flex-col gap-6" label="Loading this person's file">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-3 w-20" />
+
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-11 shrink-0 rounded-2xl" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="mt-2 h-3 w-64" />
+            </div>
+            <Skeleton className="h-8 w-24 shrink-0 rounded-full" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {order.map((key) => (
+            <Panel className="overflow-hidden" key={key}>
+              <div className="border-border flex items-center gap-2 border-b px-5 py-3">
+                <Skeleton className="size-4 shrink-0 rounded" />
+                <Skeleton className="h-2.5 w-24" />
+                <Skeleton className="ms-auto size-4 rounded" />
+              </div>
+
+              <div className={cn('px-5 py-4', BLOCK_HEIGHT[key])}>
+                <Skeleton className="h-3.5 w-2/3" />
+                <Skeleton className="mt-3 h-3 w-1/2" />
+                <Skeleton className="mt-3 h-3 w-3/5" />
+              </div>
+            </Panel>
+          ))}
+        </div>
+      </SkeletonScreen>
+    </AdminPage>
   )
 }
 
@@ -160,31 +243,30 @@ function Block({
   children: React.ReactNode
 }) {
   return (
-    <section
-      data-swapy-item={id}
-      className="border-border bg-card overflow-hidden rounded-xl border"
-    >
-      <header className="border-border flex items-center gap-2 border-b px-3 py-2">
-        <Icon aria-hidden="true" className="text-muted-foreground size-4" />
-        <h2 className="text-[11px] font-semibold tracking-widest uppercase">{title}</h2>
-        {count === undefined ? null : (
-          <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] tabular-nums">
-            {count}
+    <Panel asChild className="overflow-hidden">
+      <section data-swapy-item={id}>
+        <header className="border-border flex items-center gap-2 border-b px-5 py-3">
+          <Icon aria-hidden="true" className="text-muted-foreground size-4" />
+          <h2 className="text-[11px] font-semibold tracking-widest uppercase">{title}</h2>
+          {count === undefined ? null : (
+            <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] tabular-nums">
+              {count}
+            </span>
+          )}
+          <span
+            data-swapy-handle
+            role="button"
+            tabIndex={-1}
+            aria-label={`Drag ${title}`}
+            className="text-muted-foreground/50 hover:text-muted-foreground ms-auto cursor-grab motion-safe:transition-colors active:cursor-grabbing"
+          >
+            <GripVertical aria-hidden="true" className="size-4" />
           </span>
-        )}
-        <span
-          data-swapy-handle
-          role="button"
-          tabIndex={-1}
-          aria-label={`Drag ${title}`}
-          className="text-muted-foreground/50 hover:text-muted-foreground ms-auto cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical aria-hidden="true" className="size-4" />
-        </span>
-      </header>
+        </header>
 
-      <div className="p-3">{children}</div>
-    </section>
+        <div className="px-5 py-4">{children}</div>
+      </section>
+    </Panel>
   )
 }
 
@@ -220,7 +302,7 @@ function DealsBlock({ file }: { file: LeadFile }) {
 
         {isOpening ? (
           <form
-            className="border-border flex flex-col gap-2 rounded-xl border border-dashed p-3"
+            className="border-border flex flex-col gap-2 rounded-2xl border border-dashed p-4"
             onSubmit={(event) => {
               event.preventDefault()
 
@@ -295,7 +377,12 @@ function DealsBlock({ file }: { file: LeadFile }) {
             ) : null}
           </form>
         ) : (
-          <Button size="sm" variant="outline" className="w-fit" onClick={() => setIsOpening(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-fit rounded-full"
+            onClick={() => setIsOpening(true)}
+          >
             <Plus aria-hidden="true" />
             {file.deals.length === 0 ? 'Open a deal' : 'Another deal'}
           </Button>
@@ -310,6 +397,7 @@ function DealsBlock({ file }: { file: LeadFile }) {
 /* -------------------------------------------------------------------------- */
 
 function PersonBlock({ file }: { file: LeadFile }) {
+  const prefetch = usePrefetch()
   const person = file.person
 
   const rows: Array<[string, string]> = [
@@ -347,7 +435,7 @@ function PersonBlock({ file }: { file: LeadFile }) {
         </div>
       ) : null}
 
-      <div className="mt-3">
+      <div className="mt-4">
         <h3 className="text-muted-foreground mb-1 text-[11px] font-semibold tracking-widest uppercase">
           Notes
         </h3>
@@ -357,6 +445,7 @@ function PersonBlock({ file }: { file: LeadFile }) {
             <Link
               to="/admin/inbox/$personId"
               params={{ personId: person.id }}
+              {...prefetch(personQuery(person.id))}
               className="text-primary hover:underline"
             >
               Write one in the inbox
@@ -366,7 +455,7 @@ function PersonBlock({ file }: { file: LeadFile }) {
         ) : (
           <ul className="flex flex-col gap-2">
             {person.notes.map((note) => (
-              <li key={note.id} className="border-border rounded-lg border p-2">
+              <li key={note.id} className="ring-panel-border rounded-xl p-3 ring-1">
                 <p dir="auto" className="text-sm whitespace-pre-wrap">
                   {note.body}
                 </p>
@@ -385,6 +474,7 @@ function PersonBlock({ file }: { file: LeadFile }) {
 /* -------------------------------------------------------------------------- */
 
 function LettersBlock({ file }: { file: LeadFile }) {
+  const prefetch = usePrefetch()
   const person = file.person
   const first =
     person.firstMessage.trim() === ''
@@ -407,7 +497,7 @@ function LettersBlock({ file }: { file: LeadFile }) {
       {letters.length === 0 ? (
         <p className="text-muted-foreground text-sm">Nothing has passed between you yet.</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {letters.slice(0, 6).map((letter) => (
             <li
               key={letter.id}
@@ -448,7 +538,8 @@ function LettersBlock({ file }: { file: LeadFile }) {
         <Link
           to="/admin/inbox/$personId"
           params={{ personId: person.id }}
-          className="text-primary mt-2 inline-block text-xs hover:underline"
+          {...prefetch(personQuery(person.id))}
+          className="text-primary mt-3 inline-block text-xs hover:underline"
         >
           All {letters.length} in the inbox
         </Link>
@@ -458,6 +549,8 @@ function LettersBlock({ file }: { file: LeadFile }) {
 }
 
 function CallsBlock({ file }: { file: LeadFile }) {
+  const prefetch = usePrefetch()
+
   return (
     <Block id="calls" title="Booked calls" count={file.calls.length} icon={CalendarClock}>
       {file.calls.length === 0 ? (
@@ -485,6 +578,8 @@ function CallsBlock({ file }: { file: LeadFile }) {
               <Link
                 to="/admin/bookings/$id"
                 params={{ id: call.id }}
+                // The booking behind the reference, warmed before the click.
+                {...prefetch(adminBookingQuery(call.id))}
                 className="text-primary text-xs hover:underline"
               >
                 {call.reference}
@@ -495,7 +590,7 @@ function CallsBlock({ file }: { file: LeadFile }) {
       )}
       {/* Read-only on purpose: booking is finished, and this section does not
           write a single row into it. */}
-      <p className="text-muted-foreground mt-2 text-[11px]">
+      <p className="text-muted-foreground mt-3 text-[11px]">
         Read-only — calls are managed in the calendar.
       </p>
     </Block>
@@ -515,7 +610,7 @@ function FilesBlock({ file }: { file: LeadFile }) {
                 href={attachment.url}
                 target="_blank"
                 rel="noreferrer"
-                className="border-border hover:border-foreground/25 flex items-center gap-2 rounded-lg border p-2 transition-colors"
+                className="ring-panel-border hover:bg-accent/50 focus-visible:ring-ring flex items-center gap-2 rounded-xl p-2.5 ring-1 motion-safe:transition-colors focus-visible:ring-2 focus-visible:outline-none"
               >
                 <FileText aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
                 {/* A flex wrapper, not a bare span: a block child inside an
@@ -595,7 +690,7 @@ function HistoryBlock({ file }: { file: LeadFile }) {
                   type="button"
                   onClick={() => remove.mutate(event.id)}
                   aria-label="Remove this line"
-                  className="text-muted-foreground/0 group-hover:text-muted-foreground hover:text-destructive focus-visible:text-destructive shrink-0 transition-colors"
+                  className="text-muted-foreground/0 group-hover:text-muted-foreground hover:text-destructive focus-visible:text-destructive shrink-0 motion-safe:transition-colors"
                 >
                   <Trash2 aria-hidden="true" className="size-3.5" />
                 </button>

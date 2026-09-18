@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/frontend/components/ui/select'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { adminTagsQuery } from './post-queries'
 import { hasActiveFilters, type PostSearch } from './post-filters'
 
@@ -33,7 +34,11 @@ export function PostFilterBar({ search }: { search: PostSearch }) {
 
     const timeout = setTimeout(() => {
       void navigate({
-        search: (previous) => ({ ...previous, search: term || undefined, page: undefined }),
+        search: (previous) => ({
+          ...previous,
+          search: term || undefined,
+          page: undefined,
+        }),
         replace: true,
       })
     }, SEARCH_DEBOUNCE_MS)
@@ -43,7 +48,9 @@ export function PostFilterBar({ search }: { search: PostSearch }) {
 
   /** Any filter change returns to page one; page four of the old list is gone. */
   const update = (patch: Partial<PostSearch>) => {
-    void navigate({ search: (previous) => ({ ...previous, ...patch, page: undefined }) })
+    void navigate({
+      search: (previous) => ({ ...previous, ...patch, page: undefined }),
+    })
   }
 
   return (
@@ -60,7 +67,7 @@ export function PostFilterBar({ search }: { search: PostSearch }) {
             value={term}
             onChange={(event) => setTerm(event.target.value)}
             placeholder="Title, summary, or slug"
-            className="ps-9"
+            className="bg-panel ps-9"
           />
         </div>
       </div>
@@ -70,10 +77,12 @@ export function PostFilterBar({ search }: { search: PostSearch }) {
         <Select
           value={search.published ?? 'all'}
           onValueChange={(value) =>
-            update({ published: value === 'all' ? undefined : (value as 'published' | 'draft') })
+            update({
+              published: value === 'all' ? undefined : (value as 'published' | 'draft'),
+            })
           }
         >
-          <SelectTrigger id="post-published" className="w-44">
+          <SelectTrigger id="post-published" className="bg-panel w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -84,33 +93,52 @@ export function PostFilterBar({ search }: { search: PostSearch }) {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="post-tag">Tag</Label>
-        <Select
-          value={search.tag ?? 'all'}
-          onValueChange={(value) => update({ tag: value === 'all' ? undefined : value })}
-        >
-          <SelectTrigger id="post-tag" className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any tag</SelectItem>
-            {(tags.data ?? []).map((tag) => (
-              <SelectItem key={tag.id} value={tag.slug}>
-                {tag.names.en || tag.slug}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/*
+        A select with nothing in it and a select that has not arrived look
+        identical, and the second one silently drops the tag the URL is
+        already filtering by. So while the tags are in flight the control
+        stands as its own shape rather than as an empty menu.
+      */}
+      {tags.isPending ? (
+        <SkeletonScreen className="flex flex-col gap-2" label="Loading the tags">
+          <Skeleton className="h-3.5 w-8" />
+          <Skeleton className="h-8 w-44 rounded-lg" />
+        </SkeletonScreen>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="post-tag">Tag</Label>
+          <Select
+            value={search.tag ?? 'all'}
+            onValueChange={(value) => update({ tag: value === 'all' ? undefined : value })}
+          >
+            <SelectTrigger id="post-tag" className="bg-panel w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any tag</SelectItem>
+              {(tags.data ?? []).map((tag) => (
+                <SelectItem key={tag.id} value={tag.slug}>
+                  {tag.names.en || tag.slug}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {hasActiveFilters(search) ? (
         <Button
           type="button"
           variant="ghost"
+          className="rounded-full"
           onClick={() =>
             void navigate({
-              search: { search: undefined, published: undefined, tag: undefined, page: undefined },
+              search: {
+                search: undefined,
+                published: undefined,
+                tag: undefined,
+                page: undefined,
+              },
             })
           }
         >

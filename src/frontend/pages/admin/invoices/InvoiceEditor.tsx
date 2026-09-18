@@ -2,21 +2,26 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { ArrowLeft, FileText, Plus, Stamp, Trash2 } from 'lucide-react'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { Textarea } from '#/frontend/components/ui/textarea'
 import { invoicePdfUrl } from '#/frontend/api/invoice.api'
 import { addDays, money, today } from '#/frontend/features/invoices/invoice-format'
 import {
   clientsQuery,
   invoiceQuery,
+  invoicesQuery,
   sellerQuery,
   useCreateInvoice,
   useDeleteInvoice,
   useIssueInvoice,
   useUpdateInvoice,
 } from '#/frontend/features/invoices/invoice-queries'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import type { Invoice } from '#/shared/types/invoice.types'
 import {
@@ -47,6 +52,21 @@ type LineDraft = {
   taxRate: string
 }
 
+/**
+ * A native select wearing the same clothes as `Input`.
+ *
+ * The same string as in `ClientsPage`: a select that is a different height
+ * from the field beside it is the kind of difference nobody can name and
+ * everybody can see. `bg-transparent` lets the panel it sits on show through,
+ * so the control reads as part of the surface rather than a hole in it.
+ */
+const SELECT =
+  'border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full min-w-0 rounded-lg border bg-transparent px-2.5 text-sm outline-none focus-visible:ring-3 motion-safe:transition-colors dark:bg-input/30'
+
+/** A pill that is either the chosen answer or one of the others. */
+const CHOICE =
+  'focus-visible:ring-ring rounded-lg border motion-safe:transition-colors focus-visible:ring-2 focus-visible:outline-none'
+
 const emptyLine = (taxRate: string): LineDraft => ({
   key: crypto.randomUUID(),
   description: '',
@@ -70,13 +90,57 @@ const linesFrom = (invoice: Invoice | undefined, fallbackRate: string): LineDraf
 
 const DUE_CHOICES = [7, DEFAULT_DUE_DAYS, 30]
 
+/**
+ * The document arriving, before it is known which of its two shapes it has.
+ *
+ * Both branches are a header over three stacked panels of roughly these
+ * heights, so whichever one lands, nothing below it moves. It sits *above* the
+ * keyed `<Draft>` subtree deliberately: it must never be part of what remounts
+ * when the invoice identity changes.
+ */
+function EditorSkeleton() {
+  return (
+    <AdminPage width="narrow">
+      <SkeletonScreen className="flex flex-col gap-6" label="Loading the invoice">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-8 w-28 rounded-full" />
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-3.5 w-72" />
+        </div>
+
+        <Panel className="grid gap-4 p-6 sm:grid-cols-2">
+          {Array.from({ length: 2 }, (_, index) => (
+            <div className="flex flex-col gap-1.5" key={index}>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-8 w-full rounded-lg" />
+            </div>
+          ))}
+        </Panel>
+
+        <Panel className="flex flex-col gap-3 p-6">
+          <Skeleton className="h-4 w-24" />
+          {Array.from({ length: 2 }, (_, index) => (
+            <Skeleton className="h-28 w-full rounded-2xl" key={index} />
+          ))}
+          <Skeleton className="h-5 w-36 self-end" />
+        </Panel>
+
+        <Panel className="grid gap-4 p-6 sm:grid-cols-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </Panel>
+      </SkeletonScreen>
+    </AdminPage>
+  )
+}
+
 export function InvoiceEditor({ invoiceId }: { invoiceId: string }) {
   const navigate = useNavigate()
   const existing = useQuery(invoiceQuery(invoiceId))
   const invoice = existing.data
 
   if (invoiceId !== '' && existing.isPending) {
-    return <p className="text-muted-foreground p-6 text-sm">Loading…</p>
+    return <EditorSkeleton />
   }
 
   if (invoice && invoice.status !== 'DRAFT') {
@@ -93,6 +157,7 @@ function Draft({
   invoice: Invoice | undefined
   navigate: ReturnType<typeof useNavigate>
 }) {
+  const prefetch = usePrefetch()
   const clients = useQuery(clientsQuery(''))
 
   const [clientId, setClientId] = useState(invoice?.clientId ?? '')
@@ -184,46 +249,59 @@ function Draft({
   const chosen = clients.data?.find((client) => client.id === clientId)
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-5">
-      <header className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/invoices">
-            <ArrowLeft className="size-4" /> Invoices
-          </Link>
-        </Button>
-
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {invoice ? 'Draft' : 'New invoice'}
-        </h1>
-
-        <span className="text-muted-foreground ms-auto text-xs">
-          {/* Switch 21: a draft has no number, and the reason is worth saying once. */}
-          No number yet — it is reserved when you issue it
-        </span>
-      </header>
+    <AdminPage width="narrow">
+      <PageHeader
+        back={
+          <Button asChild className="-ms-2 w-fit rounded-full" size="sm" variant="ghost">
+            {/* The list he came from, fetched while he is still deciding to go back. */}
+            <Link to="/admin/invoices" {...prefetch(invoicesQuery('ALL', ''), sellerQuery())}>
+              <ArrowLeft className="size-4" /> Invoices
+            </Link>
+          </Button>
+        }
+        title={invoice ? 'Draft' : 'New invoice'}
+        /* Switch 21: a draft has no number, and the reason is worth saying once. */
+        description="No number yet — it is reserved when you issue it"
+      />
 
       {/* ── Who and what kind ───────────────────────────────────────── */}
-      <section className="bg-card flex flex-col gap-4 rounded-xl border p-4">
+      <Panel className="flex flex-col gap-4 p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="invoice-client">Client</Label>
-            <select
-              id="invoice-client"
-              value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
-              className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-            >
-              <option value="">Pick a client…</option>
-              {(clients.data ?? []).map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.company || client.contactName}
-                </option>
-              ))}
-            </select>
+            {/*
+              The one control on this screen that waits on the network. Before,
+              it rendered as an empty picker — which looks like "you have no
+              clients" rather than "not here yet", and those are very different
+              pieces of news.
+            */}
+            {clients.isPending ? (
+              <SkeletonScreen label="Loading the clients">
+                <Skeleton className="h-8 w-full rounded-lg" />
+              </SkeletonScreen>
+            ) : (
+              <select
+                id="invoice-client"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className={SELECT}
+              >
+                <option value="">Pick a client…</option>
+                {(clients.data ?? []).map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.company || client.contactName}
+                  </option>
+                ))}
+              </select>
+            )}
             {chosen && !chosen.street ? (
               <p className="text-xs text-amber-700 dark:text-amber-400">
                 That client has no address yet. §14 UStG needs one on the paper —{' '}
-                <Link to="/admin/invoices/clients" className="underline">
+                <Link
+                  to="/admin/invoices/clients"
+                  className="underline"
+                  {...prefetch(clientsQuery(''))}
+                >
                   add it
                 </Link>
                 .
@@ -237,7 +315,7 @@ function Draft({
               id="invoice-language"
               value={language}
               onChange={(event) => setLanguage(event.target.value as InvoiceLanguage)}
-              className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+              className={SELECT}
             >
               <option value="de">Deutsch</option>
               <option value="en">English</option>
@@ -257,9 +335,11 @@ function Draft({
               <button
                 key={kind}
                 type="button"
+                aria-pressed={moneyKind === kind}
                 onClick={() => setMoneyKind(kind)}
                 className={cn(
-                  'rounded-lg border px-3 py-2 text-start text-sm transition-colors',
+                  CHOICE,
+                  'px-3 py-2 text-start text-sm',
                   moneyKind === kind
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50',
@@ -274,13 +354,14 @@ function Draft({
             adds the two together.
           </p>
         </div>
-      </section>
+      </Panel>
 
       {/* ── Lines ───────────────────────────────────────────────────── */}
-      <section className="bg-card flex flex-col gap-3 rounded-xl border p-4">
+      <Panel className="flex flex-col gap-3 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Lines</h2>
+          <PanelTitle>Lines</PanelTitle>
           <Button
+            className="rounded-full"
             variant="outline"
             size="sm"
             onClick={() => setLines((current) => [...current, emptyLine(lines[0]?.taxRate ?? '0')])}
@@ -289,8 +370,13 @@ function Draft({
           </Button>
         </div>
 
+        {/* Carved into the panel rather than stacked on it: a line is part of
+            this document, not a card of its own floating beside it. */}
         {lines.map((line, index) => (
-          <div key={line.key} className="border-border/70 flex flex-col gap-2 rounded-lg border p-3">
+          <div
+            key={line.key}
+            className="bg-canvas ring-panel-border flex flex-col gap-2 rounded-2xl p-4 ring-1"
+          >
             <div className="flex items-start gap-2">
               <span className="text-muted-foreground tabular w-5 pt-2 text-xs">{index + 1}</span>
 
@@ -363,7 +449,7 @@ function Draft({
         <div className="flex items-baseline justify-end gap-6 pt-1">
           <span className="text-muted-foreground text-xs">Net {money(totals.netCents)}</span>
           <span className="text-muted-foreground text-xs">VAT {money(totals.taxCents)}</span>
-          <span className="tabular text-primary text-lg font-semibold">
+          <span className="font-heading tabular text-primary text-2xl leading-none font-semibold">
             {money(totals.totalCents)}
           </span>
         </div>
@@ -373,10 +459,10 @@ function Draft({
           VAT stays at 0 while you are a Kleinunternehmer. The rate lives on the line, so old
           invoices keep the rate they were issued with.
         </p>
-      </section>
+      </Panel>
 
       {/* ── Dates and the sentence ──────────────────────────────────── */}
-      <section className="bg-card grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
+      <Panel className="grid gap-4 p-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label>Payment term</Label>
           <div className="flex gap-2">
@@ -384,9 +470,11 @@ function Draft({
               <button
                 key={days}
                 type="button"
+                aria-pressed={dueDays === days}
                 onClick={() => setDueDays(days)}
                 className={cn(
-                  'rounded-lg border px-3 py-1.5 text-sm transition-colors',
+                  CHOICE,
+                  'px-3 py-1.5 text-sm',
                   dueDays === days
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50',
@@ -432,24 +520,25 @@ function Draft({
             placeholder="Ich freue mich auf die weitere Zusammenarbeit."
           />
         </div>
-      </section>
+      </Panel>
 
       {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => void save()} disabled={saving}>
+        <Button className="rounded-full" onClick={() => void save()} disabled={saving}>
           {saving ? 'Saving…' : 'Save draft'}
         </Button>
 
         {invoice ? (
           <>
-            <Button variant="outline" asChild>
+            <Button className="rounded-full" variant="outline" asChild>
               <a href={invoicePdfUrl(invoice.id)} target="_blank" rel="noreferrer">
                 <FileText className="size-4" /> See the paper
               </a>
             </Button>
 
             <Button
+              className="rounded-full"
               variant="outline"
               disabled={!seller.data?.ready || issue.isPending}
               onClick={() => setConfirming(true)}
@@ -459,7 +548,7 @@ function Draft({
 
             <Button
               variant="ghost"
-              className="ms-auto text-rose-600 dark:text-rose-400"
+              className="ms-auto rounded-full text-rose-600 dark:text-rose-400"
               disabled={remove.isPending}
               onClick={() => {
                 remove
@@ -486,8 +575,8 @@ function Draft({
         thrown away; after this, the only way back is a second document.
       */}
       {confirming && invoice ? (
-        <section className="flex flex-col gap-3 rounded-xl border border-amber-500/50 bg-amber-500/5 p-4">
-          <h2 className="text-sm font-semibold">Issue this invoice?</h2>
+        <Panel className="flex flex-col gap-3 border border-amber-500/40 bg-amber-500/5 p-6 ring-0">
+          <PanelTitle>Issue this invoice?</PanelTitle>
           <ul className="text-muted-foreground list-disc space-y-1 ps-5 text-sm">
             <li>It takes the next number in this year&rsquo;s series, and keeps it.</li>
             <li>The PDF is written once and frozen — later changes never reach it.</li>
@@ -495,6 +584,7 @@ function Draft({
           </ul>
           <div className="flex gap-2">
             <Button
+              className="rounded-full"
               disabled={issue.isPending}
               onClick={() => {
                 issue
@@ -508,12 +598,12 @@ function Draft({
             >
               {issue.isPending ? 'Issuing…' : 'Yes, issue it'}
             </Button>
-            <Button variant="ghost" onClick={() => setConfirming(false)}>
+            <Button className="rounded-full" variant="ghost" onClick={() => setConfirming(false)}>
               Not yet
             </Button>
           </div>
-        </section>
+        </Panel>
       ) : null}
-    </div>
+    </AdminPage>
   )
 }

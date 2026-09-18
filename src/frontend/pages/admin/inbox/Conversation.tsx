@@ -2,12 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { Archive, ArrowLeft, ChevronRight, CircleDot, Paperclip, Send, Star, X } from 'lucide-react'
+import { PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { RichTextEditor } from '#/frontend/features/blog/RichTextEditor'
 import { uploadAttachment } from '#/frontend/api/inbox.api'
 import { letterQuery } from '#/frontend/features/invoices/invoice-queries'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import type { LetterKind } from '#/shared/validation/invoice.validation'
 import {
+  inboxQuery,
   personQuery,
   settingsQuery,
   useReply,
@@ -47,12 +51,98 @@ export function Conversation({
 }) {
   const person = useQuery(personQuery(personId))
 
-  if (person.isPending) return <p className="text-muted-foreground p-6 text-sm">Loading…</p>
+  if (person.isPending) return <ConversationSkeleton />
+
+  /*
+    A conversation that could not be fetched used to say the person was gone.
+    Those are now told apart: a failed request offers itself again, and only a
+    request that came back with nothing means somebody really has been removed.
+  */
+  if (person.isError) {
+    return (
+      <PanelNote className="h-full justify-center" tone="error">
+        <div>
+          <p className="font-medium">This conversation could not be opened.</p>
+          <p className="text-muted-foreground mt-1">
+            {person.error instanceof Error ? person.error.message : 'Something went wrong.'}
+          </p>
+        </div>
+        <Button onClick={() => void person.refetch()} size="sm" variant="outline">
+          Try again
+        </Button>
+      </PanelNote>
+    )
+  }
+
   if (!person.data) {
-    return <p className="text-muted-foreground p-6 text-sm">That person is no longer here.</p>
+    return (
+      <PanelNote className="h-full justify-center">
+        <p className="text-sm">That person is no longer here.</p>
+      </PanelNote>
+    )
   }
 
   return <Thread person={person.data} letterFor={letterFor} />
+}
+
+/**
+ * The thread before it arrives.
+ *
+ * The same three parts at the same heights — the person's bar, a band of
+ * letters, the reply docked at the bottom — so the conversation lands into
+ * the shape the eye is already reading rather than replacing it.
+ */
+function ConversationSkeleton() {
+  return (
+    <SkeletonScreen className="flex h-full min-h-0 flex-col" label="Loading the conversation">
+      <div className="border-border/60 flex flex-wrap items-start gap-3 border-b p-4">
+        <Skeleton className="size-10 shrink-0 rounded-full" />
+        <div className="min-w-0 flex-1">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="mt-2 h-3 w-56" />
+        </div>
+        <div className="flex w-full flex-wrap gap-1.5 sm:w-auto">
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="border-border/60 border-b">
+          <div className="flex items-center gap-2 px-4 py-3">
+            <Skeleton className="size-4 rounded" />
+            <Skeleton className="h-3.5 w-24" />
+          </div>
+
+          <div className="flex flex-col gap-3 px-4 pb-4">
+            {Array.from({ length: 2 }, (_, index) => (
+              <div className="border-border/60 rounded-xl border border-s-4 p-3" key={index}>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="ms-auto h-2.5 w-24" />
+                </div>
+                <Skeleton className="mt-3 h-3 w-full" />
+                <Skeleton className="mt-2 h-3 w-4/5" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* The two folded bands under the letters: Details, then Notes. */}
+        {Array.from({ length: 2 }, (_, index) => (
+          <div className="border-border/60 flex items-center gap-2 border-b px-4 py-3" key={index}>
+            <Skeleton className="size-4 rounded" />
+            <Skeleton className="h-3.5 w-16" />
+          </div>
+        ))}
+      </div>
+
+      <div className="border-border/60 bg-muted/30 border-t p-3">
+        <Skeleton className="h-9 w-full rounded-md sm:w-56" />
+      </div>
+    </SkeletonScreen>
+  )
 }
 
 function Thread({
@@ -62,15 +152,22 @@ function Thread({
   person: Person
   letterFor: { invoiceId: string; kind: LetterKind } | null
 }) {
+  const prefetch = usePrefetch()
   const setRead = useSetRead(person.id)
   const setArchived = useSetArchived(person.id)
   const setStarred = useSetStarred(person.id)
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="border-border flex flex-wrap items-start gap-3 border-b p-4">
+      <header className="border-border/60 flex flex-wrap items-start gap-3 border-b p-4">
         <Button asChild variant="ghost" size="icon" className="lg:hidden">
-          <Link to="/admin/inbox" aria-label="Back to the list">
+          {/* Going back remounts the list with its own defaults — the lens and
+              the search are component state — so that is the entry warmed. */}
+          <Link
+            to="/admin/inbox"
+            aria-label="Back to the list"
+            {...prefetch(inboxQuery('inbox', ''))}
+          >
             <ArrowLeft aria-hidden="true" />
           </Link>
         </Button>
@@ -171,7 +268,9 @@ function FirstMessage({ person }: { person: Person }) {
         <span className="border-border rounded-full border px-2 py-0.5 text-[10px] font-medium">
           {SOURCE_LABEL[person.source] ?? person.source}
         </span>
-        <time className="text-muted-foreground text-[11px]">{formatDateTime(person.createdAt)}</time>
+        <time className="text-muted-foreground text-[11px]">
+          {formatDateTime(person.createdAt)}
+        </time>
       </header>
 
       {/*
@@ -234,11 +333,14 @@ function MessageCard({
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="hover:bg-muted/40 flex w-full flex-wrap items-center gap-2 p-3 text-start transition-colors"
+        className="hover:bg-accent/40 focus-visible:ring-ring flex w-full flex-wrap items-center gap-2 p-3 text-start motion-safe:transition-colors focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none"
       >
         <ChevronRight
           aria-hidden="true"
-          className={cn('text-muted-foreground size-3.5 shrink-0 transition-transform', open && 'rotate-90')}
+          className={cn(
+            'text-muted-foreground size-3.5 shrink-0 motion-safe:transition-transform',
+            open && 'rotate-90',
+          )}
         />
         <span
           className={cn(
@@ -250,7 +352,10 @@ function MessageCard({
         </span>
 
         {!open ? (
-          <span dir="auto" className="text-muted-foreground block max-w-[18ch] truncate text-[11px] sm:max-w-[40ch]">
+          <span
+            dir="auto"
+            className="text-muted-foreground block max-w-[18ch] truncate text-[11px] sm:max-w-[40ch]"
+          >
             {message.body.split('\n').find((line) => line.trim() !== '') ?? ''}
           </span>
         ) : null}
@@ -295,7 +400,7 @@ function Files({ files }: { files: Attachment[] }) {
             href={file.url}
             target="_blank"
             rel="noreferrer"
-            className="border-border hover:border-primary flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors"
+            className="border-border hover:border-primary flex items-center gap-2 rounded-lg border px-3 py-2 text-xs motion-safe:transition-colors"
           >
             <Paperclip aria-hidden="true" className="size-3.5 shrink-0" />
             {/* The wrapper is a flex box, not a bare span: a block child inside
@@ -348,7 +453,9 @@ function Composer({
    * guard, editing the draft and then any re-render would put the generated
    * wording back over his own words.
    */
-  const letter = useQuery(letterQuery(letterFor?.invoiceId ?? '', letterFor?.kind ?? 'INVOICE', Boolean(letterFor)))
+  const letter = useQuery(
+    letterQuery(letterFor?.invoiceId ?? '', letterFor?.kind ?? 'INVOICE', Boolean(letterFor)),
+  )
   const seeded = useRef<string | null>(null)
 
   useEffect(() => {
@@ -407,7 +514,7 @@ function Composer({
 
   if (!open) {
     return (
-      <div className="border-border bg-card border-t p-3">
+      <div className="border-border/60 bg-muted/30 border-t p-3">
         <Button className="w-full sm:w-auto" onClick={() => setOpen(true)}>
           <Send aria-hidden="true" />
           Reply to {person.name}
@@ -417,8 +524,8 @@ function Composer({
   }
 
   return (
-    <div className="border-border bg-card flex max-h-[62%] flex-col border-t">
-      <div className="border-border text-muted-foreground flex flex-wrap items-center gap-2 border-b px-3 py-2 text-xs">
+    <div className="border-border/60 bg-muted/30 flex max-h-[62%] flex-col border-t">
+      <div className="border-border/60 text-muted-foreground flex flex-wrap items-center gap-2 border-b px-3 py-2 text-xs">
         <span>To</span>
         <span className="text-foreground font-medium" dir="ltr">
           {person.email}
@@ -445,11 +552,14 @@ function Composer({
                     type: 'doc',
                     content: [
                       ...(doc.content ?? []),
-                      { type: 'paragraph', content: [{ type: 'text', text: snippet.body }] },
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: snippet.body }],
+                      },
                     ],
                   } as RichTextDoc)
                 }
-                className="border-border text-muted-foreground hover:border-primary hover:text-primary rounded-full border px-2.5 py-1 text-[11px] transition-colors"
+                className="border-border text-muted-foreground hover:border-primary hover:text-primary rounded-full border px-2.5 py-1 text-[11px] motion-safe:transition-colors"
               >
                 {snippet.label}
               </button>
@@ -466,7 +576,7 @@ function Composer({
         picked twice. A file the owner has added is now always on screen.
       */}
       {files.length > 0 || uploadError ? (
-        <div className="border-border shrink-0 border-t px-3 py-2">
+        <div className="border-border/60 shrink-0 border-t px-3 py-2">
           {files.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {files.map((file) => (
@@ -496,7 +606,7 @@ function Composer({
         </div>
       ) : null}
 
-      <div className="border-border flex flex-wrap items-center gap-2 border-t p-3">
+      <div className="border-border/60 flex flex-wrap items-center gap-2 border-t p-3">
         <Button onClick={send} disabled={reply.isPending || isRichTextEmpty(doc)}>
           <Send aria-hidden="true" />
           {reply.isPending ? 'Sending…' : 'Send'}

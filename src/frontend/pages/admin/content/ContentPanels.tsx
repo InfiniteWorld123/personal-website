@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { History, Search, Undo2 } from 'lucide-react'
 import { useMemo } from 'react'
+import { PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import {
@@ -10,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '#/frontend/components/ui/sheet'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { codeDefault, editableFields } from '#/frontend/content/editable'
 import { contentRevisionsQuery, publishDiffQuery } from '#/frontend/features/content/content-queries'
 import type { Language } from '#/frontend/i18n/language'
@@ -23,6 +25,30 @@ const formatMoment = (iso: string) =>
     hour: '2-digit',
     minute: '2-digit',
   })
+
+/**
+ * The history rows at their real height: the timestamp/key/language line, the
+ * sentence that was saved, and the small outline button under it. The heights
+ * are the ones `.history-row` and its children actually render at — a block
+ * one step short would let the whole sheet jump when the rows land.
+ */
+function RevisionsSkeleton() {
+  return (
+    <SkeletonScreen className="history-list" label="Loading the history">
+      {Array.from({ length: 5 }, (_, index) => (
+        <div className="history-row" key={index}>
+          <div className="history-meta">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3.5 w-36" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-7 w-28" />
+        </div>
+      ))}
+    </SkeletonScreen>
+  )
+}
 
 /** Every saved wording, newest first, each one restorable as a draft. */
 export function ContentHistoryPanel({
@@ -52,43 +78,89 @@ export function ContentHistoryPanel({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="history-list">
-          {revisions.isPending ? <p className="panel-note">Loading…</p> : null}
+        {revisions.isPending ? <RevisionsSkeleton /> : null}
 
-          {revisions.data?.length === 0 ? (
-            <p className="panel-note">
-              Nothing has been rewritten yet. Every change you save appears here.
-            </p>
-          ) : null}
-
-          {revisions.data?.map((revision) => (
-            <div className="history-row" key={revision.id}>
-              <div className="history-meta">
-                <time dateTime={revision.createdAt}>{formatMoment(revision.createdAt)}</time>
-                <span className="history-key">{humanizeKey(revision.key)}</span>
-                <span className="history-lang">{LANGUAGE_LABEL[revision.language]}</span>
-              </div>
-              <p className="history-value">
-                {revision.value === null ? (
-                  <em>restored to the original wording</em>
-                ) : (
-                  valueText(revision.value)
-                )}
+        {/*
+          An unread history and an empty one are the same picture, and the
+          empty one says "nothing has ever been rewritten" — which is the
+          single most reassuring sentence this panel could tell him falsely.
+        */}
+        {revisions.isError ? (
+          <PanelNote tone="error">
+            <div>
+              <p className="font-medium">The history could not be loaded.</p>
+              <p className="text-muted-foreground mt-1">
+                {revisions.error instanceof Error
+                  ? revisions.error.message
+                  : 'Something went wrong.'}
               </p>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={reverting}
-                onClick={() => onRevert(revision.id)}
-              >
-                <Undo2 className="size-3.5" />
-                Restore this
-              </Button>
             </div>
-          ))}
-        </div>
+            <Button onClick={() => void revisions.refetch()} size="sm" variant="outline">
+              Try again
+            </Button>
+          </PanelNote>
+        ) : null}
+
+        {revisions.data ? (
+          <div className="history-list">
+            {revisions.data.length === 0 ? (
+              <p className="panel-note">
+                Nothing has been rewritten yet. Every change you save appears here.
+              </p>
+            ) : null}
+
+            {revisions.data.map((revision) => (
+              <div className="history-row" key={revision.id}>
+                <div className="history-meta">
+                  <time dateTime={revision.createdAt}>{formatMoment(revision.createdAt)}</time>
+                  <span className="history-key">{humanizeKey(revision.key)}</span>
+                  <span className="history-lang">{LANGUAGE_LABEL[revision.language]}</span>
+                </div>
+                <p className="history-value">
+                  {revision.value === null ? (
+                    <em>restored to the original wording</em>
+                  ) : (
+                    valueText(revision.value)
+                  )}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={reverting}
+                  onClick={() => onRevert(revision.id)}
+                >
+                  <Undo2 className="size-3.5" />
+                  Restore this
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </SheetContent>
     </Sheet>
+  )
+}
+
+/**
+ * The diff rows at their real height: the key, the old line, the new one.
+ *
+ * How many is not a guess either. The toolbar counts the unpublished drafts
+ * from the snapshot it already holds, and that count is exactly the number of
+ * rows this list is about to show, so the sheet opens at the height it will
+ * keep. Capped, because past a screenful the scrollbar is the honest signal
+ * and eighty grey rows are not.
+ */
+function DiffSkeleton({ expected }: { expected: number }) {
+  return (
+    <SkeletonScreen className="diff-list" label="Loading what is about to change">
+      {Array.from({ length: Math.min(8, Math.max(1, expected)) }, (_, index) => (
+        <div className="diff-row" key={index}>
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-3/4" />
+        </div>
+      ))}
+    </SkeletonScreen>
   )
 }
 
@@ -98,11 +170,14 @@ export function ContentPublishDialog({
   onOpenChange,
   onConfirm,
   publishing,
+  expected,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
   publishing: boolean
+  /** How many drafts the toolbar has already counted, for the skeleton's height. */
+  expected: number
 }) {
   const diff = useQuery(publishDiffQuery(open))
   const entries = diff.data ?? []
@@ -112,26 +187,58 @@ export function ContentPublishDialog({
       <SheetContent side="right" className="w-full gap-0 sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>Before publishing</SheetTitle>
+          {/*
+            The count is read out of the list, so while there is no list there
+            is no count either — "0 changes go live together" above a panel
+            that simply has not loaded is the worst sentence on this screen.
+          */}
           <SheetDescription>
-            {entries.length === 1
-              ? 'One change goes live.'
-              : `${entries.length} changes go live together.`}
+            {diff.isPending
+              ? 'Reading what is about to change…'
+              : diff.isError
+                ? 'What is about to change could not be read.'
+                : entries.length === 1
+                  ? 'One change goes live.'
+                  : `${entries.length} changes go live together.`}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="diff-list">
-          {diff.isPending ? <p className="panel-note">Loading…</p> : null}
+        {diff.isPending ? <DiffSkeleton expected={expected} /> : null}
 
-          {entries.map((entry) => (
-            <div className="diff-row" key={`${entry.key}:${entry.language}`}>
-              <span className="diff-key">
-                {humanizeKey(entry.key)} · {LANGUAGE_LABEL[entry.language]}
-              </span>
-              <span className="diff-from">{valueText(entry.from ?? undefined) || '—'}</span>
-              <span className="diff-to">{valueText(entry.to)}</span>
+        {diff.isError ? (
+          <PanelNote tone="error">
+            <div>
+              <p className="font-medium">The changes could not be listed.</p>
+              <p className="text-muted-foreground mt-1">
+                {diff.error instanceof Error ? diff.error.message : 'Something went wrong.'}
+              </p>
+              <p className="text-muted-foreground mt-3 max-w-prose">
+                Nothing is published from a list you could not read.
+              </p>
             </div>
-          ))}
-        </div>
+            <Button onClick={() => void diff.refetch()} size="sm" variant="outline">
+              Try again
+            </Button>
+          </PanelNote>
+        ) : null}
+
+        {diff.data ? (
+          <div className="diff-list">
+            {entries.length === 0 ? (
+              <p className="panel-note">Nothing is waiting to be published.</p>
+            ) : null}
+
+            {entries.map((entry) => (
+              <div className="diff-row" key={`${entry.key}:${entry.language}`}>
+                <span className="diff-key">
+                  {humanizeKey(entry.key)} · {LANGUAGE_LABEL[entry.language]}
+                </span>
+                <span className="diff-from">{valueText(entry.from ?? undefined) || '—'}</span>
+                <span className="diff-to">{valueText(entry.to)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="panel-actions">
           <Button disabled={publishing || entries.length === 0} onClick={onConfirm}>
@@ -197,6 +304,7 @@ export function ContentSearchPanel({
         <div className="search-body">
           <Input
             autoFocus
+            className="bg-panel"
             value={term}
             placeholder="Type part of a sentence…"
             onChange={(event) => onTermChange(event.target.value)}

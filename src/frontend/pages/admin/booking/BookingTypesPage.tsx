@@ -12,132 +12,184 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '#/frontend/components/ui/alert-dialog'
-import { Badge } from '#/frontend/components/ui/badge'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/frontend/components/ui/table'
-import {
+  adminBookingTypeQuery,
   adminBookingTypesQuery,
+  adminBookingsQuery,
   useDeleteBookingType,
 } from '#/frontend/features/booking/booking-queries'
+import { toBookingFilterInput } from '#/frontend/features/booking/booking-filters'
+import { usePrefetch } from '#/frontend/lib/prefetch'
+import { cn } from '#/frontend/lib/utils'
 import type { AdminBookingType } from '#/shared/types/booking.types'
 
+/**
+ * What a visitor can book.
+ *
+ * The old table carried its meaning in the header row: four columns of bare
+ * numbers that only made sense while the headings were on screen. Here each
+ * figure keeps its own word, so a row still reads on a phone where a table
+ * would have scrolled its headings away.
+ */
+
+/** One number on a call-type row, with the word that says what it is. */
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex min-w-16 flex-col gap-0.5">
+      <span className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
+        {label}
+      </span>
+      <span className="tabular text-sm">{value}</span>
+    </span>
+  )
+}
+
+function Row({ type, onDelete }: { type: AdminBookingType; onDelete: () => void }) {
+  const prefetch = usePrefetch()
+
+  return (
+    <div className="hover:bg-accent/50 has-[a:focus-visible]:bg-accent/50 border-border/60 relative flex flex-wrap items-center gap-x-6 gap-y-3 border-b px-5 py-3.5 last:border-b-0 motion-safe:transition-colors">
+      <Link
+        to="/admin/bookings/types/$id"
+        params={{ id: type.id }}
+        // The editor this row opens, fetched while the pointer is still on it.
+        {...prefetch(adminBookingTypeQuery(type.id))}
+        className="focus-visible:ring-ring flex min-w-40 flex-1 flex-col rounded-md after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <span className="truncate text-sm font-medium">
+          {type.translations.de.name || type.slug}
+        </span>
+        <span className="text-muted-foreground truncate text-xs" dir="ltr">
+          {type.slug}
+        </span>
+      </Link>
+
+      <Figure label="Length" value={`${type.durationMinutes} min`} />
+      <Figure
+        label="Buffers"
+        value={`${type.bufferBeforeMinutes} / ${type.bufferAfterMinutes}`}
+      />
+      <Figure label="Notice" value={`${Math.round(type.minimumNoticeMinutes / 60)} h`} />
+      <Figure label="Upcoming" value={String(type.upcomingCount)} />
+
+      <span className="ms-auto flex items-center gap-2">
+        <span
+          className={cn(
+            'rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap',
+            type.isActive ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground',
+          )}
+        >
+          {type.isActive ? 'Active' : 'Off'}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="relative rounded-full"
+          onClick={onDelete}
+        >
+          Delete
+        </Button>
+      </span>
+    </div>
+  )
+}
+
+/** Four rows: the number of things a one-person studio offers to book. */
+function RowsSkeleton() {
+  return (
+    <SkeletonScreen label="Loading call types">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div
+          className="border-border/60 flex flex-wrap items-center gap-x-6 gap-y-3 border-b px-5 py-3.5 last:border-b-0"
+          key={index}
+        >
+          <div className="min-w-40 flex-1">
+            <Skeleton className="h-3.5 w-36" />
+            <Skeleton className="mt-2 h-3 w-24" />
+          </div>
+          {Array.from({ length: 4 }, (_, figure) => (
+            <div className="flex min-w-16 flex-col gap-1.5" key={figure}>
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-3.5 w-10" />
+            </div>
+          ))}
+          <div className="ms-auto flex items-center gap-2">
+            <Skeleton className="h-5 w-14 rounded-full" />
+            <Skeleton className="h-7 w-16 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </SkeletonScreen>
+  )
+}
+
 export function BookingTypesPage() {
+  const prefetch = usePrefetch()
   const types = useQuery(adminBookingTypesQuery())
   const remove = useDeleteBookingType()
   const [pendingDelete, setPendingDelete] = useState<AdminBookingType | null>(null)
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="/admin/bookings">
-          <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
-          All bookings
-        </Link>
-      </Button>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Call types</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            What a visitor can book, and the rules each one follows. An inactive type disappears
-            from the public page but keeps its history.
-          </p>
-        </div>
-
-        <Button asChild>
-          <Link to="/admin/bookings/types/new">
-            <Plus aria-hidden="true" />
-            New call type
-          </Link>
-        </Button>
-      </div>
-
-      {types.isPending ? (
-        <p className="text-muted-foreground py-12 text-center text-sm">Loading call types…</p>
-      ) : types.isError ? (
-        <div className="border-destructive/40 bg-destructive/5 flex flex-col items-start gap-3 rounded-lg border p-6">
-          <div>
-            <p className="text-destructive text-sm font-medium">{(types.error as Error).message}</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              If the database is behind the code, run <code className="text-xs">bun run db:migrate</code>{' '}
-              and try again.
-            </p>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => void types.refetch()}>
-            Try again
+    <AdminPage>
+      <PageHeader
+        back={
+          <Button asChild variant="ghost" size="sm" className="-ms-2 w-fit rounded-full">
+            <Link to="/admin/bookings" {...prefetch(adminBookingsQuery(toBookingFilterInput({})))}>
+              <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
+              All bookings
+            </Link>
           </Button>
-        </div>
-      ) : types.data.length === 0 ? (
-        <div className="border-border flex flex-col items-center gap-3 rounded-lg border border-dashed p-12 text-center">
-          <p className="text-sm font-medium">No call type yet.</p>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Until one exists and is active, the public booking page has nothing to offer. Run{' '}
-            <code className="text-xs">bun run db:seed:booking</code> for the default one, or make
-            your own.
-          </p>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Length</TableHead>
-              <TableHead>Buffers</TableHead>
-              <TableHead>Notice</TableHead>
-              <TableHead>Upcoming</TableHead>
-              <TableHead className="text-end">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {types.data.map((type) => (
-              <TableRow key={type.id}>
-                <TableCell>
-                  <span className="flex flex-col">
-                    <Link
-                      to="/admin/bookings/types/$id"
-                      params={{ id: type.id }}
-                      className="hover:text-primary font-medium"
-                    >
-                      {type.translations.de.name || type.slug}
-                    </Link>
-                    <span className="text-muted-foreground text-xs">{type.slug}</span>
-                  </span>
-                </TableCell>
-                <TableCell className="tabular">{type.durationMinutes} min</TableCell>
-                <TableCell className="tabular text-muted-foreground text-sm">
-                  {type.bufferBeforeMinutes} / {type.bufferAfterMinutes}
-                </TableCell>
-                <TableCell className="tabular text-muted-foreground text-sm">
-                  {Math.round(type.minimumNoticeMinutes / 60)} h
-                </TableCell>
-                <TableCell className="tabular">{type.upcomingCount}</TableCell>
-                <TableCell className="text-end">
-                  <span className="flex items-center justify-end gap-2">
-                    <Badge variant="outline" className="rounded-full">
-                      {type.isActive ? 'Active' : 'Off'}
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPendingDelete(type)}
-                    >
-                      Delete
-                    </Button>
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+        }
+        title="Call types"
+        description="What a visitor can book, and the rules each one follows. An inactive type disappears from the public page but keeps its history."
+        actions={
+          <Button asChild className="rounded-full" size="sm">
+            <Link to="/admin/bookings/types/new">
+              <Plus aria-hidden="true" />
+              New call type
+            </Link>
+          </Button>
+        }
+      />
+
+      <Panel className="overflow-hidden">
+        {types.isPending ? (
+          <RowsSkeleton />
+        ) : types.isError ? (
+          <PanelNote tone="error">
+            <div>
+              <p className="font-medium">{(types.error as Error).message}</p>
+              <p className="text-muted-foreground mt-1">
+                If the database is behind the code, run{' '}
+                <code className="text-xs">bun run db:migrate</code> and try again.
+              </p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => void types.refetch()}>
+              Try again
+            </Button>
+          </PanelNote>
+        ) : types.data.length === 0 ? (
+          <PanelNote>
+            <div>
+              <p className="text-foreground font-medium">No call type yet.</p>
+              <p className="mx-auto mt-1 max-w-sm">
+                Until one exists and is active, the public booking page has nothing to offer. Run{' '}
+                <code className="text-xs">bun run db:seed:booking</code> for the default one, or
+                make your own.
+              </p>
+            </div>
+          </PanelNote>
+        ) : (
+          types.data.map((type) => (
+            <Row key={type.id} onDelete={() => setPendingDelete(type)} type={type} />
+          ))
+        )}
+      </Panel>
 
       <AlertDialog open={pendingDelete !== null} onOpenChange={() => setPendingDelete(null)}>
         <AlertDialogContent>
@@ -168,6 +220,6 @@ export function BookingTypesPage() {
           {(remove.error as Error).message}
         </p>
       ) : null}
-    </div>
+    </AdminPage>
   )
 }

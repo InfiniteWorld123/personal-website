@@ -107,10 +107,10 @@ function Details({ person }: { person: Person }) {
               onClick={() => setForm((current) => ({ ...current, language: value }))}
               aria-pressed={form.language === value}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs transition-colors',
+                'rounded-full border px-3 py-1 text-xs motion-safe:transition-colors',
                 form.language === value
                   ? 'border-primary bg-primary text-primary-foreground font-medium'
-                  : 'border-border text-muted-foreground hover:text-foreground',
+                  : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
               )}
             >
               {LANGUAGE_LABEL[value]}
@@ -138,7 +138,7 @@ function Notes({ person }: { person: Person }) {
   return (
     <div className="flex flex-col gap-3">
       {person.notes.map((note) => (
-        <div key={note.id} className="border-border flex gap-2 rounded-lg border p-3">
+        <div key={note.id} className="border-border/60 flex gap-2 rounded-lg border p-3">
           <p dir="auto" className="flex-1 text-xs leading-relaxed whitespace-pre-wrap">
             {note.body}
           </p>

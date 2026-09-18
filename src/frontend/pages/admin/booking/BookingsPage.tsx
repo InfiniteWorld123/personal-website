@@ -1,52 +1,128 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { CalendarClock, CalendarPlus, Clock3, Settings2, Video } from 'lucide-react'
-import { Badge } from '#/frontend/components/ui/badge'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/frontend/components/ui/table'
-import { adminBookingsQuery } from '#/frontend/features/booking/booking-queries'
+  adminBookingQuery,
+  adminBookingTypesQuery,
+  adminBookingsQuery,
+  availabilityQuery,
+  bookingTypesQuery,
+} from '#/frontend/features/booking/booking-queries'
 import {
   hasActiveBookingFilters,
   toBookingFilterInput,
   type BookingSearch,
 } from '#/frontend/features/booking/booking-filters'
 import {
+  BOOKING_PAGE_SIZE,
   BOOKING_RANGE_FILTERS,
   BOOKING_STATUS_FILTERS,
 } from '#/shared/validation/booking.validation'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import { isCallOpen } from '#/shared/types/call.types'
+import type { AdminBookingListItem } from '#/shared/types/booking.types'
+import { StatusPill, formatBerlin } from './booking-admin-ui'
 
-/** Every time in the admin is read on the owner's own clock. */
-const BERLIN = 'Europe/Berlin'
+/**
+ * The calendar as a list.
+ *
+ * Every row is one call and the whole row opens it — the old table made only
+ * the date clickable, which meant pointing at somebody's name did nothing.
+ * The one thing on a row that is not the row is the Join button, and it is
+ * there for about ninety minutes of any given week.
+ */
 
-const formatBerlin = (instant: string) =>
-  new Intl.DateTimeFormat('de-DE', {
-    timeZone: BERLIN,
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(instant))
+function Row({ booking }: { booking: AdminBookingListItem }) {
+  const prefetch = usePrefetch()
 
-const STATUS_TONE: Record<string, string> = {
-  CONFIRMED: 'border-primary/40 text-primary',
-  CANCELLED: 'text-muted-foreground',
-  COMPLETED: 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400',
-  NO_SHOW: 'border-destructive/40 text-destructive',
+  return (
+    <div className="hover:bg-accent/50 has-[a:focus-visible]:bg-accent/50 border-border/60 relative flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0 motion-safe:transition-colors">
+      {/*
+        The link is stretched over the whole row by its own pseudo element, so
+        the Join button beside it keeps its own click without being nested
+        inside an anchor.
+      */}
+      <Link
+        to="/admin/bookings/$id"
+        params={{ id: booking.id }}
+        // The booking this row opens, fetched while the pointer is still on it.
+        {...prefetch(adminBookingQuery(booking.id))}
+        className="focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <StatusPill status={booking.status} />
+
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{booking.visitorName}</span>
+          <span className="text-muted-foreground block truncate text-xs">
+            {booking.bookingTypeName} ·{' '}
+            <span dir="ltr">{booking.visitorEmail}</span>
+          </span>
+        </span>
+
+        <span className="text-end">
+          <span className="tabular block text-sm font-medium whitespace-nowrap">
+            {formatBerlin(booking.startsAt)}
+          </span>
+          <span className="tabular text-muted-foreground block text-[11px]">
+            {booking.reference}
+          </span>
+        </span>
+      </Link>
+
+      {/* Only while the room exists — which for any given call is about an
+          hour and a half of the week. The rest of the time this is
+          deliberately empty. */}
+      {isCallOpen(booking) ? (
+        <Button asChild size="sm" className="relative rounded-full whitespace-nowrap">
+          <Link to="/admin/bookings/$id/room" params={{ id: booking.id }}>
+            <Video aria-hidden="true" />
+            Join
+          </Link>
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * The same rows, not yet arrived.
+ *
+ * A full page of them rather than a handful: the list holds twenty, and a
+ * skeleton that draws six and then grows to twenty has moved the page under
+ * the pointer, which is the one thing a skeleton exists to prevent.
+ */
+function RowsSkeleton() {
+  return (
+    <SkeletonScreen label="Loading bookings">
+      {Array.from({ length: BOOKING_PAGE_SIZE }, (_, index) => (
+        <div
+          className="border-border/60 flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0"
+          key={index}
+        >
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-3.5 w-40" />
+            <Skeleton className="mt-2 h-3 w-60" />
+          </div>
+          <div className="flex flex-col items-end">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="mt-2 h-3 w-16" />
+          </div>
+        </div>
+      ))}
+    </SkeletonScreen>
+  )
 }
 
 export function BookingsPage({ search }: { search: BookingSearch }) {
   const navigate = useNavigate({ from: '/admin/bookings/' })
+  const prefetch = usePrefetch()
   const filter = toBookingFilterInput(search)
   const bookings = useQuery(adminBookingsQuery(filter))
 
@@ -56,57 +132,64 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
     void navigate({ search: (previous) => ({ ...previous, ...next, page: undefined }) })
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Bookings</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+    <AdminPage>
+      <PageHeader
+        title="Bookings"
+        description={
+          <>
             Every call booked through the site. Times are shown in{' '}
             <span className="font-medium">Europe/Berlin</span>.
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link to="/admin/bookings/new">
-              <CalendarPlus aria-hidden="true" />
-              New booking
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/admin/bookings/availability">
-              <Clock3 aria-hidden="true" />
-              Availability
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/admin/bookings/types">
-              <Settings2 aria-hidden="true" />
-              Call types
-            </Link>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <Button asChild className="rounded-full" size="sm">
+              {/* The form behind it needs the public type list, which is what
+                  it renders its choices from. */}
+              <Link to="/admin/bookings/new" {...prefetch(bookingTypesQuery('de'))}>
+                <CalendarPlus aria-hidden="true" />
+                New booking
+              </Link>
+            </Button>
+            <Button asChild className="rounded-full" size="sm" variant="outline">
+              <Link to="/admin/bookings/availability" {...prefetch(availabilityQuery())}>
+                <Clock3 aria-hidden="true" />
+                Availability
+              </Link>
+            </Button>
+            <Button asChild className="rounded-full" size="sm" variant="outline">
+              <Link to="/admin/bookings/types" {...prefetch(adminBookingTypesQuery())}>
+                <Settings2 aria-hidden="true" />
+                Call types
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Name, email, or reference"
-          className="max-w-xs"
+          className="bg-panel max-w-xs"
           defaultValue={search.search ?? ''}
           onChange={(event) => setSearch({ search: event.currentTarget.value || undefined })}
         />
 
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {BOOKING_RANGE_FILTERS.map((range) => (
-            <Button
+            <button
               key={range}
               type="button"
-              size="sm"
-              variant={(search.range ?? 'upcoming') === range ? 'default' : 'outline'}
               onClick={() => setSearch({ range: range === 'upcoming' ? undefined : range })}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs motion-safe:transition-colors',
+                (search.range ?? 'upcoming') === range
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-panel text-muted-foreground hover:border-primary/50',
+              )}
             >
               {range}
-            </Button>
+            </button>
           ))}
         </div>
 
@@ -120,7 +203,7 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
                   : (event.currentTarget.value as BookingSearch['status']),
             })
           }
-          className="border-border bg-background h-8 rounded-md border px-2 text-sm"
+          className="border-border bg-panel h-8 rounded-full border px-3 text-xs"
         >
           {BOOKING_STATUS_FILTERS.map((status) => (
             <option key={status} value={status}>
@@ -130,92 +213,36 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
         </select>
       </div>
 
-      {bookings.isPending ? (
-        <p className="text-muted-foreground py-12 text-center text-sm">Loading bookings…</p>
-      ) : bookings.isError ? (
-        <div className="border-destructive/40 bg-destructive/5 flex flex-col items-start gap-3 rounded-lg border p-6">
-          <p className="text-destructive text-sm">
-            The booking list could not be loaded. {(bookings.error as Error).message}
-          </p>
-          <Button type="button" variant="outline" onClick={() => void bookings.refetch()}>
-            Try again
-          </Button>
-        </div>
-      ) : items.length === 0 ? (
-        <div className="border-border flex flex-col items-center gap-3 rounded-lg border border-dashed p-12 text-center">
-          <CalendarClock aria-hidden="true" className="text-muted-foreground/60 size-6" />
-          <p className="text-sm font-medium">
-            {hasActiveBookingFilters(search) ? 'No booking matches these filters.' : 'Nothing booked yet.'}
-          </p>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            {hasActiveBookingFilters(search)
-              ? 'Clear the filters to see everything again.'
-              : 'Calls booked on the public site land here. Check that a call type is active and that the week has hours in it.'}
-          </p>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>When</TableHead>
-              <TableHead>Who</TableHead>
-              <TableHead>Call</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-end">Reference</TableHead>
-              {/* No heading: the column is empty on every row but the one or
-                  two whose call is happening right now. */}
-              <TableHead className="w-0" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="tabular whitespace-nowrap">
-                  <Link
-                    to="/admin/bookings/$id"
-                    params={{ id: booking.id }}
-                    className="hover:text-primary font-medium"
-                  >
-                    {formatBerlin(booking.startsAt)}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <span className="flex flex-col">
-                    <span className="font-medium">{booking.visitorName}</span>
-                    <span className="text-muted-foreground text-xs" dir="ltr">
-                      {booking.visitorEmail}
-                    </span>
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {booking.bookingTypeName}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn('rounded-full', STATUS_TONE[booking.status])}>
-                    {booking.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="tabular text-muted-foreground text-end text-xs">
-                  {booking.reference}
-                </TableCell>
-                <TableCell className="text-end">
-                  {/* Only while the room exists — which for any given call is
-                      about an hour and a half of the week. The rest of the
-                      time this cell is deliberately empty. */}
-                  {isCallOpen(booking) ? (
-                    <Button asChild size="sm" className="whitespace-nowrap">
-                      <Link to="/admin/bookings/$id/room" params={{ id: booking.id }}>
-                        <Video aria-hidden="true" />
-                        Join
-                      </Link>
-                    </Button>
-                  ) : null}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+      <Panel className="overflow-hidden">
+        {bookings.isPending ? (
+          <RowsSkeleton />
+        ) : bookings.isError ? (
+          <PanelNote tone="error">
+            <p>The booking list could not be loaded. {(bookings.error as Error).message}</p>
+            <Button type="button" variant="outline" onClick={() => void bookings.refetch()}>
+              Try again
+            </Button>
+          </PanelNote>
+        ) : items.length === 0 ? (
+          <PanelNote>
+            <CalendarClock aria-hidden="true" className="text-muted-foreground/60 size-6" />
+            <div>
+              <p className="text-foreground text-sm font-medium">
+                {hasActiveBookingFilters(search)
+                  ? 'No booking matches these filters.'
+                  : 'Nothing booked yet.'}
+              </p>
+              <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
+                {hasActiveBookingFilters(search)
+                  ? 'Clear the filters to see everything again.'
+                  : 'Calls booked on the public site land here. Check that a call type is active and that the week has hours in it.'}
+              </p>
+            </div>
+          </PanelNote>
+        ) : (
+          items.map((booking) => <Row booking={booking} key={booking.id} />)
+        )}
+      </Panel>
 
       {(bookings.data?.pageCount ?? 1) > 1 ? (
         <div className="flex items-center justify-between gap-3">
@@ -227,6 +254,7 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
               type="button"
               variant="outline"
               size="sm"
+              className="rounded-full"
               disabled={(bookings.data?.page ?? 1) <= 1}
               onClick={() =>
                 void navigate({
@@ -240,6 +268,7 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
               type="button"
               variant="outline"
               size="sm"
+              className="rounded-full"
               disabled={(bookings.data?.page ?? 1) >= (bookings.data?.pageCount ?? 1)}
               onClick={() =>
                 void navigate({
@@ -252,6 +281,6 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
           </div>
         </div>
       ) : null}
-    </div>
+    </AdminPage>
   )
 }

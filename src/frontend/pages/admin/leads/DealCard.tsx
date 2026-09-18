@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import { Panel } from '#/frontend/components/admin/Panel'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,193 +102,198 @@ export function DealCard({
     })
 
   return (
-    <article className="border-border bg-background rounded-xl border p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            'rounded-full border px-2 py-0.5 text-[10px] font-medium',
-            STAGE_CLASS[deal.stage],
-          )}
-        >
-          {STAGE_LABEL[deal.stage]}
-        </span>
-
-        {deal.stage === 'LOST' && deal.lostReason ? (
-          <span dir="auto" className="text-muted-foreground text-xs">
-            {LOST_REASON_LABEL[deal.lostReason]}
-            {deal.lostNote ? ` — ${deal.lostNote}` : ''}
+    /* A panel inside a panel: the same surface, one step quieter — no brand
+       shadow, and a smaller radius, so a deal reads as a thing *in* the deals
+       block rather than a second block beside it. */
+    <Panel asChild className="bg-background rounded-2xl p-4 shadow-none">
+      <article>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'rounded-full border px-2 py-0.5 text-[10px] font-medium',
+              STAGE_CLASS[deal.stage],
+            )}
+          >
+            {STAGE_LABEL[deal.stage]}
           </span>
-        ) : null}
 
-        {open && deal.followUpOn ? (
-          <span className={cn('text-xs', DUE_CLASS[dueTone(deal.followUpOn)])}>
-            {dueLabel(deal.followUpOn)}
-          </span>
-        ) : null}
-
-        <span className="text-muted-foreground ms-auto text-xs tabular-nums">
-          {money(deal.buildCents, deal.currency)} once
-          {deal.monthlyCents > 0 ? (
-            <span className="text-emerald-600 dark:text-emerald-400">
-              {' · '}
-              {money(deal.monthlyCents, deal.currency)} a month
+          {deal.stage === 'LOST' && deal.lostReason ? (
+            <span dir="auto" className="text-muted-foreground text-xs">
+              {LOST_REASON_LABEL[deal.lostReason]}
+              {deal.lostNote ? ` — ${deal.lostNote}` : ''}
             </span>
           ) : null}
-        </span>
-      </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <Field label="What it is" id={`title-${deal.id}`}>
-          <Input
-            id={`title-${deal.id}`}
-            dir="auto"
-            value={title}
-            onChange={(event) => setTitle(event.currentTarget.value)}
-          />
-        </Field>
+          {open && deal.followUpOn ? (
+            <span className={cn('text-xs', DUE_CLASS[dueTone(deal.followUpOn)])}>
+              {dueLabel(deal.followUpOn)}
+            </span>
+          ) : null}
 
-        <Field label="Next step" id={`next-${deal.id}`}>
-          <Input
-            id={`next-${deal.id}`}
-            dir="auto"
-            value={nextStep}
-            placeholder="One line: what you must do"
-            onChange={(event) => setNextStep(event.currentTarget.value)}
-          />
-        </Field>
+          <span className="text-muted-foreground ms-auto text-xs tabular-nums">
+            {money(deal.buildCents, deal.currency)} once
+            {deal.monthlyCents > 0 ? (
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {' · '}
+                {money(deal.monthlyCents, deal.currency)} a month
+              </span>
+            ) : null}
+          </span>
+        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Build, once (€)" id={`build-${deal.id}`}>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field label="What it is" id={`title-${deal.id}`}>
             <Input
-              id={`build-${deal.id}`}
-              type="number"
-              min="0"
-              step="10"
-              inputMode="numeric"
-              className="tabular-nums"
-              value={build}
-              onChange={(event) => setBuild(event.currentTarget.value)}
+              id={`title-${deal.id}`}
+              dir="auto"
+              value={title}
+              onChange={(event) => setTitle(event.currentTarget.value)}
             />
           </Field>
 
-          <Field label="Monthly (€)" id={`monthly-${deal.id}`}>
+          <Field label="Next step" id={`next-${deal.id}`}>
             <Input
-              id={`monthly-${deal.id}`}
-              type="number"
-              min="0"
-              step="10"
-              inputMode="numeric"
-              className="tabular-nums"
-              value={monthly}
-              onChange={(event) => setMonthly(event.currentTarget.value)}
+              id={`next-${deal.id}`}
+              dir="auto"
+              value={nextStep}
+              placeholder="One line: what you must do"
+              onChange={(event) => setNextStep(event.currentTarget.value)}
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Build, once (€)" id={`build-${deal.id}`}>
+              <Input
+                id={`build-${deal.id}`}
+                type="number"
+                min="0"
+                step="10"
+                inputMode="numeric"
+                className="tabular-nums"
+                value={build}
+                onChange={(event) => setBuild(event.currentTarget.value)}
+              />
+            </Field>
+
+            <Field label="Monthly (€)" id={`monthly-${deal.id}`}>
+              <Input
+                id={`monthly-${deal.id}`}
+                type="number"
+                min="0"
+                step="10"
+                inputMode="numeric"
+                className="tabular-nums"
+                value={monthly}
+                onChange={(event) => setMonthly(event.currentTarget.value)}
+              />
+            </Field>
+          </div>
+
+          <Field
+            label="Follow up on"
+            id={`due-${deal.id}`}
+            hint={open ? undefined : 'A closed deal waits for nothing'}
+          >
+            <Input
+              id={`due-${deal.id}`}
+              type="date"
+              disabled={!open}
+              value={followUpOn}
+              onChange={(event) => setFollowUpOn(event.currentTarget.value)}
             />
           </Field>
         </div>
 
-        <Field
-          label="Follow up on"
-          id={`due-${deal.id}`}
-          hint={open ? undefined : 'A closed deal waits for nothing'}
-        >
-          <Input
-            id={`due-${deal.id}`}
-            type="date"
-            disabled={!open}
-            value={followUpOn}
-            onChange={(event) => setFollowUpOn(event.currentTarget.value)}
-          />
-        </Field>
-      </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {dirty ? (
+            <Button size="sm" onClick={save} disabled={update.isPending}>
+              {update.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          ) : null}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {dirty ? (
-          <Button size="sm" onClick={save} disabled={update.isPending}>
-            {update.isPending ? 'Saving…' : 'Save'}
+          {open
+            ? DEAL_STAGES.filter((stage) => stage !== deal.stage && stage !== 'LOST').map((stage) => (
+                <Button
+                  key={stage}
+                  size="sm"
+                  variant={stage === 'WON' ? 'default' : 'outline'}
+                  disabled={move.isPending}
+                  onClick={() => move.mutate({ dealId: deal.id, stage, lostReason: null, lostNote: '' })}
+                >
+                  {stage === 'WON' ? 'Won' : `Move to ${STAGE_LABEL[stage].toLowerCase()}`}
+                </Button>
+              ))
+            : null}
+
+          {open ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-rose-600 dark:text-rose-400"
+              onClick={() => setIsLostOpen(true)}
+            >
+              Lost…
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={move.isPending}
+              onClick={() =>
+                move.mutate({ dealId: deal.id, stage: 'TALKING', lostReason: null, lostNote: '' })
+              }
+            >
+              Reopen
+            </Button>
+          )}
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-muted-foreground ms-auto"
+            aria-label="Delete this deal"
+            onClick={() => setIsDeleteOpen(true)}
+          >
+            <Trash2 aria-hidden="true" className="size-4" />
           </Button>
+        </div>
+
+        {update.isError || move.isError || remove.isError ? (
+          <p role="alert" className="text-destructive mt-2 text-sm">
+            {((update.error ?? move.error ?? remove.error) as Error).message}
+          </p>
         ) : null}
 
-        {open
-          ? DEAL_STAGES.filter((stage) => stage !== deal.stage && stage !== 'LOST').map((stage) => (
-              <Button
-                key={stage}
-                size="sm"
-                variant={stage === 'WON' ? 'default' : 'outline'}
-                disabled={move.isPending}
-                onClick={() => move.mutate({ dealId: deal.id, stage, lostReason: null, lostNote: '' })}
-              >
-                {stage === 'WON' ? 'Won' : `Move to ${STAGE_LABEL[stage].toLowerCase()}`}
-              </Button>
-            ))
-          : null}
+        <LostDialog
+          open={isLostOpen}
+          onOpenChange={setIsLostOpen}
+          personName={personName}
+          pending={move.isPending}
+          onConfirm={(reason, note) =>
+            move.mutate(
+              { dealId: deal.id, stage: 'LOST', lostReason: reason, lostNote: note },
+              { onSuccess: () => setIsLostOpen(false) },
+            )
+          }
+        />
 
-        {open ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-rose-600 dark:text-rose-400"
-            onClick={() => setIsLostOpen(true)}
-          >
-            Lost…
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={move.isPending}
-            onClick={() =>
-              move.mutate({ dealId: deal.id, stage: 'TALKING', lostReason: null, lostNote: '' })
-            }
-          >
-            Reopen
-          </Button>
-        )}
-
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-muted-foreground ms-auto"
-          aria-label="Delete this deal"
-          onClick={() => setIsDeleteOpen(true)}
-        >
-          <Trash2 aria-hidden="true" className="size-4" />
-        </Button>
-      </div>
-
-      {update.isError || move.isError || remove.isError ? (
-        <p role="alert" className="text-destructive mt-2 text-sm">
-          {((update.error ?? move.error ?? remove.error) as Error).message}
-        </p>
-      ) : null}
-
-      <LostDialog
-        open={isLostOpen}
-        onOpenChange={setIsLostOpen}
-        personName={personName}
-        pending={move.isPending}
-        onConfirm={(reason, note) =>
-          move.mutate(
-            { dealId: deal.id, stage: 'LOST', lostReason: reason, lostNote: note },
-            { onSuccess: () => setIsLostOpen(false) },
-          )
-        }
-      />
-
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this deal?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The deal goes; the line in the history saying it existed stays. Letters, files and
-              calls are untouched.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep it</AlertDialogCancel>
-            <AlertDialogAction onClick={() => remove.mutate(deal.id)}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </article>
+        <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this deal?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The deal goes; the line in the history saying it existed stays. Letters, files and
+                calls are untouched.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep it</AlertDialogCancel>
+              <AlertDialogAction onClick={() => remove.mutate(deal.id)}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </article>
+    </Panel>
   )
 }
 

@@ -77,7 +77,7 @@ export function OverviewPage() {
         ) : figures ? (
           <>
             <StatCard
-              className="sm:col-span-2 xl:row-span-2 xl:justify-center"
+              className="sm:col-span-2 xl:row-span-2"
               foot={`Paid in ${monthName(figures.month)}, counted by the day it landed in the account`}
               label="Arrived this month"
               to="/admin/invoices"

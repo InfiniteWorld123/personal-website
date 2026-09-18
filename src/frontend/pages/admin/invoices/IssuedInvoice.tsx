@@ -2,10 +2,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ArrowLeft, Ban, BellRing, FileText, Mail, Receipt, Trash2 } from 'lucide-react'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
 import { invoicePdfUrl } from '#/frontend/api/invoice.api'
+import { personQuery, settingsQuery } from '#/frontend/features/inbox/inbox-queries'
 import {
   SETTLEMENT_CLASS,
   day,
@@ -14,11 +17,15 @@ import {
   today,
 } from '#/frontend/features/invoices/invoice-format'
 import {
+  invoiceQuery,
+  invoicesQuery,
   letterQuery,
+  sellerQuery,
   useAddPayment,
   useCorrectInvoice,
   useDeletePayment,
 } from '#/frontend/features/invoices/invoice-queries'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import type { Invoice } from '#/shared/types/invoice.types'
 import {
@@ -46,14 +53,41 @@ import {
  * with the person who received it.
  */
 
+/**
+ * A native select wearing the same clothes as `Input`.
+ *
+ * The same string as in `ClientsPage` and `InvoiceEditor`, so the three
+ * hand-styled selects of this section are finally one control.
+ */
+const SELECT =
+  'border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full min-w-0 rounded-lg border bg-transparent px-2.5 text-sm outline-none focus-visible:ring-3 motion-safe:transition-colors dark:bg-input/30'
+
 export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
   const [panel, setPanel] = useState<'none' | 'payment' | 'cancel' | 'credit'>('none')
   const [error, setError] = useState('')
   const [handing, setHanding] = useState<LetterKind | null>(null)
 
+  const prefetch = usePrefetch()
   const navigate = useNavigate()
   const client = useQueryClient()
   const owed = invoice.totalCents - invoice.paidCents
+
+  /**
+   * The conversation every letter button lands in, warmed on the way to it.
+   *
+   * Only `personQuery` and `settingsQuery` — the two reads the inbox screen
+   * actually performs on mount. The letter itself is deliberately *not*
+   * prefetched: `letterQuery` resolves the person, may create them, and
+   * attaches the PDF to the thread, so hovering a button would write to the
+   * database. A prefetch must never do anything a click has not been asked
+   * for yet.
+   *
+   * Undefined when the client has no conversation yet, because the person the
+   * letter will land in is chosen by the server and there is no id to warm.
+   */
+  const conversation = invoice.client.leadId
+    ? prefetch(personQuery(invoice.client.leadId), settingsQuery())
+    : undefined
 
   /**
    * Hands the letter to the inbox and goes there.
@@ -82,32 +116,37 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
   }
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-5">
-      <header className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/invoices">
-            <ArrowLeft className="size-4" /> Invoices
-          </Link>
-        </Button>
-
-        <h1 className="tabular text-2xl font-semibold tracking-tight">
-          {invoice.kind === 'INVOICE' ? 'Invoice' : INVOICE_KIND_LABEL[invoice.kind]}{' '}
-          <span className="text-primary">{invoice.number}</span>
-        </h1>
-
-        <span
-          className={cn(
-            'rounded-full border px-2.5 py-0.5 text-xs font-medium',
-            SETTLEMENT_CLASS[invoice.settlement],
-          )}
-        >
-          {SETTLEMENT_LABEL[invoice.settlement]}
-          {invoice.daysLate > 0 ? ` · ${lateLabel(invoice.daysLate)}` : ''}
-        </span>
-      </header>
+    <AdminPage width="narrow">
+      <PageHeader
+        back={
+          <Button asChild className="-ms-2 w-fit rounded-full" size="sm" variant="ghost">
+            {/* The list he came from, fetched while he is still deciding to go back. */}
+            <Link to="/admin/invoices" {...prefetch(invoicesQuery('ALL', ''), sellerQuery())}>
+              <ArrowLeft className="size-4" /> Invoices
+            </Link>
+          </Button>
+        }
+        title={
+          <span className="tabular">
+            {invoice.kind === 'INVOICE' ? 'Invoice' : INVOICE_KIND_LABEL[invoice.kind]}{' '}
+            <span className="text-primary">{invoice.number}</span>
+          </span>
+        }
+        actions={
+          <span
+            className={cn(
+              'rounded-full border px-2.5 py-0.5 text-xs font-medium',
+              SETTLEMENT_CLASS[invoice.settlement],
+            )}
+          >
+            {SETTLEMENT_LABEL[invoice.settlement]}
+            {invoice.daysLate > 0 ? ` · ${lateLabel(invoice.daysLate)}` : ''}
+          </span>
+        }
+      />
 
       {/* ── The facts ───────────────────────────────────────────────── */}
-      <section className="bg-card grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
+      <Panel className="grid gap-4 p-6 sm:grid-cols-2">
         <div>
           <p className="text-muted-foreground text-xs">To</p>
           <p className="mt-0.5 text-sm font-medium">
@@ -151,12 +190,15 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
             </>
           ) : null}
         </dl>
-      </section>
+      </Panel>
 
       {/* ── What was billed ─────────────────────────────────────────── */}
-      <section className="bg-card overflow-hidden rounded-xl border">
+      <Panel className="overflow-hidden">
         {invoice.lines.map((line) => (
-          <div key={line.id} className="flex items-start gap-3 border-b px-4 py-3 last:border-b-0">
+          <div
+            key={line.id}
+            className="border-border/60 flex items-start gap-3 border-b px-5 py-3.5 last:border-b-0"
+          >
             <span className="text-muted-foreground tabular w-5 pt-0.5 text-xs">
               {line.position}
             </span>
@@ -174,15 +216,16 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
             </span>
           </div>
         ))}
-      </section>
+      </Panel>
 
       {/* ── Money that arrived ──────────────────────────────────────── */}
       {invoice.kind === 'INVOICE' ? (
-        <section className="bg-card flex flex-col gap-3 rounded-xl border p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Payments</h2>
+        <Panel className="flex flex-col gap-3 p-6">
+          <div className="flex items-center justify-between gap-4">
+            <PanelTitle>Payments</PanelTitle>
             {invoice.status === 'ISSUED' ? (
               <Button
+                className="rounded-full"
                 size="sm"
                 variant={owed > 0 ? 'default' : 'outline'}
                 onClick={() => setPanel(panel === 'payment' ? 'none' : 'payment')}
@@ -203,7 +246,7 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
           {panel === 'payment' ? (
             <PaymentForm invoice={invoice} owed={owed} onDone={() => setPanel('none')} onError={setError} />
           ) : null}
-        </section>
+        </Panel>
       ) : null}
 
       {/* ── Corrections ─────────────────────────────────────────────── */}
@@ -215,13 +258,15 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
       ) : null}
 
       {invoice.correctedBy.length > 0 ? (
-        <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+        <Panel className="border border-amber-500/40 bg-amber-500/5 p-6 text-sm ring-0">
           {invoice.correctedBy.map((correction) => (
             <p key={correction.id}>
               {INVOICE_KIND_LABEL[correction.kind]}{' '}
               <Link
                 to="/admin/invoices/$invoiceId"
                 params={{ invoiceId: correction.id }}
+                // The document this number opens, fetched on the way to it.
+                {...prefetch(invoiceQuery(correction.id))}
                 className="tabular underline"
               >
                 {correction.number}
@@ -229,14 +274,14 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
               was written against this invoice.
             </p>
           ))}
-        </section>
+        </Panel>
       ) : null}
 
       {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
 
       {/* ── What he can do ──────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" asChild>
+        <Button className="rounded-full" variant="outline" asChild>
           <a href={invoicePdfUrl(invoice.id)} target="_blank" rel="noreferrer">
             <FileText className="size-4" /> Open the PDF
           </a>
@@ -248,10 +293,12 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
           would only fall for once.
         */}
         <Button
+          className="rounded-full"
           variant="outline"
           disabled={handing !== null || !invoice.client.email}
           title={invoice.client.email ? undefined : 'That client has no email address'}
           onClick={() => void handOver('INVOICE')}
+          {...conversation}
         >
           <Mail className="size-4" />
           {handing === 'INVOICE'
@@ -264,9 +311,11 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
         {/* Switch 22 — the first nudge is a reminder, not a Mahnung. */}
         {invoice.settlement === 'OVERDUE' || invoice.settlement === 'PART' ? (
           <Button
+            className="rounded-full"
             variant="outline"
             disabled={handing !== null || !invoice.client.email}
             onClick={() => void handOver('REMINDER')}
+            {...conversation}
           >
             <BellRing className="size-4" />
             {handing === 'REMINDER' ? 'Preparing…' : 'Remind'}
@@ -276,13 +325,17 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
         {invoice.status === 'ISSUED' && invoice.kind === 'INVOICE' ? (
           <>
             <Button
+              className="rounded-full text-rose-600 dark:text-rose-400"
               variant="ghost"
-              className="text-rose-600 dark:text-rose-400"
               onClick={() => setPanel(panel === 'cancel' ? 'none' : 'cancel')}
             >
               <Ban className="size-4" /> Cancel it
             </Button>
-            <Button variant="ghost" onClick={() => setPanel(panel === 'credit' ? 'none' : 'credit')}>
+            <Button
+              className="rounded-full"
+              variant="ghost"
+              onClick={() => setPanel(panel === 'credit' ? 'none' : 'credit')}
+            >
               Credit note
             </Button>
           </>
@@ -298,8 +351,8 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
         times it was actually posted, each one a conversation he can open.
       */}
       {invoice.letters.length > 0 ? (
-        <section className="bg-card rounded-xl border p-4">
-          <h2 className="text-sm font-semibold">Letters sent</h2>
+        <Panel className="p-6">
+          <PanelTitle>Letters sent</PanelTitle>
           <ul className="mt-2 flex flex-col gap-1">
             {invoice.letters.map((letter) => (
               <li key={letter.messageId} className="text-muted-foreground text-sm">
@@ -316,12 +369,14 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
             <Link
               to="/admin/inbox/$personId"
               params={{ personId: invoice.client.leadId }}
+              // The conversation itself, warmed before he reaches it.
+              {...conversation}
               className="text-primary mt-2 inline-block text-sm underline"
             >
               Open the conversation
             </Link>
           ) : null}
-        </section>
+        </Panel>
       ) : null}
 
       {panel === 'cancel' ? (
@@ -330,7 +385,7 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
       {panel === 'credit' ? (
         <CorrectionPanel invoice={invoice} kind="CREDIT_NOTE" onError={setError} />
       ) : null}
-    </div>
+    </AdminPage>
   )
 }
 
@@ -397,7 +452,9 @@ function PaymentForm({
   const [reference, setReference] = useState('')
 
   return (
-    <div className="border-border/70 grid gap-3 rounded-lg border p-3 sm:grid-cols-4">
+    // Carved into the panel rather than raised on it: this belongs to the
+    // payments above it, and a second floating card would say otherwise.
+    <div className="bg-canvas ring-panel-border grid gap-3 rounded-2xl p-4 ring-1 sm:grid-cols-4">
       <div className="flex flex-col gap-1">
         <Label htmlFor="pay-amount" className="text-xs">
           Amount, €
@@ -428,7 +485,7 @@ function PaymentForm({
           id="pay-method"
           value={method}
           onChange={(event) => setMethod(event.target.value as PaymentMethod)}
-          className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+          className={SELECT}
         >
           {PAYMENT_METHODS.map((option) => (
             <option key={option} value={option}>
@@ -451,6 +508,7 @@ function PaymentForm({
 
       <div className="sm:col-span-4">
         <Button
+          className="rounded-full"
           size="sm"
           disabled={add.isPending}
           onClick={() => {
@@ -494,10 +552,10 @@ function CorrectionPanel({
   const cancelling = kind === 'CANCELLATION'
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-rose-500/40 bg-rose-500/5 p-4">
-      <h2 className="text-sm font-semibold">
+    <Panel className="flex flex-col gap-3 border border-rose-500/40 bg-rose-500/5 p-6 ring-0">
+      <PanelTitle>
         {cancelling ? `Cancel ${invoice.number}` : `Credit note against ${invoice.number}`}
-      </h2>
+      </PanelTitle>
       <p className="text-muted-foreground text-sm">
         {cancelling
           ? 'This writes a new, numbered cancellation carrying the same lines, and marks this invoice void. Neither document can be deleted afterwards.'
@@ -533,6 +591,7 @@ function CorrectionPanel({
 
       <div>
         <Button
+          className="rounded-full"
           variant={cancelling ? 'destructive' : 'default'}
           size="sm"
           disabled={correct.isPending || reason.trim() === '' || (!cancelling && !Number(amount))}
@@ -561,6 +620,6 @@ function CorrectionPanel({
           {correct.isPending ? 'Issuing…' : cancelling ? 'Cancel this invoice' : 'Issue the credit note'}
         </Button>
       </div>
-    </section>
+    </Panel>
   )
 }

@@ -12,22 +12,83 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '#/frontend/components/ui/alert-dialog'
-import { Badge } from '#/frontend/components/ui/badge'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelBody, PanelHeader, PanelNote, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { Textarea } from '#/frontend/components/ui/textarea'
 import {
   adminBookingQuery,
+  adminBookingsQuery,
   useCancelBookingAsAdmin,
   useSetBookingStatus,
 } from '#/frontend/features/booking/booking-queries'
+import { toBookingFilterInput } from '#/frontend/features/booking/booking-filters'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { isCallOpen } from '#/shared/types/call.types'
+import { BERLIN, StatusPill, formatOn } from './booking-admin-ui'
 
-const BERLIN = 'Europe/Berlin'
+/**
+ * One call, everything known about it, and the two or three things that can
+ * still be done to it.
+ *
+ * The back link and the title survive the wait now: the page used to replace
+ * itself with the word *Loading booking…*, which meant the way out disappeared
+ * for as long as the request took.
+ */
 
-const format = (instant: string, timeZone: string) =>
-  new Intl.DateTimeFormat('de-DE', { timeZone, dateStyle: 'full', timeStyle: 'short' }).format(
-    new Date(instant),
+/** The way back, kept identical on every page under /admin/bookings. */
+function BackToBookings() {
+  const prefetch = usePrefetch()
+
+  return (
+    <Button asChild variant="ghost" size="sm" className="-ms-2 w-fit rounded-full">
+      <Link to="/admin/bookings" {...prefetch(adminBookingsQuery(toBookingFilterInput({})))}>
+        <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
+        All bookings
+      </Link>
+    </Button>
   )
+}
+
+/**
+ * The real blocks at their real heights: a panel of paired label/value rows,
+ * then the note panel, then the row of actions.
+ */
+function DetailSkeleton() {
+  return (
+    <SkeletonScreen className="contents" label="Loading booking">
+      {/* The pairs are drawn at the real line heights — a `dt` is 16px and a
+          `dd` 20px with a 4px gap — so the panel is the height it will be
+          rather than a shorter one that grows when the call arrives. */}
+      <Panel>
+        <PanelBody className="grid gap-5 px-6 pt-6 sm:grid-cols-2">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div className="flex flex-col gap-1" key={index}>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-48" />
+            </div>
+          ))}
+        </PanelBody>
+      </Panel>
+
+      <Panel>
+        <PanelHeader>
+          <Skeleton className="h-4 w-32" />
+        </PanelHeader>
+        <PanelBody className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </PanelBody>
+      </Panel>
+
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-8 w-36 rounded-full" />
+        <Skeleton className="h-8 w-40 rounded-full" />
+      </div>
+    </SkeletonScreen>
+  )
+}
 
 export function BookingDetailPage({ id }: { id: string }) {
   const booking = useQuery(adminBookingQuery(id))
@@ -38,14 +99,34 @@ export function BookingDetailPage({ id }: { id: string }) {
   const [reason, setReason] = useState('')
 
   if (booking.isPending) {
-    return <p className="text-muted-foreground py-12 text-center text-sm">Loading booking…</p>
+    return (
+      <AdminPage width="narrow">
+        <PageHeader
+          back={<BackToBookings />}
+          title={
+            <>
+              {/* The heading keeps a name for a screen reader while the real
+                  one is still on its way. */}
+              <span className="sr-only">Loading booking</span>
+              <Skeleton aria-hidden="true" className="h-7 w-56" />
+            </>
+          }
+        />
+        <DetailSkeleton />
+      </AdminPage>
+    )
   }
 
   if (booking.isError) {
     return (
-      <div className="border-destructive/40 bg-destructive/5 mx-auto max-w-3xl rounded-lg border p-6">
-        <p className="text-destructive text-sm">{(booking.error as Error).message}</p>
-      </div>
+      <AdminPage width="narrow">
+        <PageHeader back={<BackToBookings />} title="Booking" />
+        <Panel>
+          <PanelNote tone="error">
+            <p>{(booking.error as Error).message}</p>
+          </PanelNote>
+        </Panel>
+      </AdminPage>
     )
   }
 
@@ -54,74 +135,72 @@ export function BookingDetailPage({ id }: { id: string }) {
   const isOpen = detail.status === 'CONFIRMED'
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="/admin/bookings">
-          <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
-          All bookings
-        </Link>
-      </Button>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{detail.visitorName}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+    <AdminPage width="narrow">
+      <PageHeader
+        back={<BackToBookings />}
+        title={detail.visitorName}
+        description={
+          <>
             {detail.bookingTypeName} · <span className="tabular">{detail.reference}</span>
-          </p>
-        </div>
-        <Badge variant="outline" className="rounded-full">
-          {detail.status}
-        </Badge>
-      </div>
+          </>
+        }
+        actions={<StatusPill className="px-3 py-1 text-xs" status={detail.status} />}
+      />
 
-      <dl className="border-border grid gap-5 rounded-lg border p-6 sm:grid-cols-2">
-        <Row label="When (Berlin)" value={format(detail.startsAt, BERLIN)} />
-        <Row
-          label={`When (${detail.visitorTimezone})`}
-          value={format(detail.startsAt, detail.visitorTimezone)}
-        />
-        <Row label="Email" value={detail.visitorEmail} ltr />
-        <Row label="Phone" value={detail.visitorPhone ?? '—'} ltr />
-        <Row label="Language" value={detail.language.toUpperCase()} />
-        {/* On the lead, not on the booking: it belongs to the person, and a
-            second booking from the same address finds it again. */}
-        {detail.lead?.company ? <Row label="Company" value={detail.lead.company} /> : null}
-        {detail.lead?.serviceInterest ? (
-          <Row label="About" value={detail.lead.serviceInterest} />
-        ) : null}
-        {detail.lead?.budgetBand ? <Row label="Budget" value={detail.lead.budgetBand} /> : null}
-        {detail.lead?.timeline ? <Row label="Timeline" value={detail.lead.timeline} /> : null}
-        <Row
-          label="Held from — to (with buffers)"
-          value={`${format(detail.blockedStartsAt, BERLIN)} — ${format(detail.blockedEndsAt, BERLIN)}`}
-        />
-        {detail.rescheduledFromReference ? (
-          <Row label="Moved from" value={detail.rescheduledFromReference} />
-        ) : null}
-        {detail.cancelledAt ? (
+      <Panel>
+        <dl className="grid gap-5 p-6 sm:grid-cols-2">
+          <Row label="When (Berlin)" value={formatOn(detail.startsAt, BERLIN)} />
           <Row
-            label={`Cancelled by ${detail.cancelledBy?.toLowerCase() ?? '—'}`}
-            value={`${format(detail.cancelledAt, BERLIN)}${detail.cancellationReason ? ` · ${detail.cancellationReason}` : ''}`}
+            label={`When (${detail.visitorTimezone})`}
+            value={formatOn(detail.startsAt, detail.visitorTimezone)}
           />
-        ) : null}
-      </dl>
+          <Row label="Email" value={detail.visitorEmail} ltr />
+          <Row label="Phone" value={detail.visitorPhone ?? '—'} ltr />
+          <Row label="Language" value={detail.language.toUpperCase()} />
+          {/* On the lead, not on the booking: it belongs to the person, and a
+              second booking from the same address finds it again. */}
+          {detail.lead?.company ? <Row label="Company" value={detail.lead.company} /> : null}
+          {detail.lead?.serviceInterest ? (
+            <Row label="About" value={detail.lead.serviceInterest} />
+          ) : null}
+          {detail.lead?.budgetBand ? <Row label="Budget" value={detail.lead.budgetBand} /> : null}
+          {detail.lead?.timeline ? <Row label="Timeline" value={detail.lead.timeline} /> : null}
+          <Row
+            label="Held from — to (with buffers)"
+            value={`${formatOn(detail.blockedStartsAt, BERLIN)} — ${formatOn(detail.blockedEndsAt, BERLIN)}`}
+          />
+          {detail.rescheduledFromReference ? (
+            <Row label="Moved from" value={detail.rescheduledFromReference} />
+          ) : null}
+          {detail.cancelledAt ? (
+            <Row
+              label={`Cancelled by ${detail.cancelledBy?.toLowerCase() ?? '—'}`}
+              value={`${formatOn(detail.cancelledAt, BERLIN)}${detail.cancellationReason ? ` · ${detail.cancellationReason}` : ''}`}
+            />
+          ) : null}
+        </dl>
+      </Panel>
 
-      <div className="border-border flex flex-col gap-2 rounded-lg border p-6">
-        <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
-          What it is about
-        </p>
-        {detail.visitorNote ? (
-          <p className="text-sm leading-7 whitespace-pre-wrap">{detail.visitorNote}</p>
-        ) : (
-          <p className="text-muted-foreground text-sm">Nothing was written.</p>
-        )}
-      </div>
+      <Panel>
+        <PanelHeader>
+          <PanelTitle className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
+            What it is about
+          </PanelTitle>
+        </PanelHeader>
+        <PanelBody>
+          {detail.visitorNote ? (
+            <p className="text-sm leading-7 whitespace-pre-wrap">{detail.visitorNote}</p>
+          ) : (
+            <p className="text-muted-foreground text-sm">Nothing was written.</p>
+          )}
+        </PanelBody>
+      </Panel>
 
       <div className="flex flex-wrap gap-2">
         {/* Only while the room exists. A call button on a booking three weeks
             out is a button whose only outcome is an error message. */}
         {isCallOpen(detail) ? (
-          <Button asChild>
+          <Button asChild className="rounded-full">
             <Link to="/admin/bookings/$id/room" params={{ id: detail.id }}>
               <Video aria-hidden="true" />
               Join the call
@@ -134,6 +213,7 @@ export function BookingDetailPage({ id }: { id: string }) {
             <Button
               type="button"
               variant="outline"
+              className="rounded-full"
               disabled={setStatus.isPending}
               onClick={() => setStatus.mutate({ status: 'COMPLETED' })}
             >
@@ -143,6 +223,7 @@ export function BookingDetailPage({ id }: { id: string }) {
             <Button
               type="button"
               variant="outline"
+              className="rounded-full"
               disabled={setStatus.isPending}
               onClick={() => setStatus.mutate({ status: 'NO_SHOW' })}
             >
@@ -153,7 +234,12 @@ export function BookingDetailPage({ id }: { id: string }) {
         ) : null}
 
         {isOpen && !isPast ? (
-          <Button type="button" variant="outline" onClick={() => setIsCancelOpen(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full"
+            onClick={() => setIsCancelOpen(true)}
+          >
             <CalendarX aria-hidden="true" />
             Cancel and tell them
           </Button>
@@ -186,16 +272,14 @@ export function BookingDetailPage({ id }: { id: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() =>
-                cancel.mutate({ reason }, { onSuccess: () => setIsCancelOpen(false) })
-              }
+              onClick={() => cancel.mutate({ reason }, { onSuccess: () => setIsCancelOpen(false) })}
             >
               {cancel.isPending ? 'Cancelling…' : 'Cancel booking'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminPage>
   )
 }
 

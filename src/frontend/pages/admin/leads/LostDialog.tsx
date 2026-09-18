@@ -69,7 +69,7 @@ export function LostDialog({
               onClick={() => setReason(value)}
               aria-pressed={reason === value}
               className={cn(
-                'border-border rounded-lg border px-3 py-2 text-start text-sm transition-colors',
+                'border-border focus-visible:ring-ring rounded-xl border px-3 py-2 text-start text-sm motion-safe:transition-colors focus-visible:ring-2 focus-visible:outline-none',
                 reason === value
                   ? 'border-primary bg-primary/10 font-medium'
                   : 'hover:border-foreground/25',
@@ -97,7 +97,7 @@ export function LostDialog({
             type="button"
             disabled={reason === null || pending}
             onClick={() => reason && onConfirm(reason, note)}
-            className="bg-destructive text-destructive-foreground h-9 rounded-md px-4 text-sm font-medium disabled:opacity-50"
+            className="bg-destructive text-destructive-foreground focus-visible:ring-ring h-9 rounded-md px-4 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
           >
             {pending ? 'Marking…' : 'Mark as lost'}
           </button>

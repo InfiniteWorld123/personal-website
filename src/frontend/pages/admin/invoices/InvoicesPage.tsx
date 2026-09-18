@@ -71,7 +71,7 @@ function Figures({ summary }: { summary: InvoiceSummary }) {
   return (
     <section aria-label="Figures" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
-        className="sm:col-span-2 xl:row-span-2 xl:justify-center"
+        className="sm:col-span-2 xl:row-span-2"
         foot="By the day it reached the bank"
         label={`Arrived in ${monthName(summary.month)}`}
         tone="brand"

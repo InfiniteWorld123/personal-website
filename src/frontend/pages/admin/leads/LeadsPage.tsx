@@ -2,9 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Columns3, Search, Users } from 'lucide-react'
+import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
+import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
+import { StatCard, StatCardSkeleton } from '#/frontend/components/admin/StatCard'
 import { Input } from '#/frontend/components/ui/input'
 import { Button } from '#/frontend/components/ui/button'
+import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { avatarHue, initialsOf, timeAgo } from '#/frontend/features/inbox/inbox-format'
+import { inboxQuery } from '#/frontend/features/inbox/inbox-queries'
 import {
   DUE_CLASS,
   STAGE_CLASS,
@@ -12,7 +17,8 @@ import {
   dueTone,
   money,
 } from '#/frontend/features/leads/lead-format'
-import { leadsQuery } from '#/frontend/features/leads/lead-queries'
+import { boardQuery, leadFileQuery, leadsQuery } from '#/frontend/features/leads/lead-queries'
+import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
 import type { LeadRow, LeadSummary } from '#/shared/types/lead.types'
 import {
@@ -34,6 +40,11 @@ import {
  * and "later" are different kinds of thing rather than different values of the
  * same thing — and the fourth group, people who wrote but have no deal, is the
  * consequence of his own answer that everyone who writes or books belongs here.
+ *
+ * Each group is now one panel with flush rows rather than a stack of separate
+ * little cards: the heading names the group on the canvas, and the single
+ * surface beneath it *is* the group. Twenty floating cards said nothing about
+ * which of them belonged together.
  */
 
 type StageFilter = DealStage | 'ALL' | 'NONE'
@@ -55,6 +66,7 @@ const STAGE_FILTERS: Array<{ value: StageFilter; label: string }> = [
 ]
 
 export function LeadsPage() {
+  const prefetch = usePrefetch()
   const [search, setSearch] = useState('')
   const [stage, setStage] = useState<StageFilter>('ALL')
 
@@ -88,11 +100,26 @@ export function LeadsPage() {
   ].filter((group) => group.rows.length > 0)
 
   return (
-    <div className="flex w-full flex-col gap-5">
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
+    <AdminPage>
+      <PageHeader
+        title="Leads"
+        description="Everyone who has written or booked, grouped by what you owe them next."
+        actions={
+          <Button asChild className="rounded-full" size="sm" variant="outline">
+            {/* The board reads the same deals through its own query, so the
+                hover pays for the columns before the click asks for them. */}
+            <Link to="/admin/leads/board" {...prefetch(boardQuery())}>
+              <Columns3 aria-hidden="true" />
+              Board
+            </Link>
+          </Button>
+        }
+      />
 
-        <div className="relative ms-auto w-full max-w-xs">
+      {list.isPending ? <NumbersSkeleton /> : list.data ? <Numbers summary={list.data.summary} /> : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full max-w-xs">
           <Search
             aria-hidden="true"
             className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
@@ -101,7 +128,7 @@ export function LeadsPage() {
             value={search}
             onChange={(event) => setSearch(event.currentTarget.value)}
             placeholder="Name, company, a deal"
-            className="ps-9"
+            className="bg-panel ps-9"
             aria-label="Search people and deals"
           />
         </div>
@@ -110,7 +137,7 @@ export function LeadsPage() {
           value={stage}
           onChange={(event) => setStage(event.currentTarget.value as StageFilter)}
           aria-label="Filter by stage"
-          className="border-border bg-background h-9 rounded-md border px-2 text-sm"
+          className="border-border bg-panel focus-visible:ring-ring h-9 rounded-full border px-3 text-sm focus-visible:ring-2 focus-visible:outline-none"
         >
           {STAGE_FILTERS.map((filter) => (
             <option key={filter.value} value={filter.value}>
@@ -118,19 +145,30 @@ export function LeadsPage() {
             </option>
           ))}
         </select>
-
-        <Button asChild size="sm" variant="outline">
-          <Link to="/admin/leads/board">
-            <Columns3 aria-hidden="true" />
-            Board
-          </Link>
-        </Button>
-      </header>
-
-      {list.data ? <Numbers summary={list.data.summary} /> : null}
+      </div>
 
       {list.isPending ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <GroupsSkeleton />
+      ) : list.isError ? (
+        /*
+          Said, rather than shown as an empty list.
+          A failed request used to fall straight through to the empty panel, so
+          a section that was merely down told him nobody had ever written to
+          him — which is the one lie a list of people must never tell.
+        */
+        <Panel>
+          <PanelNote tone="error">
+            <div>
+              <p className="font-medium">The people could not be loaded.</p>
+              <p className="text-muted-foreground mt-1">
+                {list.error instanceof Error ? list.error.message : 'Something went wrong.'}
+              </p>
+            </div>
+            <Button onClick={() => void list.refetch()} size="sm" variant="outline">
+              Try again
+            </Button>
+          </PanelNote>
+        </Panel>
       ) : groups.length === 0 ? (
         <Empty search={search} stage={stage} />
       ) : (
@@ -139,7 +177,7 @@ export function LeadsPage() {
             <section key={group.key} className="flex flex-col gap-2">
               <h2
                 className={cn(
-                  'flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase',
+                  'flex items-center gap-2 px-1 text-[11px] font-semibold tracking-widest uppercase',
                   group.tone === 'late' ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground',
                 )}
               >
@@ -149,18 +187,25 @@ export function LeadsPage() {
                 </span>
               </h2>
 
-              <ul className="flex flex-col gap-2">
-                {group.rows.map((row) => (
-                  <li key={row.id}>
-                    <Row row={row} />
-                  </li>
-                ))}
-              </ul>
+              <Panel className="overflow-hidden">
+                <ul>
+                  {/* The rule lives on the `li`, not on the link inside it: a
+                      link that is the only child of its item is always
+                      `:last-child`, so `last:border-b-0` on the link would
+                      quietly erase every separator in the group rather than
+                      the final one. */}
+                  {group.rows.map((row) => (
+                    <li className="border-border/60 border-b last:border-b-0" key={row.id}>
+                      <Row row={row} />
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
             </section>
           ))}
         </div>
       )}
-    </div>
+    </AdminPage>
   )
 }
 
@@ -172,78 +217,125 @@ export function LeadsPage() {
  * subscription does not. Their captions say which is which in words, because
  * the whole reason the last system was deleted is that a number on a screen
  * meant something other than what he read into it.
+ *
+ * One card carries the brand fill, and it is the monthly one: the instalment
+ * ends, the subscription does not, and that is the figure this whole section
+ * exists to grow. The other three qualify it.
  */
+
+/**
+ * Two columns on a phone means half of 375px per card, and `1.490 €` set in
+ * the serif at 2.6rem does not fit in it — so the figure steps down until
+ * there is room for it. `tabular` is already on the card; this only touches
+ * the size, and only below `sm`.
+ */
+const FIGURE = 'text-[1.6rem] sm:text-[2.6rem]'
+
+/** The card's own padding is generous for a desk and too wide for a phone. */
+const TILE = 'p-4 sm:p-6'
+
 function Numbers({ summary }: { summary: LeadSummary }) {
   return (
     // Two columns even on a phone: four stacked tiles filled his whole screen
     // and pushed the list — the thing he came for — below the fold.
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      <Tile
+    <section aria-label="Figures" className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <StatCard
+        className={TILE}
         label="Open deals"
-        value={String(summary.openDeals)}
-        note={`across ${summary.openPeople} ${summary.openPeople === 1 ? 'person' : 'people'}`}
+        value={<span className={FIGURE}>{summary.openDeals}</span>}
+        foot={`across ${summary.openPeople} ${summary.openPeople === 1 ? 'person' : 'people'}`}
       />
-      <Tile
+      <StatCard
+        className={TILE}
         label="Build value, open"
-        value={money(summary.openBuildCents)}
-        note="possible — not money you have"
+        value={<span className={FIGURE}>{money(summary.openBuildCents)}</span>}
+        foot="possible — not money you have"
       />
-      <Tile
+      <StatCard
+        className={TILE}
         label="Monthly, confirmed"
-        value={money(summary.confirmedMonthlyCents)}
-        note="from won deals only"
-        strong
+        value={<span className={FIGURE}>{money(summary.confirmedMonthlyCents)}</span>}
+        foot="from won deals only"
+        tone="brand"
       />
-      <Tile
+      <StatCard
+        className={TILE}
         label="Won / lost"
-        value={`${summary.won} / ${summary.lost}`}
-        note={
+        value={
+          <span className={FIGURE}>
+            {summary.won} / {summary.lost}
+          </span>
+        }
+        foot={
           summary.topLostReason
             ? `most often: ${LOST_REASON_LABEL[summary.topLostReason].toLowerCase()}`
             : 'nothing lost yet'
         }
       />
-    </div>
+    </section>
   )
 }
 
-function Tile({
-  label,
-  value,
-  note,
-  strong,
-}: {
-  label: string
-  value: string
-  note: string
-  strong?: boolean
-}) {
+/** Four boxes at the size the four figures will be. Nothing moves on arrival. */
+function NumbersSkeleton() {
   return (
-    <div className="border-border bg-card rounded-xl border p-3">
-      <p className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
-        {label}
-      </p>
-      <p
-        className={cn(
-          'mt-1 text-xl font-semibold tabular-nums',
-          strong && 'text-emerald-600 dark:text-emerald-400',
-        )}
-      >
-        {value}
-      </p>
-      <p className="text-muted-foreground mt-0.5 text-[11px]">{note}</p>
-    </div>
+    <SkeletonScreen className="grid grid-cols-2 gap-4 xl:grid-cols-4" label="Loading the figures">
+      <StatCardSkeleton className={TILE} />
+      <StatCardSkeleton className={TILE} />
+      <StatCardSkeleton className={TILE} />
+      <StatCardSkeleton className={TILE} />
+    </SkeletonScreen>
+  )
+}
+
+/**
+ * The grouped list, not yet arrived.
+ *
+ * Two headed panels rather than one long one, because that is the shape the
+ * list nearly always has: something is due, and something is not.
+ */
+function GroupsSkeleton() {
+  return (
+    <SkeletonScreen className="flex flex-col gap-6" label="Loading the people">
+      {[3, 3].map((count, group) => (
+        <div className="flex flex-col gap-2" key={group}>
+          <Skeleton className="ms-1 h-3 w-28" />
+
+          <Panel className="overflow-hidden">
+            {Array.from({ length: count }, (_, index) => (
+              <div
+                className="border-border/60 flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0"
+                key={index}
+              >
+                <Skeleton className="size-9 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1">
+                  <Skeleton className="h-3.5 w-36" />
+                  <Skeleton className="mt-2 h-3 w-52" />
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            ))}
+          </Panel>
+        </div>
+      ))}
+    </SkeletonScreen>
   )
 }
 
 function Row({ row }: { row: LeadRow }) {
+  const prefetch = usePrefetch()
   const tone = dueTone(row.followUpOn)
 
   return (
     <Link
       to="/admin/leads/$personId"
       params={{ personId: row.id }}
-      className="border-border bg-card hover:border-foreground/20 flex items-center gap-3 rounded-xl border p-3 transition-colors"
+      // The file this row opens, fetched while the pointer is still on it.
+      {...prefetch(leadFileQuery(row.id))}
+      className="hover:bg-accent/50 focus-visible:ring-ring flex items-center gap-3 px-5 py-3.5 motion-safe:transition-colors focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none"
     >
       <span
         aria-hidden="true"
@@ -271,7 +363,7 @@ function Row({ row }: { row: LeadRow }) {
         ) : null}
       </span>
 
-      <span className="flex shrink-0 flex-col items-end gap-1 text-right">
+      <span className="flex shrink-0 flex-col items-end gap-1 text-end">
         {row.headline ? (
           <span
             className={cn(
@@ -314,30 +406,41 @@ function Row({ row }: { row: LeadRow }) {
 
 /** An empty list says which kind of empty it is — the three call for different moves. */
 function Empty({ search, stage }: { search: string; stage: StageFilter }) {
+  const prefetch = usePrefetch()
+
   if (search !== '') {
     return (
-      <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-xl border border-dashed p-10 text-center">
-        <Search aria-hidden="true" className="size-7 opacity-40" />
-        <p className="text-sm">Nothing matches “{search}”.</p>
-      </div>
+      <Panel>
+        <PanelNote>
+          <Search aria-hidden="true" className="size-7 opacity-40" />
+          <p className="text-sm">Nothing matches “{search}”.</p>
+        </PanelNote>
+      </Panel>
     )
   }
 
   return (
-    <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-xl border border-dashed p-10 text-center">
-      <Users aria-hidden="true" className="size-7 opacity-40" />
-      <p className="text-sm">
-        {stage === 'ALL'
-          ? 'Nobody has written or booked yet.'
-          : stage === 'NONE'
-            ? 'Everyone here has a deal.'
-            : `No deal is at ${STAGE_LABEL[stage as DealStage].toLowerCase()}.`}
-      </p>
-      {stage === 'ALL' ? (
-        <Link to="/admin/inbox" className="text-primary text-sm font-medium hover:underline">
-          Open the inbox
-        </Link>
-      ) : null}
-    </div>
+    <Panel>
+      <PanelNote>
+        <Users aria-hidden="true" className="size-7 opacity-40" />
+        <p className="text-sm">
+          {stage === 'ALL'
+            ? 'Nobody has written or booked yet.'
+            : stage === 'NONE'
+              ? 'Everyone here has a deal.'
+              : `No deal is at ${STAGE_LABEL[stage as DealStage].toLowerCase()}.`}
+        </p>
+        {stage === 'ALL' ? (
+          <Link
+            to="/admin/inbox"
+            // The inbox opens on its own default lens with no search.
+            {...prefetch(inboxQuery('inbox', ''))}
+            className="text-primary text-sm font-medium hover:underline"
+          >
+            Open the inbox
+          </Link>
+        ) : null}
+      </PanelNote>
+    </Panel>
   )
 }

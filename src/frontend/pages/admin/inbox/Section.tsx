@@ -26,16 +26,19 @@ export function Section({
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <section className="border-border border-b last:border-b-0">
+    <section className="border-border/60 border-b last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-start transition-colors"
+        className="hover:bg-accent/50 focus-visible:ring-ring flex w-full items-center gap-2 px-4 py-3 text-start motion-safe:transition-colors focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none"
       >
         <ChevronRight
           aria-hidden="true"
-          className={cn('text-muted-foreground size-4 transition-transform', open && 'rotate-90')}
+          className={cn(
+            'text-muted-foreground size-4 motion-safe:transition-transform',
+            open && 'rotate-90',
+          )}
         />
         <span className="text-sm font-semibold">{title}</span>
         <span className="text-muted-foreground text-xs tabular-nums">{count}</span>

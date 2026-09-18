@@ -80,11 +80,17 @@ export function StatCard({
         ) : null}
       </div>
 
-      <p className="font-heading mt-6 text-[2.6rem] leading-none font-semibold tracking-tight tabular-nums">
-        {value}
-      </p>
+      {/* `mt-auto` is what makes a tall tile read as one composition rather
+          than as a short card with dead space under it: the label stays at the
+          top, the figure sits on the floor of whatever height the grid gives
+          this card. In a one-row tile the margin below does the same job. */}
+      <div className="mt-auto pt-6">
+        <p className="font-heading text-[2.6rem] leading-none font-semibold tracking-tight tabular-nums">
+          {value}
+        </p>
 
-      {foot ? <p className={cn('mt-2 text-xs', FOOT[tone])}>{foot}</p> : null}
+        {foot ? <p className={cn('mt-2 text-xs', FOOT[tone])}>{foot}</p> : null}
+      </div>
     </>
   )
 
