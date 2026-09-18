@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CalendarClock, CalendarPlus, Clock3, Settings2 } from 'lucide-react'
+import { CalendarClock, CalendarPlus, Clock3, Settings2, Video } from 'lucide-react'
 import { Badge } from '#/frontend/components/ui/badge'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
@@ -23,6 +23,7 @@ import {
   BOOKING_STATUS_FILTERS,
 } from '#/shared/validation/booking.validation'
 import { cn } from '#/frontend/lib/utils'
+import { isCallOpen } from '#/shared/types/call.types'
 
 /** Every time in the admin is read on the owner's own clock. */
 const BERLIN = 'Europe/Berlin'
@@ -161,6 +162,9 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
               <TableHead>Call</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-end">Reference</TableHead>
+              {/* No heading: the column is empty on every row but the one or
+                  two whose call is happening right now. */}
+              <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -193,6 +197,19 @@ export function BookingsPage({ search }: { search: BookingSearch }) {
                 </TableCell>
                 <TableCell className="tabular text-muted-foreground text-end text-xs">
                   {booking.reference}
+                </TableCell>
+                <TableCell className="text-end">
+                  {/* Only while the room exists — which for any given call is
+                      about an hour and a half of the week. The rest of the
+                      time this cell is deliberately empty. */}
+                  {isCallOpen(booking) ? (
+                    <Button asChild size="sm" className="whitespace-nowrap">
+                      <Link to="/admin/bookings/$id/room" params={{ id: booking.id }}>
+                        <Video aria-hidden="true" />
+                        Join
+                      </Link>
+                    </Button>
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}

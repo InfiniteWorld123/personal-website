@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { ArrowLeft, CalendarCheck, CalendarClock, CalendarX, Check } from 'lucide-react'
+import { ArrowLeft, CalendarCheck, CalendarClock, CalendarX, Check, Video } from 'lucide-react'
 import { ApiRequestError } from '#/frontend/api/response'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow } from '#/frontend/components/layout/public/Section'
@@ -11,6 +11,7 @@ import { Textarea } from '#/frontend/components/ui/textarea'
 import { BookingCalendar } from '#/frontend/features/booking/BookingCalendar'
 import { SlotPicker } from '#/frontend/features/booking/SlotPicker'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
+import { callCopy } from '#/frontend/features/call/call-copy'
 import {
   bookingQuery,
   slotsQuery,
@@ -26,6 +27,7 @@ import {
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 import type { PublicBooking } from '#/shared/types/booking.types'
+import { isCallOpen } from '#/shared/types/call.types'
 
 /** The email link's token authorises this page; the reference alone proves nothing. */
 export function BookingManagePage({ reference, token }: { reference: string; token: string }) {
@@ -87,6 +89,32 @@ export function BookingManagePage({ reference, token }: { reference: string; tok
               />
               <Detail label={copy.manage.status} value={copy.status[status ?? 'CONFIRMED']} />
             </dl>
+
+            {/* The way in, while there is a way in. It sits above cancelling
+                and moving because for the fifteen minutes it is here, it is
+                the only thing on this page anyone came for. */}
+            {isCallOpen(booking.data) ? (
+              <div className="border-border flex flex-col items-start gap-3 border-t pt-6">
+                <p className="text-foreground text-base font-semibold">
+                  {callCopy[language].ready.heading}
+                </p>
+                <p className="text-foreground/58 text-sm leading-7">
+                  {callCopy[language].ready.body}
+                </p>
+                <Button asChild className="rounded-full">
+                  <Link
+                    to="/$lang/booking/room/$reference"
+                    params={{ lang: language, reference: booking.data.reference }}
+                    // The token never reaches the router's search params: it
+                    // travels in the fragment, exactly as it arrived.
+                    hash={`token=${encodeURIComponent(token)}`}
+                  >
+                    <Video aria-hidden="true" className="size-4" />
+                    {callCopy[language].lobby.join}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
 
             {status === 'CANCELLED' ? (
               <div className="flex flex-col items-start gap-4">

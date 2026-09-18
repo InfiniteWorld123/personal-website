@@ -36,7 +36,10 @@ const noStorePath = (pathname: string): boolean =>
   pathname.startsWith('/admin') ||
   pathname.startsWith('/api/admin') ||
   pathname.startsWith('/api/auth') ||
-  pathname.includes('/booking/manage/')
+  pathname.includes('/booking/manage/') ||
+  // The call room renders the same private booking it is opened by, and is
+  // reached with a live token. Cached, it outlives the call.
+  pathname.includes('/booking/room/')
 
 export const validateMutationRequest = (
   request: Request,

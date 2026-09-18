@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ArrowLeft, CalendarX, Check, UserX } from 'lucide-react'
+import { ArrowLeft, CalendarX, Check, UserX, Video } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,7 @@ import {
   useCancelBookingAsAdmin,
   useSetBookingStatus,
 } from '#/frontend/features/booking/booking-queries'
+import { isCallOpen } from '#/shared/types/call.types'
 
 const BERLIN = 'Europe/Berlin'
 
@@ -117,6 +118,17 @@ export function BookingDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {/* Only while the room exists. A call button on a booking three weeks
+            out is a button whose only outcome is an error message. */}
+        {isCallOpen(detail) ? (
+          <Button asChild>
+            <Link to="/admin/bookings/$id/room" params={{ id: detail.id }}>
+              <Video aria-hidden="true" />
+              Join the call
+            </Link>
+          </Button>
+        ) : null}
+
         {isOpen && isPast ? (
           <>
             <Button

@@ -69,6 +69,31 @@ export const env = {
    * one leaked secret must not also hand out sessions.
    */
   PREVIEW_TOKEN_SECRET: getOptionalEnvVar('PREVIEW_TOKEN_SECRET'),
+
+  /**
+   * The video call held inside a booking (D33).
+   *
+   * `CALL_ROOM_SECRET` is shared with `workers/call-room`: this side signs the
+   * two-minute ticket, that side verifies it. A third secret rather than a
+   * reused one, for the reason the preview secret is its own — a leak here
+   * must buy a room, never a session.
+   *
+   * `CALL_ROOM_URL` is where that Worker answers, e.g.
+   * `wss://yamanwarda-call-room.<subdomain>.workers.dev`. It is read on the
+   * server and handed to the browser inside the call details, so no Worker
+   * address is baked into the client bundle.
+   *
+   * `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` buy the relay that carries the
+   * tenth of calls which cannot connect directly. Without them a call still
+   * connects for most people over STUN alone.
+   *
+   * All four optional: absent, the room refuses politely and every other part
+   * of booking works exactly as before.
+   */
+  CALL_ROOM_SECRET: getOptionalEnvVar('CALL_ROOM_SECRET'),
+  CALL_ROOM_URL: getOptionalEnvVar('CALL_ROOM_URL'),
+  TURN_KEY_ID: getOptionalEnvVar('TURN_KEY_ID'),
+  TURN_KEY_API_TOKEN: getOptionalEnvVar('TURN_KEY_API_TOKEN'),
 } as const
 
 export type EnvVariables = typeof env

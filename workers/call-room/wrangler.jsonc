@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yamanwarda-call-room",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-18",
+
+  // The site is served from yamanwarda.de and must not be reachable at a
+  // second, crawlable address — but this Worker serves no pages. It answers
+  // one WebSocket path, so its `workers.dev` address is the address, and the
+  // site is told about it through CALL_ROOM_URL rather than guessing.
+  //
+  // Give it `call.yamanwarda.de` as a custom domain later if the URL in the
+  // browser's network tab should carry his name. Nothing in the code depends
+  // on which of the two it is.
+  "workers_dev": true,
+
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  },
+
+  // The room itself. A Durable Object rather than a plain Worker because two
+  // browsers have to reach the *same* instance to be introduced to each other,
+  // and a Worker gives no such guarantee — each request may land anywhere.
+  //
+  // SQLite-backed, which is what the Workers free plan allows and what new
+  // classes should be regardless. The room stores nothing: the backend is
+  // simply the storage engine the class is created with.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "CallRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["CallRoom"] }]
+
+  // The only secret, shared with the site, set once with:
+  //   bunx wrangler secret put CALL_ROOM_SECRET --config workers/call-room/wrangler.jsonc
+  // A ticket signed with a different key is refused, so a mismatch here is a
+  // room nobody can enter rather than a room anybody can.
+}

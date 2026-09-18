@@ -839,3 +839,37 @@ clears the stamp, because by then he has seen it.
 
 The automation is exactly what was asked for. The stamp is the price of being
 able to trust it.
+
+### D33
+
+**The call happens on this site, and nothing else real-time does.**
+
+*18 Sep 2026.*
+
+`AGENTS.md` ruled out "real-time chat, notifications infrastructure" and
+"client portals, customer logins". A video call held on the site touches the
+first of those, so the boundary is amended here rather than quietly ignored.
+
+What is now in scope: a one-to-one video call between the owner and the person
+who booked it, for the length of that booking. Nothing more. The call has no
+history, writes no messages to the database, and survives no longer than the
+window around the meeting. Text typed during a call lives in the call and dies
+with it — it is not an inbox, and it is not a chat product.
+
+What stays out, unchanged: a chat widget on the public site, a chat anyone can
+open outside a booked call, presence or read receipts, push notifications, and
+any second user account. The visitor still has no login. The door is the manage
+link that already carries cancel and reschedule (D-era B5): a 32-byte token in
+the URL fragment, never sent to the server, that the site trades for a
+two-minute ticket to one room.
+
+The alternative was an embedded third party — Zoom, Jitsi, Whereby. Rejected:
+it puts another company's name and another company's consent banner inside a
+German business site, for a feature that WebRTC gives directly. Cloudflare's
+TURN service covers the tenth of calls that cannot connect peer-to-peer, at
+1,000 GB a month free — roughly two thousand half-hour calls, against the
+twenty this site will actually hold.
+
+The signalling lives in its own Worker (`workers/call-room/`), for the reason
+the inbound-email Worker does: Nitro generates the site's Worker entry, and a
+Durable Object class has to be exported from one written by hand.

@@ -59,6 +59,8 @@ import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projec
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
 import { Route as LangBookingManageReferenceRouteImport } from './../routes/$lang.booking.manage.$reference'
+import { Route as LangBookingRoomReferenceRouteImport } from './../routes/$lang.booking.room.$reference'
+import { Route as AdminBookingsIdRoomRouteImport } from './../routes/admin.bookings.$id_.room'
 import { Route as AdminBookingsTypesIndexRouteImport } from './../routes/admin.bookings.types.index'
 import { Route as AdminBookingsTypesIdRouteImport } from './../routes/admin.bookings.types.$id'
 import { Route as AdminBookingsTypesNewRouteImport } from './../routes/admin.bookings.types.new'
@@ -315,6 +317,17 @@ const LangBookingManageReferenceRoute =
     path: '/booking/manage/$reference',
     getParentRoute: () => LangRoute,
   } as any)
+const LangBookingRoomReferenceRoute =
+  LangBookingRoomReferenceRouteImport.update({
+    id: '/booking/room/$reference',
+    path: '/booking/room/$reference',
+    getParentRoute: () => LangRoute,
+  } as any)
+const AdminBookingsIdRoomRoute = AdminBookingsIdRoomRouteImport.update({
+  id: '/bookings/$id_/room',
+  path: '/bookings/$id/room',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBookingsTypesIndexRoute = AdminBookingsTypesIndexRouteImport.update({
   id: '/bookings/types/',
   path: '/bookings/types/',
@@ -382,6 +395,8 @@ export interface FileRoutesByFullPath {
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
+  '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
@@ -435,6 +450,8 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
+  '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/admin/bookings/types': typeof AdminBookingsTypesIndexRoute
@@ -491,6 +508,8 @@ export interface FileRoutesById {
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
+  '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
+  '/admin/bookings/$id_/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
@@ -548,6 +567,8 @@ export interface FileRouteTypes {
     | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
+    | '/$lang/booking/room/$reference'
+    | '/admin/bookings/$id/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/admin/bookings/types/'
@@ -601,6 +622,8 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/projects'
     | '/$lang/booking/manage/$reference'
+    | '/$lang/booking/room/$reference'
+    | '/admin/bookings/$id/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/admin/bookings/types'
@@ -656,6 +679,8 @@ export interface FileRouteTypes {
     | '/admin/leads/'
     | '/admin/projects/'
     | '/$lang/booking/manage/$reference'
+    | '/$lang/booking/room/$reference'
+    | '/admin/bookings/$id_/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/admin/bookings/types/'
@@ -1027,6 +1052,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangBookingManageReferenceRouteImport
       parentRoute: typeof LangRoute
     }
+    '/$lang/booking/room/$reference': {
+      id: '/$lang/booking/room/$reference'
+      path: '/booking/room/$reference'
+      fullPath: '/$lang/booking/room/$reference'
+      preLoaderRoute: typeof LangBookingRoomReferenceRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/admin/bookings/$id_/room': {
+      id: '/admin/bookings/$id_/room'
+      path: '/bookings/$id/room'
+      fullPath: '/admin/bookings/$id/room'
+      preLoaderRoute: typeof AdminBookingsIdRoomRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/bookings/types/': {
       id: '/admin/bookings/types/'
       path: '/bookings/types'
@@ -1067,6 +1106,7 @@ interface LangRouteChildren {
   LangBookingIndexRoute: typeof LangBookingIndexRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
   LangBookingManageReferenceRoute: typeof LangBookingManageReferenceRoute
+  LangBookingRoomReferenceRoute: typeof LangBookingRoomReferenceRoute
 }
 
 const LangRouteChildren: LangRouteChildren = {
@@ -1085,6 +1125,7 @@ const LangRouteChildren: LangRouteChildren = {
   LangBookingIndexRoute: LangBookingIndexRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,
   LangBookingManageReferenceRoute: LangBookingManageReferenceRoute,
+  LangBookingRoomReferenceRoute: LangBookingRoomReferenceRoute,
 }
 
 const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
@@ -1114,6 +1155,7 @@ interface AdminRouteChildren {
   AdminInvoicesIndexRoute: typeof AdminInvoicesIndexRoute
   AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
   AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
+  AdminBookingsIdRoomRoute: typeof AdminBookingsIdRoomRoute
   AdminBookingsTypesIdRoute: typeof AdminBookingsTypesIdRoute
   AdminBookingsTypesNewRoute: typeof AdminBookingsTypesNewRoute
   AdminBookingsTypesIndexRoute: typeof AdminBookingsTypesIndexRoute
@@ -1144,6 +1186,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInvoicesIndexRoute: AdminInvoicesIndexRoute,
   AdminLeadsIndexRoute: AdminLeadsIndexRoute,
   AdminProjectsIndexRoute: AdminProjectsIndexRoute,
+  AdminBookingsIdRoomRoute: AdminBookingsIdRoomRoute,
   AdminBookingsTypesIdRoute: AdminBookingsTypesIdRoute,
   AdminBookingsTypesNewRoute: AdminBookingsTypesNewRoute,
   AdminBookingsTypesIndexRoute: AdminBookingsTypesIndexRoute,

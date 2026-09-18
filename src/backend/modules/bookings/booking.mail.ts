@@ -7,6 +7,7 @@ import {
   sendMail,
   toBase64,
 } from '#/backend/shared/mail'
+import { isCallConfigured } from '#/backend/modules/calls/call.ticket'
 import { env } from '#/shared/env'
 import type { BookingLanguage } from '#/shared/validation/booking.validation'
 import { buildCalendarEvent } from './booking.ics'
@@ -33,6 +34,8 @@ type Copy = {
   reason: string
   manage: string
   bookAgain: string
+  /** Only for a video call held on the site. */
+  callHere: string
   minutes: string
   signOff: string
 }
@@ -51,6 +54,8 @@ const COPY: Record<BookingLanguage, Copy> = {
     reason: 'Grund',
     manage: 'Termin ansehen oder absagen',
     bookAgain: 'Neuen Termin buchen',
+    callHere:
+      'Das Gespräch findet direkt auf dieser Seite statt — nichts zu installieren. Der Raum öffnet 15 Minuten vorher; den Link finden Sie über den Button unten.',
     minutes: 'Minuten',
     signOff: 'Bis bald,\nYaman',
   },
@@ -67,6 +72,8 @@ const COPY: Record<BookingLanguage, Copy> = {
     reason: 'Reason',
     manage: 'View or cancel this booking',
     bookAgain: 'Book a new time',
+    callHere:
+      'The call happens right on this website — nothing to install. The room opens 15 minutes beforehand; the button below takes you to it.',
     minutes: 'minutes',
     signOff: 'See you soon,\nYaman',
   },
@@ -83,6 +90,8 @@ const COPY: Record<BookingLanguage, Copy> = {
     reason: 'السبب',
     manage: 'عرض الموعد أو إلغاؤه',
     bookAgain: 'احجز موعداً جديداً',
+    callHere:
+      'المكالمة تجري داخل هذا الموقع مباشرة — بلا تثبيت أي برنامج. تفتح الغرفة قبل الموعد بربع ساعة، والزر بالأسفل يوصلك إليها.',
     minutes: 'دقيقة',
     signOff: 'إلى اللقاء،\nيمان',
   },
@@ -102,6 +111,8 @@ export type BookingMailInput = {
   language: BookingLanguage
   typeName: string
   locationLabel: string
+  /** A video call is the only kind this site can host itself. */
+  locationKind?: string
   /** Only present while the plaintext token is still in memory. */
   manageToken?: string
   /** What the visitor typed when they cancelled, if they typed anything. */
@@ -155,6 +166,12 @@ export const sendVisitorBookingMail = async (
   // Cancelled: the way back in, rather than a link to a booking that is gone.
   const manage =
     input.manageToken && !cancelled ? manageUrl(input.reference, input.manageToken, input.language) : null
+
+  // Said once, under "Where", because that is the line someone reads when they
+  // are wondering what they are supposed to click on the day. Not a second
+  // link: the room lives behind the button that is already in this letter, and
+  // a link that does nothing for six days is a link people learn to ignore.
+  const callHere = !cancelled && input.locationKind === 'VIDEO' && isCallConfigured()
   const actions = cancelled
     ? button(`${site}/${input.language}/booking`, copy.bookAgain, align, true)
     : manage
@@ -171,7 +188,12 @@ export const sendVisitorBookingMail = async (
       rows: [
         { label: copy.when, value: `${escapeHtml(when)}<br /><span style="font-weight:400;color:${BRAND.muted}">${escapeHtml(input.visitorTimezone)}</span>` },
         { label: copy.duration, value: `${input.durationMinutes} ${escapeHtml(copy.minutes)}` },
-        { label: copy.where, value: escapeHtml(input.locationLabel) },
+        {
+          label: copy.where,
+          value: callHere
+            ? `${escapeHtml(input.locationLabel)}<br /><span style="font-weight:400;color:${BRAND.muted}">${escapeHtml(copy.callHere)}</span>`
+            : escapeHtml(input.locationLabel),
+        },
         { label: copy.reference, value: escapeHtml(input.reference) },
         {
           label: copy.reason,
@@ -192,6 +214,7 @@ export const sendVisitorBookingMail = async (
       `${copy.when}: ${when} (${input.visitorTimezone})`,
       `${copy.duration}: ${input.durationMinutes} ${copy.minutes}`,
       `${copy.where}: ${input.locationLabel}`,
+      callHere ? copy.callHere : '',
       `${copy.reference}: ${input.reference}`,
       cancelled && input.cancellationReason ? `${copy.reason}: ${input.cancellationReason}` : '',
       '',

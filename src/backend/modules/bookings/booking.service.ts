@@ -354,6 +354,7 @@ const mailInputFor = (
   language: booking.language,
   typeName,
   locationLabel: booking.location_value ?? LOCATION_FALLBACK[booking.location_kind],
+  locationKind: booking.location_kind,
   manageToken,
 })
 
@@ -1288,6 +1289,7 @@ type AdminBookingRow = {
   visitor_timezone: string
   booking_type_name: string
   lead_id: string | null
+  location_kind: AdminBookingDetail['locationKind']
 }
 
 /** Prefer German, then English, then Arabic for the one name the admin lists. */
@@ -1320,7 +1322,7 @@ export const listBookingsForAdmin = async (
 
   const rows = await db.query<AdminBookingRow>(
     `SELECT b.id, b.reference, b.starts_at, b.ends_at, b.status, b.visitor_name,
-            b.visitor_email, b.visitor_timezone, b.lead_id,
+            b.visitor_email, b.visitor_timezone, b.lead_id, b.location_kind,
             COALESCE(${ADMIN_TYPE_NAME}, '') AS booking_type_name
        FROM bookings b
        ${where}
@@ -1341,6 +1343,7 @@ export const listBookingsForAdmin = async (
       visitorTimezone: row.visitor_timezone,
       bookingTypeName: row.booking_type_name,
       leadId: row.lead_id,
+      locationKind: row.location_kind,
     })),
     total,
     page,
@@ -1468,6 +1471,7 @@ export const cancelBookingAsAdmin = async (
     language: detail.language,
     typeName: detail.bookingTypeName,
     locationLabel: detail.locationValue ?? LOCATION_FALLBACK[detail.locationKind],
+    locationKind: detail.locationKind,
     cancellationReason: input.reason,
   }
 

@@ -128,6 +128,8 @@ export type AdminBookingListItem = {
   visitorTimezone: string
   bookingTypeName: string
   leadId: string | null
+  /** Needed to know whether this row can carry a call button at all. */
+  locationKind: LocationKind
 }
 
 export type AdminBookingList = {
@@ -145,7 +147,6 @@ export type AdminBookingDetail = AdminBookingListItem & {
   bufferAfterMinutes: number
   blockedStartsAt: string
   blockedEndsAt: string
-  locationKind: LocationKind
   locationValue: string | null
   priceCents: number
   currency: string
