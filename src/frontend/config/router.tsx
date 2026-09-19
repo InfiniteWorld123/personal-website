@@ -2,6 +2,7 @@ import { MutationCache, QueryClient } from '@tanstack/react-query'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { getGlobalStartContext } from '@tanstack/react-start'
+import { RouteError } from '#/frontend/components/feedback/RouteError'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { routeTree } from './routeTree.gen'
 
@@ -47,6 +48,13 @@ export function getRouter() {
      * not the router's, and it keeps its own `staleTime`.
      */
     defaultPreloadStaleTime: 30_000,
+    /*
+     * The screen a route falls back to when it throws, in place of the
+     * router's own. It exists for one failure in particular: the route's
+     * JavaScript file not arriving, which no route can do anything about and
+     * a reload almost always fixes.
+     */
+    defaultErrorComponent: RouteError,
     context: { queryClient },
     ssr: globalContext?.nonce ? { nonce: globalContext.nonce } : undefined,
   })
