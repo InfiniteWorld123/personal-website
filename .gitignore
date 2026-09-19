@@ -24,3 +24,9 @@ my images/
 
 # Vercel CLI link data. `.env` and `*.local` above already cover its env files.
 .vercel
+
+# Scratch prompts and the Codex helper's local state. Working notes for a
+# session, not part of the site.
+.codex/
+PROMPT.md
+REVIEW-PROMPT.md
