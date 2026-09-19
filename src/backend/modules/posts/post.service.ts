@@ -510,6 +510,8 @@ type PublicRow = {
   cover_src: string | null
   cover_width: number | null
   cover_height: number | null
+  view_count: number | string | null
+  like_count: number | string | null
   tags: PublicTag[] | null
   project_slug: string | null
   project_name: string | null
@@ -526,6 +528,10 @@ const toSummary = (row: PublicRow): PublicPostSummary => ({
       ? { src: row.cover_src, width: row.cover_width, height: row.cover_height, alt: row.cover_alt }
       : null,
   tags: row.tags ?? [],
+  // Approximate by construction — see `0019_post_engagement.sql`. The screen
+  // that shows them says "reads", not "readers", for that reason.
+  viewCount: Number(row.view_count ?? 0),
+  likeCount: Number(row.like_count ?? 0),
 })
 
 /**
@@ -545,6 +551,8 @@ const publicSelect = `
     p.cover_src,
     p.cover_width,
     p.cover_height,
+    p.view_count,
+    p.like_count,
     ${tagsFor('$1')} AS tags,
     project.slug AS project_slug,
     project.name AS project_name
@@ -630,3 +638,69 @@ export const listPublishedPostSlugs = async (): Promise<string[]> => {
 
   return result.rows.map((row) => row.slug)
 }
+
+/* -------------------------------------------------------------------------- */
+/* Reading and liking                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The counters, after the change.
+ *
+ * Returned rather than assumed, so the reader's screen shows what the database
+ * actually holds. Two people liking the same article in the same second both
+ * see the real total, not their own optimistic guess plus one.
+ */
+export type PostEngagement = { viewCount: number; likeCount: number }
+
+const countsFor = async (slug: string, sql: string): Promise<PostEngagement> => {
+  const result = await getDb().query<{ view_count: number; like_count: number }>(sql, [slug])
+
+  const row = result.rows[0]
+
+  // No row means no published post with that slug. Said as "not here" rather
+  // than counted silently, so a typo in a URL cannot inflate a figure on a
+  // draft nobody can read.
+  if (!row) throw notFoundError('That post does not exist')
+
+  return { viewCount: Number(row.view_count), likeCount: Number(row.like_count) }
+}
+
+/**
+ * One more read.
+ *
+ * `is_published` is in the predicate, not checked before it: an unpublished
+ * post must not be countable, and a check in a separate statement would leave
+ * the window between the two.
+ */
+export const countPostView = (slug: string): Promise<PostEngagement> =>
+  countsFor(
+    slug,
+    `UPDATE posts SET view_count = view_count + 1
+      WHERE slug = $1 AND is_published
+      RETURNING view_count, like_count;`,
+  )
+
+export const likePost = (slug: string): Promise<PostEngagement> =>
+  countsFor(
+    slug,
+    `UPDATE posts SET like_count = like_count + 1
+      WHERE slug = $1 AND is_published
+      RETURNING view_count, like_count;`,
+  )
+
+/**
+ * A like, taken back.
+ *
+ * `GREATEST(..., 0)` rather than a plain subtraction: the browser is the only
+ * thing that remembers whether this reader had liked the post, and a cleared
+ * storage or a second tab can send an unlike that was never a like. The floor
+ * keeps that from walking the figure below zero, where the table's own CHECK
+ * would turn a shrug into a 500.
+ */
+export const unlikePost = (slug: string): Promise<PostEngagement> =>
+  countsFor(
+    slug,
+    `UPDATE posts SET like_count = GREATEST(like_count - 1, 0)
+      WHERE slug = $1 AND is_published
+      RETURNING view_count, like_count;`,
+  )

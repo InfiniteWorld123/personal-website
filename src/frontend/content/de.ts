@@ -481,6 +481,12 @@ export const de: SiteContent = {
     seeProject: 'Zum Projekt',
     shown: '{visible} von {total} Artikeln',
     feed: 'RSS-Feed',
+    reads: '{count} Aufrufe',
+    readsOne: '1 Aufruf',
+    likes: '{count} mal gefällt das',
+    likesOne: 'Einmal gefällt das',
+    like: 'Gefällt mir',
+    liked: 'Gefällt dir',
     home: {
       eyebrow: 'Geschrieben',
       title: 'Was ich beim Bauen lerne.',

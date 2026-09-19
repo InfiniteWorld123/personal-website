@@ -82,6 +82,12 @@ const EXCLUDED_LEAVES = new Set([
   'blog.seeProject',
   'blog.shown',
   'blog.feed',
+  'blog.reads',
+  'blog.readsOne',
+  'blog.likes',
+  'blog.likesOne',
+  'blog.like',
+  'blog.liked',
   'home.services.more',
   'home.work.all',
 ])

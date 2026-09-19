@@ -479,6 +479,12 @@ export const ar: SiteContent = {
     seeProject: 'انتقل إلى المشروع',
     shown: '{visible} من {total} مقالاً',
     feed: 'تغذية RSS',
+    reads: '{count} قراءة',
+    readsOne: 'قراءة واحدة',
+    likes: '{count} إعجاب',
+    likesOne: 'إعجاب واحد',
+    like: 'أعجبني',
+    liked: 'أعجبك',
     home: {
       eyebrow: 'كتابات',
       title: 'ما أتعلّمه وأنا أبني.',

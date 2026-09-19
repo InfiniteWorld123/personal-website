@@ -5,6 +5,7 @@ import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent } from '#/frontend/content'
 import { PostBody } from '#/frontend/features/blog/PostBody'
+import { PostEngagement } from '#/frontend/features/blog/PostEngagement'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { formatPostDate } from '#/frontend/lib/format'
 import { useReveal } from '#/frontend/motion'
@@ -63,6 +64,14 @@ export function PostPage({ post }: { post: PublicPost }) {
           ) : null}
 
           <PostBody doc={post.body} />
+
+          {/* After the article, not before it: the number is worth something
+              once it has been read, and worth nothing as a claim on arrival. */}
+          <PostEngagement
+            slug={post.slug}
+            viewCount={post.viewCount}
+            likeCount={post.likeCount}
+          />
 
           {post.project ? (
             <aside className="post-project">

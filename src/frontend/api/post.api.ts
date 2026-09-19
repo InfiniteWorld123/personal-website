@@ -88,3 +88,29 @@ export async function deleteAdminTag(id: string): Promise<void> {
 export async function fetchPostProjectOptions(): Promise<PostProjectOption[]> {
   return unwrap(await api().admin.blog.projects.get())
 }
+
+/* -------------------------------------------------------------------------- */
+/* Reading and liking                                                         */
+/* -------------------------------------------------------------------------- */
+
+/** The two figures, as the database holds them after the change. */
+export type PostEngagement = { viewCount: number; likeCount: number }
+
+/**
+ * Counts one read, and hands back the new totals.
+ *
+ * No body, no cookie, no visitor id. Whether *this* reader has already been
+ * counted is remembered by their own browser (`post-engagement.ts`); the server
+ * only ever adds one to an integer.
+ */
+export async function countPostRead(slug: string): Promise<PostEngagement> {
+  return unwrap(await api().blog.posts({ slug }).view.post())
+}
+
+export async function likePost(slug: string): Promise<PostEngagement> {
+  return unwrap(await api().blog.posts({ slug }).like.post())
+}
+
+export async function unlikePost(slug: string): Promise<PostEngagement> {
+  return unwrap(await api().blog.posts({ slug }).like.delete())
+}

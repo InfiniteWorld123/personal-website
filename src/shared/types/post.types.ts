@@ -67,6 +67,15 @@ export type PublicPostSummary = {
   readingMinutes: number
   cover: { src: string; width: number; height: number; alt: string } | null
   tags: PublicTag[]
+  /**
+   * Times the article has been opened, and readers who liked it.
+   *
+   * Both are approximate on purpose: no row anywhere records who did either,
+   * so nothing about a visitor is stored to make them exact. See
+   * `0019_post_engagement.sql`. The UI says "reads", never "readers".
+   */
+  viewCount: number
+  likeCount: number
 }
 
 export type PublicPost = PublicPostSummary & {

@@ -1,8 +1,10 @@
 import { Elysia } from 'elysia'
 import { adminGuard } from '#/backend/modules/admin/admin.guard'
+import { getTrustedClientIp } from '#/backend/shared/client-ip'
 import { notFoundError } from '#/backend/shared/error'
 import { HttpStatusCode } from '#/backend/shared/http'
 import { responseOk } from '#/backend/shared/response'
+import { enforceRateLimit } from '#/backend/shared/rate-limit'
 import { parseInput } from '#/backend/shared/validate'
 import {
   POST_LANGUAGES,
@@ -12,6 +14,7 @@ import {
 } from '#/shared/validation/post.validation'
 import * as v from 'valibot'
 import {
+  countPostView,
   createPost,
   createTag,
   deletePost,
@@ -21,8 +24,10 @@ import {
   listPostsForAdmin,
   listProjectOptions,
   listPublishedPosts,
+  likePost,
   listPublishedTags,
   listTags,
+  unlikePost,
   updatePost,
   updateTag,
 } from './post.service'
@@ -90,6 +95,26 @@ export const adminPostRoutes = new Elysia({ prefix: '/blog' })
   })
 
 /**
+ * How often one address may move a blog counter in an hour.
+ *
+ * Returns without limiting when the address is unknown — behind a proxy that
+ * strips it, refusing every reader is worse than counting a few too many.
+ */
+const limitBy = async (request: Request, scope: string, perHour: number): Promise<void> => {
+  const clientIp = getTrustedClientIp(request)
+
+  if (!clientIp) return
+
+  await enforceRateLimit({
+    scope,
+    identity: clientIp,
+    limit: perHour,
+    windowSeconds: 60 * 60,
+    message: 'That is a lot of clicking. Give it a minute.',
+  })
+}
+
+/**
  * Public read surface. Only published posts, one language at a time, and the
  * explicit projection built in the service — never a table row.
  */
@@ -115,4 +140,40 @@ export const publicPostRoutes = new Elysia({ prefix: '/blog' })
     if (!post) throw notFoundError('That post does not exist')
 
     return responseOk({ data: post, message: 'Post loaded' })
+  })
+
+  /*
+   * Reading and liking.
+   *
+   * Three writes that take no body, set no cookie and return two integers.
+   * There is no visitor id anywhere in this flow: whether *this* reader has
+   * already read or liked the article is remembered by their own browser, and
+   * the only thing the server keeps is the total.
+   *
+   * The address is used and not stored. `enforceRateLimit` keeps an HMAC of it
+   * in `request_rate_limits`, which prunes itself within two days — the same
+   * mechanism the sign-in form and the assistant already use. Without it these
+   * would be three unauthenticated increment endpoints, which is a figure
+   * anyone could write.
+   *
+   * The limits are deliberately loose. Somebody reading five articles in a row
+   * is a good afternoon, not an attack, and a limit that fires on real reading
+   * would make the numbers wrong in the one direction that matters.
+   */
+  .post('/posts/:slug/view', async ({ params, request }) => {
+    await limitBy(request, 'blog-view', 120)
+
+    return responseOk({ data: await countPostView(params.slug), message: 'Read counted' })
+  })
+
+  .post('/posts/:slug/like', async ({ params, request }) => {
+    await limitBy(request, 'blog-like', 60)
+
+    return responseOk({ data: await likePost(params.slug), message: 'Liked' })
+  })
+
+  .delete('/posts/:slug/like', async ({ params, request }) => {
+    await limitBy(request, 'blog-like', 60)
+
+    return responseOk({ data: await unlikePost(params.slug), message: 'Like taken back' })
   })

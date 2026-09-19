@@ -480,6 +480,12 @@ export const en: SiteContent = {
     seeProject: 'See the project',
     shown: '{visible} of {total} articles',
     feed: 'RSS feed',
+    reads: '{count} reads',
+    readsOne: '1 read',
+    likes: '{count} likes',
+    likesOne: '1 like',
+    like: 'Like this',
+    liked: 'Liked',
     home: {
       eyebrow: 'Writing',
       title: 'What I learn while building.',

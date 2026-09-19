@@ -218,6 +218,24 @@ export type BlogCopy = {
   /** Carries `{visible}` and `{total}`. */
   shown: string
   feed: string
+  /**
+   * Reads and likes.
+   *
+   * "Reads", never "readers": no row records who opened the article, so the
+   * figure counts openings and the word has to be honest about that.
+   *
+   * Two forms each, because "1 Aufrufe" is not German and "1 reads" is not
+   * English. `Intl.PluralRules` picks between them, so a language whose rule
+   * is not one-versus-many still lands on a form somebody wrote rather than on
+   * a number glued to a plural noun. All four carry `{count}`.
+   */
+  reads: string
+  readsOne: string
+  likes: string
+  likesOne: string
+  /** The button, before and after this browser has pressed it. */
+  like: string
+  liked: string
   /** The latest-articles section on the home page. */
   home: { eyebrow: string; title: string; sub: string; all: string }
 }

@@ -2813,6 +2813,85 @@ body.dark::after {
   font-size: 0.95rem;
 }
 
+/* ── Reads and likes, under the article ──────────────────────
+   Logical properties throughout: this row is rendered in Arabic too, and
+   `margin-left` would put the like button on the wrong side of it. */
+.post-engagement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.post-engagement-reads {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.post-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-inline-start: auto;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.post-like:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--foreground);
+}
+
+.post-like:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Pressed: the one piece of state on this page that is the reader's own. */
+.post-like.is-liked {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+.post-like-count {
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .post-like {
+    transition:
+      color 160ms var(--ease-out-soft),
+      border-color 160ms var(--ease-out-soft),
+      background-color 160ms var(--ease-out-soft);
+  }
+
+  /* A small acknowledgement, once, on the press itself. */
+  .post-like.is-liked svg {
+    animation: post-like-pop 260ms var(--ease-out-soft);
+  }
+}
+
+@keyframes post-like-pop {
+  40% { transform: scale(1.25); }
+  to { transform: none; }
+}
+
 /* ── The article body ────────────────────────────────────────
    The rendered document from `PostBody`. Every selector here is a tag the
    renderer can emit, and no other tag can reach this tree. */
