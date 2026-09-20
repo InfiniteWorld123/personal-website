@@ -48,6 +48,16 @@ export type Seller = {
    * the rate lives on the line, not here.
    */
   smallBusiness: boolean
+
+  /**
+   * True only for `TEST_SELLER` below.
+   *
+   * Nothing about the business; it is a warning that travels with the data.
+   * Every PDF drawn from a seller carrying this gets stamped, so a document
+   * made with invented bank details cannot be mistaken for one that can be
+   * paid — the same reason a draft is stamped.
+   */
+  isTest?: boolean
 }
 
 export const SELLER: Seller = {
@@ -78,6 +88,70 @@ export const SELLER: Seller = {
 }
 
 /**
+ * Invented details, so the whole section can be walked through before the
+ * Finanzamt has answered.
+ *
+ * Yaman asked for this on 20 Sep 2026: he could not see what issuing, sending
+ * or the sent register actually do, because nothing could be issued at all.
+ *
+ * Three things keep it from becoming a liability:
+ *
+ *   1. **It is never used in production.** `resolveSeller` asks for a
+ *      positive `NODE_ENV === 'development'` rather than checking for
+ *      `!== 'production'`, and the difference is the whole safety argument:
+ *      if the variable is missing, unset or spelled differently in some
+ *      future runtime, the negative form quietly hands a live Worker an
+ *      invented IBAN. The positive form falls back to his real details, which
+ *      still carry `TODO`, which blocks issuing. Wrong in the safe direction.
+ *   2. **It stops being used the moment the real details exist.** Even in
+ *      development, `resolveSeller` prefers `SELLER` as soon as it has no
+ *      gaps — so he never finds himself testing against invented data while
+ *      believing it is his own.
+ *   3. **Every page it draws says so.** `isTest` puts a stamp across the
+ *      document, exactly like a draft, so a test invoice that escapes as a
+ *      file still cannot be mistaken for one a client could pay.
+ *
+ * The IBAN is deliberately not a real-looking one. `DE00` fails the IBAN check
+ * digits by construction — no bank will accept it, and no banking app will
+ * scan the payment code into a transfer that goes anywhere.
+ */
+export const TEST_SELLER: Seller = {
+  name: 'Yaman Warda',
+  trade: { de: 'Webentwicklung', en: 'Web development' },
+
+  street: 'Teststraße 1',
+  postcode: '99084',
+  city: 'Erfurt',
+  country: 'DE',
+
+  taxNumber: '000/000/00000 (Test)',
+  vatId: '',
+
+  bankName: 'Testbank — keine echte Bank',
+  iban: 'DE00 0000 0000 0000 0000 00',
+  bic: 'TESTDEFFXXX',
+
+  email: 'info@yamanwarda.de',
+  phone: '',
+  website: 'yamanwarda.de',
+
+  smallBusiness: true,
+  isTest: true,
+}
+
+/**
+ * Which details this run prints with.
+ *
+ * Real ones whenever they are real. Invented ones only on his own machine, and
+ * only while the real ones are still placeholders.
+ */
+export const resolveSeller = (): Seller => {
+  if (process.env.NODE_ENV !== 'development') return SELLER
+
+  return sellerGaps(SELLER).length > 0 ? TEST_SELLER : SELLER
+}
+
+/**
  * The sentence that replaces the VAT row.
  *
  * Printed verbatim, in the language of the paper. It is a legal statement and
@@ -91,7 +165,7 @@ export const SMALL_BUSINESS_NOTE: Record<'de' | 'en', string> = {
 }
 
 /** Anything still carrying the placeholder. */
-export const sellerGaps = (seller: Seller = SELLER): string[] => {
+export const sellerGaps = (seller: Seller = resolveSeller()): string[] => {
   const gaps: string[] = []
   const missing = (value: string) => value.trim() === '' || value.includes('TODO')
 
@@ -106,7 +180,8 @@ export const sellerGaps = (seller: Seller = SELLER): string[] => {
   return gaps
 }
 
-export const isSellerReady = (seller: Seller = SELLER): boolean => sellerGaps(seller).length === 0
+export const isSellerReady = (seller: Seller = resolveSeller()): boolean =>
+  sellerGaps(seller).length === 0
 
 /** The IBAN as a payment code wants it: no spaces, upper case. */
 export const compactIban = (iban: string): string => iban.replace(/\s+/g, '').toUpperCase()

@@ -9,7 +9,13 @@ import {
   type InvoiceLanguage,
 } from '#/shared/validation/invoice.validation'
 import { SPACE_GROTESK_BOLD, SPACE_GROTESK_REGULAR } from './font-data'
-import { compactIban, SELLER, SMALL_BUSINESS_NOTE, type Seller } from './seller'
+import {
+  compactIban,
+  resolveSeller,
+  SELLER,
+  SMALL_BUSINESS_NOTE,
+  type Seller,
+} from './seller'
 
 /**
  * The paper.
@@ -106,6 +112,10 @@ type Words = {
   draft: string
   /** The sentence that replaces the payment instruction on a draft. */
   draftNotice: string
+  /** What a page drawn from invented details calls itself. */
+  test: string
+  /** And the sentence that says which part of it is invented. */
+  testNotice: string
 }
 
 /**
@@ -116,22 +126,31 @@ type Words = {
 export const draftWord = (language: InvoiceLanguage): string => WORDS[language].draft
 
 /**
- * Everything the paper does differently because it is not a fact yet.
+ * Everything the paper does differently because it is not a real invoice.
  *
  * Pulled out of the drawing below and into one value for a reason worth
- * naming: these four decisions are a safety rule, not a style. A draft could
- * always be downloaded, and until now it came out looking exactly like a real
+ * naming: these decisions are a safety rule, not a style. A draft could always
+ * be downloaded, and until now it came out looking exactly like a real
  * invoice — same header, same totals, same scannable payment code — with only
  * a dash where the number belonged. One careless attachment and a client
  * believes he has been billed, or worse, scans the code and transfers money
  * against a document that does not exist in the books.
  *
- * Each field below closes one of those doors, and each is asserted in
+ * Two reasons a page is not one, and they are different:
+ *
+ *   * **A draft.** No number, nothing owed, nothing to pay yet.
+ *   * **Invented seller details.** Everything about the document is real —
+ *     it has a number and it is in the books — but the account printed at the
+ *     foot of it does not exist. That one only happens on his own machine,
+ *     and it still gets a stamp, because a file can outlive the machine that
+ *     made it.
+ *
+ * Each field below closes one door, and each is asserted in
  * `invoice-draft-paper.test.ts`. Buried inside eight hundred lines of
  * coordinates, a future edit could quietly switch one back on and nothing
  * would notice until a client had paid. Here, the test fails.
  */
-export type DraftRules = {
+export type PaperRules = {
   /** The word drawn corner to corner, or null on a document that is real. */
   stamp: string | null
   /** What the meta block prints beside «Nummer». */
@@ -152,24 +171,29 @@ export type DraftRules = {
   payText: string
 }
 
-export const draftRules = (invoice: {
-  status: string
-  kind: InvoiceKind
-  number: string | null
-  language: InvoiceLanguage
-  dueOn: string | null
-  totalCents: number
-}): DraftRules => {
+export const paperRules = (
+  invoice: {
+    status: string
+    kind: InvoiceKind
+    number: string | null
+    language: InvoiceLanguage
+    dueOn: string | null
+    totalCents: number
+  },
+  seller: { isTest?: boolean } = SELLER,
+): PaperRules => {
   const words = WORDS[invoice.language]
   const isDraft = invoice.status === 'DRAFT'
   const isCredit = invoice.kind !== 'INVOICE'
 
   return {
-    stamp: isDraft ? words.draft : null,
+    // Draft first. A draft drawn from invented details is still, first and
+    // foremost, a draft — and saying both would need two stamps on one page.
+    stamp: isDraft ? words.draft : seller.isTest ? words.test : null,
     number: invoice.number ?? words.draft,
     showDue: !isCredit && !isDraft,
     showQr: !isCredit && !isDraft && invoice.totalCents > 0,
-    notice: isDraft ? words.draftNotice : null,
+    notice: isDraft ? words.draftNotice : seller.isTest ? words.testNotice : null,
     payText: isDraft
       ? ''
       : isCredit
@@ -210,6 +234,8 @@ const WORDS: Record<InvoiceLanguage, Words> = {
     scan: 'Mit der Banking-App scannen',
     draft: 'ENTWURF',
     draftNotice: 'Entwurf — keine Rechnung, nicht zur Zahlung. Der Inhalt kann sich noch ändern.',
+    test: 'TEST',
+    testNotice: 'Testdokument — die Anschrift, Steuernummer und Bankverbindung unten sind erfunden.',
   },
   en: {
     number: 'Number',
@@ -240,6 +266,8 @@ const WORDS: Record<InvoiceLanguage, Words> = {
     scan: 'Scan with your banking app',
     draft: 'DRAFT',
     draftNotice: 'Draft — not an invoice, not payable. The content can still change.',
+    test: 'TEST',
+    testNotice: 'Test document — the address, tax number and bank details below are invented.',
   },
 }
 
@@ -644,13 +672,13 @@ export const assertPrintable = (invoice: Invoice, client: Client): void => {
 export const renderInvoicePdf = async (
   invoice: Invoice,
   client: Client,
-  seller: Seller = SELLER,
+  seller: Seller = resolveSeller(),
 ): Promise<Uint8Array> => {
   assertPrintable(invoice, client)
 
   const language = invoice.language
   const words = WORDS[language]
-  const paper = draftRules(invoice)
+  const paper = paperRules(invoice, seller)
 
   const document = await PDFDocument.create()
 

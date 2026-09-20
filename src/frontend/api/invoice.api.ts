@@ -102,9 +102,18 @@ export async function fetchSummary(): Promise<InvoiceSummary> {
   return unwrap<InvoiceSummary>(await api().admin.invoices.summary.get())
 }
 
-/** Whether his own details in `seller.ts` are real yet. */
-export async function fetchSellerState(): Promise<{ ready: boolean; gaps: string[] }> {
-  return unwrap<{ ready: boolean; gaps: string[] }>(await api().admin.invoices.seller.get())
+/**
+ * Whether his own details in `seller.ts` are real yet — and whether what is
+ * being printed right now is his, or the invented set.
+ */
+export async function fetchSellerState(): Promise<{
+  ready: boolean
+  gaps: string[]
+  isTest: boolean
+}> {
+  return unwrap<{ ready: boolean; gaps: string[]; isTest: boolean }>(
+    await api().admin.invoices.seller.get(),
+  )
 }
 
 export async function fetchClients(search: string): Promise<Client[]> {

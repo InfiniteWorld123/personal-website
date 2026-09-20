@@ -6,7 +6,7 @@ import type { InvoiceLetter } from '#/shared/types/invoice.types'
 import { DOCUMENT_TITLE, type LetterKind } from '#/shared/validation/invoice.validation'
 import { documentBytes, getInvoice } from './invoice.service'
 import { money } from './pdf.service'
-import { SELLER } from './seller'
+import { resolveSeller } from './seller'
 
 /**
  * Handing an invoice to the inbox.
@@ -238,7 +238,7 @@ export const prepareLetter = async (
 
   return {
     personId,
-    subject: `${title} ${invoice.number} · ${SELLER.name}`,
+    subject: `${title} ${invoice.number} · ${resolveSeller().name}`,
     body: plainText(
       german
         ? [

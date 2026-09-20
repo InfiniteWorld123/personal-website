@@ -2,7 +2,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { PDFDocument } from 'pdf-lib'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { SPACE_GROTESK_BOLD } from '#/backend/modules/invoices/font-data'
-import { draftRules, draftWord, stampBox } from '#/backend/modules/invoices/pdf.service'
+import { draftWord, paperRules, stampBox } from '#/backend/modules/invoices/pdf.service'
 
 /**
  * What stops a draft being mistaken for an invoice.
@@ -33,49 +33,52 @@ const draft = {
 
 const issued = { ...draft, status: 'ISSUED', number: '2026-004', dueOn: '2026-10-04' }
 
+/** Details that are real, which is what every case below assumes unless it says otherwise. */
+const real = { isTest: false }
+
 describe('what a draft prints', () => {
   it('stamps itself, in the language the paper speaks', () => {
-    expect(draftRules(draft).stamp).toBe('ENTWURF')
-    expect(draftRules({ ...draft, language: 'en' }).stamp).toBe('DRAFT')
+    expect(paperRules(draft, real).stamp).toBe('ENTWURF')
+    expect(paperRules({ ...draft, language: 'en' }, real).stamp).toBe('DRAFT')
   })
 
   it('says the word where the number would be, not a dash', () => {
     // A dash reads as "missing". The word reads as "this is not one yet".
-    expect(draftRules(draft).number).toBe('ENTWURF')
+    expect(paperRules(draft, real).number).toBe('ENTWURF')
   })
 
   it('promises no due date, because nothing has been issued to be due', () => {
-    expect(draftRules(draft).showDue).toBe(false)
+    expect(paperRules(draft, real).showDue).toBe(false)
   })
 
   it('never carries a payment code', () => {
     // The whole reason this file exists. A banking app will happily pay a QR
     // whose reference names an invoice that was never numbered, and no row in
     // `payments` could ever be matched against that transfer.
-    expect(draftRules(draft).showQr).toBe(false)
+    expect(paperRules(draft, real).showQr).toBe(false)
   })
 
   it('says under the title that it is not one', () => {
-    expect(draftRules(draft).notice).toContain('nicht zur Zahlung')
-    expect(draftRules({ ...draft, language: 'en' }).notice).toContain('not payable')
+    expect(paperRules(draft, real).notice).toContain('nicht zur Zahlung')
+    expect(paperRules({ ...draft, language: 'en' }, real).notice).toContain('not payable')
   })
 
   it('leaves the payment instruction empty rather than repeating itself', () => {
     // That slot exists to tell a client what to do. A draft has nothing to
     // tell them, and printing the notice twice on one sheet read as noise.
-    expect(draftRules(draft).payText).toBe('')
+    expect(paperRules(draft, real).payText).toBe('')
   })
 
   it('names itself the same way on the page and on disk', () => {
     // One source of truth: the stamp and the filename cannot drift apart.
-    expect(draftRules(draft).stamp).toBe(draftWord('de'))
-    expect(draftRules({ ...draft, language: 'en' }).stamp).toBe(draftWord('en'))
+    expect(paperRules(draft, real).stamp).toBe(draftWord('de'))
+    expect(paperRules({ ...draft, language: 'en' }, real).stamp).toBe(draftWord('en'))
   })
 })
 
 describe('what an issued invoice prints', () => {
   it('carries its number, its due date and its payment code', () => {
-    const paper = draftRules(issued)
+    const paper = paperRules(issued, real)
 
     expect(paper.stamp).toBeNull()
     expect(paper.notice).toBeNull()
@@ -87,14 +90,14 @@ describe('what an issued invoice prints', () => {
   })
 
   it('drops the payment code when there is nothing to pay', () => {
-    expect(draftRules({ ...issued, totalCents: 0 }).showQr).toBe(false)
+    expect(paperRules({ ...issued, totalCents: 0 }, real).showQr).toBe(false)
   })
 
   it('asks for no money on a correction, and stamps nothing on it either', () => {
     // A cancellation is issued, numbered and frozen like any other document.
     // It owes nobody anything, so it carries neither a due date nor a code —
     // but it is a fact, and a fact is never stamped as a draft.
-    const cancellation = draftRules({ ...issued, kind: 'CANCELLATION' as const })
+    const cancellation = paperRules({ ...issued, kind: 'CANCELLATION' as const }, real)
 
     expect(cancellation.stamp).toBeNull()
     expect(cancellation.showDue).toBe(false)
@@ -160,4 +163,48 @@ describe('where the stamp lands', () => {
       expect(stampBox(bold, word).maxX - stampBox(bold, word).minX).toBeGreaterThan(A4_WIDTH * 0.6)
     })
   }
+})
+
+/**
+ * A document drawn from invented seller details.
+ *
+ * Everything about it is real — it has a number, it is in the books, it counts
+ * towards what he is owed. What is not real is the account printed at the foot
+ * of it. That only happens on his own machine, and it is still stamped,
+ * because a PDF can outlive the machine that drew it.
+ */
+
+const test = { isTest: true }
+
+describe('a document drawn from invented details', () => {
+  it('is stamped, and says which parts are invented', () => {
+    const paper = paperRules(issued, test)
+
+    expect(paper.stamp).toBe('TEST')
+    expect(paper.notice).toContain('erfunden')
+  })
+
+  it('still carries its number, its due date and its payment code', () => {
+    // It is a real document with a fake bank account, not a draft. Hiding the
+    // due date would make it useless for seeing what an issued invoice looks
+    // like, which is the only reason the invented details exist.
+    const paper = paperRules(issued, test)
+
+    expect(paper.number).toBe('2026-004')
+    expect(paper.showDue).toBe(true)
+    expect(paper.showQr).toBe(true)
+  })
+
+  it('says DRAFT rather than TEST while it is still a draft', () => {
+    // Both are true and there is one stamp. A draft is the more important of
+    // the two, because it is the one that says the figures can still change.
+    expect(paperRules(draft, test).stamp).toBe('ENTWURF')
+  })
+
+  it('keeps TEST inside the page too', () => {
+    const box = stampBox(bold, 'TEST')
+
+    expect(box.minX).toBeGreaterThanOrEqual(0)
+    expect(box.maxX).toBeLessThanOrEqual(A4_WIDTH)
+  })
 })

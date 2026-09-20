@@ -272,6 +272,32 @@ export function InvoicesPage() {
             </span>
           </p>
         </Panel>
+      ) : seller.data?.isTest ? (
+        /*
+          The other half of the same warning, and the more dangerous half.
+          Everything works here — invoices issue, take numbers, land in the
+          register — and the account at the foot of every one of them does not
+          exist. Without this line he could spend an evening believing he had
+          billed somebody. Said once, at the top, rather than at the moment he
+          presses Issue, because by then he has already written the document.
+        */
+        <Panel className="flex items-start gap-3 border border-amber-500/40 bg-amber-500/5 p-4 ring-0">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm">
+            <span className="font-medium">You are on invented details.</span>{' '}
+            <span className="text-muted-foreground">
+              Your real address, tax number and bank account are still{' '}
+              <code className="bg-muted rounded px-1 py-0.5 text-xs">TODO</code> in{' '}
+              <code className="bg-muted rounded px-1 py-0.5 text-xs">
+                src/backend/modules/invoices/seller.ts
+              </code>
+              , so this machine prints a test set instead. Everything works and
+              every page is stamped <span className="font-medium">TEST</span> — nobody
+              could pay one. The live site refuses to issue at all until you fill
+              yours in.
+            </span>
+          </p>
+        </Panel>
       ) : null}
 
       {list.isPending ? <FiguresSkeleton /> : list.data ? <Figures summary={list.data.summary} /> : null}

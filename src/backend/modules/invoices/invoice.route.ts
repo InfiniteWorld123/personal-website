@@ -35,7 +35,7 @@ import {
   updateInvoice,
 } from './invoice.service'
 import { prepareLetter } from './letter.service'
-import { isSellerReady, sellerGaps } from './seller'
+import { isSellerReady, resolveSeller, sellerGaps } from './seller'
 
 const id = (value: unknown) => parseInput(IdSchema, value)
 
@@ -84,7 +84,14 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
    */
   .get('/seller', async () =>
     responseOk({
-      data: { ready: isSellerReady(), gaps: sellerGaps() },
+      /*
+       * `ready` is about whether anything can be issued at all. `isTest` is a
+       * different question with a different answer — on his own machine both
+       * are true, and the screen has to say so, or he would spend an evening
+       * issuing invoices against an account that does not exist and never be
+       * told.
+       */
+      data: { ready: isSellerReady(), gaps: sellerGaps(), isTest: resolveSeller().isTest === true },
       message: 'Checked',
     }),
   )
