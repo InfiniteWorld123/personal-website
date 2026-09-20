@@ -668,6 +668,27 @@ function CorrectionPanel({
           : 'This writes a new, numbered credit note. The original stays exactly as it was sent; what is still owed goes down by the amount below.'}
       </p>
 
+      {/*
+        The consequence the sentence above does not carry: money already
+        arrived on this invoice. Voiding the document does not void the
+        transfer — the payment rows stay, the month's figures still count
+        them, and the client is now owed that money back. Cancelling a paid
+        invoice is sometimes exactly right (paid, then the deal fell through);
+        doing it while believing the money question disappears with the
+        document is how a refund gets forgotten for a quarter.
+      */}
+      {cancelling && invoice.paidCents > 0 ? (
+        <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span>
+            <span className="font-medium">
+              {money(invoice.paidCents, invoice.currency)} has already arrived on this invoice.
+            </span>{' '}
+            Cancelling does not undo that — you will owe it back to {invoice.clientName}.
+          </span>
+        </p>
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <Label htmlFor="correct-reason" className="text-xs">
