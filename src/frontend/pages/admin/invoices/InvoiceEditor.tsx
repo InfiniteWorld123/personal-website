@@ -26,12 +26,9 @@ import { cn } from '#/frontend/lib/utils'
 import type { Invoice } from '#/shared/types/invoice.types'
 import {
   DEFAULT_DUE_DAYS,
-  MONEY_KINDS,
-  MONEY_KIND_LABEL,
   totalsOf,
   vatConflict,
   type InvoiceLanguage,
-  type MoneyKind,
 } from '#/shared/validation/invoice.validation'
 import { IssuedInvoice } from './IssuedInvoice'
 
@@ -162,7 +159,6 @@ function Draft({
   const clients = useQuery(clientsQuery(''))
 
   const [clientId, setClientId] = useState(invoice?.clientId ?? '')
-  const [moneyKind, setMoneyKind] = useState<MoneyKind>(invoice?.moneyKind ?? 'BUILD')
   const [language, setLanguage] = useState<InvoiceLanguage>(invoice?.language ?? 'de')
   const [dueDays, setDueDays] = useState(DEFAULT_DUE_DAYS)
   const [serviceFrom, setServiceFrom] = useState(invoice?.serviceFrom ?? '')
@@ -240,7 +236,6 @@ function Draft({
     const payload = {
       clientId,
       dealId: invoice?.dealId ?? null,
-      moneyKind,
       language,
       dueDays,
       serviceFrom: serviceFrom || null,
@@ -357,37 +352,6 @@ function Draft({
           </div>
         </div>
 
-        {/*
-          The rule the whole business rests on, made a choice he has to make.
-          A build invoice and a subscription invoice are two documents — never
-          two lines on one — and this is where that is decided.
-        */}
-        <div className="flex flex-col gap-1.5">
-          <Label>What kind of money is this?</Label>
-          <div className="flex flex-wrap gap-2">
-            {MONEY_KINDS.map((kind) => (
-              <button
-                key={kind}
-                type="button"
-                aria-pressed={moneyKind === kind}
-                onClick={() => setMoneyKind(kind)}
-                className={cn(
-                  CHOICE,
-                  'px-3 py-2 text-start text-sm',
-                  moneyKind === kind
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50',
-                )}
-              >
-                {MONEY_KIND_LABEL[kind]}
-              </button>
-            ))}
-          </div>
-          <p className="text-muted-foreground text-xs">
-            Only subscription invoices reach the “every month” figure. Nothing in this system
-            adds the two together.
-          </p>
-        </div>
       </Panel>
 
       {/* ── Lines ───────────────────────────────────────────────────── */}

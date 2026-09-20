@@ -295,6 +295,15 @@ function Row({
                 </span>
               </span>
             ))}
+            {/*
+              He asked whether three months is all of it. Three is what a list
+              can usefully show; the arrangement itself has no end, and a
+              schedule that simply stopped after the third line invited exactly
+              that question.
+            */}
+            <span className="text-muted-foreground block text-[11px]">
+              … and on, every month, until you stop it.
+            </span>
           </span>
         ) : null}
 

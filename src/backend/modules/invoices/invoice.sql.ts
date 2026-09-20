@@ -5,7 +5,6 @@ import {
   type InvoiceKind,
   type InvoiceLanguage,
   type InvoiceStatus,
-  type MoneyKind,
   type PaymentMethod,
 } from '#/shared/validation/invoice.validation'
 
@@ -182,7 +181,6 @@ export type InvoiceRowShape = {
   number: string | null
   kind: InvoiceKind
   status: InvoiceStatus
-  money_kind: MoneyKind
   client_id: string
   client_name: string
   first_line: string | null
@@ -206,7 +204,7 @@ export type InvoiceRowShape = {
  * and asking it once per query is cheaper than being wrong for two hours a
  * night on a Worker that has no idea where its reader lives.
  */
-export const INVOICE_ROW_COLUMNS = `i.id, i.number, i.kind, i.status, i.money_kind,
+export const INVOICE_ROW_COLUMNS = `i.id, i.number, i.kind, i.status,
         i.client_id,
         COALESCE(${CLIENT_NAME}, c.contact_name) AS client_name,
         (SELECT l.description FROM invoice_lines l
@@ -242,7 +240,6 @@ export const projectRow = (row: InvoiceRowShape): InvoiceRow => {
     kind: row.kind,
     status: row.status,
     settlement,
-    moneyKind: row.money_kind,
     clientId: row.client_id,
     clientName: row.client_name || 'Unnamed client',
     title: row.first_line ?? '',

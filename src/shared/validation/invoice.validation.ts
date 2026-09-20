@@ -68,22 +68,19 @@ export const SETTLEMENTS = [
 
 export type Settlement = (typeof SETTLEMENTS)[number]
 
-/**
- * BUILD is paid once and ends. SUBSCRIPTION does not stop.
+/*
+ * `MONEY_KINDS` stood here until 20 Sep 2026.
  *
- * *«التقسيط ينتهي. الاشتراك لا ينتهي.»* — the sentence the whole business
- * rests on. This is the column that keeps the two apart on the screen, and the
- * reason a setup fee and a care fee are two pieces of paper rather than two
- * lines on one.
+ * It was the flag that kept build money out of the recurring figure, back
+ * when that figure had to be inferred from invoices because no subscriptions
+ * table existed. `0020` brought one back, the figure now reads the
+ * arrangements themselves, and the flag was left being written by the form
+ * and read by nothing.
+ *
+ * The rule it stood for — «التقسيط ينتهي. الاشتراك لا ينتهي.» — is now
+ * structural instead of declared: an invoice a subscription wrote carries a
+ * `subscriptionId`, and one he wrote does not. See `0022`.
  */
-export const MONEY_KINDS = ['BUILD', 'SUBSCRIPTION'] as const
-
-export type MoneyKind = (typeof MONEY_KINDS)[number]
-
-export const MONEY_KIND_LABEL: Record<MoneyKind, string> = {
-  BUILD: 'Build — paid once',
-  SUBSCRIPTION: 'Subscription — every month',
-}
 
 export const PAYMENT_METHODS = ['TRANSFER', 'CARD', 'CASH', 'PAYPAL', 'OTHER'] as const
 
@@ -270,7 +267,6 @@ export const InvoiceWriteSchema = v.pipe(
   v.object({
     clientId: IdSchema,
     dealId: v.nullish(IdSchema),
-    moneyKind: v.optional(v.picklist(MONEY_KINDS), 'BUILD'),
     language: v.optional(v.picklist(INVOICE_LANGUAGES), 'de'),
     dueDays: v.pipe(
       v.optional(v.union([v.string(), v.number()]), DEFAULT_DUE_DAYS),

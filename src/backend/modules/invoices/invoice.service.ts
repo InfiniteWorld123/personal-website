@@ -55,8 +55,11 @@ import { resolveSeller, sellerGaps } from './seller'
  * 2. **A number is handed out by the same statement that writes it.** Never
  *    before, never in a second round trip. A gap in the series is a question
  *    at an audit that he should never have to answer.
- * 3. **Nothing is summed across the two kinds of money.** Every figure is
- *    filtered by `money_kind`, or is about one document and does not care.
+ * 3. **Nothing is summed across the two kinds of money.** The recurring
+ *    figure reads `subscriptions`, so build money cannot reach it by
+ *    construction; every other figure is about invoices and does not care.
+ *    This used to be a `money_kind` flag on the invoice, which worked only as
+ *    long as he remembered to set it — `0022` deleted it.
  */
 
 /* -------------------------------------------------------------------------- */
@@ -434,12 +437,11 @@ export const createInvoice = async (input: InvoiceWriteInput): Promise<Invoice> 
 
   const result = await getDb().query<{ id: string }>(
     `INSERT INTO invoices
-       (client_id, deal_id, money_kind, language, service_from, service_to, note, due_days)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`,
+       (client_id, deal_id, language, service_from, service_to, note, due_days)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`,
     [
       input.clientId,
       input.dealId ?? null,
-      input.moneyKind,
       input.language,
       input.serviceFrom ?? null,
       input.serviceTo ?? null,
@@ -494,15 +496,14 @@ export const updateInvoice = async (
 
     await db.query(
       `UPDATE invoices
-          SET client_id = $2, deal_id = $3, money_kind = $4, language = $5,
-              service_from = $6, service_to = $7, note = $8, due_days = $9,
+          SET client_id = $2, deal_id = $3, language = $4,
+              service_from = $5, service_to = $6, note = $7, due_days = $8,
               updated_at = CURRENT_TIMESTAMP
         WHERE id = $1 AND status = 'DRAFT';`,
       [
         invoiceId,
         input.clientId,
         input.dealId ?? null,
-        input.moneyKind,
         input.language,
         input.serviceFrom ?? null,
         input.serviceTo ?? null,
@@ -797,15 +798,14 @@ export const correctInvoice = async (
 
     const created = await db.query<{ id: string }>(
       `INSERT INTO invoices
-         (client_id, deal_id, kind, corrects_id, money_kind, language, note,
+         (client_id, deal_id, kind, corrects_id, language, note,
           net_cents, tax_cents, total_cents)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;`,
       [
         original.clientId,
         original.dealId,
         input.kind,
         original.id,
-        original.moneyKind,
         original.language,
         input.reason,
         totals.netCents,

@@ -114,7 +114,7 @@ function Figures({ summary }: { summary: InvoiceSummary }) {
       />
 
       <StatCard
-        foot="Subscriptions only — no build money"
+        foot="What your subscriptions add up to, billed or not"
         label="Every month"
         value={money(summary.recurringCents, summary.currency)}
       />

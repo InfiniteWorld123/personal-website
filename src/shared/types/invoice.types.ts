@@ -3,7 +3,6 @@ import type {
   InvoiceLanguage,
   InvoiceStatus,
   LetterKind,
-  MoneyKind,
   PaymentMethod,
   Settlement,
 } from '#/shared/validation/invoice.validation'
@@ -67,7 +66,6 @@ export type InvoiceRow = {
   kind: InvoiceKind
   status: InvoiceStatus
   settlement: Settlement
-  moneyKind: MoneyKind
   clientId: string
   clientName: string
   title: string
@@ -139,9 +137,12 @@ export type InvoiceSummary = {
    */
   thisMonthCents: number
   /**
-   * Subscriptions only, by construction: `money_kind = 'SUBSCRIPTION'`. No
-   * build money can reach this figure, so it cannot quietly become the lie
-   * that made him delete the last system.
+   * What he has agreed to be paid every month, summed from the arrangements
+   * themselves rather than from what he happens to have invoiced.
+   *
+   * Build money cannot reach it by construction: a row in `subscriptions`
+   * **is** a subscription. Stronger than the `money_kind` flag this replaced,
+   * which depended on him remembering to set it — see `0022`.
    */
   recurringCents: number
   currency: string

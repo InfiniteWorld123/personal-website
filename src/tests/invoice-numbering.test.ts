@@ -270,7 +270,6 @@ class Engine {
       number: row.number,
       kind: row.kind,
       status: row.status,
-      money_kind: row.moneyKind,
       client_id: row.clientId,
       client_name: 'Musterfirma GmbH',
       first_line: row.lines[0]?.description ?? null,

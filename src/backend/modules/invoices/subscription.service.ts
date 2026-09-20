@@ -243,9 +243,9 @@ const draftPeriod = async (row: Due, period: string): Promise<string> =>
   withTransaction(async (db: Db) => {
     const invoice = await db.query<{ id: string }>(
       `INSERT INTO invoices
-         (client_id, money_kind, language, due_days, subscription_id, period_start,
+         (client_id, language, due_days, subscription_id, period_start,
           service_from, service_to)
-       VALUES ($1, 'SUBSCRIPTION', $2, $3, $4, $5::date,
+       VALUES ($1, $2, $3, $4, $5::date,
                $5::date, ($5::date + INTERVAL '1 month' - INTERVAL '1 day')::date)
        RETURNING id;`,
       [row.client_id, row.language, row.due_days, row.id, period],
@@ -332,14 +332,20 @@ export const runDueSubscriptions = async (): Promise<string[]> => {
         written.push(await draftPeriod(row, period))
       } catch (error) {
         /*
-         * Almost certainly the unique index: another request drafted this
-         * month a moment ago. That is the constraint doing its job, and there
-         * is nothing to report — the invoice he needs exists. Anything else
-         * is swallowed for the same reason the whole generator is best-effort:
-         * it runs inside a page load, and a subscription that cannot be
-         * drafted must not take the invoice list down with it.
+         * Usually the unique index: another request drafted this month a
+         * moment ago. That is the constraint doing its job and there is
+         * nothing to report — the invoice he needs exists.
+         *
+         * Anything else is still swallowed, because this runs inside a page
+         * load and one broken subscription must not take the invoice list
+         * down with it. But it is **logged**, and that is not a nicety: on
+         * 20 Sep `0022` dropped `invoices.money_kind` while the INSERT below
+         * still named it, and this catch turned a total failure of the
+         * generator into "no drafts today" with nothing anywhere to say why.
+         * A best-effort path that is also silent is a path that can be broken
+         * for a month before anybody notices.
          */
-        void error
+        console.error('[subscriptions] could not draft', row.id, period, error)
         break
       }
 
