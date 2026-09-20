@@ -2,9 +2,17 @@ import { getDb } from '#/backend/db/client'
 import { storeAttachmentBytes } from '#/backend/modules/inbox/attachment.service'
 import { badRequestError, notFoundError } from '#/backend/shared/error'
 import { plainText } from '#/backend/shared/mail'
-import type { InvoiceLetter } from '#/shared/types/invoice.types'
-import { DOCUMENT_TITLE, type LetterKind } from '#/shared/validation/invoice.validation'
+import type { InvoiceLetter, PersonInvoice } from '#/shared/types/invoice.types'
+import {
+  DOCUMENT_TITLE,
+  settlementOf,
+  type InvoiceKind,
+  type InvoiceLanguage,
+  type InvoiceStatus,
+  type LetterKind,
+} from '#/shared/validation/invoice.validation'
 import { documentBytes, getInvoice } from './invoice.service'
+import { DATE_TEXT, LETTERS_LAST, PAID_CENTS, TODAY, toInt } from './invoice.sql'
 import { money } from './pdf.service'
 import { resolveSeller } from './seller'
 
@@ -113,7 +121,7 @@ const personForClient = async (invoiceId: string): Promise<string> => {
  * Nineteen kilobytes per letter, so a client who is reminded twice costs less
  * than a single photograph.
  */
-const fileForInvoice = async (
+export const fileForInvoice = async (
   invoiceId: string,
   personId: string,
 ): Promise<{ id: string; filename: string; bytes: number }> => {
@@ -263,4 +271,120 @@ export const prepareLetter = async (
     attachment,
     kind,
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Attaching, without a letter to go with it                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * This person's invoices, for the composer's attach panel.
+ *
+ * His own request, 20 Sep 2026: writing a reply and wanting to attach an
+ * invoice he already made, without going to the invoice, pressing *Write the
+ * letter*, and losing the words he had typed. `prepareLetter` opens a letter;
+ * this only lists what could go in one.
+ *
+ * Scoped to the person by `clients.lead_id`, which is the same link
+ * `personForClient` writes. That is the whole safety argument for the panel:
+ * with a list of everyone's invoices it would take one mis-click to send one
+ * client another client's figures, and there is no taking that back.
+ *
+ * Drafts are listed and marked unattachable rather than filtered out. A draft
+ * has no frozen file, so there is genuinely nothing to send — but dropping it
+ * silently would leave him looking for an invoice he knows he wrote.
+ */
+export const listInvoicesForPerson = async (personId: string): Promise<PersonInvoice[]> => {
+  const result = await getDb().query<{
+    id: string
+    number: string | null
+    kind: InvoiceKind
+    status: InvoiceStatus
+    language: InvoiceLanguage
+    title: string | null
+    issued_on: string | null
+    due_on: string | null
+    total_cents: number | string
+    paid_cents: number | string
+    currency: string
+    last_sent_at: Date | null
+    today: string
+  }>(
+    `SELECT i.id, i.number, i.kind, i.status, i.language,
+            (SELECT l.description FROM invoice_lines l
+              WHERE l.invoice_id = i.id ORDER BY l.position LIMIT 1) AS title,
+            ${DATE_TEXT('i.issued_on')} AS issued_on,
+            ${DATE_TEXT('i.due_on')} AS due_on,
+            i.total_cents,
+            ${PAID_CENTS} AS paid_cents,
+            i.currency,
+            ${LETTERS_LAST} AS last_sent_at,
+            ${DATE_TEXT(TODAY)} AS today
+       FROM invoices i
+       JOIN clients c ON c.id = i.client_id
+      WHERE c.lead_id = $1
+      ORDER BY i.created_at DESC;`,
+    [personId],
+  )
+
+  return result.rows.map((row) => {
+    const totalCents = toInt(row.total_cents)
+
+    return {
+      id: row.id,
+      number: row.number,
+      kind: row.kind,
+      settlement: settlementOf({
+        status: row.status,
+        kind: row.kind,
+        dueOn: row.due_on,
+        totalCents,
+        paidCents: toInt(row.paid_cents),
+        today: row.today,
+      }),
+      title: row.title ?? '',
+      issuedOn: row.issued_on,
+      totalCents,
+      currency: row.currency,
+      // A draft is the only document with no file behind it.
+      attachable: row.status !== 'DRAFT',
+      filename: `${DOCUMENT_TITLE[row.language][row.kind]}-${row.number ?? ''}.pdf`.replace(
+        /[^\w.-]/g,
+        '-',
+      ),
+      lastSentAt: row.last_sent_at ? row.last_sent_at.toISOString() : null,
+    }
+  })
+}
+
+/**
+ * Copies one invoice's PDF into this person's files, for the composer.
+ *
+ * The check is the point. Without it, an id typed into the request would
+ * attach any client's invoice to any conversation — one client reading
+ * another's figures, with no way to take it back. So the invoice must already
+ * belong to this person, by the same `clients.lead_id` link the panel lists
+ * by, and a mismatch reads as "not here" rather than as a permission error:
+ * from the composer's side it genuinely is not.
+ */
+export const attachInvoiceToPerson = async (
+  personId: string,
+  invoiceId: string,
+): Promise<{ id: string; filename: string; bytes: number }> => {
+  const owned = await getDb().query<{ status: InvoiceStatus }>(
+    `SELECT i.status FROM invoices i
+       JOIN clients c ON c.id = i.client_id
+      WHERE i.id = $1 AND c.lead_id = $2;`,
+    [invoiceId, personId],
+  )
+
+  const invoice = owned.rows[0]
+
+  if (!invoice) throw notFoundError('That invoice is not one of this person\'s')
+
+  if (invoice.status === 'DRAFT') {
+    throw badRequestError('A draft has no final document yet. Issue it first.')
+  }
+
+  return fileForInvoice(invoiceId, personId)
 }

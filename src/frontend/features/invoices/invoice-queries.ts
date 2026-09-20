@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   addPayment,
+  attachInvoice,
   correctInvoice,
   clientFromLead,
   createClient,
@@ -12,6 +13,7 @@ import {
   fetchInvoice,
   fetchInvoices,
   fetchLetter,
+  fetchPersonInvoices,
   fetchSellerState,
   fetchSentLetters,
   fetchSummary,
@@ -64,6 +66,20 @@ export const summaryQuery = () =>
  */
 export const sentLettersQuery = () =>
   queryOptions({ queryKey: [...INVOICES, 'letters'], queryFn: fetchSentLetters })
+
+/**
+ * What this person has been billed, for the composer's attach panel.
+ *
+ * Under the section's key prefix, so issuing an invoice while the composer is
+ * open leaves this stale and the panel shows the new document rather than a
+ * list that is one invoice behind.
+ */
+export const personInvoicesQuery = (personId: string, enabled = true) =>
+  queryOptions({
+    queryKey: [...INVOICES, 'for-person', personId],
+    queryFn: () => fetchPersonInvoices(personId),
+    enabled: enabled && personId !== '',
+  })
 
 export const clientsQuery = (search: string) =>
   queryOptions({ queryKey: [...INVOICES, 'clients', search], queryFn: () => fetchClients(search) })
@@ -140,6 +156,16 @@ export const useIssueInvoice = () =>
 
 export const useCorrectInvoice = (invoiceId: string) =>
   useInvoiceMutation((input: CorrectionInput) => correctInvoice(invoiceId, input))
+
+/**
+ * Copies an invoice's PDF into a conversation.
+ *
+ * A mutation rather than a query: it writes a file. The invalidation it
+ * inherits also refreshes the panel it was opened from, so the row it came
+ * from is redrawn with whatever the copy changed.
+ */
+export const useAttachInvoice = (personId: string) =>
+  useInvoiceMutation((invoiceId: string) => attachInvoice(personId, invoiceId))
 
 /* ----------------------------------------------------------------- payments */
 

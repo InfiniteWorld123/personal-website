@@ -1,13 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
-import { Archive, ArrowLeft, ChevronRight, CircleDot, Paperclip, Send, Star, X } from 'lucide-react'
+import {
+  Archive,
+  ArrowLeft,
+  ChevronRight,
+  CircleDot,
+  FileText,
+  Paperclip,
+  Send,
+  Star,
+  X,
+} from 'lucide-react'
 import { PanelNote } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
 import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { RichTextEditor } from '#/frontend/features/blog/RichTextEditor'
 import { uploadAttachment } from '#/frontend/api/inbox.api'
-import { letterQuery } from '#/frontend/features/invoices/invoice-queries'
+import {
+  letterQuery,
+  personInvoicesQuery,
+  useAttachInvoice,
+} from '#/frontend/features/invoices/invoice-queries'
+import {
+  SETTLEMENT_CLASS,
+  day,
+  money,
+} from '#/frontend/features/invoices/invoice-format'
+import { SETTLEMENT_LABEL } from '#/shared/validation/invoice.validation'
+import type { PersonInvoice } from '#/shared/types/invoice.types'
 import { usePrefetch } from '#/frontend/lib/prefetch'
 import type { LetterKind } from '#/shared/validation/invoice.validation'
 import {
@@ -419,6 +440,146 @@ function Files({ files }: { files: Attachment[] }) {
 }
 
 /**
+ * The invoices this person has been billed, inside the composer.
+ *
+ * His own request: he is replying to "can you send me the invoice again?" and
+ * wants the document without leaving the letter he has already started. Going
+ * to the invoice and pressing *Write the letter* works, and replaces his words
+ * with generated ones — which is the whole reason this exists.
+ *
+ * Three decisions, each visible on a row:
+ *
+ *   * **Only this person's.** Scoped on the server, not filtered here. A list
+ *     of everyone's invoices is one mis-click from a client reading another
+ *     client's figures, and there is no taking that back.
+ *   * **Drafts stay, greyed.** A draft has no frozen file, so there is nothing
+ *     to attach — but removing it from the list would send him looking for an
+ *     invoice he knows he wrote.
+ *   * **"Sent 12 Sep" on the row.** This panel makes sending the same invoice
+ *     twice easy, and the moment to notice is before pressing send.
+ */
+function InvoicePicker({
+  personId,
+  onAttached,
+  onClose,
+}: {
+  personId: string
+  onAttached: (file: { id: string; filename: string; bytes: number }) => void
+  onClose: () => void
+}) {
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const invoices = useQuery(personInvoicesQuery(personId))
+  const attach = useAttachInvoice(personId)
+
+  const pick = (invoice: PersonInvoice) => {
+    setError(null)
+    setBusy(invoice.id)
+
+    attach
+      .mutateAsync(invoice.id)
+      .then((file) => {
+        onAttached(file)
+        onClose()
+      })
+      .catch((caught: unknown) =>
+        setError(caught instanceof Error ? caught.message : 'That could not be attached.'),
+      )
+      .finally(() => setBusy(null))
+  }
+
+  return (
+    <div className="border-border/60 bg-muted/40 shrink-0 border-t">
+      <div className="flex items-baseline gap-2 px-3 pt-2.5 pb-1.5">
+        <span className="text-xs font-medium">Invoices for this person</span>
+        <span className="text-muted-foreground text-[11px]">
+          {invoices.isPending
+            ? 'loading…'
+            : `${invoices.data?.filter((invoice) => invoice.attachable).length ?? 0} you can attach`}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close the invoice list"
+          className="text-muted-foreground hover:text-foreground ms-auto"
+        >
+          <X aria-hidden="true" className="size-3.5" />
+        </button>
+      </div>
+
+      {invoices.isPending ? (
+        <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
+          {Array.from({ length: 2 }, (_, index) => (
+            <Skeleton className="h-12 rounded-xl" key={index} />
+          ))}
+        </div>
+      ) : invoices.isError ? (
+        <p className="text-destructive px-3 pb-3 text-[11px]">
+          That list could not be read. Use the paperclip for a file on your computer.
+        </p>
+      ) : (invoices.data?.length ?? 0) === 0 ? (
+        /* Not an error, and said as the fact it is: he has never billed them. */
+        <p className="text-muted-foreground px-3 pb-3 text-[11px]">
+          You have never billed this person. Make an invoice for them first, or use the
+          paperclip for a file on your computer.
+        </p>
+      ) : (
+        <ul className="max-h-56 overflow-y-auto px-2.5 pb-2.5">
+          {invoices.data?.map((invoice) => (
+            <li key={invoice.id}>
+              <button
+                type="button"
+                disabled={!invoice.attachable || busy !== null}
+                onClick={() => pick(invoice)}
+                className={cn(
+                  'border-border/60 bg-panel mt-1.5 flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-start motion-safe:transition-colors',
+                  invoice.attachable
+                    ? 'hover:border-primary cursor-pointer'
+                    : 'cursor-not-allowed opacity-55',
+                )}
+              >
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium whitespace-nowrap',
+                    SETTLEMENT_CLASS[invoice.settlement],
+                  )}
+                >
+                  {SETTLEMENT_LABEL[invoice.settlement]}
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium">
+                    {invoice.title || 'No lines'}
+                  </span>
+                  <span className="text-muted-foreground block truncate text-[11px]">
+                    {invoice.number ? <span className="tabular">{invoice.number} · </span> : null}
+                    {invoice.attachable ? day(invoice.issuedOn) : 'no file until you issue it'}
+                  </span>
+                </span>
+
+                {/* The fact that stops the same invoice going out twice. */}
+                {invoice.lastSentAt ? (
+                  <span className="shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] whitespace-nowrap text-amber-700 dark:text-amber-300">
+                    sent {day(invoice.lastSentAt.slice(0, 10))}
+                  </span>
+                ) : null}
+
+                <span className="tabular shrink-0 text-xs font-semibold">
+                  {busy === invoice.id ? '…' : money(invoice.totalCents, invoice.currency)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {error ? <p className="text-destructive px-3 pb-3 text-[11px]">{error}</p> : null}
+    </div>
+  )
+}
+
+/**
  * The reply, docked to the bottom.
  *
  * His own measure of this screen was "how many blocks sit between me and the
@@ -437,6 +598,7 @@ function Composer({
   const [files, setFiles] = useState<Array<{ id: string; filename: string; bytes: number }>>([])
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const settings = useQuery(settingsQuery())
@@ -606,6 +768,21 @@ function Composer({
         </div>
       ) : null}
 
+      {picking ? (
+        <InvoicePicker
+          personId={person.id}
+          onAttached={(file) =>
+            // Guarded rather than appended blindly: the server hands back the
+            // copy it already made when the same invoice is picked twice, and
+            // two chips naming one file would each offer to remove it.
+            setFiles((current) =>
+              current.some((existing) => existing.id === file.id) ? current : [...current, file],
+            )
+          }
+          onClose={() => setPicking(false)}
+        />
+      ) : null}
+
       <div className="border-border/60 flex flex-wrap items-center gap-2 border-t p-3">
         <Button onClick={send} disabled={reply.isPending || isRichTextEmpty(doc)}>
           <Send aria-hidden="true" />
@@ -628,9 +805,25 @@ function Composer({
           size="icon"
           onClick={() => fileInput.current?.click()}
           disabled={uploading}
-          aria-label="Attach a file"
+          aria-label="Attach a file from your computer"
+          title="A file from your computer"
         >
           <Paperclip aria-hidden="true" />
+        </Button>
+
+        {/*
+          Beside the paperclip, not inside a menu.
+          The invoice is the file he attaches most often and the one he already
+          owns — asking him to find it on his own disk first, when the system
+          drew it, was the step he asked to remove.
+        */}
+        <Button
+          variant="outline"
+          onClick={() => setPicking((open) => !open)}
+          aria-expanded={picking}
+          title="An invoice you already made"
+        >
+          <FileText aria-hidden="true" /> Invoice
         </Button>
 
         <Button variant="ghost" onClick={() => setOpen(false)}>

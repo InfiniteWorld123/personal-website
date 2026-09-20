@@ -34,7 +34,7 @@ import {
   readInvoicePdf,
   updateInvoice,
 } from './invoice.service'
-import { prepareLetter } from './letter.service'
+import { attachInvoiceToPerson, listInvoicesForPerson, prepareLetter } from './letter.service'
 import { isSellerReady, resolveSeller, sellerGaps } from './seller'
 
 const id = (value: unknown) => parseInput(IdSchema, value)
@@ -73,6 +73,21 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
    */
   .get('/letters', async () =>
     responseOk({ data: await listSentLetters(), message: 'Letters listed' }),
+  )
+
+  /**
+   * One person's invoices, for the composer's attach panel.
+   *
+   * Static-prefixed like everything above, so `for-person` is never read as
+   * somebody's id. Scoped to the person on the server rather than filtered on
+   * the screen: a list of everyone's invoices reaching the browser is one
+   * mis-click from a client reading another client's figures.
+   */
+  .get('/for-person/:personId', async ({ params }) =>
+    responseOk({
+      data: await listInvoicesForPerson(id(params.personId)),
+      message: 'Invoices listed',
+    }),
   )
 
   /**
@@ -222,6 +237,21 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
       message: 'Letter ready',
     })
   })
+
+  /**
+   * Copies one invoice's PDF into this person's files, and says where it went.
+   *
+   * What `prepareLetter` does for the file, without the letter — he is already
+   * writing one in his own words and does not want it replaced. The service
+   * refuses an invoice that is not this person's; the check is on the server
+   * because the alternative is a request that can reach any client's document.
+   */
+  .post('/:invoiceId/attach/:personId', async ({ params }) =>
+    responseOk({
+      data: await attachInvoiceToPerson(id(params.personId), id(params.invoiceId)),
+      message: 'Attached',
+    }),
+  )
 
   /* ------------------------------------------------------------- payments */
 

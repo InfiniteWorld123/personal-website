@@ -4,6 +4,7 @@ import type {
   InvoiceLetter,
   InvoiceList,
   InvoiceSummary,
+  PersonInvoice,
   SentLetter,
 } from '#/shared/types/invoice.types'
 import type {
@@ -120,6 +121,38 @@ export async function fetchSellerState(): Promise<{
 export async function fetchClients(search: string): Promise<Client[]> {
   return unwrap<Client[]>(await api().admin.invoices.clients.get({ query: { search } })).map(
     normaliseClient,
+  )
+}
+
+/**
+ * This person's invoices, for the composer's attach panel.
+ *
+ * Scoped on the server. Nothing here filters a longer list, because a longer
+ * list should never reach the browser in the first place.
+ */
+export async function fetchPersonInvoices(personId: string): Promise<PersonInvoice[]> {
+  return unwrap<PersonInvoice[]>(
+    await api().admin.invoices['for-person']({ personId }).get(),
+  ).map((invoice) => ({
+    ...invoice,
+    issuedOn: toDay(invoice.issuedOn),
+    lastSentAt: toInstant(invoice.lastSentAt),
+  }))
+}
+
+/**
+ * Puts one invoice's PDF in this person's files and hands back the file.
+ *
+ * A write, so it is a POST and never a prefetch: it copies bytes into the
+ * conversation. Asking twice finds the copy the first call made rather than
+ * piling up a second identical PDF.
+ */
+export async function attachInvoice(
+  personId: string,
+  invoiceId: string,
+): Promise<{ id: string; filename: string; bytes: number }> {
+  return unwrap<{ id: string; filename: string; bytes: number }>(
+    await api().admin.invoices({ invoiceId }).attach({ personId }).post({}),
   )
 }
 

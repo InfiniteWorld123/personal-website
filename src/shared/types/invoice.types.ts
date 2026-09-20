@@ -181,6 +181,38 @@ export type SentLetter = {
   currency: string
 }
 
+/**
+ * One of this person's invoices, as the inbox composer offers it.
+ *
+ * Enough to recognise a document and decide whether to send it again, and
+ * nothing more — the composer is a place to write a letter, not a second
+ * invoice screen.
+ *
+ * `attachable` is false for a draft. A draft has no frozen file, so there is
+ * nothing to attach; it appears in the list anyway, greyed, because hiding it
+ * would send him hunting for an invoice he knows he wrote.
+ */
+export type PersonInvoice = {
+  id: string
+  number: string | null
+  kind: InvoiceKind
+  settlement: Settlement
+  title: string
+  issuedOn: string | null
+  totalCents: number
+  currency: string
+  attachable: boolean
+  /** What the file will be called once it is attached. */
+  filename: string
+  /**
+   * When a letter last carried this document, or null.
+   *
+   * On the row because this panel makes sending the same invoice twice easy,
+   * and the moment to notice is before pressing send, not after.
+   */
+  lastSentAt: string | null
+}
+
 export type InvoiceList = {
   rows: InvoiceRow[]
   summary: InvoiceSummary
