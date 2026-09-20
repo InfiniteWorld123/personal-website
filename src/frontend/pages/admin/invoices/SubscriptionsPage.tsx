@@ -25,8 +25,10 @@ import { cn } from '#/frontend/lib/utils'
 import type { Subscription } from '#/shared/types/invoice.types'
 import {
   LAST_BILLING_DAY,
-  billingDate,
-  periodLabel,
+  VAT_RATES,
+  VAT_RATE_LABEL,
+  plannedInvoices,
+  subscriptionLine,
   type SubscriptionWriteInput,
 } from '#/shared/validation/invoice.validation'
 
@@ -137,25 +139,27 @@ function Form({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="sub-tax">VAT %</Label>
-          <Input
-            id="sub-tax"
-            type="number"
-            min="0"
-            max="100"
-            step="1"
-            value={value.taxRate}
-            onChange={(event) => set('taxRate', Number(event.target.value))}
-          />
+          <Label htmlFor="sub-tax">VAT</Label>
           {/*
-            Shown rather than hidden behind the generator.
-            It is 0 for every subscription he writes this year, and the whole
-            reason it is on screen is the year after: a subscription quietly
-            billing 0 % once §19 no longer applies would be found out months of
-            sent invoices later.
+            Two options, not a number box. His own request, and the right one:
+            a typo like 1,9 in a free field bills wrong every month until
+            somebody reads a PDF closely — and there is no third answer to
+            pick, because 7 % covers books and food, not software.
           */}
+          <select
+            id="sub-tax"
+            className={SELECT}
+            value={value.taxRate}
+            onChange={(event) => set('taxRate', Number(event.target.value) as 0 | 19)}
+          >
+            {VAT_RATES.map((rate) => (
+              <option key={rate} value={rate}>
+                {VAT_RATE_LABEL[rate]}
+              </option>
+            ))}
+          </select>
           <p className="text-muted-foreground text-xs">
-            0 while you are a Kleinunternehmer. Every invoice this writes carries this rate.
+            Every invoice this writes carries this rate.
           </p>
         </div>
 
@@ -230,7 +234,6 @@ function Row({
   const [error, setError] = useState('')
 
   const live = subscription.cancelledOn === null
-  const nextOn = billingDate(subscription.nextPeriod, subscription.billingDay)
 
   return (
     <div className="border-border/60 flex flex-wrap items-center gap-3 border-b px-5 py-4 last:border-b-0">
@@ -254,12 +257,46 @@ function Row({
           {' · '}
           {live ? (
             <>
-              next invoice {day(nextOn)} for {periodLabel(subscription.nextPeriod, 'en')}
+              {money(subscription.amountCents, subscription.currency)} on the{' '}
+              {ordinal(subscription.billingDay)}
+              {subscription.taxRate > 0 ? ` · ${subscription.taxRate} % VAT` : null}
             </>
           ) : (
             <>stopped {day(subscription.cancelledOn)}</>
           )}
           </span>
+
+        {/*
+          What it is about to do, before it does it.
+
+          The generator writes one draft a month, silently, and until this
+          there was no way to watch it except to wait a month and hope. He said
+          so in those words: he could not see it and could not test it. Three
+          rows of plain text — the date, the line, the amount — turn a promise
+          into something he can check against the invoice list tomorrow.
+
+          Only while it is running. A stopped subscription is about to do
+          nothing, and showing it a future would be the lie this fixes.
+        */}
+        {live ? (
+          <span className="mt-2 block">
+            <span className="text-muted-foreground block text-[11px] font-medium">
+              Next, as drafts:
+            </span>
+            {plannedInvoices(subscription.nextPeriod, subscription.billingDay).map((planned) => (
+              <span
+                key={planned.period}
+                className="text-muted-foreground block truncate text-[11px]"
+              >
+                {day(planned.on)} — {subscriptionLine(subscription.description, planned.period, 'de')}
+                {' · '}
+                <span className="tabular">
+                  {money(subscription.amountCents, subscription.currency)}
+                </span>
+              </span>
+            ))}
+          </span>
+        ) : null}
 
         {/*
           The invoices it has written, reachable.
@@ -470,7 +507,7 @@ export function SubscriptionsPage() {
                   clientId: subscription.clientId,
                   description: subscription.description,
                   amountEuros: subscription.amountCents / 100,
-                  taxRate: subscription.taxRate,
+                  taxRate: subscription.taxRate === 19 ? 19 : 0,
                   billingDay: subscription.billingDay,
                   note: subscription.note,
                 })

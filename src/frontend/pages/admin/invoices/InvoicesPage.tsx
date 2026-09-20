@@ -159,7 +159,27 @@ function Row({ row }: { row: InvoiceRow }) {
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{row.clientName}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium">{row.clientName}</span>
+          {/*
+            A draft he did not write, saying so.
+
+            The generator runs when this list loads, so its output simply
+            appears — and he asked, in those words, how he could tell it had
+            happened. A quiet mark on the row it produced is the answer, and it
+            stays true for the life of the document rather than being a message
+            that flashes once.
+          */}
+          {row.fromSubscription ? (
+            <span
+              className="text-muted-foreground shrink-0"
+              title="Written by a subscription, not by hand"
+            >
+              <Repeat aria-hidden="true" className="size-3" />
+              <span className="sr-only">Written by a subscription</span>
+            </span>
+          ) : null}
+        </span>
         <span className="text-muted-foreground block truncate text-xs">
           {row.kind === 'INVOICE' ? row.title || 'No lines yet' : INVOICE_KIND_LABEL[row.kind]}
           {row.number ? <span className="tabular"> · {row.number}</span> : null}

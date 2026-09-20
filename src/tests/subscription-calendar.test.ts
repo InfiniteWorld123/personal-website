@@ -6,7 +6,10 @@ import {
   nextPeriod,
   periodLabel,
   periodOf,
+  plannedInvoices,
   subscriptionLine,
+  VAT_RATE_LABEL,
+  VAT_RATES,
 } from '#/shared/validation/invoice.validation'
 
 /**
@@ -120,5 +123,64 @@ describe('the line a client reads', () => {
 
     expect(periodLabel('2026-03-01', 'de')).toBe('März 2026')
     expect(periodLabel('2026-12-01', 'en')).toBe('December 2026')
+  })
+})
+
+/**
+ * What the screen promises before anything has happened.
+ *
+ * He said he could not see the generator work and could not test it — he would
+ * have to wait a month and hope. The schedule on each subscription is the
+ * answer: three dates, written down before they arrive, that he can hold the
+ * invoice list against tomorrow. It is only worth that if it agrees with the
+ * generator exactly, which is what this checks.
+ */
+
+describe('plannedInvoices', () => {
+  it('lists the next three months and the day each is dated', () => {
+    expect(plannedInvoices('2026-09-01', 25)).toEqual([
+      { period: '2026-09-01', on: '2026-09-25' },
+      { period: '2026-10-01', on: '2026-10-25' },
+      { period: '2026-11-01', on: '2026-11-25' },
+    ])
+  })
+
+  it('crosses the year without drifting', () => {
+    expect(plannedInvoices('2026-12-01', 1)).toEqual([
+      { period: '2026-12-01', on: '2026-12-01' },
+      { period: '2027-01-01', on: '2027-01-01' },
+      { period: '2027-02-01', on: '2027-02-01' },
+    ])
+  })
+
+  it('walks the same path the generator walks', () => {
+    // The screen and the generator must never disagree about which month comes
+    // next — a schedule that promises November while the generator writes
+    // December is worse than no schedule at all.
+    const planned = plannedInvoices('2026-09-01', 14, 6)
+    let period = '2026-09-01'
+
+    for (const step of planned) {
+      expect(step.period).toBe(period)
+      expect(step.on).toBe(billingDate(period, 14))
+      period = nextPeriod(period)
+    }
+  })
+
+  it('never promises a date that does not exist', () => {
+    for (const step of plannedInvoices('2026-01-01', LAST_BILLING_DAY, 12)) {
+      expect(new Date(`${step.on}T00:00:00Z`).toISOString().slice(0, 10)).toBe(step.on)
+    }
+  })
+})
+
+describe('the rates he can pick', () => {
+  it('offers exactly the two that exist for him', () => {
+    // Not a free number box: 1,9 instead of 19 would bill wrong every month
+    // until somebody read a PDF closely. And 7 % covers books and food, not
+    // software, so offering it would be offering a wrong answer.
+    expect(VAT_RATES).toEqual([0, 19])
+    expect(VAT_RATE_LABEL[0]).toContain('§19')
+    expect(VAT_RATE_LABEL[19]).toContain('19 %')
   })
 })

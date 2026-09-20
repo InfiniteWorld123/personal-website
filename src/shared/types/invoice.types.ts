@@ -90,6 +90,14 @@ export type InvoiceRow = {
    */
   letterCount: number
   lastLetterAt: string | null
+  /**
+   * True when a subscription wrote this rather than he did.
+   *
+   * On the row because a draft he did not create appearing in his list is
+   * otherwise unexplained — he asked, in those words, how he could tell the
+   * generator had run. This is the answer, on the invoice itself.
+   */
+  fromSubscription: boolean
 }
 
 export type Invoice = InvoiceRow & {

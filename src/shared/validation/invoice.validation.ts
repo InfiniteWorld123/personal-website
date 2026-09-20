@@ -386,6 +386,51 @@ export type InvoiceQueryInput = v.InferOutput<typeof InvoiceQuerySchema>
  */
 export const LAST_BILLING_DAY = 28
 
+/**
+ * The two rates that exist for him, and nothing in between.
+ *
+ * A free number box invites a typo nobody catches — 1,9 instead of 19 on a
+ * subscription bills wrong every month until somebody reads a PDF closely.
+ * And there is no third answer to pick: selling web development from Erfurt,
+ * he charges **0 % under `§19`** until he crosses the threshold, and **19 %**
+ * after. The reduced 7 % rate covers books, food and public transport, not
+ * software, so offering it would be offering a wrong answer.
+ *
+ * His own words, 20 Sep: *"I have just the 19 percent taxes… you can add zero
+ * or 19 as a dropdown."*
+ */
+export const VAT_RATES = [0, 19] as const
+
+export const VAT_RATE_LABEL: Record<number, string> = {
+  0: '0 % — Kleinunternehmer (§19)',
+  19: '19 % — Regelbesteuerung',
+}
+
+/**
+ * The next few months a subscription will bill, and when.
+ *
+ * Pure, so the screen can show him what is going to happen before it happens.
+ * That is the whole reason it exists: the generator writes a draft once a
+ * month, silently, and until this there was no way to watch it except to wait
+ * a month and hope. A feature he cannot see is a feature he cannot trust, and
+ * he said so.
+ */
+export const plannedInvoices = (
+  fromPeriod: string,
+  billingDay: number,
+  count = 3,
+): Array<{ period: string; on: string }> => {
+  const planned: Array<{ period: string; on: string }> = []
+  let period = fromPeriod
+
+  for (let index = 0; index < count; index += 1) {
+    planned.push({ period, on: billingDate(period, billingDay) })
+    period = nextPeriod(period)
+  }
+
+  return planned
+}
+
 export const SubscriptionWriteSchema = v.object({
   clientId: IdSchema,
   description: trimmed('Say what they are paying for each month', 200),
@@ -409,10 +454,9 @@ export const SubscriptionWriteSchema = v.object({
    * subscription that kept billing 0 % silently, with nothing on any screen to
    * say so, would be found out months of sent invoices later.
    */
-  taxRate: v.pipe(
-    v.number('That is not a rate'),
-    v.minValue(0, 'A rate cannot be negative'),
-    v.maxValue(100, 'That is not a rate'),
+  taxRate: v.picklist(
+    VAT_RATES,
+    'Pick 0 % while §19 applies, or 19 % once it does not',
   ),
   note: optionalText(500),
 })
