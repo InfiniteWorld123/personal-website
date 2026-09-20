@@ -30,6 +30,7 @@ import type { InvoiceRow, InvoiceSummary } from '#/shared/types/invoice.types'
 import {
   INVOICE_KIND_LABEL,
   SETTLEMENT_LABEL,
+  balanceOf,
   type Settlement,
 } from '#/shared/validation/invoice.validation'
 
@@ -139,7 +140,7 @@ function FiguresSkeleton() {
 
 function Row({ row }: { row: InvoiceRow }) {
   const prefetch = usePrefetch()
-  const owed = row.totalCents - row.paidCents
+  const { owed, over } = balanceOf(row)
 
   return (
     <Link
@@ -195,9 +196,15 @@ function Row({ row }: { row: InvoiceRow }) {
         <span className="tabular block text-sm font-semibold">
           {money(row.totalCents, row.currency)}
         </span>
-        {row.paidCents > 0 && owed > 0 ? (
+        {/* Credit notes count here too, which they did not until 20 Sep. */}
+        {(row.paidCents > 0 || row.creditedCents > 0) && owed > 0 ? (
           <span className="tabular text-muted-foreground block text-[11px]">
             {money(owed, row.currency)} left
+          </span>
+        ) : null}
+        {over > 0 ? (
+          <span className="tabular block text-[11px] text-amber-700 dark:text-amber-400">
+            {money(over, row.currency)} too much
           </span>
         ) : null}
       </span>

@@ -72,7 +72,20 @@ export type InvoiceRow = {
   issuedOn: string | null
   dueOn: string | null
   totalCents: number
+  /** Money that actually arrived. Credit notes are not payments and are not here. */
   paidCents: number
+  /**
+   * What credit notes have taken off this invoice.
+   *
+   * Its own field rather than folded into `paidCents`, because they are
+   * different facts and a screen that merged them would say "paid 400 €" about
+   * money nobody ever sent. What is still owed is
+   * `totalCents − paidCents − creditedCents`, and every surface has to use all
+   * three: until 20 Sep the rows used only the first two and told him a client
+   * still owed 990 € on an invoice he had credited 400 € of, while the total
+   * above them — computed in SQL, which did subtract it — said 590 €.
+   */
+  creditedCents: number
   currency: string
   /** Days past due, positive only. Zero when it is not late. */
   daysLate: number

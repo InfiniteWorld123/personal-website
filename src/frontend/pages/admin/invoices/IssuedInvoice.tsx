@@ -1,7 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ArrowLeft, Ban, BellRing, FileText, Mail, Receipt, Trash2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Ban,
+  BellRing,
+  FileText,
+  Mail,
+  Receipt,
+  Trash2,
+} from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
@@ -33,6 +42,7 @@ import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABEL,
   SETTLEMENT_LABEL,
+  balanceOf,
   type LetterKind,
   type PaymentMethod,
 } from '#/shared/validation/invoice.validation'
@@ -70,7 +80,7 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
   const prefetch = usePrefetch()
   const navigate = useNavigate()
   const client = useQueryClient()
-  const owed = invoice.totalCents - invoice.paidCents
+  const { owed, over } = balanceOf(invoice)
 
   /**
    * The conversation every letter button lands in, warmed on the way to it.
@@ -181,11 +191,37 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
               <dd className="tabular text-end">{money(invoice.paidCents, invoice.currency)}</dd>
             </>
           ) : null}
+          {/*
+            Named separately from Paid, because they are different facts: money
+            that arrived, and money given back. Merging them would say "paid
+            400 €" about money nobody ever sent.
+          */}
+          {invoice.creditedCents > 0 ? (
+            <>
+              <dt className="text-muted-foreground">Credited</dt>
+              <dd className="tabular text-end">
+                −{money(invoice.creditedCents, invoice.currency)}
+              </dd>
+            </>
+          ) : null}
           {owed > 0 && invoice.status === 'ISSUED' && invoice.kind === 'INVOICE' ? (
             <>
               <dt className="text-muted-foreground">Still owed</dt>
               <dd className="tabular text-end font-semibold">
                 {money(owed, invoice.currency)}
+              </dd>
+            </>
+          ) : null}
+          {/*
+            The other direction, which had no name at all. A client who
+            transfers twice leaves him believing he has been paid when he owes
+            a refund — and nothing on any screen said so.
+          */}
+          {over > 0 ? (
+            <>
+              <dt className="text-amber-700 dark:text-amber-400">Overpaid by</dt>
+              <dd className="tabular text-end font-semibold text-amber-700 dark:text-amber-400">
+                {money(over, invoice.currency)}
               </dd>
             </>
           ) : null}
@@ -451,6 +487,18 @@ function PaymentForm({
   const [method, setMethod] = useState<PaymentMethod>('TRANSFER')
   const [reference, setReference] = useState('')
 
+  /*
+   * More than is left to pay, said before it is recorded.
+   *
+   * Not a refusal: a client really does transfer twice, or round 990 up to
+   * 1000, and a system that refused the truth would push him into not
+   * recording it at all. But it was accepted in complete silence, which left
+   * him believing he had been paid when he owed a refund — so the number is
+   * named here, while he can still check the statement, and again on the
+   * invoice afterwards.
+   */
+  const excess = Math.round((Number(amount) || 0) * 100) - owed
+
   return (
     // Carved into the panel rather than raised on it: this belongs to the
     // payments above it, and a second floating card would say otherwise.
@@ -505,6 +553,17 @@ function PaymentForm({
           placeholder="From the statement"
         />
       </div>
+
+      {excess > 0 && owed > 0 ? (
+        <p className="flex items-start gap-2 text-xs text-amber-700 sm:col-span-4 dark:text-amber-400">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>
+            That is <span className="font-medium">{money(excess, invoice.currency)}</span> more
+            than is left to pay. Record it if that is what really arrived — the invoice will
+            show the difference as overpaid, and you owe it back.
+          </span>
+        </p>
+      ) : null}
 
       <div className="sm:col-span-4">
         <Button

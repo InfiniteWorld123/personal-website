@@ -188,6 +188,7 @@ export type InvoiceRowShape = {
   due_on: string | null
   total_cents: number | string
   paid_cents: number | string
+  credited_cents?: number | string
   currency: string
   pdf_key: string | null
   letter_count: number | string
@@ -247,6 +248,9 @@ export const projectRow = (row: InvoiceRowShape): InvoiceRow => {
     dueOn: row.due_on,
     totalCents,
     paidCents,
+    // Zero unless the caller selected it. `projectWithCredit` fills it in for
+    // the list and for one document; nothing else needs it.
+    creditedCents: toInt(row.credited_cents ?? 0),
     currency: row.currency,
     // Only ever a positive number of days, and only for something still owed.
     // "Late by -3 days" is not a thing anyone says.

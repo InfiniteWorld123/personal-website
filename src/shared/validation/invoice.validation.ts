@@ -571,6 +571,30 @@ export const totalsOf = (
 }
 
 /**
+ * What is still owed on a document, and what to call it.
+ *
+ * One function because three surfaces were each doing their own subtraction
+ * and two of them were wrong. Until 20 Sep the list and the document computed
+ * `total − paid` and ignored credit notes entirely, so an invoice credited
+ * 400 € of 990 € still read "990 € left" while the figure above it — computed
+ * in SQL, which did subtract — said 590 €. He would have chased a client for
+ * money he had given back himself.
+ *
+ * `over` is the other direction and had no name at all: a payment larger than
+ * the invoice was accepted in silence, so he would believe he had been paid
+ * when in fact he owes a refund.
+ */
+export const balanceOf = (invoice: {
+  totalCents: number
+  paidCents: number
+  creditedCents: number
+}): { owed: number; over: number } => {
+  const balance = invoice.totalCents - invoice.paidCents - invoice.creditedCents
+
+  return { owed: Math.max(0, balance), over: Math.max(0, -balance) }
+}
+
+/**
  * The one combination that cannot be printed: `§19` and a VAT row.
  *
  * A `Kleinunternehmer` charges no VAT, and the paper says so in a sentence
