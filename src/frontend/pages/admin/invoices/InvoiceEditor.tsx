@@ -177,6 +177,7 @@ function Draft({
   const seller = useQuery(sellerQuery())
   const saving = create.isPending || update.isPending
   const [confirming, setConfirming] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
   /**
    * The running total, from the same function the server and the paper use.
@@ -592,21 +593,60 @@ function Draft({
               <Stamp className="size-4" /> Issue it
             </Button>
 
-            <Button
-              variant="ghost"
-              className="ms-auto rounded-full text-rose-600 dark:text-rose-400"
-              disabled={remove.isPending}
-              onClick={() => {
-                remove
-                  .mutateAsync(invoice.id)
-                  .then(() => navigate({ to: '/admin/invoices' }))
-                  .catch((caught: unknown) =>
-                    setError(caught instanceof Error ? caught.message : 'That could not be removed.'),
-                  )
-              }}
-            >
-              <Trash2 className="size-4" /> Delete draft
-            </Button>
+            {/*
+              Two clicks, not one.
+
+              A draft is the only document in this system that can be
+              destroyed, and until 20 Sep 2026 destroying one took a single
+              click beside Save — no question, no undo, and the row gone. For
+              a draft he typed himself that is an annoyance. For a draft a
+              **subscription** wrote it is worse than that: the subscription
+              already moved on to the next month when it wrote this one, so
+              deleting it means the month is never billed, silently and for
+              ever. The warning saying so sits right below, and a warning
+              under a one-click button is a warning nobody reads in time.
+            */}
+            {removing ? (
+              <span className="ms-auto flex items-center gap-2">
+                <span className="text-muted-foreground text-xs">Delete it for good?</span>
+                <Button
+                  className="rounded-full"
+                  size="sm"
+                  variant="destructive"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    remove
+                      .mutateAsync(invoice.id)
+                      .then(() => navigate({ to: '/admin/invoices' }))
+                      .catch((caught: unknown) => {
+                        setRemoving(false)
+                        setError(
+                          caught instanceof Error ? caught.message : 'That could not be removed.',
+                        )
+                      })
+                  }}
+                >
+                  {remove.isPending ? 'Deleting…' : 'Yes, delete it'}
+                </Button>
+                <Button
+                  className="rounded-full"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setRemoving(false)}
+                >
+                  Keep it
+                </Button>
+              </span>
+            ) : (
+              <Button
+                variant="ghost"
+                className="ms-auto rounded-full text-rose-600 dark:text-rose-400"
+                disabled={remove.isPending}
+                onClick={() => setRemoving(true)}
+              >
+                <Trash2 className="size-4" /> Delete draft
+              </Button>
+            )}
           </>
         ) : (
           <span className="text-muted-foreground text-xs">

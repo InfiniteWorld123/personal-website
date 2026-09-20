@@ -217,6 +217,11 @@ export async function fetchLetter(invoiceId: string, kind: LetterKind): Promise<
   )
 }
 
+/** Which years have anything in them, so the screen offers only those. */
+export async function fetchArchiveYears(): Promise<number[]> {
+  return unwrap<number[]>(await api().admin.invoices.archive.years.get())
+}
+
 /**
  * The letter that carries a subscription's agreement.
  *
@@ -325,3 +330,14 @@ export const invoicePdfUrl = (invoiceId: string): string =>
  */
 export const subscriptionPaperUrl = (subscriptionId: string): string =>
   `/api/admin/invoices/subscriptions/${subscriptionId}/paper`
+
+/**
+ * Every document of a year, in one archive.
+ *
+ * A plain URL for the same reason the PDFs are: the route answers with the
+ * file, so the browser saves it without any of it passing through React —
+ * which for a multi-megabyte zip is the difference between a download and a
+ * tab that hangs.
+ */
+export const invoiceArchiveUrl = (year: number | 'all'): string =>
+  `/api/admin/invoices/archive?year=${year}`

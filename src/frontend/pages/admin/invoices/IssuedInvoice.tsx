@@ -83,7 +83,7 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
   const prefetch = usePrefetch()
   const navigate = useNavigate()
   const client = useQueryClient()
-  const { owed, over } = balanceOf(invoice)
+  const { owed, refund } = balanceOf(invoice)
 
   /**
    * The conversation every letter button lands in, warmed on the way to it.
@@ -220,11 +220,24 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
             transfers twice leaves him believing he has been paid when he owes
             a refund — and nothing on any screen said so.
           */}
-          {over > 0 ? (
+          {/*
+            Money that has to go back, named and kept on the screen.
+
+            Two ways to get here. A client transfers twice — that one always
+            had a name. Or an invoice that was already paid is cancelled,
+            which voids what it demanded and leaves every cent that arrived
+            owed back. That second case showed nothing at all: `total − paid`
+            was zero, so no row appeared, and the only mention of the refund
+            was a warning inside the panel that closed when he pressed the
+            button.
+          */}
+          {refund > 0 ? (
             <>
-              <dt className="text-amber-700 dark:text-amber-400">Overpaid by</dt>
+              <dt className="text-amber-700 dark:text-amber-400">
+                {invoice.status === 'CANCELLED' ? 'To refund' : 'Overpaid by'}
+              </dt>
               <dd className="tabular text-end font-semibold text-amber-700 dark:text-amber-400">
-                {money(over, invoice.currency)}
+                {money(refund, invoice.currency)}
               </dd>
             </>
           ) : null}

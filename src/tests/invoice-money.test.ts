@@ -244,25 +244,98 @@ describe('THE_CURRENCY', () => {
 })
 
 describe('balanceOf', () => {
+  const live = { status: 'ISSUED' as InvoiceStatus, kind: 'INVOICE' as InvoiceKind }
+
   it('takes credit notes off what is owed, exactly as it takes payments', () => {
-    expect(balanceOf({ totalCents: 99_000, paidCents: 0, creditedCents: 40_000 })).toEqual({
+    expect(balanceOf({ ...live, totalCents: 99_000, paidCents: 0, creditedCents: 40_000 })).toEqual({
       owed: 59_000,
-      over: 0,
+      refund: 0,
     })
   })
 
   it('names money that came in twice', () => {
-    expect(balanceOf({ totalCents: 99_000, paidCents: 120_000, creditedCents: 0 })).toEqual({
+    expect(balanceOf({ ...live, totalCents: 99_000, paidCents: 120_000, creditedCents: 0 })).toEqual({
       owed: 0,
-      over: 21_000,
+      refund: 21_000,
     })
   })
 
   it('names the refund a credit note creates on an invoice already paid', () => {
-    expect(balanceOf({ totalCents: 99_000, paidCents: 99_000, creditedCents: 40_000 })).toEqual({
-      owed: 0,
-      over: 40_000,
-    })
+    expect(
+      balanceOf({ ...live, totalCents: 99_000, paidCents: 99_000, creditedCents: 40_000 }),
+    ).toEqual({ owed: 0, refund: 40_000 })
+  })
+
+  it('owes back every cent that arrived on an invoice that was then cancelled', () => {
+    /*
+     * The gap this closes, and it is the one he found by instinct.
+     *
+     * Cancelling an invoice a client has already paid is a legitimate act —
+     * the job fell through after payment, and the Stornorechnung is the right
+     * paper. But the document is voided, so what it demanded becomes zero and
+     * every cent that arrived is owed back.
+     *
+     * The old subtraction read `total − paid` and came to zero: nothing owed,
+     * nothing over, and no figure on any screen. The payment row stayed, the
+     * month still counted the income, and the only mention of the refund was
+     * a warning inside the panel that closed the moment he pressed the button.
+     */
+    expect(
+      balanceOf({
+        status: 'CANCELLED',
+        kind: 'INVOICE',
+        totalCents: 99_000,
+        paidCents: 99_000,
+        creditedCents: 0,
+      }),
+    ).toEqual({ owed: 0, refund: 99_000 })
+  })
+
+  it('owes back a part payment too, when the invoice is cancelled', () => {
+    expect(
+      balanceOf({
+        status: 'CANCELLED',
+        kind: 'INVOICE',
+        totalCents: 99_000,
+        paidCents: 30_000,
+        creditedCents: 0,
+      }),
+    ).toEqual({ owed: 0, refund: 30_000 })
+  })
+
+  it('asks for nothing on a cancelled invoice nobody paid', () => {
+    expect(
+      balanceOf({
+        status: 'CANCELLED',
+        kind: 'INVOICE',
+        totalCents: 99_000,
+        paidCents: 0,
+        creditedCents: 0,
+      }),
+    ).toEqual({ owed: 0, refund: 0 })
+  })
+
+  it('asks for nothing on a correction, which is not a debt', () => {
+    // A credit note is money going the other way and a cancellation voids a
+    // document. Neither is something a client owes, so neither may appear in
+    // a figure that says what is still out.
+    for (const kind of ['CREDIT_NOTE', 'CANCELLATION'] as const) {
+      expect(
+        balanceOf({ status: 'ISSUED', kind, totalCents: 40_000, paidCents: 0, creditedCents: 0 }),
+      ).toEqual({ owed: 0, refund: 0 })
+    }
+  })
+
+  it('asks for nothing on a draft, which has not been issued', () => {
+    expect(
+      balanceOf({
+        status: 'DRAFT',
+        kind: 'INVOICE',
+        totalCents: 99_000,
+        paidCents: 0,
+        creditedCents: 0,
+      }),
+    ).toEqual({ owed: 0, refund: 0 })
   })
 })
 

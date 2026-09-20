@@ -14,6 +14,7 @@ import {
   PaymentSchema,
   type LetterKind,
 } from '#/shared/validation/invoice.validation'
+import { archiveYears, readArchive, thisYear } from './archive.service'
 import {
   clientForLead,
   createClient,
@@ -87,6 +88,32 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
    */
   .get('/letters', async () =>
     responseOk({ data: await listSentLetters(), message: 'Letters listed' }),
+  )
+
+  /**
+   * Everything of one year, in one file he can put somewhere else.
+   *
+   * Static-prefixed like the rest, so `archive` is never read as an id.
+   *
+   * German retention law asks *him* for the invoices, not Cloudflare, and
+   * every document and every figure he has lives in one account. This is the
+   * button that gets a copy out of it.
+   */
+  .get('/archive', async ({ query }) => {
+    const asked = typeof query.year === 'string' ? query.year : ''
+
+    if (asked === 'all') return readArchive({ year: 'all' })
+
+    const year = Number(asked)
+
+    return readArchive({
+      year: Number.isInteger(year) && year >= 2000 && year <= 2999 ? year : await thisYear(),
+    })
+  })
+
+  /** Which years have anything in them, so the screen offers only those. */
+  .get('/archive/years', async () =>
+    responseOk({ data: await archiveYears(), message: 'Years listed' }),
   )
 
   /**

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { AlertTriangle, Plus, Repeat, Search, Send, Users } from 'lucide-react'
+import { AlertTriangle, Download, Plus, Repeat, Search, Send, Users } from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { StatCard, StatCardSkeleton } from '#/frontend/components/admin/StatCard'
@@ -16,7 +16,9 @@ import {
   money,
   monthName,
 } from '#/frontend/features/invoices/invoice-format'
+import { invoiceArchiveUrl } from '#/frontend/api/invoice.api'
 import {
+  archiveYearsQuery,
   clientsQuery,
   invoiceQuery,
   invoicesQuery,
@@ -140,7 +142,7 @@ function FiguresSkeleton() {
 
 function Row({ row }: { row: InvoiceRow }) {
   const prefetch = usePrefetch()
-  const { owed, over } = balanceOf(row)
+  const { owed, refund } = balanceOf(row)
 
   return (
     <Link
@@ -202,13 +204,70 @@ function Row({ row }: { row: InvoiceRow }) {
             {money(owed, row.currency)} left
           </span>
         ) : null}
-        {over > 0 ? (
+        {/*
+          Money he owes back, on the row, where scanning the list finds it.
+
+          Two ways it happens and both used to be silent past the document
+          itself: a client transfers twice, or an invoice that was already
+          paid is cancelled. The second is the one that had no figure at all
+          — `total − paid` came to zero and nothing anywhere said a refund
+          was due.
+        */}
+        {refund > 0 ? (
           <span className="tabular block text-[11px] text-amber-700 dark:text-amber-400">
-            {money(over, row.currency)} too much
+            {money(refund, row.currency)}{' '}
+            {row.status === 'CANCELLED' ? 'to refund' : 'too much'}
           </span>
         ) : null}
       </span>
     </Link>
+  )
+}
+
+/**
+ * A copy of the books he can put somewhere else.
+ *
+ * Everything he has lives in one Cloudflare account: the documents in a
+ * bucket, the figures in a database beside it. R2 will not lose them, but an
+ * account can be closed or suspended or simply stopped being paid for — and
+ * German retention law asks **him** for the invoices, not Cloudflare.
+ *
+ * So this is not a backup system, it is a button. One file, on his own disk,
+ * which is the only kind of backup a one-person business actually performs.
+ * At the bottom of the page rather than in the header, because it is a
+ * once-a-year act and does not deserve to compete with the work.
+ */
+function ArchivePanel() {
+  const years = useQuery(archiveYearsQuery())
+  const found = years.data ?? []
+
+  // Nothing issued yet means nothing to take a copy of, and an offer to
+  // download an empty archive is a button that can only disappoint.
+  if (years.isPending || found.length === 0) return null
+
+  return (
+    <Panel className="flex flex-wrap items-center gap-3 p-5">
+      <Download className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-sm">
+        <span className="font-medium">Take a copy</span>{' '}
+        <span className="text-muted-foreground">
+          — every document of a year plus two spreadsheets, in one file. Keep it on your own
+          disk: the law asks you for these, not your hosting.
+        </span>
+      </span>
+      <span className="flex flex-wrap gap-2">
+        {found.map((year) => (
+          <Button key={year} className="rounded-full" size="sm" variant="outline" asChild>
+            <a href={invoiceArchiveUrl(year)}>{year}</a>
+          </Button>
+        ))}
+        {found.length > 1 ? (
+          <Button className="rounded-full" size="sm" variant="ghost" asChild>
+            <a href={invoiceArchiveUrl('all')}>Everything</a>
+          </Button>
+        ) : null}
+      </span>
+    </Panel>
   )
 }
 
@@ -412,6 +471,8 @@ export function InvoicesPage() {
           rows.map((row) => <Row key={row.id} row={row} />)
         )}
       </Panel>
+
+      <ArchivePanel />
     </AdminPage>
   )
 }

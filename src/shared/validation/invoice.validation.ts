@@ -585,13 +585,36 @@ export const totalsOf = (
  * when in fact he owes a refund.
  */
 export const balanceOf = (invoice: {
+  status: InvoiceStatus
+  kind: InvoiceKind
   totalCents: number
   paidCents: number
   creditedCents: number
-}): { owed: number; over: number } => {
-  const balance = invoice.totalCents - invoice.paidCents - invoice.creditedCents
+}): { owed: number; refund: number } => {
+  /*
+   * Whether this document asks for money at all.
+   *
+   * Three that do not, and the third is the one that was missing. A draft has
+   * not been issued. A correction never demanded anything — it *is* the
+   * giving back. And a **cancelled invoice has been voided**, so what it once
+   * demanded is now zero.
+   *
+   * That last one left money invisible. Cancel an invoice a client has
+   * already paid — a legitimate act, and the right one when a job falls
+   * through after payment — and the old subtraction read
+   * `total − paid = 0`: nothing owed, nothing over, nothing anywhere on any
+   * screen. The payment row stayed, the month still counted the income, and
+   * the refund he now owed existed only in a warning that vanished the moment
+   * he pressed the button. Verified on 20 Sep 2026.
+   *
+   * With the total voided the arithmetic says it by itself: every cent that
+   * arrived on a cancelled invoice is a cent he owes back.
+   */
+  const demands = invoice.status === 'ISSUED' && invoice.kind === 'INVOICE'
+  const due = demands ? invoice.totalCents - invoice.creditedCents : 0
+  const balance = due - invoice.paidCents
 
-  return { owed: Math.max(0, balance), over: Math.max(0, -balance) }
+  return { owed: Math.max(0, balance), refund: Math.max(0, -balance) }
 }
 
 /**

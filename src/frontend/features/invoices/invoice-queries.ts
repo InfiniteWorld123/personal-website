@@ -19,6 +19,7 @@ import {
   fetchPersonInvoices,
   fetchSellerState,
   fetchSentLetters,
+  fetchArchiveYears,
   fetchSubscriptionLetter,
   fetchSubscriptions,
   fetchSummary,
@@ -98,6 +99,20 @@ export const personInvoicesQuery = (personId: string, enabled = true) =>
  */
 export const subscriptionsQuery = () =>
   queryOptions({ queryKey: [...INVOICES, 'subscriptions'], queryFn: fetchSubscriptions })
+
+/**
+ * The years he can ask for a copy of.
+ *
+ * Allowed to be stale for a while: a new year appears in this list the first
+ * time something is issued in it, which is not something that happens while
+ * he is looking at the page.
+ */
+export const archiveYearsQuery = () =>
+  queryOptions({
+    queryKey: [...INVOICES, 'archive-years'],
+    queryFn: fetchArchiveYears,
+    staleTime: 5 * 60_000,
+  })
 
 export const clientsQuery = (search: string) =>
   queryOptions({ queryKey: [...INVOICES, 'clients', search], queryFn: () => fetchClients(search) })
