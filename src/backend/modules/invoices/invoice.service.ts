@@ -681,6 +681,46 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
   // other way, at the last moment before it becomes a permanent fact.
   assertOneCurrency(invoice.currency)
 
+  /*
+   * §14 Abs. 4 UStG: the invoice must carry the recipient's full name **and
+   * address**.
+   *
+   * This was checked for his own details and not for the client's, which is a
+   * strange place to be protective on one side only. A client row needs a name
+   * and nothing else — `clients_named_check` is the whole of it — so an
+   * invoice could be issued, numbered and frozen for a client with no street,
+   * no postcode and no town, and the paper would print a name over empty
+   * space. Verified on 20 Sep: it issued as 2026-001 without a word.
+   *
+   * Refused at issue rather than required on the client form, because a client
+   * he is only keeping notes about does not need a postal address yet. It
+   * becomes required at the moment the row becomes a legal document.
+   */
+  const missingAddress = (
+    [
+      ['street', invoice.client.street],
+      ['postcode', invoice.client.postcode],
+      ['town', invoice.client.city],
+    ] as const
+  )
+    .filter(([, value]) => value.trim() === '')
+    .map(([label]) => label)
+
+  if (missingAddress.length > 0) {
+    const who = invoice.client.company || invoice.client.contactName
+    // "no street, postcode and town" rather than "no street, no postcode, no
+    // town" — he reads these at the moment something refuses him, and that is
+    // the wrong moment to be reading English that limps.
+    const list =
+      missingAddress.length === 1
+        ? missingAddress[0]
+        : `${missingAddress.slice(0, -1).join(', ')} and ${missingAddress.at(-1)}`
+
+    throw badRequestError(
+      `${who} has no ${list}. An invoice has to carry the client's full address (§14 UStG) — add it on the client first.`,
+    )
+  }
+
   if (vatConflict(invoice.lines, seller.smallBusiness)) {
     throw badRequestError(
       'This invoice charges VAT while you are registered as a Kleinunternehmer under §19. ' +
@@ -795,6 +835,37 @@ export const correctInvoice = async (
         : input.lines
 
     const totals = totalsOf(lines)
+
+    /*
+     * A credit note cannot give back more than was charged.
+     *
+     * Verified on 20 Sep: a 9,90 € invoice accepted a 50,00 € credit note and
+     * then read **Paid**, because `OWED` went negative and `settlementOf` sees
+     * anything at or below zero as settled. Two wrongs in one document — a
+     * refund of money that was never taken, and an invoice claiming to be
+     * square when 40 € is owed the other way.
+     *
+     * Measured against what is left to credit, not against the total, so two
+     * partial credit notes cannot add up past it either.
+     */
+    if (input.kind === 'CREDIT_NOTE') {
+      const already = await db.query<{ cents: string }>(
+        `SELECT COALESCE(SUM(n.total_cents), 0) AS cents
+           FROM invoices n
+          WHERE n.corrects_id = $1 AND n.kind = 'CREDIT_NOTE' AND n.status = 'ISSUED';`,
+        [original.id],
+      )
+
+      const creditable = original.totalCents - toInt(already.rows[0]?.cents ?? 0)
+
+      if (totals.totalCents > creditable) {
+        throw badRequestError(
+          creditable <= 0
+            ? `${original.number} has already been credited in full.`
+            : `That is more than ${original.number} is worth. At most ${(creditable / 100).toFixed(2)} € can still be credited against it.`,
+        )
+      }
+    }
 
     const created = await db.query<{ id: string }>(
       `INSERT INTO invoices

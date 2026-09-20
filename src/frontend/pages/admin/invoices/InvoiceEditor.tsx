@@ -27,6 +27,7 @@ import type { Invoice } from '#/shared/types/invoice.types'
 import {
   DEFAULT_DUE_DAYS,
   totalsOf,
+  VAT_RATES,
   vatConflict,
   type InvoiceLanguage,
 } from '#/shared/validation/invoice.validation'
@@ -431,14 +432,32 @@ function Draft({
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor={`tax-${line.key}`} className="text-xs">
-                  VAT %
+                  VAT
                 </Label>
-                <Input
+                {/*
+                  The same two options the subscription form offers, and for
+                  the same reason: a free box accepted 1,9 for 19, and 15 for
+                  a rate Germany does not have. Neither is a typo anything
+                  downstream could catch — `issueInvoice` refuses VAT while
+                  §19 applies, but a wrong *rate* once it no longer does is a
+                  document that looks entirely normal.
+
+                  7 % covers books, food and public transport, not software,
+                  so it is not offered: a third option here would be a wrong
+                  answer made easy to pick.
+                */}
+                <select
                   id={`tax-${line.key}`}
-                  inputMode="decimal"
+                  className={SELECT}
                   value={line.taxRate}
                   onChange={(event) => setLine(line.key, { taxRate: event.target.value })}
-                />
+                >
+                  {VAT_RATES.map((rate) => (
+                    <option key={rate} value={String(rate)}>
+                      {rate} %
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
