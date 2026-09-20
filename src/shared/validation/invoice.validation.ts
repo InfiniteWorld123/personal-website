@@ -372,6 +372,121 @@ export const InvoiceQuerySchema = v.object({
 export type InvoiceQueryInput = v.InferOutput<typeof InvoiceQuerySchema>
 
 /* -------------------------------------------------------------------------- */
+/* Subscriptions                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The highest day of the month a subscription may bill on.
+ *
+ * Not 31, and the ceiling is the point. A subscription set to the 31st has no
+ * 31st in February, and every system that allows it then has to invent a rule
+ * — bill early, bill late, skip the month — that nobody remembers choosing and
+ * that silently moves a client's billing date forever. The 28th exists in
+ * every month of every year, so there is no rule to invent.
+ */
+export const LAST_BILLING_DAY = 28
+
+export const SubscriptionWriteSchema = v.object({
+  clientId: IdSchema,
+  description: trimmed('Say what they are paying for each month', 200),
+  /** Euros in the form, cents everywhere behind it. */
+  amountEuros: v.pipe(
+    v.number('That is not an amount'),
+    v.minValue(0.01, 'A subscription has to be worth something'),
+    v.maxValue(1_000_000, 'That is too large'),
+  ),
+  billingDay: v.pipe(
+    v.number('Pick a day of the month'),
+    v.integer(),
+    v.minValue(1, 'Pick a day between 1 and 28'),
+    v.maxValue(LAST_BILLING_DAY, `The 28th is the last day every month has — pick 1 to ${LAST_BILLING_DAY}`),
+  ),
+  note: optionalText(500),
+})
+
+export type SubscriptionWriteInput = v.InferOutput<typeof SubscriptionWriteSchema>
+
+/**
+ * The calendar a subscription runs on.
+ *
+ * Every period is the first of a month, and every function here is pure string
+ * arithmetic — no `Date`, and no timezone. A subscription billed on the 1st
+ * must not become the 31st of the previous month for anyone west of London,
+ * and the only reliable way to guarantee that is never to parse the string at
+ * all. The same rule `invoice.types.ts` states for every date that is a *day*.
+ */
+
+/** `2026-10-01` → `2026-11-01`. */
+export const nextPeriod = (period: string): string => {
+  const [year, month] = period.split('-').map(Number) as [number, number]
+
+  return month === 12
+    ? `${year + 1}-01-01`
+    : `${year}-${String(month + 1).padStart(2, '0')}-01`
+}
+
+/** The first of the month a day falls in. */
+export const periodOf = (day: string): string => `${day.slice(0, 7)}-01`
+
+/**
+ * The day an invoice for this period is dated.
+ *
+ * `billingDay` never exceeds 28, so this cannot name a day that does not
+ * exist — the whole reason for that ceiling.
+ */
+export const billingDate = (period: string, billingDay: number): string =>
+  `${period.slice(0, 7)}-${String(billingDay).padStart(2, '0')}`
+
+/**
+ * The first month a new subscription bills.
+ *
+ * **This month, if its day has not passed; otherwise next month.** Adding one
+ * on the 20th that bills on the 1st should not immediately produce an invoice
+ * for a month three weeks gone — he would delete it every single time. Adding
+ * one on the 20th that bills on the 25th should, because that money is
+ * genuinely due in five days.
+ */
+export const firstPeriod = (today: string, billingDay: number): string => {
+  const thisMonth = periodOf(today)
+
+  return Number(today.slice(8, 10)) <= billingDay ? thisMonth : nextPeriod(thisMonth)
+}
+
+/**
+ * The month a subscription invoice bills, in the language of the paper.
+ *
+ * `2026-10-01` → «Oktober 2026». Appended to his fixed description so he types
+ * "Website-Betreuung" once and the client reads which month they are paying
+ * for — his answer on 20 Sep, and the difference between a line a client can
+ * check and one they have to take on trust.
+ *
+ * Hand-rolled rather than `Intl`: the Worker's ICU data is not something this
+ * code controls, and a month name that differs between runtimes would mean two
+ * clients holding two different-looking invoices from the same system — the
+ * same reason `money` in `pdf.service.ts` is hand-rolled.
+ */
+const MONTH_NAMES: Record<InvoiceLanguage, string[]> = {
+  de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June',
+       'July', 'August', 'September', 'October', 'November', 'December'],
+}
+
+export const periodLabel = (period: string, language: InvoiceLanguage): string => {
+  const [year, month] = period.split('-')
+  const name = MONTH_NAMES[language][Number(month) - 1]
+
+  return name ? `${name} ${year}` : period
+}
+
+/** The full line as it reaches the paper. */
+export const subscriptionLine = (
+  description: string,
+  period: string,
+  language: InvoiceLanguage,
+): string => `${description} · ${periodLabel(period, language)}`
+
+/* -------------------------------------------------------------------------- */
 /* Shared arithmetic                                                          */
 /* -------------------------------------------------------------------------- */
 

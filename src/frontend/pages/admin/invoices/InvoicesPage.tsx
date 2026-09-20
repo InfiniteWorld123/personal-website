@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { AlertTriangle, Plus, Search, Send, Users } from 'lucide-react'
+import { AlertTriangle, Plus, Repeat, Search, Send, Users } from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { StatCard, StatCardSkeleton } from '#/frontend/components/admin/StatCard'
@@ -22,6 +22,7 @@ import {
   invoicesQuery,
   sellerQuery,
   sentLettersQuery,
+  subscriptionsQuery,
 } from '#/frontend/features/invoices/invoice-queries'
 import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
@@ -241,6 +242,12 @@ export function InvoicesPage() {
               one row here, and folding them together would mean picking one
               of those two truths to tell.
             */}
+            {/* The money that does not stop, and writes its own drafts. */}
+            <Button asChild className="rounded-full" size="sm" variant="outline">
+              <Link to="/admin/invoices/subscriptions" {...prefetch(subscriptionsQuery())}>
+                <Repeat className="size-4" /> Subscriptions
+              </Link>
+            </Button>
             <Button asChild className="rounded-full" size="sm" variant="outline">
               <Link to="/admin/invoices/sent" {...prefetch(sentLettersQuery())}>
                 <Send className="size-4" /> Sent

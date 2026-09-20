@@ -40,6 +40,7 @@ import {
   type PaymentShape,
 } from './invoice.sql'
 import { assertPrintable, draftWord, renderInvoicePdf } from './pdf.service'
+import { runDueSubscriptions } from './subscription.service'
 import { resolveSeller, sellerGaps } from './seller'
 
 /**
@@ -118,6 +119,26 @@ const projectWithCredit = (row: RowWithCredit): InvoiceRow => {
 
 export const listInvoices = async (query: InvoiceQueryInput): Promise<InvoiceList> => {
   const term = query.search.trim()
+
+  /*
+   * Subscriptions become drafts here, on the screen those drafts appear on.
+   *
+   * There is no cron. A scheduled job that quietly stops running is the dead
+   * promise this project keeps deleting, and one that cannot be watched from
+   * a laptop cannot be trusted from one either. The output is a draft he has
+   * to act on anyway, so one written the moment he opens this list is worth
+   * exactly as much as one written at three in the morning — and he sees it
+   * happen.
+   *
+   * Awaited rather than fired and forgotten: the rows are read immediately
+   * below, and a draft that appears only on the *next* visit would read as
+   * the generator having failed.
+   *
+   * Best-effort by design. `runDueSubscriptions` swallows its own failures,
+   * and this catch is the second line of the same argument: a subscription
+   * that cannot be drafted must never take the invoice list down with it.
+   */
+  await runDueSubscriptions().catch(() => [])
 
   const result = await getDb().query<RowWithCredit>(
     `SELECT ${ROW_COLUMNS}

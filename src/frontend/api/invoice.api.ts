@@ -6,6 +6,7 @@ import type {
   InvoiceSummary,
   PersonInvoice,
   SentLetter,
+  Subscription,
 } from '#/shared/types/invoice.types'
 import type {
   ClientWriteInput,
@@ -13,6 +14,7 @@ import type {
   InvoiceWriteInput,
   LetterKind,
   PaymentInput,
+  SubscriptionWriteInput,
 } from '#/shared/validation/invoice.validation'
 import { api } from './client'
 import { unwrap } from './response'
@@ -97,6 +99,48 @@ export async function fetchSentLetters(): Promise<SentLetter[]> {
     ...letter,
     sentAt: toInstant(letter.sentAt),
   }))
+}
+
+const normaliseSubscription = (subscription: Subscription): Subscription => ({
+  ...subscription,
+  // Days, not instants: `nextPeriod` decides which month is billed, and a
+  // conversion to local time would move it into the previous one.
+  startedOn: toDay(subscription.startedOn),
+  nextPeriod: toDay(subscription.nextPeriod),
+  cancelledOn: toDay(subscription.cancelledOn),
+})
+
+export async function fetchSubscriptions(): Promise<Subscription[]> {
+  return unwrap<Subscription[]>(await api().admin.invoices.subscriptions.get()).map(
+    normaliseSubscription,
+  )
+}
+
+export async function createSubscription(input: SubscriptionWriteInput): Promise<Subscription> {
+  return normaliseSubscription(
+    unwrap<Subscription>(await api().admin.invoices.subscriptions.post(input)),
+  )
+}
+
+export async function updateSubscription(
+  subscriptionId: string,
+  input: SubscriptionWriteInput,
+): Promise<Subscription> {
+  return normaliseSubscription(
+    unwrap<Subscription>(await api().admin.invoices.subscriptions({ subscriptionId }).put(input)),
+  )
+}
+
+export async function cancelSubscription(subscriptionId: string): Promise<Subscription> {
+  return normaliseSubscription(
+    unwrap<Subscription>(
+      await api().admin.invoices.subscriptions({ subscriptionId }).cancel.post({}),
+    ),
+  )
+}
+
+export async function deleteSubscription(subscriptionId: string): Promise<void> {
+  unwrap(await api().admin.invoices.subscriptions({ subscriptionId }).delete())
 }
 
 export async function fetchSummary(): Promise<InvoiceSummary> {

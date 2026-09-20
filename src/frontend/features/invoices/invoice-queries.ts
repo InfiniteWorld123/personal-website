@@ -2,13 +2,16 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import {
   addPayment,
   attachInvoice,
+  cancelSubscription,
   correctInvoice,
   clientFromLead,
   createClient,
   createInvoice,
+  createSubscription,
   deleteClient,
   deleteInvoice,
   deletePayment,
+  deleteSubscription,
   fetchClients,
   fetchInvoice,
   fetchInvoices,
@@ -16,10 +19,12 @@ import {
   fetchPersonInvoices,
   fetchSellerState,
   fetchSentLetters,
+  fetchSubscriptions,
   fetchSummary,
   issueInvoice,
   updateClient,
   updateInvoice,
+  updateSubscription,
 } from '#/frontend/api/invoice.api'
 import type {
   ClientWriteInput,
@@ -27,6 +32,7 @@ import type {
   InvoiceWriteInput,
   LetterKind,
   PaymentInput,
+  SubscriptionWriteInput,
 } from '#/shared/validation/invoice.validation'
 
 /**
@@ -80,6 +86,16 @@ export const personInvoicesQuery = (personId: string, enabled = true) =>
     queryFn: () => fetchPersonInvoices(personId),
     enabled: enabled && personId !== '',
   })
+
+/**
+ * The money that does not stop.
+ *
+ * Under the section's key prefix, so opening the invoice list — which is what
+ * turns a due subscription into a draft — leaves this stale and it redraws
+ * with the new `nextPeriod` rather than the month it just billed.
+ */
+export const subscriptionsQuery = () =>
+  queryOptions({ queryKey: [...INVOICES, 'subscriptions'], queryFn: fetchSubscriptions })
 
 export const clientsQuery = (search: string) =>
   queryOptions({ queryKey: [...INVOICES, 'clients', search], queryFn: () => fetchClients(search) })
@@ -166,6 +182,24 @@ export const useCorrectInvoice = (invoiceId: string) =>
  */
 export const useAttachInvoice = (personId: string) =>
   useInvoiceMutation((invoiceId: string) => attachInvoice(personId, invoiceId))
+
+/* ------------------------------------------------------------ subscriptions */
+
+export const useCreateSubscription = () =>
+  useInvoiceMutation((input: SubscriptionWriteInput) => createSubscription(input))
+
+export const useUpdateSubscription = () =>
+  useInvoiceMutation((input: { subscriptionId: string } & SubscriptionWriteInput) => {
+    const { subscriptionId, ...rest } = input
+
+    return updateSubscription(subscriptionId, rest)
+  })
+
+export const useCancelSubscription = () =>
+  useInvoiceMutation((subscriptionId: string) => cancelSubscription(subscriptionId))
+
+export const useDeleteSubscription = () =>
+  useInvoiceMutation((subscriptionId: string) => deleteSubscription(subscriptionId))
 
 /* ----------------------------------------------------------------- payments */
 

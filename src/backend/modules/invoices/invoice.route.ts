@@ -6,6 +6,7 @@ import { parseInput } from '#/backend/shared/validate'
 import {
   ClientWriteSchema,
   CorrectionSchema,
+  SubscriptionWriteSchema,
   IdSchema,
   InvoiceQuerySchema,
   InvoiceWriteSchema,
@@ -35,6 +36,13 @@ import {
   updateInvoice,
 } from './invoice.service'
 import { attachInvoiceToPerson, listInvoicesForPerson, prepareLetter } from './letter.service'
+import {
+  cancelSubscription,
+  createSubscription,
+  deleteSubscription,
+  listSubscriptions,
+  updateSubscription,
+} from './subscription.service'
 import { isSellerReady, resolveSeller, sellerGaps } from './seller'
 
 const id = (value: unknown) => parseInput(IdSchema, value)
@@ -119,6 +127,53 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
       message: 'Checked',
     }),
   )
+
+  /* ---------------------------------------------------------- subscriptions */
+  /*
+   * Static-prefixed like the rest, so `subscriptions` is never read as an id.
+   *
+   * There is no "run it now" route. The generator runs inside the invoice
+   * list, because the drafts it writes appear there — a button that makes
+   * invoices appear elsewhere would be a second thing to remember.
+   */
+
+  .get('/subscriptions', async () =>
+    responseOk({ data: await listSubscriptions(), message: 'Subscriptions listed' }),
+  )
+
+  .post('/subscriptions', async ({ body, status }) =>
+    status(
+      HttpStatusCode.CREATED,
+      responseOk({
+        data: await createSubscription(parseInput(SubscriptionWriteSchema, body)),
+        message: 'Subscription started',
+      }),
+    ),
+  )
+
+  .put('/subscriptions/:subscriptionId', async ({ params, body }) =>
+    responseOk({
+      data: await updateSubscription(
+        id(params.subscriptionId),
+        parseInput(SubscriptionWriteSchema, body),
+      ),
+      message: 'Saved',
+    }),
+  )
+
+  /** Stops the billing. The invoices it already wrote stay where they are. */
+  .post('/subscriptions/:subscriptionId/cancel', async ({ params }) =>
+    responseOk({
+      data: await cancelSubscription(id(params.subscriptionId)),
+      message: 'Subscription stopped',
+    }),
+  )
+
+  .delete('/subscriptions/:subscriptionId', async ({ params }) => {
+    await deleteSubscription(id(params.subscriptionId))
+
+    return responseOk({ data: { deleted: true }, message: 'Subscription removed' })
+  })
 
   /* ---------------------------------------------------------------- clients */
 

@@ -207,6 +207,32 @@ export type PersonInvoice = {
   lastSentAt: string | null
 }
 
+/**
+ * Money that does not stop: a client, an amount, and a day of the month.
+ *
+ * Deliberately not the tier model that `0012` carried and `0013` deleted —
+ * tiers, add-ons and instalment schedules all assume a price list he has not
+ * settled. This is the smallest shape that can write next month's invoice.
+ */
+export type Subscription = {
+  id: string
+  clientId: string
+  clientName: string
+  /** The fixed half of the line. The month is appended when the paper is drawn. */
+  description: string
+  amountCents: number
+  currency: string
+  /** 1–28. The 28th is the last day every month has. */
+  billingDay: number
+  startedOn: string
+  /** The next month this owes an invoice for, as its first day. */
+  nextPeriod: string
+  cancelledOn: string | null
+  note: string
+  /** How many invoices it has written. Deleting is only allowed while this is 0. */
+  invoiceCount: number
+}
+
 export type InvoiceList = {
   rows: InvoiceRow[]
   summary: InvoiceSummary

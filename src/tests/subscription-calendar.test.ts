@@ -1,0 +1,124 @@
+import { describe, expect, it } from 'vitest'
+import {
+  billingDate,
+  firstPeriod,
+  LAST_BILLING_DAY,
+  nextPeriod,
+  periodLabel,
+  periodOf,
+  subscriptionLine,
+} from '#/shared/validation/invoice.validation'
+
+/**
+ * The calendar a subscription runs on.
+ *
+ * Every bug this file guards against is the same shape: a date that does not
+ * exist, or a month that gets billed at the wrong moment. Neither is visible
+ * on the screen — the first one he would meet as a February that silently
+ * skipped, the second as a client asking why they were invoiced three weeks
+ * after the month ended.
+ */
+
+describe('nextPeriod', () => {
+  it('walks month to month', () => {
+    expect(nextPeriod('2026-01-01')).toBe('2026-02-01')
+    expect(nextPeriod('2026-09-01')).toBe('2026-10-01')
+  })
+
+  it('crosses the year', () => {
+    expect(nextPeriod('2026-12-01')).toBe('2027-01-01')
+  })
+
+  it('pads the month, so the string stays sortable and comparable', () => {
+    // These dates are compared with `<` and `>` throughout the generator. An
+    // unpadded '2026-9-01' sorts after '2026-10-01' and the catch-up loop
+    // would walk backwards.
+    expect(nextPeriod('2026-08-01')).toBe('2026-09-01')
+    expect(nextPeriod('2027-01-01')).toBe('2027-02-01')
+  })
+
+  it('walks a whole year without drifting', () => {
+    let period = '2026-01-01'
+
+    for (let month = 0; month < 12; month += 1) period = nextPeriod(period)
+
+    expect(period).toBe('2027-01-01')
+  })
+})
+
+describe('billingDate', () => {
+  it('lands inside the period it bills', () => {
+    expect(billingDate('2026-10-01', 1)).toBe('2026-10-01')
+    expect(billingDate('2026-10-01', 25)).toBe('2026-10-25')
+  })
+
+  it('never produces a day that does not exist', () => {
+    /*
+     * The reason `billing_day` is capped at 28. February has 28 days in every
+     * year, leap or not, so the highest allowed day is real in every month —
+     * and there is no rule to invent about what the 31st means in February.
+     */
+    for (let month = 1; month <= 12; month += 1) {
+      const period = `2026-${String(month).padStart(2, '0')}-01`
+      const date = new Date(`${billingDate(period, LAST_BILLING_DAY)}T00:00:00Z`)
+
+      expect(Number.isNaN(date.getTime())).toBe(false)
+      expect(date.toISOString().slice(0, 10)).toBe(billingDate(period, LAST_BILLING_DAY))
+    }
+  })
+})
+
+describe('firstPeriod', () => {
+  it('bills this month when the day has not passed', () => {
+    // Added on the 20th, bills on the 25th: that money is genuinely due in
+    // five days, so this month is right.
+    expect(firstPeriod('2026-09-20', 25)).toBe('2026-09-01')
+  })
+
+  it('bills this month when added exactly on the day', () => {
+    expect(firstPeriod('2026-09-25', 25)).toBe('2026-09-01')
+  })
+
+  it('waits for next month when the day is already gone', () => {
+    // Added on the 20th, bills on the 1st. Without this he would get an
+    // invoice for a month three weeks gone, every single time he adds one.
+    expect(firstPeriod('2026-09-20', 1)).toBe('2026-10-01')
+  })
+
+  it('rolls into the new year', () => {
+    expect(firstPeriod('2026-12-20', 1)).toBe('2027-01-01')
+  })
+})
+
+describe('periodOf', () => {
+  it('reduces any day to the first of its month', () => {
+    expect(periodOf('2026-09-20')).toBe('2026-09-01')
+    expect(periodOf('2026-09-01')).toBe('2026-09-01')
+  })
+})
+
+describe('the line a client reads', () => {
+  it('names the month in the language of the paper', () => {
+    expect(subscriptionLine('Website-Betreuung', '2026-10-01', 'de')).toBe(
+      'Website-Betreuung · Oktober 2026',
+    )
+    expect(subscriptionLine('Website care', '2026-10-01', 'en')).toBe(
+      'Website care · October 2026',
+    )
+  })
+
+  it('names every month of the year in both languages', () => {
+    // Hand-rolled rather than `Intl`, because the Worker's ICU data is not
+    // something this code controls — so the table itself has to be right.
+    for (let month = 1; month <= 12; month += 1) {
+      const period = `2026-${String(month).padStart(2, '0')}-01`
+
+      expect(periodLabel(period, 'de')).not.toBe(period)
+      expect(periodLabel(period, 'en')).not.toBe(period)
+      expect(periodLabel(period, 'de')).toContain('2026')
+    }
+
+    expect(periodLabel('2026-03-01', 'de')).toBe('März 2026')
+    expect(periodLabel('2026-12-01', 'en')).toBe('December 2026')
+  })
+})
