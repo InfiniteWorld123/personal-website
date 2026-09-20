@@ -147,6 +147,40 @@ export type InvoiceSummary = {
   month: string
 }
 
+/**
+ * One letter that really left, carrying one document.
+ *
+ * The row of the sent register. Every field is read from the message and the
+ * file it carried, never from a flag on the invoice: `sent_at` was a column
+ * until 18 Sep 2026 and nothing wrote it once sending moved to the inbox.
+ *
+ * `attachmentId` is the file as the client received it — not the invoice's
+ * current PDF, the copy that was attached to *this* letter. On a document
+ * issued before a correction, those are the same bytes; the distinction still
+ * matters, because the question this screen answers is "what did they get",
+ * and only the copy can answer it.
+ */
+export type SentLetter = {
+  attachmentId: string
+  messageId: string
+  sentAt: string
+  subject: string
+  filename: string
+  bytes: number
+  /** Where to open the conversation this letter lives in. */
+  personId: string
+  personName: string
+  /** The document it carried. Null number means it never had one — impossible
+   * by construction, since a draft cannot be prepared as a letter, and kept
+   * nullable only because the column is. */
+  invoiceId: string
+  invoiceNumber: string | null
+  invoiceKind: InvoiceKind
+  invoiceStatus: InvoiceStatus
+  totalCents: number
+  currency: string
+}
+
 export type InvoiceList = {
   rows: InvoiceRow[]
   summary: InvoiceSummary

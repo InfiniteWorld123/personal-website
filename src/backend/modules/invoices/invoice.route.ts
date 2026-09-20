@@ -30,6 +30,7 @@ import {
   getSummary,
   issueInvoice,
   listInvoices,
+  listSentLetters,
   readInvoicePdf,
   updateInvoice,
 } from './invoice.service'
@@ -63,6 +64,16 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
   )
 
   .get('/summary', async () => responseOk({ data: await getSummary(), message: 'Counted' }))
+
+  /**
+   * The sent register — every letter that carried a document out of here.
+   *
+   * Declared with the static paths for the reason at the top of this file:
+   * `letters` must never be read as somebody's id.
+   */
+  .get('/letters', async () =>
+    responseOk({ data: await listSentLetters(), message: 'Letters listed' }),
+  )
 
   /**
    * Whether his own details are real yet.

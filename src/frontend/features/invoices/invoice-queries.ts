@@ -13,6 +13,7 @@ import {
   fetchInvoices,
   fetchLetter,
   fetchSellerState,
+  fetchSentLetters,
   fetchSummary,
   issueInvoice,
   updateClient,
@@ -53,6 +54,16 @@ export const invoiceQuery = (invoiceId: string) =>
 
 export const summaryQuery = () =>
   queryOptions({ queryKey: [...INVOICES, 'summary'], queryFn: fetchSummary })
+
+/**
+ * The sent register.
+ *
+ * Under the section's key prefix like everything else, so sending a letter
+ * from the inbox — which is what writes a row here — leaves this page stale
+ * and it refetches rather than showing a register missing its newest entry.
+ */
+export const sentLettersQuery = () =>
+  queryOptions({ queryKey: [...INVOICES, 'letters'], queryFn: fetchSentLetters })
 
 export const clientsQuery = (search: string) =>
   queryOptions({ queryKey: [...INVOICES, 'clients', search], queryFn: () => fetchClients(search) })

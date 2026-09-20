@@ -33,6 +33,28 @@ export const day = (value: string | null): string =>
         year: 'numeric',
       }).format(new Date(`${value}T00:00:00Z`))
 
+/**
+ * An **instant** — a moment a letter left — as `18 Sep 2026, 11:14`.
+ *
+ * Converted into Erfurt time, which is the opposite of what `day` above must
+ * do and for the same reason: a letter sent at 00:40 Berlin on the 19th went
+ * out on the 19th as far as he is concerned, and rendering it in UTC would
+ * date it the 18th.
+ *
+ * `inbox-format.ts` has a near-twin that leaves the year out, because a mail
+ * thread is read in the week it happened. A register of everything he has ever
+ * sent is not, so the year stays.
+ */
+export const instant = (value: string): string =>
+  new Intl.DateTimeFormat('en-GB', {
+    timeZone: BERLIN,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
+
 /** `2026-09` → `September 2026`, for the month a figure belongs to. */
 export const monthName = (value: string): string =>
   value === ''

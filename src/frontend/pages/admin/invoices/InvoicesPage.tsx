@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { AlertTriangle, Plus, Search, Users } from 'lucide-react'
+import { AlertTriangle, Plus, Search, Send, Users } from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelNote } from '#/frontend/components/admin/Panel'
 import { StatCard, StatCardSkeleton } from '#/frontend/components/admin/StatCard'
@@ -21,6 +21,7 @@ import {
   invoiceQuery,
   invoicesQuery,
   sellerQuery,
+  sentLettersQuery,
 } from '#/frontend/features/invoices/invoice-queries'
 import { usePrefetch } from '#/frontend/lib/prefetch'
 import { cn } from '#/frontend/lib/utils'
@@ -224,6 +225,19 @@ export function InvoicesPage() {
         description="What has been billed, what has been paid, and what is late."
         actions={
           <>
+            {/*
+              What he is holding, rather than what he is owed.
+              Its own screen and not a filter here, because a row there is a
+              *letter* and a row here is a document: an invoice sent, chased,
+              then sent again after a client lost it is three rows there and
+              one row here, and folding them together would mean picking one
+              of those two truths to tell.
+            */}
+            <Button asChild className="rounded-full" size="sm" variant="outline">
+              <Link to="/admin/invoices/sent" {...prefetch(sentLettersQuery())}>
+                <Send className="size-4" /> Sent
+              </Link>
+            </Button>
             <Button asChild className="rounded-full" size="sm" variant="outline">
               <Link to="/admin/invoices/clients" {...prefetch(clientsQuery(''))}>
                 <Users className="size-4" /> Clients

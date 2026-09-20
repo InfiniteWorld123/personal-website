@@ -4,6 +4,7 @@ import type {
   InvoiceLetter,
   InvoiceList,
   InvoiceSummary,
+  SentLetter,
 } from '#/shared/types/invoice.types'
 import type {
   ClientWriteInput,
@@ -82,6 +83,19 @@ export async function fetchInvoices(settlement: string, search: string): Promise
 
 export async function fetchInvoice(invoiceId: string): Promise<Invoice> {
   return normaliseInvoice(unwrap<Invoice>(await api().admin.invoices({ invoiceId }).get()))
+}
+
+/**
+ * Every letter that carried a document out of here, newest first.
+ *
+ * `sentAt` is an instant and arrives revived as a `Date`, like every other
+ * instant on this side — rendering one straight into JSX throws.
+ */
+export async function fetchSentLetters(): Promise<SentLetter[]> {
+  return unwrap<SentLetter[]>(await api().admin.invoices.letters.get()).map((letter) => ({
+    ...letter,
+    sentAt: toInstant(letter.sentAt),
+  }))
 }
 
 export async function fetchSummary(): Promise<InvoiceSummary> {

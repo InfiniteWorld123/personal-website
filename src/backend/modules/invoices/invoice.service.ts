@@ -6,6 +6,7 @@ import type {
   InvoiceList,
   InvoiceRow,
   InvoiceSummary,
+  SentLetter,
 } from '#/shared/types/invoice.types'
 import {
   DOCUMENT_TITLE,
@@ -14,6 +15,7 @@ import {
   type CorrectionInput,
   type InvoiceKind,
   type InvoiceQueryInput,
+  type InvoiceStatus,
   type InvoiceWriteInput,
 } from '#/shared/validation/invoice.validation'
 import { getClient } from './client.service'
@@ -784,6 +786,89 @@ export const correctInvoice = async (
   await freezePdf(correction).catch(() => {})
 
   return correction
+}
+
+/* -------------------------------------------------------------------------- */
+/* The sent register                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Every letter that ever carried a document out of here, newest first.
+ *
+ * The question this answers is his, and it is not the one the invoice list
+ * answers. The list says what is owed; this says **what a client is holding.**
+ * Three months after a job, "what exactly did I send him, and when?" had only
+ * one place to look — the conversation — and only if he remembered who it was
+ * with.
+ *
+ * Read entirely from letters that really left. There is no flag on an invoice
+ * saying it was sent, deliberately: `0018` deleted the two that existed, and
+ * the join below cannot drift out of date because it *is* the evidence. A row
+ * here means an outgoing message exists with this file attached to it.
+ *
+ * The file is the copy that went, not the invoice's PDF as it stands today.
+ * On a corrected document those differ, and only the copy answers the question
+ * being asked.
+ *
+ * No paging. A one-person business sends a few hundred letters a year and the
+ * honest shape of this screen is the whole register; a `LIMIT` here would be a
+ * silent horizon past which he would stop believing the page.
+ */
+export const listSentLetters = async (): Promise<SentLetter[]> => {
+  const result = await getDb().query<{
+    attachment_id: string
+    message_id: string
+    sent_at: Date
+    subject: string
+    filename: string
+    bytes: number | string
+    person_id: string
+    person_name: string
+    invoice_id: string
+    invoice_number: string | null
+    invoice_kind: InvoiceKind
+    invoice_status: InvoiceStatus
+    total_cents: number | string
+    currency: string
+  }>(
+    `SELECT a.id            AS attachment_id,
+            m.id            AS message_id,
+            m.sent_at,
+            m.subject,
+            a.filename,
+            a.bytes,
+            l.id            AS person_id,
+            COALESCE(NULLIF(btrim(l.company), ''), l.name) AS person_name,
+            i.id            AS invoice_id,
+            i.number        AS invoice_number,
+            i.kind          AS invoice_kind,
+            i.status        AS invoice_status,
+            i.total_cents,
+            i.currency
+       FROM lead_attachments a
+       JOIN lead_messages m ON m.id = a.message_id
+       JOIN leads l ON l.id = a.lead_id
+       JOIN invoices i ON i.id = a.invoice_id
+      WHERE a.invoice_id IS NOT NULL AND m.direction = 'OUT'
+      ORDER BY m.sent_at DESC;`,
+  )
+
+  return result.rows.map((row) => ({
+    attachmentId: row.attachment_id,
+    messageId: row.message_id,
+    sentAt: toIsoRequired(row.sent_at),
+    subject: row.subject,
+    filename: row.filename,
+    bytes: toInt(row.bytes),
+    personId: row.person_id,
+    personName: row.person_name,
+    invoiceId: row.invoice_id,
+    invoiceNumber: row.invoice_number,
+    invoiceKind: row.invoice_kind,
+    invoiceStatus: row.invoice_status,
+    totalCents: toInt(row.total_cents),
+    currency: row.currency,
+  }))
 }
 
 /* -------------------------------------------------------------------------- */

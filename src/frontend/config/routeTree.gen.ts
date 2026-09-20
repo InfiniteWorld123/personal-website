@@ -52,6 +52,7 @@ import { Route as AdminInvoicesIndexRouteImport } from './../routes/admin.invoic
 import { Route as AdminInvoicesInvoiceIdRouteImport } from './../routes/admin.invoices.$invoiceId'
 import { Route as AdminInvoicesClientsRouteImport } from './../routes/admin.invoices.clients'
 import { Route as AdminInvoicesNewRouteImport } from './../routes/admin.invoices.new'
+import { Route as AdminInvoicesSentRouteImport } from './../routes/admin.invoices.sent'
 import { Route as AdminLeadsIndexRouteImport } from './../routes/admin.leads.index'
 import { Route as AdminLeadsPersonIdRouteImport } from './../routes/admin.leads.$personId'
 import { Route as AdminLeadsBoardRouteImport } from './../routes/admin.leads.board'
@@ -281,6 +282,11 @@ const AdminInvoicesNewRoute = AdminInvoicesNewRouteImport.update({
   path: '/invoices/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInvoicesSentRoute = AdminInvoicesSentRouteImport.update({
+  id: '/invoices/sent',
+  path: '/invoices/sent',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLeadsIndexRoute = AdminLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
   '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
   '/admin/invoices/new': typeof AdminInvoicesNewRoute
+  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -436,6 +443,7 @@ export interface FileRoutesByTo {
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
   '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
   '/admin/invoices/new': typeof AdminInvoicesNewRoute
+  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -494,6 +502,7 @@ export interface FileRoutesById {
   '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
   '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
   '/admin/invoices/new': typeof AdminInvoicesNewRoute
+  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
   '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
   '/admin/leads/board': typeof AdminLeadsBoardRoute
   '/admin/projects/$id': typeof AdminProjectsIdRoute
@@ -553,6 +562,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/clients'
     | '/admin/invoices/new'
+    | '/admin/invoices/sent'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -608,6 +618,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/clients'
     | '/admin/invoices/new'
+    | '/admin/invoices/sent'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -665,6 +676,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/$invoiceId'
     | '/admin/invoices/clients'
     | '/admin/invoices/new'
+    | '/admin/invoices/sent'
     | '/admin/leads/$personId'
     | '/admin/leads/board'
     | '/admin/projects/$id'
@@ -1003,6 +1015,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInvoicesNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invoices/sent': {
+      id: '/admin/invoices/sent'
+      path: '/invoices/sent'
+      fullPath: '/admin/invoices/sent'
+      preLoaderRoute: typeof AdminInvoicesSentRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/leads/': {
       id: '/admin/leads/'
       path: '/leads'
@@ -1145,6 +1164,7 @@ interface AdminRouteChildren {
   AdminInvoicesInvoiceIdRoute: typeof AdminInvoicesInvoiceIdRoute
   AdminInvoicesClientsRoute: typeof AdminInvoicesClientsRoute
   AdminInvoicesNewRoute: typeof AdminInvoicesNewRoute
+  AdminInvoicesSentRoute: typeof AdminInvoicesSentRoute
   AdminLeadsPersonIdRoute: typeof AdminLeadsPersonIdRoute
   AdminLeadsBoardRoute: typeof AdminLeadsBoardRoute
   AdminProjectsIdRoute: typeof AdminProjectsIdRoute
@@ -1176,6 +1196,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInvoicesInvoiceIdRoute: AdminInvoicesInvoiceIdRoute,
   AdminInvoicesClientsRoute: AdminInvoicesClientsRoute,
   AdminInvoicesNewRoute: AdminInvoicesNewRoute,
+  AdminInvoicesSentRoute: AdminInvoicesSentRoute,
   AdminLeadsPersonIdRoute: AdminLeadsPersonIdRoute,
   AdminLeadsBoardRoute: AdminLeadsBoardRoute,
   AdminProjectsIdRoute: AdminProjectsIdRoute,
