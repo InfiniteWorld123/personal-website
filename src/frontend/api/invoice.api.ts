@@ -5,6 +5,7 @@ import type {
   InvoiceList,
   InvoiceSummary,
   PersonInvoice,
+  PreparedLetter,
   SentLetter,
   Subscription,
 } from '#/shared/types/invoice.types'
@@ -216,6 +217,20 @@ export async function fetchLetter(invoiceId: string, kind: LetterKind): Promise<
   )
 }
 
+/**
+ * The letter that carries a subscription's agreement.
+ *
+ * Nothing is sent by calling this, exactly as with an invoice letter: the
+ * server resolves who it goes to, draws the agreement, copies it into that
+ * person's files and writes the words. Idempotent, so a second click or a
+ * refresh finds the same attached file rather than a second copy.
+ */
+export async function fetchSubscriptionLetter(subscriptionId: string): Promise<PreparedLetter> {
+  return unwrap<PreparedLetter>(
+    await api().admin.invoices.subscriptions({ subscriptionId }).letter.get(),
+  )
+}
+
 /* -------------------------------------------------------------------------- */
 /* Writing                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -299,3 +314,14 @@ export async function deletePayment(invoiceId: string, paymentId: string): Promi
  */
 export const invoicePdfUrl = (invoiceId: string): string =>
   `/api/admin/invoices/${invoiceId}/pdf`
+
+/**
+ * Where the agreement lives.
+ *
+ * The same shape as `invoicePdfUrl`, and the same reason: the route answers
+ * with the PDF itself behind the admin guard. Unlike an invoice there is no
+ * frozen copy to fetch — the page is drawn from what the arrangement says at
+ * the moment he asks for it.
+ */
+export const subscriptionPaperUrl = (subscriptionId: string): string =>
+  `/api/admin/invoices/subscriptions/${subscriptionId}/paper`

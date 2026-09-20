@@ -277,10 +277,24 @@ export type InvoiceList = {
  * that person, so the composer attaches it the way it attaches any other file
  * and `reply()` links it to the message at the moment of sending.
  */
-export type InvoiceLetter = {
+export type PreparedLetter = {
   personId: string
   subject: string
   body: string
   attachment: { id: string; filename: string; bytes: number }
-  kind: LetterKind
 }
+
+export type InvoiceLetter = PreparedLetter & { kind: LetterKind }
+
+/**
+ * Which document the composer was asked to open on.
+ *
+ * A union rather than a widened invoice, because the two carry different
+ * things and only one of them can ever be true. An invoice letter needs a
+ * kind — sending it and reminding about it are different letters about the
+ * same paper. A subscription's agreement has exactly one form, so asking for
+ * a kind would be asking a question with one answer.
+ */
+export type LetterTarget =
+  | { invoiceId: string; kind: LetterKind }
+  | { subscriptionId: string }

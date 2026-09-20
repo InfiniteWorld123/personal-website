@@ -16,7 +16,7 @@ import {
 import { avatarHue, initialsOf, timeAgo } from '#/frontend/features/inbox/inbox-format'
 import { usePrefetch } from '#/frontend/lib/prefetch'
 import { INBOX_LENSES, type InboxLens } from '#/shared/validation/inbox.validation'
-import type { LetterKind } from '#/shared/validation/invoice.validation'
+import type { LetterTarget } from '#/shared/types/invoice.types'
 import type { InboxRow } from '#/shared/types/inbox.types'
 import { cn } from '#/frontend/lib/utils'
 import { Conversation } from './Conversation'
@@ -57,7 +57,7 @@ export function InboxPage({
    * A letter the invoicing section is handing over: which document the
    * composer should open already written and already attached.
    */
-  letterFor?: { invoiceId: string; kind: LetterKind } | null
+  letterFor?: LetterTarget | null
 }) {
   const navigate = useNavigate()
   const prefetch = usePrefetch()

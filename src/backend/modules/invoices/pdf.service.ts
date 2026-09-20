@@ -1072,3 +1072,523 @@ const base64Bytes = (base64: string): Uint8Array => {
 
   return bytes
 }
+
+/* -------------------------------------------------------------------------- */
+/* The agreement a subscription starts with                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The paper a subscription has, which is not an invoice.
+ *
+ * His question on 20 Sep: a subscription had no document at all. Its monthly
+ * invoices were its only paper, and they answer a different question — "pay
+ * me for October" rather than "this is what we agreed". A client who signs up
+ * for 49 € a month and receives nothing until the first invoice has nothing
+ * to file, nothing to check the amount against, and nothing to show a
+ * colleague.
+ *
+ * Three things keep this page from being mistaken for a bill, and all three
+ * are deliberate:
+ *
+ *   1. **No number.** The gapless series exists for documents that demand
+ *      money. Consuming one here would put a hole in it the day he writes an
+ *      agreement that never becomes a client.
+ *   2. **No payment code and no due date.** There is nothing to pay yet.
+ *   3. **A sentence that says so**, under the title, in the language of the
+ *      paper. The stamp on a test page is drawn for the same reason: a file
+ *      outlives the screen that explained it.
+ *
+ * Drawn fresh on every request rather than frozen. An invoice is frozen
+ * because what was sent is a fact that must never change; an agreement
+ * describes the arrangement **as it stands today**, and the copy a client
+ * holds is the attachment on the letter that carried it.
+ */
+export type SubscriptionPaper = {
+  description: string
+  amountCents: number
+  currency: string
+  taxRate: number
+  billingDay: number
+  /** The first month this bills, as its first day. */
+  nextPeriod: string
+  startedOn: string
+  cancelledOn: string | null
+  note: string
+  /** The term every invoice it writes will carry. */
+  dueDays: number
+}
+
+type AgreementWords = {
+  title: string
+  intro: string
+  notBill: string
+  dated: string
+  firstBill: string
+  billing: string
+  billingValue: string
+  endedOn: string
+  service: string
+  amount: string
+  perMonth: string
+  vat: string
+  vatNone: string
+  vatPlus: string
+  terms: string
+  termOpen: string
+  termStop: string
+  termInvoice: string
+  termDue: string
+  termEnded: string
+  place: string
+  signClient: string
+  signSeller: string
+  address: string
+  bank: string
+  contact: string
+  taxNumber: string
+  vatIdLabel: string
+  test: string
+  testNotice: string
+}
+
+const AGREEMENT: Record<InvoiceLanguage, AgreementWords> = {
+  de: {
+    title: 'Vereinbarung',
+    intro:
+      'Hiermit halten wir die laufende Zusammenarbeit fest, auf die wir uns geeinigt haben.',
+    // Said on the page itself, because the page will be read months later by
+    // somebody who was not in the conversation — an accountant, most likely.
+    notBill:
+      'Dies ist keine Rechnung. Die Abrechnung erfolgt monatlich mit einer eigenen Rechnung.',
+    dated: 'Datum',
+    firstBill: 'Erste Abrechnung',
+    billing: 'Abrechnung',
+    billingValue: 'monatlich, am {day}.',
+    endedOn: 'Beendet am',
+    service: 'Leistung',
+    amount: 'Betrag',
+    perMonth: 'pro Monat',
+    vat: 'Umsatzsteuer',
+    vatNone: 'keine (§ 19 UStG)',
+    vatPlus: 'zzgl. {rate} %',
+    terms: 'Bedingungen',
+    termOpen: 'Die Vereinbarung läuft auf unbestimmte Zeit.',
+    termStop:
+      'Beide Seiten können sie zum Ende eines Monats beenden. Eine formlose Nachricht genügt.',
+    termInvoice: 'Für jeden Monat erhalten Sie eine Rechnung über den oben genannten Betrag.',
+    termDue: 'Rechnungen sind innerhalb von {days} Tagen ohne Abzug zahlbar.',
+    termEnded: 'Diese Vereinbarung ist beendet und wird nicht weiter abgerechnet.',
+    place: 'Ort, Datum',
+    signClient: 'Auftraggeber',
+    signSeller: 'Auftragnehmer',
+    address: 'Anschrift',
+    bank: 'Bankverbindung',
+    contact: 'Kontakt',
+    taxNumber: 'Steuernummer',
+    vatIdLabel: 'USt-IdNr.',
+    test: 'TEST',
+    testNotice:
+      'Diese Seite wurde mit erfundenen Absenderdaten erstellt und ist kein gültiges Dokument.',
+  },
+  en: {
+    title: 'Agreement',
+    intro: 'This letter records the ongoing work we have agreed.',
+    notBill: 'This is not an invoice. Each month is billed with an invoice of its own.',
+    dated: 'Date',
+    firstBill: 'First billed',
+    billing: 'Billing',
+    billingValue: 'monthly, on the {day}.',
+    endedOn: 'Ended on',
+    service: 'Service',
+    amount: 'Amount',
+    perMonth: 'per month',
+    vat: 'VAT',
+    vatNone: 'none (§ 19 German VAT Act)',
+    vatPlus: 'plus {rate} %',
+    terms: 'Terms',
+    termOpen: 'This agreement runs for an open period.',
+    termStop: 'Either side may end it at the end of any month. A plain message is enough.',
+    termInvoice: 'You receive an invoice for each month, for the amount above.',
+    termDue: 'Invoices are payable in full within {days} days.',
+    termEnded: 'This agreement has ended and is no longer billed.',
+    place: 'Place, date',
+    signClient: 'Client',
+    signSeller: 'Contractor',
+    address: 'Address',
+    bank: 'Bank',
+    contact: 'Contact',
+    taxNumber: 'Tax number',
+    vatIdLabel: 'VAT ID',
+    test: 'TEST',
+    testNotice:
+      'This page was drawn with invented sender details and is not a valid document.',
+  },
+}
+
+/**
+ * The month a period names, in the language of the paper.
+ *
+ * Hand-rolled here rather than imported from the validation module for the
+ * reason stated there: `Intl` month names depend on the runtime's ICU data,
+ * and two clients holding differently-worded papers from the same system is
+ * the bug that costs a phone call. Kept in one place — this reads the same
+ * table the invoice line does.
+ */
+const AGREEMENT_MONTHS: Record<InvoiceLanguage, string[]> = {
+  de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June',
+       'July', 'August', 'September', 'October', 'November', 'December'],
+}
+
+const monthOf = (period: string, language: InvoiceLanguage): string => {
+  const [year, month] = period.split('-')
+  const name = AGREEMENT_MONTHS[language][Number(month) - 1]
+
+  return name ? `${name} ${year}` : period
+}
+
+/**
+ * Refuses a page the embedded face cannot draw, before it is drawn.
+ *
+ * The same guard `assertPrintable` is for invoices, and needed for the same
+ * reason: Space Grotesk covers Latin, and a description typed in Arabic would
+ * come out as a row of empty boxes in a document going to a client. Better a
+ * sentence naming the character than a file that looks broken.
+ */
+export const assertAgreementPrintable = (paper: SubscriptionPaper, client: Client): void => {
+  const fields: Array<[string, string]> = [
+    ['the client name', client.company || client.contactName],
+    ['the contact name', client.contactName],
+    ['the street', client.street],
+    ['the city', client.city],
+    ['what they pay for', paper.description],
+    ['your note', paper.note],
+  ]
+
+  for (const [label, value] of fields) {
+    const bad = findUnprintable(value)
+
+    if (bad) {
+      throw badRequestError(
+        `The document font cannot print “${bad}” in ${label}. Write it in Latin letters, or ask for a font that covers it.`,
+      )
+    }
+  }
+}
+
+export const renderSubscriptionPdf = async (
+  paper: SubscriptionPaper,
+  client: Client,
+  today: string,
+  seller: Seller = resolveSeller(),
+): Promise<Uint8Array> => {
+  assertAgreementPrintable(paper, client)
+
+  const language = client.language
+  const words = AGREEMENT[language]
+  const ended = paper.cancelledOn !== null
+
+  const document = await PDFDocument.create()
+
+  document.registerFontkit(fontkit)
+
+  const regular = await document.embedFont(base64Bytes(SPACE_GROTESK_REGULAR), { subset: true })
+  const bold = await document.embedFont(base64Bytes(SPACE_GROTESK_BOLD), { subset: true })
+
+  const page = document.addPage([PAGE_W, PAGE_H])
+  const ink: Ink = { page, regular, bold }
+
+  document.setTitle(`${words.title} · ${paper.description}`)
+  document.setAuthor(seller.name)
+  document.setCreator(seller.website)
+  document.setProducer(seller.website)
+  document.setSubject(paper.description)
+
+  // Invented sender details get the same stamp an invoice gets. A file
+  // outlives the machine that made it, and the footer below prints an account
+  // that does not exist.
+  if (seller.isTest) stamp(page, bold, words.test)
+
+  let y = PAGE_H - TOP
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
+
+  const markSize = 23
+
+  drawMark(page, LEFT, y, markSize)
+
+  write(ink, seller.name, LEFT + markSize + 11, y - 16, { size: 16, bold: true })
+  write(ink, `${seller.trade[language]} · ${seller.city}`, LEFT + markSize + 11, y - 26, {
+    size: 6.5,
+    color: FAINT,
+    tracking: 0.9,
+  })
+
+  y -= markSize + 14
+
+  rule(page, LEFT, y, CONTENT, BLUE, 0.9)
+
+  /* ── Address and meta ───────────────────────────────────────────────── */
+
+  y -= 30 * AIRY
+
+  const senderLine = [seller.name, seller.street, `${seller.postcode} ${seller.city}`].join(' · ')
+
+  write(ink, senderLine, LEFT, y, { size: 6, color: FAINT })
+  rule(page, LEFT, y - 4, CONTENT * 0.5, HAIR, 0.4)
+
+  y -= 18
+
+  const addressLines = [
+    client.company,
+    client.contactName,
+    client.street,
+    client.streetExtra,
+    [client.postcode, client.city].filter(Boolean).join(' '),
+    client.country === seller.country ? '' : client.country,
+  ].filter((line) => line.trim() !== '')
+
+  let addressY = y
+
+  addressLines.forEach((line, index) => {
+    write(ink, line, LEFT, addressY, { size: 9.5, bold: index === 0 })
+    addressY -= 13
+  })
+
+  const metaRight = LEFT + CONTENT
+  let metaY = y
+
+  const metaRow = (label: string, value: string, accent = false) => {
+    write(ink, label, metaRight - 205, metaY, { size: 7.5, color: GREY })
+    writeRight(ink, value, metaRight, metaY, {
+      size: 7.5,
+      bold: true,
+      color: accent ? BLUE : INK,
+    })
+    metaY -= 12
+  }
+
+  metaRow(words.dated, date(today, language))
+  metaRow(words.billing, words.billingValue.replace('{day}', String(paper.billingDay)))
+
+  // The month, not the day: this says which month the first invoice covers,
+  // and `billingValue` above already says which day of it he bills on.
+  if (ended) metaRow(words.endedOn, date(paper.cancelledOn, language))
+  else metaRow(words.firstBill, monthOf(paper.nextPeriod, language), true)
+
+  y = Math.min(addressY, metaY) - 22 * AIRY
+
+  /* ── Title ──────────────────────────────────────────────────────────── */
+
+  write(ink, words.title, LEFT, y, { size: 22, bold: true })
+
+  y -= 16
+
+  // Directly under the title, where the stamp cannot be seen on a greyscale
+  // printout and a phone shows only the first third of the page.
+  for (const line of wrap(ink, words.notBill, CONTENT * 0.78, { size: 8, bold: true })) {
+    write(ink, line, LEFT, y, { size: 8, bold: true, color: GREY })
+    y -= 12
+  }
+
+  if (seller.isTest) {
+    y -= 2
+
+    for (const line of wrap(ink, words.testNotice, CONTENT * 0.78, { size: 8, bold: true })) {
+      write(ink, line, LEFT, y, { size: 8, bold: true, color: GREY })
+      y -= 12
+    }
+  }
+
+  y -= 4
+
+  for (const line of wrap(ink, words.intro, CONTENT * 0.78, { size: 8.5 })) {
+    write(ink, line, LEFT, y, { size: 8.5, color: GREY })
+    y -= 12
+  }
+
+  /* ── What was agreed ────────────────────────────────────────────────── */
+
+  y -= 14 * AIRY
+
+  rule(page, LEFT, y, CONTENT, INK, 0.9)
+  y -= 15 * AIRY
+
+  const labelX = LEFT
+  const valueX = LEFT + 150
+
+  const agreedRow = (label: string, lines: string[], options: TextOptions = {}) => {
+    write(ink, label, labelX, y, { size: 7.5, color: GREY })
+
+    lines.forEach((line) => {
+      write(ink, line, valueX, y, { size: 9.5, ...options })
+      y -= 13
+    })
+
+    y -= 5
+  }
+
+  agreedRow(words.service, wrap(ink, paper.description, CONTENT - 150, { size: 9.5 }))
+
+  // The one figure the whole page exists for, in the same blue the invoice
+  // total is drawn in.
+  write(ink, words.amount, labelX, y, { size: 7.5, color: GREY })
+  write(ink, money(paper.amountCents, language, paper.currency), valueX, y, {
+    size: 13,
+    bold: true,
+    color: BLUE,
+  })
+  write(
+    ink,
+    ` ${words.perMonth}`,
+    valueX + widthOf(ink, money(paper.amountCents, language, paper.currency), { size: 13, bold: true }),
+    y,
+    { size: 8.5, color: GREY },
+  )
+  y -= 18
+
+  agreedRow(
+    words.vat,
+    [
+      paper.taxRate > 0
+        ? words.vatPlus.replace('{rate}', quantity(paper.taxRate, language))
+        : words.vatNone,
+    ],
+    { size: 9 },
+  )
+
+  y += 5
+  rule(page, LEFT, y + 6, CONTENT, HAIR, 0.4)
+  y -= 12 * AIRY
+
+  /* ── Terms ──────────────────────────────────────────────────────────── */
+
+  write(ink, words.terms.toUpperCase(), LEFT, y, {
+    size: 6.5,
+    color: GREY,
+    bold: true,
+    tracking: 0.8,
+  })
+
+  y -= 16
+
+  const terms = ended
+    ? [words.termEnded, words.termInvoice]
+    : [
+        words.termOpen,
+        words.termStop,
+        words.termInvoice,
+        words.termDue.replace('{days}', String(paper.dueDays)),
+      ]
+
+  terms.forEach((term, index) => {
+    const bullet = `${index + 1}.`
+
+    write(ink, bullet, LEFT, y, { size: 8.5, color: FAINT })
+
+    for (const line of wrap(ink, term, CONTENT * 0.82 - 18, { size: 8.5 })) {
+      write(ink, line, LEFT + 18, y, { size: 8.5, color: GREY })
+      y -= 12
+    }
+
+    y -= 4
+  })
+
+  /*
+   * The §19 sentence, in the same words the invoice prints.
+   *
+   * Printed only when it is true of this arrangement: a subscription set to
+   * 19 % while he is still a Kleinunternehmer would otherwise carry both the
+   * rate and the sentence denying it — the §14c contradiction `issueInvoice`
+   * refuses, appearing a month early on the agreement instead.
+   */
+  if (seller.smallBusiness && paper.taxRate === 0) {
+    y -= 6
+    write(ink, SMALL_BUSINESS_NOTE[language], LEFT, y, { size: 7.5, color: GREY })
+    y -= 14
+  }
+
+  /* ── His own sentence ───────────────────────────────────────────────── */
+
+  if (paper.note.trim()) {
+    y -= 8
+
+    for (const line of wrap(ink, paper.note.trim(), CONTENT * 0.78, { size: 8.5 })) {
+      write(ink, line, LEFT, y, { size: 8.5, color: GREY })
+      y -= 12
+    }
+  }
+
+  /* ── Signatures ─────────────────────────────────────────────────────── */
+
+  /*
+   * Two lines, and neither is required.
+   *
+   * A verbal agreement is binding in Germany and this paper is worth having
+   * whether or not anybody signs it. The lines are here because a client who
+   * signs and returns it has put the amount beyond argument, and because a
+   * page with nowhere to sign quietly tells the reader it is only an
+   * announcement.
+   *
+   * Pinned above the footer rather than after the content, so a short
+   * description and a long one produce the same sheet.
+   */
+  const signTop = Math.min(y - 20, BOTTOM + 150)
+
+  const signColumn = (x: number, width: number, who: string) => {
+    rule(page, x, signTop, width, HAIR, 0.6)
+    write(ink, words.place, x, signTop - 10, { size: 6, color: FAINT })
+    write(ink, who, x, signTop - 20, { size: 7.5, bold: true })
+  }
+
+  const signWidth = CONTENT * 0.42
+
+  signColumn(LEFT, signWidth, words.signClient)
+  signColumn(LEFT + CONTENT - signWidth, signWidth, `${words.signSeller} · ${seller.name}`)
+
+  /* ── Footer ─────────────────────────────────────────────────────────── */
+
+  const footTop = BOTTOM + 58
+
+  rule(page, LEFT, footTop, CONTENT, HAIR, 0.4)
+
+  const columns: Array<[string, string[]]> = [
+    [
+      words.address,
+      [
+        seller.name,
+        seller.street,
+        `${seller.postcode} ${seller.city}`,
+        seller.vatId
+          ? `${words.vatIdLabel} ${seller.vatId}`
+          : `${words.taxNumber} ${seller.taxNumber}`,
+      ],
+    ],
+    [words.bank, [seller.bankName, compactIban(seller.iban), `BIC ${seller.bic}`]],
+    [words.contact, [seller.website, seller.email, seller.phone].filter(Boolean)],
+  ]
+
+  columns.forEach(([label, lines], index) => {
+    const x = LEFT + (CONTENT / 3) * index
+    let footY = footTop - 12
+
+    write(ink, label.toUpperCase(), x, footY, { size: 5.8, color: GREY, bold: true, tracking: 0.7 })
+    footY -= 9
+
+    lines.forEach((line) => {
+      write(ink, line, x, footY, { size: 6.5, color: FAINT })
+      footY -= 8
+    })
+  })
+
+  return document.save()
+}
+
+/**
+ * What the agreement calls itself, for the callers outside this file that
+ * need the same word — the filename and the letter's subject, so far. One
+ * source, so the title on the page, the name on disk and the subject of the
+ * mail can never say three different things.
+ */
+export const agreementTitle = (language: InvoiceLanguage): string => AGREEMENT[language].title

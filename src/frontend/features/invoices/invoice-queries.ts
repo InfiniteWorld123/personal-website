@@ -19,6 +19,7 @@ import {
   fetchPersonInvoices,
   fetchSellerState,
   fetchSentLetters,
+  fetchSubscriptionLetter,
   fetchSubscriptions,
   fetchSummary,
   issueInvoice,
@@ -26,6 +27,7 @@ import {
   updateInvoice,
   updateSubscription,
 } from '#/frontend/api/invoice.api'
+import type { LetterTarget, PreparedLetter } from '#/shared/types/invoice.types'
 import type {
   ClientWriteInput,
   CorrectionInput,
@@ -128,6 +130,62 @@ export const letterQuery = (invoiceId: string, kind: LetterKind, enabled = true)
     enabled: enabled && invoiceId !== '',
     staleTime: 5 * 60_000,
   })
+
+/**
+ * The agreement a subscription starts with, prepared for the composer.
+ *
+ * Cached under the subscription so the click that navigates and the composer
+ * that renders a moment later share one request — the same argument
+ * `letterQuery` makes, and the reason the PDF is copied once rather than
+ * twice.
+ */
+export const subscriptionLetterQuery = (subscriptionId: string, enabled = true) =>
+  queryOptions({
+    queryKey: [...INVOICES, 'subscription-letter', subscriptionId],
+    queryFn: () => fetchSubscriptionLetter(subscriptionId),
+    enabled: enabled && subscriptionId !== '',
+    staleTime: 5 * 60_000,
+  })
+
+/**
+ * Whichever letter the composer was asked to open on.
+ *
+ * One function rather than a branch inside the composer, because the choice
+ * is about *what was asked for* and not about how to render it. The composer
+ * needs a body and a file; which document they were drawn from is this
+ * module's business.
+ *
+ * A null target still returns a disabled query, so the composer can call a
+ * hook unconditionally — React's rules leave no other shape.
+ */
+export const letterTargetQuery = (target: LetterTarget | null) => {
+  const subscriptionId = target && 'subscriptionId' in target ? target.subscriptionId : null
+  const invoiceId = target && 'invoiceId' in target ? target.invoiceId : ''
+  const kind: LetterKind = target && 'kind' in target ? target.kind : 'INVOICE'
+
+  /*
+   * The keys are spelled to match `letterQuery` and `subscriptionLetterQuery`
+   * exactly, and that is the whole point of writing them out again rather
+   * than delegating. The button prepares the letter with `fetchQuery` and the
+   * composer reads it a moment later; sharing one cache entry is what makes
+   * the PDF be copied once instead of twice.
+   */
+  return queryOptions({
+    queryKey: subscriptionId
+      ? [...INVOICES, 'subscription-letter', subscriptionId]
+      : [...INVOICES, 'letter', invoiceId, kind],
+    // Typed as the shape both letters have in common. An invoice letter also
+    // carries a `kind`, which the composer has no use for.
+    queryFn: (): Promise<PreparedLetter> =>
+      subscriptionId ? fetchSubscriptionLetter(subscriptionId) : fetchLetter(invoiceId, kind),
+    enabled: target !== null,
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** What identifies a prepared letter, for the composer's "seed it once" guard. */
+export const letterTargetKey = (target: LetterTarget): string =>
+  'subscriptionId' in target ? `subscription:${target.subscriptionId}` : `${target.invoiceId}:${target.kind}`
 
 const useInvoiceMutation = <TInput, TResult>(mutationFn: (input: TInput) => Promise<TResult>) => {
   const client = useQueryClient()

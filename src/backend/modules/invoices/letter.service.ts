@@ -2,11 +2,12 @@ import { getDb } from '#/backend/db/client'
 import { storeAttachmentBytes } from '#/backend/modules/inbox/attachment.service'
 import { badRequestError, notFoundError } from '#/backend/shared/error'
 import { plainText } from '#/backend/shared/mail'
-import type { InvoiceLetter, PersonInvoice } from '#/shared/types/invoice.types'
+import type { InvoiceLetter, PersonInvoice, PreparedLetter } from '#/shared/types/invoice.types'
 import {
   balanceOf,
   DOCUMENT_TITLE,
   payLinkUsable,
+  periodLabel,
   settlementOf,
   type InvoiceKind,
   type InvoiceLanguage,
@@ -15,7 +16,8 @@ import {
 } from '#/shared/validation/invoice.validation'
 import { documentBytes, getInvoice } from './invoice.service'
 import { CREDITED_CENTS, DATE_TEXT, LETTERS_LAST, PAID_CENTS, TODAY, toInt } from './invoice.sql'
-import { money } from './pdf.service'
+import { agreementTitle, money } from './pdf.service'
+import { subscriptionPaper, subscriptionPdfBytes } from './subscription.service'
 import { resolveSeller } from './seller'
 
 /**
@@ -50,6 +52,28 @@ import { resolveSeller } from './seller'
  * resolution happens once and every later invoice lands in the same thread.
  */
 const personForClient = async (invoiceId: string): Promise<string> => {
+  const found = await getDb().query<{ client_id: string }>(
+    'SELECT i.client_id FROM invoices i WHERE i.id = $1;',
+    [invoiceId],
+  )
+
+  const row = found.rows[0]
+
+  if (!row) throw notFoundError('That invoice is not here')
+
+  return personForClientId(row.client_id)
+}
+
+/**
+ * The same resolution, starting from the client rather than from an invoice.
+ *
+ * A subscription has a client and no invoice — its first paper is the
+ * agreement, written before anything has been billed — so the lookup above
+ * could not reach it. Split rather than duplicated, because "which
+ * conversation is this client" has to have exactly one answer: two copies
+ * would drift, and the drift would show up as a client with two threads.
+ */
+export const personForClientId = async (clientId: string): Promise<string> => {
   const db = getDb()
 
   const found = await db.query<{
@@ -61,14 +85,13 @@ const personForClient = async (invoiceId: string): Promise<string> => {
     language: string
   }>(
     `SELECT c.id AS client_id, c.lead_id, c.email, c.company, c.contact_name, c.language
-       FROM invoices i JOIN clients c ON c.id = i.client_id
-      WHERE i.id = $1;`,
-    [invoiceId],
+       FROM clients c WHERE c.id = $1;`,
+    [clientId],
   )
 
   const client = found.rows[0]
 
-  if (!client) throw notFoundError('That invoice is not here')
+  if (!client) throw notFoundError('That client is not here')
 
   if (client.lead_id) return client.lead_id
 
@@ -496,4 +519,127 @@ export const attachInvoiceToPerson = async (
   }
 
   return fileForInvoice(invoiceId, personId)
+}
+
+/* -------------------------------------------------------------------------- */
+/* The agreement, handed to the inbox                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The agreement's PDF, in the person's files, ready for the composer.
+ *
+ * The same shape as `fileForInvoice` and the same reasoning: a copy rather
+ * than a pointer, deduplicated on the **unsent** copy so pressing the button
+ * twice finds the file already there instead of piling up identical PDFs.
+ *
+ * One difference, and it matters. An invoice's PDF is frozen, so every copy
+ * of it is the same bytes for ever. An agreement is drawn from what the
+ * arrangement says today, so a copy made after a price change genuinely
+ * differs from the one sent last year — which is why the unique index is
+ * partial on `message_id IS NULL`. Once a letter has carried a copy, the next
+ * letter gets its own, and the thread shows what each one actually contained.
+ */
+export const fileForSubscription = async (
+  subscriptionId: string,
+  personId: string,
+): Promise<{ id: string; filename: string; bytes: number }> => {
+  const db = getDb()
+
+  const existing = await db.query<{ id: string; filename: string; bytes: number | string }>(
+    `SELECT id, filename, bytes FROM lead_attachments
+      WHERE lead_id = $1 AND subscription_id = $2 AND message_id IS NULL LIMIT 1;`,
+    [personId, subscriptionId],
+  )
+
+  const already = existing.rows[0]
+
+  if (already) {
+    return { id: already.id, filename: already.filename, bytes: Number(already.bytes) }
+  }
+
+  const { filename } = await subscriptionPaper(subscriptionId)
+  const bytes = await subscriptionPdfBytes(subscriptionId)
+
+  const stored = await storeAttachmentBytes({
+    personId,
+    filename,
+    contentType: 'application/pdf',
+    bytes: bytes as Uint8Array<ArrayBuffer>,
+    direction: 'OUT',
+  })
+
+  await db.query('UPDATE lead_attachments SET subscription_id = $2 WHERE id = $1;', [
+    stored.id,
+    subscriptionId,
+  ])
+
+  return { id: stored.id, filename: stored.filename, bytes: stored.bytes }
+}
+
+/**
+ * The letter that carries the agreement.
+ *
+ * Nothing is sent here, exactly as with an invoice: it prepares the words and
+ * the file and hands them to the composer, where he reads them before
+ * pressing send and where the thread records that it went.
+ *
+ * The body says the three things a client actually needs — what, how much per
+ * month, and from which month — and then says plainly that the paper is not a
+ * bill. Without that sentence the attachment is a PDF with a euro figure on
+ * it, arriving unannounced, and the first thing a careful client does with
+ * one of those is pay it.
+ */
+export const prepareSubscriptionLetter = async (
+  subscriptionId: string,
+): Promise<PreparedLetter> => {
+  const { paper, client } = await subscriptionPaper(subscriptionId)
+
+  const language = client.language
+  const german = language === 'de'
+  const name = client.contactName.trim()
+  const title = agreementTitle(language)
+  const amount = money(paper.amountCents, language, paper.currency)
+  const firstMonth = periodLabel(paper.nextPeriod, language)
+  const ended = paper.cancelledOn !== null
+
+  const personId = await personForClientId(client.id)
+  const attachment = await fileForSubscription(subscriptionId, personId)
+
+  return {
+    personId,
+    // The same in both languages, because the title is already the language's
+    // own word for it and the description is his, in whatever he typed.
+    subject: `${title} · ${paper.description}`,
+    body: plainText(
+      german
+        ? [
+            greeting(name, language),
+            '',
+            `anbei die ${title} über ${paper.description}.`,
+            ended
+              ? 'Die Vereinbarung ist beendet; dieses Schreiben dient Ihren Unterlagen.'
+              : `Der Betrag ist ${amount} pro Monat, erstmals abgerechnet für ${firstMonth}.`,
+            '',
+            // The sentence the whole letter exists to carry. A PDF with a
+            // euro figure arriving unannounced gets paid, and then he owes a
+            // refund on money that was never billed.
+            'Dieses Schreiben ist keine Rechnung. Die Rechnung erhalten Sie jeden Monat separat.',
+            '',
+            paper.note.trim() || null,
+          ]
+        : [
+            greeting(name, language),
+            '',
+            `please find attached the ${title.toLowerCase()} for ${paper.description}.`,
+            ended
+              ? 'The agreement has ended; this letter is for your records.'
+              : `The amount is ${amount} per month, first billed for ${firstMonth}.`,
+            '',
+            'This letter is not an invoice. You will receive the invoice separately each month.',
+            '',
+            paper.note.trim() || null,
+          ],
+    ),
+    attachment,
+  }
 }

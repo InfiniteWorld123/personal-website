@@ -35,12 +35,18 @@ import {
   readInvoicePdf,
   updateInvoice,
 } from './invoice.service'
-import { attachInvoiceToPerson, listInvoicesForPerson, prepareLetter } from './letter.service'
+import {
+  attachInvoiceToPerson,
+  listInvoicesForPerson,
+  prepareLetter,
+  prepareSubscriptionLetter,
+} from './letter.service'
 import {
   cancelSubscription,
   createSubscription,
   deleteSubscription,
   listSubscriptions,
+  readSubscriptionPdf,
   updateSubscription,
 } from './subscription.service'
 import { isSellerReady, resolveSeller, sellerGaps } from './seller'
@@ -158,6 +164,39 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
         parseInput(SubscriptionWriteSchema, body),
       ),
       message: 'Saved',
+    }),
+  )
+
+  /**
+   * The agreement, as paper.
+   *
+   * A subscription had no document of its own: its paper was the monthly
+   * invoices underneath it, which answer "pay me for October" and not "this
+   * is what we agreed". This is the page a client gets at the beginning.
+   *
+   * It takes no number and demands no money, so unlike issuing it is not an
+   * irreversible act — it is drawn fresh on every request from what the
+   * arrangement says today.
+   */
+  .get('/subscriptions/:subscriptionId/paper', async ({ params }) =>
+    readSubscriptionPdf(id(params.subscriptionId)),
+  )
+
+  /**
+   * The same agreement, prepared as a letter for the inbox.
+   *
+   * **Nothing is sent here**, exactly as with an invoice: the words and the
+   * file are handed to the composer, he reads them, and the inbox sends —
+   * which is what puts the letter in the conversation where he can find it
+   * again.
+   *
+   * A GET that writes, for the same reason `/letter` is: it is idempotent,
+   * and the composer asks for the same letter again after a refresh.
+   */
+  .get('/subscriptions/:subscriptionId/letter', async ({ params }) =>
+    responseOk({
+      data: await prepareSubscriptionLetter(id(params.subscriptionId)),
+      message: 'Letter ready',
     }),
   )
 

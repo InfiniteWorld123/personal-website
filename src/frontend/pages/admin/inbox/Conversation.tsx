@@ -18,7 +18,8 @@ import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { RichTextEditor } from '#/frontend/features/blog/RichTextEditor'
 import { uploadAttachment } from '#/frontend/api/inbox.api'
 import {
-  letterQuery,
+  letterTargetKey,
+  letterTargetQuery,
   personInvoicesQuery,
   useAttachInvoice,
 } from '#/frontend/features/invoices/invoice-queries'
@@ -28,9 +29,8 @@ import {
   money,
 } from '#/frontend/features/invoices/invoice-format'
 import { SETTLEMENT_LABEL } from '#/shared/validation/invoice.validation'
-import type { PersonInvoice } from '#/shared/types/invoice.types'
+import type { LetterTarget, PersonInvoice } from '#/shared/types/invoice.types'
 import { usePrefetch } from '#/frontend/lib/prefetch'
-import type { LetterKind } from '#/shared/validation/invoice.validation'
 import {
   inboxQuery,
   personQuery,
@@ -68,7 +68,7 @@ export function Conversation({
   letterFor = null,
 }: {
   personId: string
-  letterFor?: { invoiceId: string; kind: LetterKind } | null
+  letterFor?: LetterTarget | null
 }) {
   const person = useQuery(personQuery(personId))
 
@@ -171,7 +171,7 @@ function Thread({
   letterFor,
 }: {
   person: Person
-  letterFor: { invoiceId: string; kind: LetterKind } | null
+  letterFor: LetterTarget | null
 }) {
   const prefetch = usePrefetch()
   const setRead = useSetRead(person.id)
@@ -591,7 +591,7 @@ function Composer({
   letterFor,
 }: {
   person: Person
-  letterFor: { invoiceId: string; kind: LetterKind } | null
+  letterFor: LetterTarget | null
 }) {
   const [doc, setDoc] = useState<RichTextDoc>(emptyRichTextDoc)
   const [open, setOpen] = useState(false)
@@ -615,9 +615,10 @@ function Composer({
    * guard, editing the draft and then any re-render would put the generated
    * wording back over his own words.
    */
-  const letter = useQuery(
-    letterQuery(letterFor?.invoiceId ?? '', letterFor?.kind ?? 'INVOICE', Boolean(letterFor)),
-  )
+  // Whichever document was handed over — an invoice, a reminder about one, or
+  // the agreement a subscription starts with. The composer needs a body and a
+  // file; which paper they came from is the query module's business.
+  const letter = useQuery(letterTargetQuery(letterFor))
   const seeded = useRef<string | null>(null)
 
   useEffect(() => {
@@ -625,7 +626,7 @@ function Composer({
 
     if (!prepared || !letterFor) return
 
-    const key = `${letterFor.invoiceId}:${letterFor.kind}`
+    const key = letterTargetKey(letterFor)
 
     if (seeded.current === key) return
 

@@ -1,8 +1,9 @@
 import { getDb, withTransaction, type Db } from '#/backend/db/client'
 import { badRequestError, notFoundError } from '#/backend/shared/error'
-import type { Subscription } from '#/shared/types/invoice.types'
+import type { Client, Subscription } from '#/shared/types/invoice.types'
 import {
   billingDate,
+  DEFAULT_DUE_DAYS,
   firstPeriod,
   nextPeriod,
   subscriptionDraftUntouched,
@@ -12,6 +13,8 @@ import {
 } from '#/shared/validation/invoice.validation'
 import { getClient } from './client.service'
 import { DATE_TEXT, TODAY, toInt } from './invoice.sql'
+import { agreementTitle, renderSubscriptionPdf, type SubscriptionPaper } from './pdf.service'
+import { resolveSeller, sellerGaps } from './seller'
 
 /**
  * Money that does not stop.
@@ -111,7 +114,7 @@ export const listSubscriptions = async (): Promise<Subscription[]> => {
   return result.rows.map(project)
 }
 
-const getSubscription = async (id: string): Promise<Subscription> => {
+export const getSubscription = async (id: string): Promise<Subscription> => {
   const result = await getDb().query<Shape>(
     `SELECT ${COLUMNS} FROM subscriptions s JOIN clients c ON c.id = s.client_id
       WHERE s.id = $1;`,
@@ -406,7 +409,11 @@ export const runDueSubscriptions = async (): Promise<string[]> => {
   const due = await db.query<Due & { today: string }>(
     `SELECT s.id, s.client_id, s.description, s.amount_cents, s.tax_rate, s.billing_day,
             ${DATE_TEXT('s.next_period')} AS next_period,
-            c.language, 14 AS due_days,
+            -- The same term the agreement prints and the editor defaults to.
+            -- It was the literal 14 here and a constant everywhere else, so
+            -- changing his payment term would have changed every invoice
+            -- except the ones this writes.
+            c.language, ${DEFAULT_DUE_DAYS} AS due_days,
             ${DATE_TEXT(TODAY)} AS today
        FROM subscriptions s
        JOIN clients c ON c.id = s.client_id
@@ -452,4 +459,95 @@ export const runDueSubscriptions = async (): Promise<string[]> => {
   }
 
   return written
+}
+
+/* -------------------------------------------------------------------------- */
+/* The paper                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Everything the agreement needs to be drawn, from the arrangement and the
+ * client it is with.
+ *
+ * Shared by the download and by the letter, so the file he opens and the file
+ * a client receives are drawn from one read rather than two that could drift
+ * apart between them.
+ */
+export const subscriptionPaper = async (
+  subscriptionId: string,
+): Promise<{ paper: SubscriptionPaper; client: Client; today: string; filename: string }> => {
+  const subscription = await getSubscription(subscriptionId)
+  const client = await getClient(subscription.clientId)
+
+  /*
+   * The same refusal issuing makes, and for the same reason.
+   *
+   * This page carries his address, his tax number and his bank details in its
+   * footer. Drawn while `seller.ts` still says TODO, it would go to a client
+   * reading «TODO IBAN» — worse than no paper at all, because it looks like a
+   * document. `resolveSeller` hands back the invented details on his own
+   * machine, and those are complete and stamped, so this is only reachable
+   * once he turns the test switch off.
+   */
+  const gaps = sellerGaps(resolveSeller())
+
+  if (gaps.length > 0) {
+    throw badRequestError(
+      `Your own details are still placeholders: ${gaps.join(', ')}. Fill them in seller.ts before sending anything to a client.`,
+    )
+  }
+
+  const clock = await getDb().query<{ today: string }>(`SELECT ${DATE_TEXT(TODAY)} AS today;`)
+  const today = clock.rows[0]!.today
+
+  const who = client.company.trim() || client.contactName.trim()
+
+  return {
+    paper: {
+      description: subscription.description,
+      amountCents: subscription.amountCents,
+      currency: subscription.currency,
+      taxRate: subscription.taxRate,
+      billingDay: subscription.billingDay,
+      nextPeriod: subscription.nextPeriod,
+      startedOn: subscription.startedOn,
+      cancelledOn: subscription.cancelledOn,
+      note: subscription.note,
+      dueDays: DEFAULT_DUE_DAYS,
+    },
+    client,
+    today,
+    filename: `${agreementTitle(client.language)}-${who}.pdf`.replace(/[^\w.-]/g, '-'),
+  }
+}
+
+/**
+ * The agreement, as bytes.
+ *
+ * Drawn on demand every time, and never frozen into the bucket. An invoice is
+ * frozen because what was sent is a fact that must survive unchanged; this
+ * page describes the arrangement **as it stands**, so the honest version is
+ * always the current one. The copy a client holds is the attachment on the
+ * letter that carried it, which is stored and is the record.
+ */
+export const subscriptionPdfBytes = async (subscriptionId: string): Promise<Uint8Array> => {
+  const { paper, client, today } = await subscriptionPaper(subscriptionId)
+
+  return renderSubscriptionPdf(paper, client, today)
+}
+
+/** Hands the agreement back, behind the admin guard. */
+export const readSubscriptionPdf = async (subscriptionId: string): Promise<Response> => {
+  const { filename } = await subscriptionPaper(subscriptionId)
+  const bytes = await subscriptionPdfBytes(subscriptionId)
+
+  return new Response(bytes as unknown as BodyInit, {
+    headers: {
+      'content-type': 'application/pdf',
+      'content-length': String(bytes.byteLength),
+      'content-disposition': `inline; filename="${filename}"`,
+      'x-content-type-options': 'nosniff',
+      'cache-control': 'private, no-store',
+    },
+  })
 }

@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ArrowLeft, Ban, Plus, Repeat, Trash2 } from 'lucide-react'
+import { ArrowLeft, Ban, FileText, Mail, Plus, Repeat, Trash2 } from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelNote, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
@@ -9,11 +9,13 @@ import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
 import { Skeleton, SkeletonScreen } from '#/frontend/components/ui/skeleton'
 import { Textarea } from '#/frontend/components/ui/textarea'
+import { subscriptionPaperUrl } from '#/frontend/api/invoice.api'
 import { day, money } from '#/frontend/features/invoices/invoice-format'
 import {
   clientsQuery,
   invoicesQuery,
   sellerQuery,
+  subscriptionLetterQuery,
   subscriptionsQuery,
   useCancelSubscription,
   useCreateSubscription,
@@ -247,8 +249,42 @@ function Row({
   const stop = useCancelSubscription()
   const remove = useDeleteSubscription()
   const [error, setError] = useState('')
+  const [handing, setHanding] = useState(false)
+
+  const navigate = useNavigate()
+  const client = useQueryClient()
 
   const live = subscription.cancelledOn === null
+
+  /**
+   * Hands the agreement to the inbox and goes there.
+   *
+   * `fetchQuery` rather than a mutation, exactly as on an issued invoice:
+   * preparing the letter is idempotent, and the composer asks for the same
+   * thing a moment later — one shared request means the PDF is copied once.
+   *
+   * Deliberately **not** prefetched on hover. Preparing a letter resolves the
+   * person, may create them, and attaches the file to the thread; a prefetch
+   * must never do something a click has not asked for yet.
+   */
+  const handOver = async () => {
+    setError('')
+    setHanding(true)
+
+    try {
+      const letter = await client.fetchQuery(subscriptionLetterQuery(subscription.id))
+
+      await navigate({
+        to: '/admin/inbox/$personId',
+        params: { personId: letter.personId },
+        search: { subscription: subscription.id },
+      })
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'The letter could not be prepared.')
+    } finally {
+      setHanding(false)
+    }
+  }
 
   return (
     <div className="border-border/60 flex flex-wrap items-center gap-3 border-b px-5 py-4 last:border-b-0">
@@ -349,6 +385,36 @@ function Row({
       </span>
 
       <span className="flex shrink-0 gap-1">
+        {/*
+          The paper the arrangement has, which is not an invoice.
+
+          Offered on a stopped subscription too: the page then says it has
+          ended, and that is exactly the copy somebody asks for months later.
+        */}
+        <Button className="rounded-full" size="sm" variant="ghost" asChild title="The agreement, as a PDF">
+          <a href={subscriptionPaperUrl(subscription.id)} target="_blank" rel="noreferrer">
+            <FileText className="size-4" />
+            <span className="sr-only">Open the agreement</span>
+          </a>
+        </Button>
+
+        {/*
+          Goes to the inbox, it does not send — the same rule the invoice
+          screen follows, and the reason a sent agreement appears in the
+          conversation with the person who received it.
+        */}
+        <Button
+          className="rounded-full"
+          size="sm"
+          variant="ghost"
+          disabled={handing}
+          title="Write the letter that carries it"
+          onClick={() => void handOver()}
+        >
+          <Mail className="size-4" />
+          <span className="sr-only">Write the letter</span>
+        </Button>
+
         {live ? (
           <>
             <Button className="rounded-full" size="sm" variant="outline" onClick={onEdit}>
@@ -544,6 +610,19 @@ export function SubscriptionsPage() {
       <p className="text-muted-foreground text-xs">
         Drafts appear when you open the invoice list. Nothing is issued or sent by itself — an
         issued invoice keeps its number for ever, and that decision stays yours.
+      </p>
+
+      {/*
+        What the paper button is for, said once on the screen it lives on.
+
+        Without this the document icon beside a row is a mystery, and the
+        first thing he would do is press it to find out — which is harmless,
+        but the sentence is cheaper than the guess.
+      */}
+      <p className="text-muted-foreground text-xs">
+        The document icon opens the <span className="text-foreground">agreement</span>: one page
+        saying what was agreed, how much per month and from which month. It is not an invoice and
+        asks for no money — the envelope beside it writes the letter that carries it.
       </p>
     </AdminPage>
   )
