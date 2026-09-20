@@ -12,6 +12,7 @@ import {
   DOCUMENT_TITLE,
   settlementOf,
   totalsOf,
+  vatConflict,
   type CorrectionInput,
   type InvoiceKind,
   type InvoiceQueryInput,
@@ -38,7 +39,7 @@ import {
   type PaymentShape,
 } from './invoice.sql'
 import { assertPrintable, draftWord, renderInvoicePdf } from './pdf.service'
-import { sellerGaps } from './seller'
+import { resolveSeller, sellerGaps } from './seller'
 
 /**
  * Invoicing.
@@ -100,6 +101,7 @@ const projectWithCredit = (row: RowWithCredit): InvoiceRow => {
 
   const settlement = settlementOf({
     status: row.status,
+    kind: row.kind,
     dueOn: row.due_on,
     totalCents: base.totalCents,
     paidCents: base.paidCents + credited,
@@ -607,11 +609,32 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
 
   if (invoice.lines.length === 0) throw badRequestError('An invoice needs at least one line')
 
-  const gaps = sellerGaps()
+  const seller = resolveSeller()
+  const gaps = sellerGaps(seller)
 
   if (gaps.length > 0) {
     throw badRequestError(
       `Your own details are still placeholders: ${gaps.join(', ')}. Fill them in seller.ts before sending anything to a client.`,
+    )
+  }
+
+  /*
+   * §14c(2) UStG, and the reason this is a refusal rather than a correction.
+   *
+   * A Kleinunternehmer charges no VAT, and the paper says so in a sentence
+   * that is a legal statement. A line carrying a rate makes the document say
+   * both — and the VAT shown becomes owed to the Finanzamt whether or not it
+   * was allowed to be charged. He would have no input tax to set against it
+   * and would find out months later.
+   *
+   * Nothing here can pick for him. Dropping the sentence leaves the VAT and
+   * the liability standing; dropping the VAT changes what he charged.
+   */
+  if (vatConflict(invoice.lines, seller.smallBusiness)) {
+    throw badRequestError(
+      'This invoice charges VAT while you are registered as a Kleinunternehmer under §19. ' +
+        'Set the rate on every line to 0, or turn off smallBusiness in seller.ts — VAT shown on ' +
+        'an invoice is owed to the Finanzamt either way (§14c UStG).',
     )
   }
 

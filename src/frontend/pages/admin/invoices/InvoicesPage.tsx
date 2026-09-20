@@ -49,7 +49,11 @@ type Filter = Settlement | 'ALL'
 const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: 'ALL', label: 'Everything' },
   { value: 'OVERDUE', label: 'Overdue' },
-  { value: 'OPEN', label: 'Sent' },
+  // "Unpaid", not "Sent". An invoice lands in this group the moment it is
+  // issued, whether or not a letter ever left — and the section now has a
+  // Sent register a click away, where the word means an outgoing message
+  // exists. One word, two facts, is how a screen starts lying quietly.
+  { value: 'OPEN', label: 'Unpaid' },
   { value: 'PART', label: 'Part paid' },
   { value: 'DRAFT', label: 'Drafts' },
   { value: 'PAID', label: 'Paid' },
@@ -91,7 +95,7 @@ function Figures({ summary }: { summary: InvoiceSummary }) {
       />
 
       <StatCard
-        foot="Sent, still owed"
+        foot="Issued, still owed"
         label="Not paid yet"
         value={money(summary.openCents, summary.currency)}
       />

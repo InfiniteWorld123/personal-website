@@ -227,6 +227,7 @@ export const projectRow = (row: InvoiceRowShape): InvoiceRow => {
 
   const settlement = settlementOf({
     status: row.status,
+    kind: row.kind,
     dueOn: row.due_on,
     totalCents,
     paidCents,

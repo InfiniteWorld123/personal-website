@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { ArrowLeft, FileText, Plus, Stamp, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, FileText, Plus, Stamp, Trash2 } from 'lucide-react'
 import { AdminPage, PageHeader } from '#/frontend/components/admin/PageHeader'
 import { Panel, PanelTitle } from '#/frontend/components/admin/Panel'
 import { Button } from '#/frontend/components/ui/button'
@@ -29,6 +29,7 @@ import {
   MONEY_KINDS,
   MONEY_KIND_LABEL,
   totalsOf,
+  vatConflict,
   type InvoiceLanguage,
   type MoneyKind,
 } from '#/shared/validation/invoice.validation'
@@ -195,6 +196,20 @@ function Draft({
         })),
       ),
     [lines],
+  )
+
+  /*
+   * Recomputed from the same rates the totals above use, so the warning and
+   * the VAT figure beside it can never disagree.
+   *
+   * `smallBusiness` is undefined until the seller query lands. Defaulting to
+   * `false` while it is in flight keeps the warning from flashing on every
+   * invoice for a moment before the answer arrives — the check runs again the
+   * instant it does, and the server refuses regardless.
+   */
+  const vatConflicted = vatConflict(
+    lines.map((line) => ({ taxRate: Number(line.taxRate) || 0 })),
+    seller.data?.smallBusiness ?? false,
   )
 
   const setLine = (key: string, patch: Partial<LineDraft>) =>
@@ -453,12 +468,38 @@ function Draft({
             {money(totals.totalCents)}
           </span>
         </div>
-        {/* Zero VAT is the §19 default and stays a field, so crossing the
-            threshold is a number typed here rather than a migration. */}
-        <p className="text-muted-foreground text-xs">
-          VAT stays at 0 while you are a Kleinunternehmer. The rate lives on the line, so old
-          invoices keep the rate they were issued with.
-        </p>
+        {/*
+          Said here, while he is looking at the rate he typed.
+
+          `issueInvoice` refuses this combination outright, and it has to —
+          under §14c(2) UStG the VAT printed on an invoice is owed to the
+          Finanzamt whether or not it was allowed to be charged, and a
+          Kleinunternehmer has no input tax to set against it. But being
+          refused at the last step, after writing the whole document, is the
+          small cruelty the seller warning above already avoids. So the same
+          fact is said twice: here as a sentence, there as a wall.
+        */}
+        {vatConflicted ? (
+          <p className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+            <span>
+              <span className="font-medium">
+                This charges VAT while you are a Kleinunternehmer.
+              </span>{' '}
+              It cannot be issued that way: VAT shown on an invoice is owed to the Finanzamt
+              either way (§14c UStG). Set every rate to 0, or turn off{' '}
+              <code className="bg-muted rounded px-1 py-0.5">smallBusiness</code> in{' '}
+              <code className="bg-muted rounded px-1 py-0.5">seller.ts</code>.
+            </span>
+          </p>
+        ) : (
+          /* Zero VAT is the §19 default and stays a field, so crossing the
+             threshold is a number typed here rather than a migration. */
+          <p className="text-muted-foreground text-xs">
+            VAT stays at 0 while you are a Kleinunternehmer. The rate lives on the line, so old
+            invoices keep the rate they were issued with.
+          </p>
+        )}
       </Panel>
 
       {/* ── Dates and the sentence ──────────────────────────────────── */}
@@ -540,7 +581,7 @@ function Draft({
             <Button
               className="rounded-full"
               variant="outline"
-              disabled={!seller.data?.ready || issue.isPending}
+              disabled={!seller.data?.ready || vatConflicted || issue.isPending}
               onClick={() => setConfirming(true)}
             >
               <Stamp className="size-4" /> Issue it

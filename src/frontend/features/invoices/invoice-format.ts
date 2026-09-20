@@ -82,6 +82,9 @@ export const SETTLEMENT_CLASS: Record<Settlement, string> = {
   PART: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
   PAID: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   CANCELLED: 'border-border bg-muted text-muted-foreground line-through',
+  // A correction. Quiet, like the rest: it is a document that exists, and
+  // there is nothing to do about it.
+  ISSUED: 'border-border bg-muted text-foreground/80',
 }
 
 /** How a row sorts when overdue goes first — switch 16. */
@@ -91,7 +94,10 @@ export const SETTLEMENT_WEIGHT: Record<Settlement, number> = {
   OPEN: 2,
   DRAFT: 3,
   PAID: 4,
-  CANCELLED: 5,
+  // Below paid: a correction is finished business, and so is a cancelled
+  // invoice. Neither is ever the row he opened the section to find.
+  ISSUED: 5,
+  CANCELLED: 6,
 }
 
 export const lateLabel = (days: number): string =>

@@ -91,7 +91,16 @@ export const adminInvoiceRoutes = new Elysia({ prefix: '/invoices' })
        * issuing invoices against an account that does not exist and never be
        * told.
        */
-      data: { ready: isSellerReady(), gaps: sellerGaps(), isTest: resolveSeller().isTest === true },
+      data: {
+        ready: isSellerReady(),
+        gaps: sellerGaps(),
+        isTest: resolveSeller().isTest === true,
+        // What decides whether a rate on a line is allowed at all. The editor
+        // cannot warn about §14c without it, and finding out at Issue — after
+        // the whole document is written — is the small cruelty this admin
+        // is supposed to avoid.
+        smallBusiness: resolveSeller().smallBusiness,
+      },
       message: 'Checked',
     }),
   )

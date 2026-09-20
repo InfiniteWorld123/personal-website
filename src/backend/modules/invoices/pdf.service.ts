@@ -917,7 +917,18 @@ export const renderInvoicePdf = async (
 
   /* ── The law, and how to pay ────────────────────────────────────────── */
 
-  if (seller.smallBusiness) {
+  /*
+   * The §19 sentence, and the one case where it must not be printed.
+   *
+   * `issueInvoice` refuses a document that charges VAT while he is a
+   * Kleinunternehmer, so this should be unreachable. It is here anyway for
+   * the documents frozen before that rule existed, which are redrawn by
+   * `documentBytes` whenever the stored file is missing: a page claiming "no
+   * VAT is charged" above a row charging 188,10 € is the contradiction the
+   * rule exists to prevent, and it must not survive in the drawing code
+   * either.
+   */
+  if (seller.smallBusiness && invoice.taxCents === 0) {
     write(ink, SMALL_BUSINESS_NOTE[language], LEFT, y, { size: 7.5, color: GREY })
     y -= 18
   }

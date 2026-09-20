@@ -4,6 +4,8 @@ import type { Seller } from '#/backend/modules/invoices/seller'
 import {
   settlementOf,
   totalsOf,
+  vatConflict,
+  type InvoiceKind,
   type InvoiceStatus,
 } from '#/shared/validation/invoice.validation'
 
@@ -70,6 +72,7 @@ describe('totalsOf', () => {
 describe('settlementOf', () => {
   const base = {
     status: 'ISSUED' as InvoiceStatus,
+    kind: 'INVOICE' as InvoiceKind,
     dueOn: '2026-10-02',
     totalCents: 148_000,
     paidCents: 0,
@@ -93,9 +96,29 @@ describe('settlementOf', () => {
   })
 
   it('never reads as overdue without a due date', () => {
-    // Cancellations and credit notes carry no payment term: nobody owes
-    // anything on them, so they must not drift into the overdue list.
+    // An invoice with no term is unusual but not late, whatever the date.
     expect(settlementOf({ ...base, dueOn: null, today: '2027-01-01' })).toBe('OPEN')
+  })
+
+  it('reads a correction as a document, not as a debt', () => {
+    /*
+     * This case used to come out `OPEN`, which the list drew as "still owed"
+     * while the figure above it counted nothing — `getSummary` filters on
+     * `kind = 'INVOICE'`. The row and the total disagreed and the row was
+     * wrong. Nobody has ever owed money on a cancellation.
+     */
+    const cancellation = { ...base, kind: 'CANCELLATION' as InvoiceKind, dueOn: null }
+
+    expect(settlementOf(cancellation)).toBe('ISSUED')
+    expect(settlementOf({ ...cancellation, today: '2030-01-01' })).toBe('ISSUED')
+    expect(settlementOf({ ...base, kind: 'CREDIT_NOTE' as InvoiceKind, dueOn: null })).toBe('ISSUED')
+  })
+
+  it('still reads a cancelled correction as cancelled', () => {
+    // Status wins over kind: the row is void, and that is the louder fact.
+    expect(
+      settlementOf({ ...base, kind: 'CANCELLATION' as InvoiceKind, status: 'CANCELLED' }),
+    ).toBe('CANCELLED')
   })
 
   it('separates a deposit from a settled invoice', () => {
@@ -157,5 +180,36 @@ describe('epcPayload', () => {
     expect(epcPayload({ seller, amountCents: 2_450, reference: 'x' }).split('\n')[7]).toBe(
       'EUR24.50',
     )
+  })
+})
+
+/**
+ * The one combination that must never reach paper.
+ *
+ * A `Kleinunternehmer` charges no VAT and the invoice says so, in a sentence
+ * that is a legal statement. Put a rate on a line anyway and the document says
+ * both at once — and under `§14c(2) UStG` the VAT shown is then owed to the
+ * Finanzamt regardless of whether it was allowed to be charged.
+ *
+ * So this is a refusal, not a tidy-up. Dropping the sentence would leave the
+ * VAT standing and the liability with it; dropping the VAT would change what
+ * he charged. Only he can say which he meant.
+ */
+
+describe('vatConflict', () => {
+  it('catches a rate on a line while he is a Kleinunternehmer', () => {
+    expect(vatConflict([{ taxRate: 19 }], true)).toBe(true)
+    expect(vatConflict([{ taxRate: 0 }, { taxRate: 7 }], true)).toBe(true)
+  })
+
+  it('allows zero-rated lines, which is every line he writes this year', () => {
+    expect(vatConflict([{ taxRate: 0 }, { taxRate: 0 }], true)).toBe(false)
+    expect(vatConflict([], true)).toBe(false)
+  })
+
+  it('allows any rate once he is no longer a Kleinunternehmer', () => {
+    // The day he crosses the threshold, 19 % is correct and this must not
+    // stand in the way of it.
+    expect(vatConflict([{ taxRate: 19 }], false)).toBe(false)
   })
 })

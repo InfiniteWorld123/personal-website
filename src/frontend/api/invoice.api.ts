@@ -110,8 +110,9 @@ export async function fetchSellerState(): Promise<{
   ready: boolean
   gaps: string[]
   isTest: boolean
+  smallBusiness: boolean
 }> {
-  return unwrap<{ ready: boolean; gaps: string[]; isTest: boolean }>(
+  return unwrap<{ ready: boolean; gaps: string[]; isTest: boolean; smallBusiness: boolean }>(
     await api().admin.invoices.seller.get(),
   )
 }

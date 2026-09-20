@@ -56,7 +56,15 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
  * themselves as the calendar moves, and a stored flag would have to be
  * rewritten by something that runs every night.
  */
-export const SETTLEMENTS = ['DRAFT', 'OPEN', 'OVERDUE', 'PART', 'PAID', 'CANCELLED'] as const
+export const SETTLEMENTS = [
+  'DRAFT',
+  'OPEN',
+  'OVERDUE',
+  'PART',
+  'PAID',
+  'CANCELLED',
+  'ISSUED',
+] as const
 
 export type Settlement = (typeof SETTLEMENTS)[number]
 
@@ -374,6 +382,29 @@ export const totalsOf = (
 }
 
 /**
+ * The one combination that cannot be printed: `§19` and a VAT row.
+ *
+ * A `Kleinunternehmer` charges no VAT, and the paper says so in a sentence
+ * that is a legal statement rather than a label. Put a rate on a line anyway
+ * and the document ends up saying both — "no VAT is charged under §19" above
+ * a row reading "Umsatzsteuer 19 % · 188,10 €".
+ *
+ * That is not a cosmetic contradiction. **`§14c(2) UStG`: VAT shown on an
+ * invoice is owed to the Finanzamt whether or not it was allowed to be
+ * charged.** A Kleinunternehmer who prints 188,10 € of VAT owes 188,10 €, has
+ * no input tax to set against it, and finds out months later. The client, for
+ * their part, may not deduct it — so the invoice is wrong for both of them.
+ *
+ * Hence a refusal rather than a quiet correction. Dropping the sentence would
+ * leave the VAT standing and the liability with it; dropping the VAT would
+ * change what he charged. Only he can say which he meant.
+ */
+export const vatConflict = (
+  lines: Array<{ taxRate: number }>,
+  smallBusiness: boolean,
+): boolean => smallBusiness && lines.some((line) => line.taxRate > 0)
+
+/**
  * What a document *is*, right now, to someone looking at the screen.
  *
  * Derived on every read rather than stored, because two of the six answers
@@ -382,6 +413,7 @@ export const totalsOf = (
  */
 export const settlementOf = (invoice: {
   status: InvoiceStatus
+  kind: InvoiceKind
   dueOn: string | null
   totalCents: number
   paidCents: number
@@ -389,6 +421,20 @@ export const settlementOf = (invoice: {
 }): Settlement => {
   if (invoice.status === 'DRAFT') return 'DRAFT'
   if (invoice.status === 'CANCELLED') return 'CANCELLED'
+
+  /*
+   * A cancellation or a credit note is a document, not a debt.
+   *
+   * Before this it fell through to the bottom line and came out `OPEN` —
+   * which the list drew as "still owed" while the figure above it correctly
+   * counted nothing, because `getSummary` filters on `kind = 'INVOICE'`. The
+   * row and the total disagreed, and the row was the one that was wrong.
+   *
+   * `ISSUED` makes no claim about money. It says only that the document
+   * exists, which for a correction is the whole of what is true.
+   */
+  if (invoice.kind !== 'INVOICE') return 'ISSUED'
+
   if (invoice.paidCents >= invoice.totalCents) return 'PAID'
   if (invoice.paidCents > 0) return 'PART'
 
@@ -397,9 +443,22 @@ export const settlementOf = (invoice: {
 
 export const SETTLEMENT_LABEL: Record<Settlement, string> = {
   DRAFT: 'Draft',
-  OPEN: 'Sent',
+  /*
+   * "Unpaid", not "Sent".
+   *
+   * It said Sent, and an invoice reaches this state the moment it is issued —
+   * whether or not a letter ever left. The word was survivable until the
+   * section grew a register of letters that really did leave, where "sent" is
+   * proven by an outgoing message and nothing else. Two places using one word
+   * for two different facts is how a screen starts lying quietly.
+   *
+   * This axis is about money, so the word is about money. Unpaid and overdue
+   * then read as the pair they are: not yet due, and late.
+   */
+  OPEN: 'Unpaid',
   OVERDUE: 'Overdue',
   PART: 'Part paid',
   PAID: 'Paid',
   CANCELLED: 'Cancelled',
+  ISSUED: 'Issued',
 }
