@@ -285,15 +285,39 @@ export const prepareLetter = async (
  * letter*, and losing the words he had typed. `prepareLetter` opens a letter;
  * this only lists what could go in one.
  *
- * Scoped to the person by `clients.lead_id`, which is the same link
- * `personForClient` writes. That is the whole safety argument for the panel:
- * with a list of everyone's invoices it would take one mis-click to send one
- * client another client's figures, and there is no taking that back.
+ * Scoped to the person by `THIS_PERSONS`, which is the whole safety argument
+ * for the panel: with a list of everyone's invoices it would take one
+ * mis-click to send one client another client's figures, and there is no
+ * taking that back.
  *
  * Drafts are listed and marked unattachable rather than filtered out. A draft
  * has no frozen file, so there is genuinely nothing to send — but dropping it
  * silently would leave him looking for an invoice he knows he wrote.
  */
+/**
+ * Which invoices belong to the person a conversation is with.
+ *
+ * Two ways, and the second one is not a convenience.
+ *
+ * `clients.lead_id` is the stored link, written once by `personForClient` and
+ * true from then on. But it is **null until the first letter**, so a client he
+ * typed in by hand and has never written to has no link at all — and the panel
+ * scoped on that column alone came back empty for a client whose email matched
+ * the conversation exactly. He would have seen "0 you can attach" beside a
+ * client he had just invoiced, with nothing on screen explaining why.
+ *
+ * So an unlinked client also matches on its email address, which is how
+ * `personForClient` resolves one in the first place. Only when the link is
+ * genuinely absent: a client already pointed at another person stays pointed
+ * there, and never gets pulled into a second conversation by a shared mailbox.
+ */
+const THIS_PERSONS = `(
+        c.lead_id = $1
+        OR (c.lead_id IS NULL
+            AND btrim(c.email) <> ''
+            AND lower(c.email) = (SELECT lower(l.email) FROM leads l WHERE l.id = $1))
+      )`
+
 export const listInvoicesForPerson = async (personId: string): Promise<PersonInvoice[]> => {
   const result = await getDb().query<{
     id: string
@@ -322,7 +346,7 @@ export const listInvoicesForPerson = async (personId: string): Promise<PersonInv
             ${DATE_TEXT(TODAY)} AS today
        FROM invoices i
        JOIN clients c ON c.id = i.client_id
-      WHERE c.lead_id = $1
+      WHERE ${THIS_PERSONS}
       ORDER BY i.created_at DESC;`,
     [personId],
   )
@@ -362,20 +386,22 @@ export const listInvoicesForPerson = async (personId: string): Promise<PersonInv
  *
  * The check is the point. Without it, an id typed into the request would
  * attach any client's invoice to any conversation — one client reading
- * another's figures, with no way to take it back. So the invoice must already
- * belong to this person, by the same `clients.lead_id` link the panel lists
- * by, and a mismatch reads as "not here" rather than as a permission error:
- * from the composer's side it genuinely is not.
+ * another's figures, with no way to take it back. So the invoice must belong
+ * to this person by `THIS_PERSONS`, the same rule the panel lists by, and a
+ * mismatch reads as "not here" rather than as a permission error: from the
+ * composer's side it genuinely is not.
  */
 export const attachInvoiceToPerson = async (
   personId: string,
   invoiceId: string,
 ): Promise<{ id: string; filename: string; bytes: number }> => {
-  const owned = await getDb().query<{ status: InvoiceStatus }>(
-    `SELECT i.status FROM invoices i
+  const db = getDb()
+
+  const owned = await db.query<{ status: InvoiceStatus; client_id: string; lead_id: string | null }>(
+    `SELECT i.status, c.id AS client_id, c.lead_id FROM invoices i
        JOIN clients c ON c.id = i.client_id
-      WHERE i.id = $1 AND c.lead_id = $2;`,
-    [invoiceId, personId],
+      WHERE i.id = $2 AND ${THIS_PERSONS};`,
+    [personId, invoiceId],
   )
 
   const invoice = owned.rows[0]
@@ -384,6 +410,21 @@ export const attachInvoiceToPerson = async (
 
   if (invoice.status === 'DRAFT') {
     throw badRequestError('A draft has no final document yet. Issue it first.')
+  }
+
+  /*
+   * Matched on the email, so write the link down.
+   *
+   * The same thing `personForClient` does after resolving one, and for the
+   * same reason: the resolution happens once, and every later invoice for this
+   * client lands in this conversation without depending on the address staying
+   * the same. A client who changes mailbox afterwards keeps their thread.
+   */
+  if (!invoice.lead_id) {
+    await db.query(
+      'UPDATE clients SET lead_id = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1;',
+      [invoice.client_id, personId],
+    )
   }
 
   return fileForInvoice(invoiceId, personId)
