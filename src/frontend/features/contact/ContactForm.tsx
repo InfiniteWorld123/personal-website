@@ -211,7 +211,10 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
         </div>
       </Field>
 
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      {/* Hidden by clipping, never by pushing it off the side: a large
+          negative inset widens the document by that distance, and in RTL the
+          page then opens scrolled onto the empty strip and reads as blank. */}
+      <div aria-hidden="true" className="sr-only">
         <label htmlFor="contact-website">Website</label>
         <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
