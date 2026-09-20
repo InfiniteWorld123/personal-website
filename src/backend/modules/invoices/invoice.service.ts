@@ -248,9 +248,6 @@ export const getSummary = async (): Promise<InvoiceSummary> => {
     openCount: toInt(first?.open_count ?? 0),
     thisMonthCents,
     recurringCents: toInt(recurring.rows[0]?.cents ?? 0),
-    // Switch 18, which he turned on knowing what it is. A flat 30 % of what
-    // arrived — not a calculation of anything, and the card says so in words.
-    taxPotCents: Math.round(thisMonthCents * 0.3),
     // True because `assertOneCurrency` makes it true, not because it was
     // typed here and hoped for.
     currency: THE_CURRENCY,

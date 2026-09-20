@@ -114,12 +114,6 @@ export function OverviewPage() {
               prefetch={prefetch(invoicesQuery('ALL', ''), summaryQuery())}
               value={money(figures.recurringCents)}
             />
-
-            <StatCard
-              foot="Thirty per cent of what arrived. An estimate to put aside, not tax advice."
-              label="Set aside for tax"
-              value={money(figures.taxPotCents)}
-            />
           </>
         ) : null}
       </section>

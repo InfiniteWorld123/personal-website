@@ -62,11 +62,23 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
 /**
  * The figures.
  *
- * Six cards, which is what his answers came to: the five he picked from the
- * list plus the tax estimate he switched on. Three of them carry a second line
- * saying what the number actually counts — because "this month" and "recurring"
- * are the two that a person could otherwise read as meaning something they do
- * not.
+ * Four now. There was a fifth — "Put aside for tax", a flat 30 % of what
+ * arrived — and on 20 Sep 2026 he said it should not be there. He was right,
+ * for a sharper reason than the one he gave: `§19` frees him from **VAT**,
+ * not from income tax, so the card was not describing a tax he does not owe.
+ * It was describing one he might, on the wrong basis. Income tax is charged
+ * on profit, not on money in — after expenses, and nothing at all below the
+ * Grundfreibetrag — so 30 % of receipts could be far too much or far too
+ * little, and this code cannot know which.
+ *
+ * A figure that looks like advice and is not is the one thing this admin must
+ * never do, and a caption reading "an estimate, not advice" did not make it
+ * one. Deleted rather than reworded. It comes back the day he has a
+ * Steuerberater and real expenses to compute it from.
+ *
+ * Two of the four carry a second line saying what the number actually counts —
+ * because "this month" and "recurring" are the two that a person could
+ * otherwise read as meaning something they do not.
  *
  * The one filled card is what arrived, not what is late. Late is the alarm and
  * it earns its colour only when it is above zero; what arrived is the figure he
@@ -106,13 +118,6 @@ function Figures({ summary }: { summary: InvoiceSummary }) {
         value={money(summary.recurringCents, summary.currency)}
       />
 
-      {/* Said on the card itself, because a figure that looks like advice and
-          is not is the one thing this admin must never do. */}
-      <StatCard
-        foot="30 % of what arrived — an estimate, not advice"
-        label="Put aside for tax"
-        value={money(summary.taxPotCents, summary.currency)}
-      />
     </section>
   )
 }
@@ -124,7 +129,6 @@ function FiguresSkeleton() {
       label="Loading the figures"
     >
       <StatCardSkeleton className="sm:col-span-2 xl:row-span-2" />
-      <StatCardSkeleton />
       <StatCardSkeleton />
       <StatCardSkeleton />
       <StatCardSkeleton />

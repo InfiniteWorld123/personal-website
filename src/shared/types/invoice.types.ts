@@ -136,12 +136,6 @@ export type InvoiceSummary = {
    * that made him delete the last system.
    */
   recurringCents: number
-  /**
-   * Thirty per cent of what arrived this month. He switched this on knowing
-   * it is an estimate; the screen says so on the card, because a number that
-   * looks like advice and is not is the one thing this admin must never do.
-   */
-  taxPotCents: number
   currency: string
   /** The month these figures describe, as `YYYY-MM`. */
   month: string
