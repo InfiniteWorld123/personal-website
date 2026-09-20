@@ -2,7 +2,7 @@ import { getDb } from '#/backend/db/client'
 import { badRequestError, notFoundError } from '#/backend/shared/error'
 import type { Client } from '#/shared/types/invoice.types'
 import type { ClientWriteInput } from '#/shared/validation/invoice.validation'
-import { CLIENT_COLUMNS, OWING, PAID_CENTS, projectClient, type ClientShape } from './invoice.sql'
+import { CLIENT_COLUMNS, COUNTS, OWED, projectClient, type ClientShape } from './invoice.sql'
 
 /**
  * Clients — the people he actually bills.
@@ -20,10 +20,18 @@ import { CLIENT_COLUMNS, OWING, PAID_CENTS, projectClient, type ClientShape } fr
  * Two correlated subqueries rather than a join with `GROUP BY`: an invoice may
  * have several payments, and a join across both tables multiplies rows before
  * it sums them — the classic way a client's balance quietly doubles.
+ *
+ * `COUNTS` and `OWED` are the same two strings the figures on the invoice
+ * list are built from, and that is not a tidiness: until 20 Sep this summed
+ * `total − paid` over every issued row, and a *cancellation* is an issued row
+ * carrying the original's total. Cancel a 990 € invoice and this client read
+ * "990 € open" — for a debt that had just been voided — while the list said
+ * nothing was owed. Credit notes were the same wrong twice: not subtracted
+ * from the invoice, and added as documents of their own.
  */
 const WITH_TOTALS = `(SELECT COUNT(*) FROM invoices i WHERE i.client_id = c.id) AS invoice_count,
-        (SELECT COALESCE(SUM(i.total_cents - ${PAID_CENTS}), 0)
-           FROM invoices i WHERE i.client_id = c.id AND ${OWING}) AS open_cents`
+        (SELECT COALESCE(SUM(${OWED}), 0)
+           FROM invoices i WHERE i.client_id = c.id AND ${COUNTS}) AS open_cents`
 
 export const listClients = async (search: string): Promise<Client[]> => {
   const term = search.trim()
@@ -125,6 +133,23 @@ export const deleteClient = async (clientId: string): Promise<void> => {
   if (client.invoiceCount > 0) {
     throw badRequestError(
       `${client.invoiceCount === 1 ? 'An invoice was' : `${client.invoiceCount} invoices were`} issued to this client, so they stay in the books.`,
+    )
+  }
+
+  /*
+   * A subscription that has not written its first invoice yet holds the
+   * client just as firmly — `subscriptions.client_id` is `RESTRICT` too — but
+   * the count above does not see it, so the delete reached the database and
+   * came back as a foreign-key error with a constraint name in it.
+   */
+  const subscribed = await getDb().query<{ count: string }>(
+    'SELECT COUNT(*) AS count FROM subscriptions WHERE client_id = $1;',
+    [clientId],
+  )
+
+  if (Number(subscribed.rows[0]?.count ?? 0) > 0) {
+    throw badRequestError(
+      'This client has a subscription. Stop or remove the subscription first, then the client can go.',
     )
   }
 

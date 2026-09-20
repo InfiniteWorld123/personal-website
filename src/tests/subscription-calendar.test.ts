@@ -7,6 +7,7 @@ import {
   periodLabel,
   periodOf,
   plannedInvoices,
+  subscriptionDraftUntouched,
   subscriptionLine,
   VAT_RATE_LABEL,
   VAT_RATES,
@@ -182,5 +183,48 @@ describe('the rates he can pick', () => {
     expect(VAT_RATES).toEqual([0, 19])
     expect(VAT_RATE_LABEL[0]).toContain('§19')
     expect(VAT_RATE_LABEL[19]).toContain('19 %')
+  })
+})
+
+describe('subscriptionDraftUntouched', () => {
+  const was = { description: 'Website-Betreuung', amountCents: 4_900, taxRate: 0 }
+  const line = (overrides: Partial<{ description: string; quantity: number; unitCents: number; taxRate: number }> = {}) => ({
+    description: 'Website-Betreuung · Oktober 2026',
+    quantity: 1,
+    unitCents: 4_900,
+    taxRate: 0,
+    ...overrides,
+  })
+
+  it('recognises the draft the generator wrote, so a price change reaches it', () => {
+    expect(subscriptionDraftUntouched([line()], was, '2026-10-01', 'de')).toBe(true)
+  })
+
+  it('reads the line in the language the draft was written in', () => {
+    expect(
+      subscriptionDraftUntouched([line({ description: 'Website-Betreuung · October 2026' })], was, '2026-10-01', 'en'),
+    ).toBe(true)
+    expect(
+      subscriptionDraftUntouched([line({ description: 'Website-Betreuung · October 2026' })], was, '2026-10-01', 'de'),
+    ).toBe(false)
+  })
+
+  it('leaves a draft he has edited alone', () => {
+    // Any of the four things he can change makes the draft his: the wording,
+    // the amount, the rate, or a second line. A generator that rewrote it
+    // then would be a second author on one document.
+    expect(subscriptionDraftUntouched([line({ description: 'Betreuung, wie besprochen' })], was, '2026-10-01', 'de')).toBe(false)
+    expect(subscriptionDraftUntouched([line({ unitCents: 5_900 })], was, '2026-10-01', 'de')).toBe(false)
+    expect(subscriptionDraftUntouched([line({ taxRate: 19 })], was, '2026-10-01', 'de')).toBe(false)
+    expect(subscriptionDraftUntouched([line({ quantity: 2 })], was, '2026-10-01', 'de')).toBe(false)
+    expect(subscriptionDraftUntouched([line(), line({ description: 'Extra' })], was, '2026-10-01', 'de')).toBe(false)
+  })
+
+  it('does not mistake one month for another', () => {
+    expect(subscriptionDraftUntouched([line()], was, '2026-11-01', 'de')).toBe(false)
+  })
+
+  it('is false for a draft with no lines at all', () => {
+    expect(subscriptionDraftUntouched([], was, '2026-10-01', 'de')).toBe(false)
   })
 })

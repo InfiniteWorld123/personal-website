@@ -5,10 +5,12 @@ import {
   billingDate,
   firstPeriod,
   nextPeriod,
+  subscriptionDraftUntouched,
   subscriptionLine,
   totalsOf,
   type SubscriptionWriteInput,
 } from '#/shared/validation/invoice.validation'
+import { getClient } from './client.service'
 import { DATE_TEXT, TODAY, toInt } from './invoice.sql'
 
 /**
@@ -132,6 +134,10 @@ export const createSubscription = async (
 ): Promise<Subscription> => {
   const db = getDb()
 
+  // Checked rather than left to the foreign key, so a client deleted in
+  // another tab reads as a sentence instead of a constraint name.
+  await getClient(input.clientId)
+
   const today = await db.query<{ today: string }>(`SELECT ${DATE_TEXT(TODAY)} AS today;`)
   const start = firstPeriod(today.rows[0]!.today, input.billingDay)
 
@@ -164,23 +170,115 @@ export const updateSubscription = async (
   id: string,
   input: SubscriptionWriteInput,
 ): Promise<Subscription> => {
-  await getDb().query(
-    `UPDATE subscriptions
-        SET client_id = $2, description = $3, amount_cents = $4, tax_rate = $5,
-            billing_day = $6, note = $7, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1;`,
-    [
+  await getClient(input.clientId)
+
+  const amountCents = Math.round(input.amountEuros * 100)
+
+  await withTransaction(async (db: Db) => {
+    const held = await db.query<{
+      description: string
+      amount_cents: number | string
+      tax_rate: number | string
+    }>('SELECT description, amount_cents, tax_rate FROM subscriptions WHERE id = $1 FOR UPDATE;', [
       id,
-      input.clientId,
-      input.description,
-      Math.round(input.amountEuros * 100),
-      input.taxRate,
-      input.billingDay,
-      input.note,
-    ],
-  )
+    ])
+
+    const was = held.rows[0]
+
+    if (!was) throw notFoundError('That subscription is not here')
+
+    await db.query(
+      `UPDATE subscriptions
+          SET client_id = $2, description = $3, amount_cents = $4, tax_rate = $5,
+              billing_day = $6, note = $7, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1;`,
+      [id, input.clientId, input.description, amountCents, input.taxRate, input.billingDay, input.note],
+    )
+
+    await refreshUntouchedDrafts(
+      db,
+      id,
+      { description: was.description, amountCents: toInt(was.amount_cents), taxRate: Number(was.tax_rate) },
+      { clientId: input.clientId, description: input.description, amountCents, taxRate: input.taxRate },
+    )
+  })
 
   return getSubscription(id)
+}
+
+/**
+ * The draft already sitting in the list, brought up to date.
+ *
+ * The generator writes October's draft on the 1st; he raises the price on the
+ * 2nd. Without this the draft kept the old price, "Saved" said nothing about
+ * it, and the invoice he issued a week later carried a figure the arrangement
+ * no longer had. Verified on 20 Sep — the subscriptions screen said 59 €,
+ * the draft beside it said 49 €, and nothing connected the two.
+ *
+ * Only drafts, and only those still exactly as the generator wrote them —
+ * `subscriptionDraftUntouched` is the whole test. One he has edited by hand is
+ * his document, and a generator rewriting it would be a second author on one
+ * page. An issued invoice is never reached: its lines are a fact.
+ *
+ * Held with `FOR UPDATE`, the same lock issuing takes, so a rewrite and an
+ * issue cannot overlap — whichever comes second sees the other's result.
+ */
+const refreshUntouchedDrafts = async (
+  db: Db,
+  subscriptionId: string,
+  was: { description: string; amountCents: number; taxRate: number },
+  now: { clientId: string; description: string; amountCents: number; taxRate: number },
+): Promise<void> => {
+  const drafts = await db.query<{ id: string; language: 'de' | 'en'; period: string }>(
+    `SELECT i.id, i.language, ${DATE_TEXT('i.period_start')} AS period
+       FROM invoices i
+      WHERE i.subscription_id = $1 AND i.status = 'DRAFT'
+      FOR UPDATE;`,
+    [subscriptionId],
+  )
+
+  for (const draft of drafts.rows) {
+    const lines = await db.query<{
+      description: string
+      quantity: number | string
+      unit_cents: number | string
+      tax_rate: number | string
+    }>(
+      `SELECT description, quantity, unit_cents, tax_rate
+         FROM invoice_lines WHERE invoice_id = $1 ORDER BY position;`,
+      [draft.id],
+    )
+
+    const untouched = subscriptionDraftUntouched(
+      lines.rows.map((line) => ({
+        description: line.description,
+        quantity: Number(line.quantity),
+        unitCents: toInt(line.unit_cents),
+        taxRate: Number(line.tax_rate),
+      })),
+      was,
+      draft.period,
+      draft.language,
+    )
+
+    if (!untouched) continue
+
+    await db.query(
+      `UPDATE invoice_lines SET description = $2, unit_cents = $3, tax_rate = $4
+        WHERE invoice_id = $1;`,
+      [draft.id, subscriptionLine(now.description, draft.period, draft.language), now.amountCents, now.taxRate],
+    )
+
+    const totals = totalsOf([{ quantity: 1, unitEuros: now.amountCents, taxRate: now.taxRate }])
+
+    await db.query(
+      `UPDATE invoices
+          SET client_id = $2, net_cents = $3, tax_cents = $4, total_cents = $5,
+              updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1;`,
+      [draft.id, now.clientId, totals.netCents, totals.taxCents, totals.totalCents],
+    )
+  }
 }
 
 /**

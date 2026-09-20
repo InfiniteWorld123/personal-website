@@ -479,6 +479,20 @@ class Engine {
       return { rows, rowCount: rows.length }
     }
 
+    // What has already been credited against an invoice — the guard that
+    // stops two partial credit notes adding up past the original. Read inside
+    // the transaction, so the second of two concurrent notes sees the first.
+    if (/FROM invoices n\s+WHERE n\.corrects_id = \$1 AND n\.kind = 'CREDIT_NOTE'/i.test(sql)) {
+      const cents = this.allInvoices(txn)
+        .filter(
+          (row) =>
+            row.correctsId === first && row.kind === 'CREDIT_NOTE' && row.status === 'ISSUED',
+        )
+        .reduce((sum, row) => sum + row.totalCents, 0)
+
+      return { rows: [{ cents }], rowCount: 1 }
+    }
+
     throw new Error(`the fake database was asked something it does not model: ${sql}`)
   }
 

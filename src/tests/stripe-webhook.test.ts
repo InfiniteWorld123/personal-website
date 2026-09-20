@@ -105,3 +105,105 @@ describe('a message that did not', () => {
     expect(await verifyStripeSignature(BODY, await sign(BODY, now - 301))).toBe(false)
   })
 })
+
+/* -------------------------------------------------------------------------- */
+/* Which messages mean the money is here                                       */
+/* -------------------------------------------------------------------------- */
+
+const { paidSessionOf } = await import('#/backend/modules/invoices/stripe.service')
+
+const session = (overrides: Record<string, unknown> = {}) => ({
+  id: 'cs_1',
+  payment_intent: 'pi_1',
+  payment_status: 'paid',
+  amount_total: 99_000,
+  currency: 'eur',
+  metadata: { invoice_id: 'inv-1', invoice_number: '2026-001' },
+  ...overrides,
+})
+
+const event = (type: string, object: Record<string, unknown> = session()) => ({
+  id: 'evt_1',
+  type,
+  data: { object },
+})
+
+describe('a session that was paid', () => {
+  it('is recorded against the invoice it names, by its payment intent', () => {
+    expect(paidSessionOf(event('checkout.session.completed'))).toEqual({
+      invoiceId: 'inv-1',
+      amountCents: 99_000,
+      currency: 'eur',
+      external: 'pi_1',
+    })
+  })
+
+  it('is recorded when the money arrives later, by SEPA or a bank redirect', () => {
+    // A debit completes the session on the day it is submitted and pays days
+    // later. This is the event that says it did.
+    expect(
+      paidSessionOf(event('checkout.session.async_payment_succeeded', session({ payment_status: 'paid' }))),
+    ).toMatchObject({ invoiceId: 'inv-1', amountCents: 99_000 })
+  })
+
+  it('falls back to the session id, then the event id, when there is no payment intent', () => {
+    expect(
+      paidSessionOf(event('checkout.session.completed', session({ payment_intent: undefined }))),
+    ).toMatchObject({ external: 'cs_1' })
+
+    expect(
+      paidSessionOf(
+        event('checkout.session.completed', session({ payment_intent: undefined, id: undefined })),
+      ),
+    ).toMatchObject({ external: 'evt_1' })
+  })
+
+  it('carries the currency the client was charged in, lower-cased', () => {
+    expect(
+      paidSessionOf(event('checkout.session.completed', session({ currency: 'USD' }))),
+    ).toMatchObject({ currency: 'usd' })
+  })
+})
+
+describe('a session that was not', () => {
+  it('is ignored while a completed session is still waiting for the money', () => {
+    /*
+     * The bug this pins: `completed` fires the moment a client submits a SEPA
+     * mandate, with `payment_status: unpaid`, and the debit can still fail. An
+     * invoice marked paid on this event would read Paid with nothing behind
+     * it — and no later event was listened for that could have put it right.
+     */
+    expect(
+      paidSessionOf(event('checkout.session.completed', session({ payment_status: 'unpaid' }))),
+    ).toBeNull()
+
+    expect(
+      paidSessionOf(
+        event('checkout.session.completed', session({ payment_status: 'no_payment_required' })),
+      ),
+    ).toBeNull()
+  })
+
+  it('is ignored when the payment failed, whatever the session says', () => {
+    expect(paidSessionOf(event('checkout.session.async_payment_failed'))).toBeNull()
+    expect(paidSessionOf(event('checkout.session.expired'))).toBeNull()
+    expect(paidSessionOf(event('payment_intent.succeeded'))).toBeNull()
+  })
+
+  it('is ignored when it does not say which invoice it pays', () => {
+    expect(
+      paidSessionOf(event('checkout.session.completed', session({ metadata: {} }))),
+    ).toBeNull()
+  })
+
+  it('is ignored when nothing was charged', () => {
+    expect(
+      paidSessionOf(event('checkout.session.completed', session({ amount_total: 0 }))),
+    ).toBeNull()
+  })
+
+  it('is ignored when the message has no session at all', () => {
+    expect(paidSessionOf({ id: 'evt_1', type: 'checkout.session.completed' })).toBeNull()
+    expect(paidSessionOf({})).toBeNull()
+  })
+})

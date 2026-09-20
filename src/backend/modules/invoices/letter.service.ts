@@ -4,7 +4,9 @@ import { badRequestError, notFoundError } from '#/backend/shared/error'
 import { plainText } from '#/backend/shared/mail'
 import type { InvoiceLetter, PersonInvoice } from '#/shared/types/invoice.types'
 import {
+  balanceOf,
   DOCUMENT_TITLE,
+  payLinkUsable,
   settlementOf,
   type InvoiceKind,
   type InvoiceLanguage,
@@ -12,7 +14,7 @@ import {
   type LetterKind,
 } from '#/shared/validation/invoice.validation'
 import { documentBytes, getInvoice } from './invoice.service'
-import { DATE_TEXT, LETTERS_LAST, PAID_CENTS, TODAY, toInt } from './invoice.sql'
+import { CREDITED_CENTS, DATE_TEXT, LETTERS_LAST, PAID_CENTS, TODAY, toInt } from './invoice.sql'
 import { money } from './pdf.service'
 import { resolveSeller } from './seller'
 
@@ -201,13 +203,47 @@ export const prepareLetter = async (
     throw badRequestError('Nothing is overdue on that invoice')
   }
 
+  /*
+   * A cancelled invoice is not a letter to write again.
+   *
+   * The original still has its number and its file, so the button stayed
+   * offered — and the letter it prepared read "please find invoice 2026-001
+   * attached, payable by …" about a document he had voided. The cancellation
+   * is the paper that says what happened; it has its own letter.
+   */
+  if (invoice.status === 'CANCELLED') {
+    const cancellation = invoice.correctedBy.find((c) => c.kind === 'CANCELLATION')
+
+    throw badRequestError(
+      `${invoice.number} was cancelled${cancellation?.number ? ` by ${cancellation.number}` : ''}. Send the cancellation instead — it is the document that says so.`,
+    )
+  }
+
   const personId = await personForClient(invoiceId)
   const language = invoice.language
   const german = language === 'de'
   const name = invoice.client.contactName.trim()
   const title = DOCUMENT_TITLE[language][invoice.kind]
   const total = money(invoice.totalCents, language, invoice.currency)
-  const owed = money(invoice.totalCents - invoice.paidCents, language, invoice.currency)
+  /*
+   * What is still owed, with credit notes taken off.
+   *
+   * Until 20 Sep this was `total − paid`, so a reminder on an invoice he had
+   * credited 400 € of asked for the whole 990 € — chasing a client for money
+   * he had given back himself, in writing. `balanceOf` is the one subtraction
+   * every screen uses; the letter now uses it too.
+   */
+  const { owed: owedCents } = balanceOf(invoice)
+  const owed = money(owedCents, language, invoice.currency)
+  /*
+   * Only a link that still works.
+   *
+   * `payUrl` stays on the row after a partial payment while Stripe has been
+   * told to switch the link off, so printing it here sent a partly-paid client
+   * to a dead page under the words "pay by card". Same rule as Stripe's, from
+   * `payLinkUsable`.
+   */
+  const payUrl = payLinkUsable(invoice) ? invoice.payUrl : null
 
   const attachment = await fileForInvoice(invoiceId, personId)
 
@@ -231,7 +267,7 @@ export const prepareLetter = async (
               'Die Rechnung liegt zur Sicherheit noch einmal bei.',
               // On the reminder above all: the one letter whose whole purpose
               // is to make paying take ten seconds rather than ten minutes.
-              ...(invoice.payUrl ? ['', 'Mit Karte bezahlen:', invoice.payUrl] : []),
+              ...(payUrl ? ['', 'Mit Karte bezahlen:', payUrl] : []),
             ]
           : [
               greeting(name, language),
@@ -240,13 +276,26 @@ export const prepareLetter = async (
               'It has most likely just slipped through — if the payment is already on its way, please ignore this note.',
               '',
               'The invoice is attached again for convenience.',
-              ...(invoice.payUrl ? ['', 'Pay by card:', invoice.payUrl] : []),
+              ...(payUrl ? ['', 'Pay by card:', payUrl] : []),
             ],
       ),
       attachment,
       kind,
     }
   }
+
+  /*
+   * Whether the letter asks for money at all.
+   *
+   * "Write again" is pressed on a paid invoice too — a client wants the paper
+   * for their books after paying by card, or lost the first copy. The letter
+   * used to say "payable in full by …" and offer the card link regardless,
+   * asking a client who had paid to pay again. Now it says what is true:
+   * settled invoices are thanked for, corrections carry no payment sentence
+   * at all, and only an open invoice gets a due date and a link.
+   */
+  const settled = invoice.kind === 'INVOICE' && owedCents === 0 && invoice.paidCents > 0
+  const asksForMoney = invoice.kind === 'INVOICE' && owedCents > 0
 
   return {
     personId,
@@ -257,13 +306,14 @@ export const prepareLetter = async (
             greeting(name, language),
             '',
             `anbei erhalten Sie die ${title} ${invoice.number} über ${total}.`,
-            invoice.dueOn
+            asksForMoney && invoice.dueOn
               ? `Zahlbar ohne Abzug bis ${readableDay(invoice.dueOn, language)}.`
               : null,
+            settled ? 'Die Rechnung ist bereits beglichen — vielen Dank.' : null,
             // Clickable here, where the paper can only print it. The bank
             // details stay on the invoice and stay the first offer.
-            ...(invoice.payUrl
-              ? ['', 'Sie können auch direkt mit Karte bezahlen:', invoice.payUrl]
+            ...(asksForMoney && payUrl
+              ? ['', 'Sie können auch direkt mit Karte bezahlen:', payUrl]
               : []),
             '',
             invoice.note.trim() || null,
@@ -272,8 +322,11 @@ export const prepareLetter = async (
             greeting(name, language),
             '',
             `please find ${title.toLowerCase()} ${invoice.number} attached, for ${total}.`,
-            invoice.dueOn ? `Payable in full by ${readableDay(invoice.dueOn, language)}.` : null,
-            ...(invoice.payUrl ? ['', 'You can also pay by card:', invoice.payUrl] : []),
+            asksForMoney && invoice.dueOn
+              ? `Payable in full by ${readableDay(invoice.dueOn, language)}.`
+              : null,
+            settled ? 'This invoice has already been settled — thank you.' : null,
+            ...(asksForMoney && payUrl ? ['', 'You can also pay by card:', payUrl] : []),
             '',
             invoice.note.trim() || null,
           ],
@@ -340,6 +393,7 @@ export const listInvoicesForPerson = async (personId: string): Promise<PersonInv
     due_on: string | null
     total_cents: number | string
     paid_cents: number | string
+    credited_cents: number | string
     currency: string
     last_sent_at: Date | null
     today: string
@@ -351,6 +405,7 @@ export const listInvoicesForPerson = async (personId: string): Promise<PersonInv
             ${DATE_TEXT('i.due_on')} AS due_on,
             i.total_cents,
             ${PAID_CENTS} AS paid_cents,
+            ${CREDITED_CENTS} AS credited_cents,
             i.currency,
             ${LETTERS_LAST} AS last_sent_at,
             ${DATE_TEXT(TODAY)} AS today
@@ -368,12 +423,15 @@ export const listInvoicesForPerson = async (personId: string): Promise<PersonInv
       id: row.id,
       number: row.number,
       kind: row.kind,
+      // Credit notes settle an invoice as surely as payments do. Without them
+      // here, an invoice he had credited in full read **Overdue** in the
+      // composer while the list beside it said **Paid**.
       settlement: settlementOf({
         status: row.status,
         kind: row.kind,
         dueOn: row.due_on,
         totalCents,
-        paidCents: toInt(row.paid_cents),
+        paidCents: toInt(row.paid_cents) + toInt(row.credited_cents),
         today: row.today,
       }),
       title: row.title ?? '',

@@ -595,6 +595,66 @@ export const balanceOf = (invoice: {
 }
 
 /**
+ * Whether the card link on an invoice still leads somewhere.
+ *
+ * `payUrl` is written once, at issue, and never cleared — the link stays on
+ * the row as a record of what was offered. But `syncPaymentLink` switches it
+ * off at Stripe the moment anything settles against the invoice, because a
+ * link that charges the full total is wrong the moment the total is not what
+ * is owed. So a partial payment, a credit note, a cancellation: the URL still
+ * reads like an offer and the page behind it says "this link is no longer
+ * active".
+ *
+ * Until 20 Sep the reminder letter printed that dead link under "pay by card"
+ * — on exactly the invoice a partly-paid client was being reminded about —
+ * and the invoice screen offered to copy it. The same rule Stripe is told,
+ * written once here so a screen and a letter can only agree:
+ *
+ *     usable  ⇔  a link exists, on an issued ordinary invoice, untouched
+ */
+export const payLinkUsable = (invoice: {
+  payUrl: string | null
+  status: InvoiceStatus
+  kind: InvoiceKind
+  totalCents: number
+  paidCents: number
+  creditedCents: number
+}): invoice is typeof invoice & { payUrl: string } =>
+  invoice.payUrl !== null &&
+  invoice.status === 'ISSUED' &&
+  invoice.kind === 'INVOICE' &&
+  invoice.totalCents > 0 &&
+  invoice.paidCents === 0 &&
+  invoice.creditedCents === 0
+
+/**
+ * Whether a draft a subscription wrote is still exactly what it wrote.
+ *
+ * When he changes a subscription's price, a draft for the current month may
+ * already be sitting in the list — written on the 1st, price raised on the
+ * 2nd. `updateSubscription` rewrites that draft to the new figures, but only
+ * if it is still the generator's own: one line, the generated description,
+ * the old amount, the old rate. A draft he has touched by hand is his, and
+ * a generator that overwrote it would be a second author on one document.
+ */
+export const subscriptionDraftUntouched = (
+  lines: Array<{ description: string; quantity: number; unitCents: number; taxRate: number }>,
+  was: { description: string; amountCents: number; taxRate: number },
+  period: string,
+  language: InvoiceLanguage,
+): boolean => {
+  const only = lines.length === 1 ? lines[0] : undefined
+
+  return (
+    only !== undefined &&
+    only.quantity === 1 &&
+    only.unitCents === was.amountCents &&
+    only.taxRate === was.taxRate &&
+    only.description === subscriptionLine(was.description, period, language)
+  )
+}
+
+/**
  * The one combination that cannot be printed: `§19` and a VAT row.
  *
  * A `Kleinunternehmer` charges no VAT, and the paper says so in a sentence

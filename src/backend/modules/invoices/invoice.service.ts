@@ -23,9 +23,11 @@ import {
 import { getClient } from './client.service'
 import {
   CLIENT_COLUMNS_ALIASED,
+  COUNTS,
+  CREDITED_CENTS,
   DATE_TEXT,
   INVOICE_ROW_COLUMNS,
-  PAID_CENTS,
+  OWED,
   projectClient,
   projectLine,
   projectPayment,
@@ -67,22 +69,11 @@ import { createPaymentLink, syncPaymentLink } from './stripe.service'
 /* What one invoice has been settled by                                       */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Credit notes written against an invoice.
- *
- * A `CREDIT_NOTE` reduces what is owed without touching the original, whose
- * paper and totals must stay exactly as they were sent. So "still owed" is
- * `total − paid − credited`, and a client who was credited the difference
- * stops appearing in the overdue list — which is the whole point of writing
- * the credit note.
+/*
+ * `CREDITED_CENTS`, `OWED` and `COUNTS` lived here until 20 Sep 2026. They
+ * moved to `invoice.sql.ts` the day it turned out three other surfaces had
+ * each written `total − paid` on their own and forgotten the credit.
  */
-const CREDITED_CENTS = `(SELECT COALESCE(SUM(n.total_cents), 0)
-        FROM invoices n
-       WHERE n.corrects_id = i.id AND n.kind = 'CREDIT_NOTE' AND n.status = 'ISSUED')`
-
-/** Money still out with a client: an ordinary invoice, issued, not settled. */
-const OWED = `(i.total_cents - ${PAID_CENTS} - ${CREDITED_CENTS})`
-const COUNTS = `i.status = 'ISSUED' AND i.kind = 'INVOICE' AND ${OWED} > 0`
 
 /* -------------------------------------------------------------------------- */
 /* Reading                                                                    */
@@ -739,11 +730,13 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
   if (!number) throw internalError('The invoice could not be numbered')
 
   /*
-   * The card link, before the PDF — because the PDF prints it.
+   * The card link, before the PDF.
    *
-   * Order matters and cost me one wrong draft to see: freeze first and the
-   * frozen paper carries no link, for ever, while the screen shows one. The
-   * file is the thing a client keeps, so it has to be drawn last.
+   * The paper does not print the link today — the letter carries it, where
+   * it can be clicked. The order is kept anyway: the day the paper does print
+   * it, freezing first would leave every invoice without one, for ever, while
+   * the screen showed one. The file is the thing a client keeps, so it is
+   * drawn last.
    *
    * Not rethrown, for the same reason the freeze below is not: the invoice is
    * issued, numbered and lawful. An invoice with no card link is an invoice
@@ -1064,6 +1057,39 @@ export const addPayment = async (
 
   if (invoice.status === 'DRAFT') {
     throw badRequestError('Nobody can pay a draft. Issue it first.')
+  }
+
+  /*
+   * A correction is not something a client pays.
+   *
+   * A credit note is money going the other way, and a cancellation voids a
+   * document — neither has a debt on it. The screen hides the form for both,
+   * but the route did not refuse, and a payment booked on a credit note would
+   * have counted as income in "arrived this month" while the invoice it
+   * corrects stayed unpaid. Money that arrives belongs on the invoice.
+   */
+  if (invoice.kind !== 'INVOICE') {
+    const what = invoice.kind === 'CREDIT_NOTE' ? 'credit note' : 'cancellation'
+    const where = invoice.correctsNumber ? `invoice ${invoice.correctsNumber}` : 'the invoice it corrects'
+
+    throw badRequestError(`${invoice.number} is a ${what}, not a debt. Record the money on ${where} instead.`)
+  }
+
+  /*
+   * Money cannot have arrived on a day that has not happened.
+   *
+   * The date decides which month the figure counts in — for the screen and
+   * for his tax return alike. A date typed a year ahead by a slip of the
+   * keyboard would take the money out of every month until then, silently,
+   * and the invoice would read "paid" the whole time.
+   */
+  const clock = await getDb().query<{ today: string }>(`SELECT ${DATE_TEXT(TODAY)} AS today;`)
+  const today = clock.rows[0]!.today
+
+  if (input.receivedOn > today) {
+    throw badRequestError(
+      `${input.receivedOn} is in the future. Record the payment on the day the money actually reached your account.`,
+    )
   }
 
   await getDb().query(

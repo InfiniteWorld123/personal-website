@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { epcPayload, money } from '#/backend/modules/invoices/pdf.service'
 import type { Seller } from '#/backend/modules/invoices/seller'
 import {
+  balanceOf,
+  payLinkUsable,
   settlementOf,
   THE_CURRENCY,
   totalsOf,
@@ -238,5 +240,65 @@ describe('THE_CURRENCY', () => {
     // says EUR because every row is EUR, not because 'EUR' was typed in.
     expect(money(149_000, 'de', THE_CURRENCY)).toContain('€')
     expect(money(149_000, 'en', THE_CURRENCY)).toContain('€')
+  })
+})
+
+describe('balanceOf', () => {
+  it('takes credit notes off what is owed, exactly as it takes payments', () => {
+    expect(balanceOf({ totalCents: 99_000, paidCents: 0, creditedCents: 40_000 })).toEqual({
+      owed: 59_000,
+      over: 0,
+    })
+  })
+
+  it('names money that came in twice', () => {
+    expect(balanceOf({ totalCents: 99_000, paidCents: 120_000, creditedCents: 0 })).toEqual({
+      owed: 0,
+      over: 21_000,
+    })
+  })
+
+  it('names the refund a credit note creates on an invoice already paid', () => {
+    expect(balanceOf({ totalCents: 99_000, paidCents: 99_000, creditedCents: 40_000 })).toEqual({
+      owed: 0,
+      over: 40_000,
+    })
+  })
+})
+
+describe('payLinkUsable', () => {
+  const link = {
+    payUrl: 'https://buy.stripe.com/test',
+    status: 'ISSUED' as InvoiceStatus,
+    kind: 'INVOICE' as InvoiceKind,
+    totalCents: 99_000,
+    paidCents: 0,
+    creditedCents: 0,
+  }
+
+  it('is usable on an issued invoice nobody has touched', () => {
+    expect(payLinkUsable(link)).toBe(true)
+  })
+
+  it('is dead the moment anything settles against the invoice', () => {
+    /*
+     * The link charges the full total, and Stripe is told to switch it off
+     * once that is no longer what is owed. The reminder letter used to print
+     * it anyway — "pay by card" over a page that says the link is inactive,
+     * sent to exactly the client who had paid part of it.
+     */
+    expect(payLinkUsable({ ...link, paidCents: 10_000 })).toBe(false)
+    expect(payLinkUsable({ ...link, creditedCents: 10_000 })).toBe(false)
+    expect(payLinkUsable({ ...link, paidCents: 99_000 })).toBe(false)
+  })
+
+  it('is dead on a cancelled invoice and on every correction', () => {
+    expect(payLinkUsable({ ...link, status: 'CANCELLED' })).toBe(false)
+    expect(payLinkUsable({ ...link, kind: 'CREDIT_NOTE' })).toBe(false)
+    expect(payLinkUsable({ ...link, kind: 'CANCELLATION' })).toBe(false)
+  })
+
+  it('is nothing at all when there is no link', () => {
+    expect(payLinkUsable({ ...link, payUrl: null })).toBe(false)
   })
 })

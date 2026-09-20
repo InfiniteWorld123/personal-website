@@ -44,6 +44,30 @@ export const PAID_CENTS = `(SELECT COALESCE(SUM(p.amount_cents), 0)
         FROM payments p WHERE p.invoice_id = i.id)`
 
 /**
+ * Credit notes written against an invoice.
+ *
+ * A `CREDIT_NOTE` reduces what is owed without touching the original, whose
+ * paper and totals must stay exactly as they were sent. So "still owed" is
+ * `total − paid − credited`, and a client who was credited the difference
+ * stops appearing in the overdue list — which is the whole point of writing
+ * the credit note.
+ *
+ * Here rather than in the service, because three other readers of "what is
+ * owed" — the reminder letter, the composer's attach panel, the client list —
+ * each did `total − paid` on their own and forgot the credit. One string, and
+ * a surface that wants the figure cannot get it without the credit in it.
+ */
+export const CREDITED_CENTS = `(SELECT COALESCE(SUM(n.total_cents), 0)
+        FROM invoices n
+       WHERE n.corrects_id = i.id AND n.kind = 'CREDIT_NOTE' AND n.status = 'ISSUED')`
+
+/** Money still out with a client on one invoice, before clamping at zero. */
+export const OWED = `(i.total_cents - ${PAID_CENTS} - ${CREDITED_CENTS})`
+
+/** The rows that owe anything: an ordinary invoice, issued, not settled. */
+export const COUNTS = `i.status = 'ISSUED' AND i.kind = 'INVOICE' AND ${OWED} > 0`
+
+/**
  * The name to draw on a row.
  *
  * The company when there is one, the person otherwise — the same rule the

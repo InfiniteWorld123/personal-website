@@ -44,6 +44,7 @@ import {
   PAYMENT_METHOD_LABEL,
   SETTLEMENT_LABEL,
   balanceOf,
+  payLinkUsable,
   type LetterKind,
   type PaymentMethod,
 } from '#/shared/validation/invoice.validation'
@@ -238,14 +239,12 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
         while the invoice can still be paid — on a cancelled or settled
         document it is an offer that leads nowhere.
       */}
-      {invoice.payUrl && owed > 0 && invoice.status === 'ISSUED' ? (
+      {payLinkUsable(invoice) ? (
         <Panel className="flex flex-wrap items-center gap-3 p-4">
           <CreditCard className="text-primary size-4 shrink-0" aria-hidden="true" />
           <span className="text-sm">
             <span className="font-medium">Pay by card</span>{' '}
-            <span className="text-muted-foreground">
-              — on the invoice and in the letter already.
-            </span>
+            <span className="text-muted-foreground">— in the letter already.</span>
           </span>
           <span className="ms-auto flex gap-2">
             <Button
@@ -273,6 +272,21 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
             </Button>
           </span>
         </Panel>
+      ) : null}
+
+      {/*
+        A link that exists but no longer works, said so.
+
+        After a partial payment or a credit note the link is switched off at
+        Stripe — it charged the whole total, and that is no longer what is
+        owed. Nothing on the screen said so; this row used to offer "Copy the
+        link" on exactly that invoice.
+      */}
+      {invoice.payUrl && !payLinkUsable(invoice) && owed > 0 && invoice.status === 'ISSUED' ? (
+        <p className="text-muted-foreground text-xs">
+          The card link is switched off: it charged the full amount, and that is no longer what
+          is owed. The rest comes by bank transfer.
+        </p>
       ) : null}
 
       {/* ── What was billed ─────────────────────────────────────────── */}

@@ -108,7 +108,11 @@ export function OverviewPage() {
             />
 
             <StatCard
-              foot="Subscriptions billed in the last forty days. Build money cannot reach this figure."
+              // What the running subscriptions add up to — the arrangements
+              // themselves, not what happened to be invoiced. The old text
+              // said "billed in the last forty days", which stopped being
+              // how the figure was counted on 20 Sep 2026.
+              foot="What the running subscriptions add up to. Build money cannot reach this figure."
               label="Recurring, per month"
               to="/admin/invoices"
               prefetch={prefetch(invoicesQuery('ALL', ''), summaryQuery())}

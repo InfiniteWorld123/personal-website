@@ -259,13 +259,14 @@ export const verifyStripeSignature = async (
 /* Acting on one                                                              */
 /* -------------------------------------------------------------------------- */
 
-type StripeEvent = {
+export type StripeEvent = {
   id?: string
   type?: string
   data?: {
     object?: {
       id?: string
       payment_intent?: string
+      payment_status?: string
       amount_total?: number
       currency?: string
       metadata?: Record<string, string>
@@ -273,12 +274,70 @@ type StripeEvent = {
   }
 }
 
+/** A payment Stripe says has actually been collected, and where it belongs. */
+export type PaidSession = {
+  invoiceId: string
+  /** What the client paid, in the smallest unit of `currency`. */
+  amountCents: number
+  /** The currency the client was charged in, lower case — or null if unsaid. */
+  currency: string | null
+  /** The id his Stripe dashboard shows beside the money. */
+  external: string
+}
+
+/**
+ * The two events that mean "the money is here", read for what they carry.
+ *
+ * Pure, and exported for the test: this is the whole of the decision about
+ * whether a message from Stripe becomes a row in `payments`, and it was wrong
+ * once in a way no signature check could catch.
+ *
+ * **`completed` is not `paid`.** A payment link accepts more than cards —
+ * SEPA direct debit, bank redirects — and with those the session *completes*
+ * the moment the client submits, while the money follows days later, or
+ * never. Stripe says which by `payment_status`: `paid` when it has the money,
+ * `unpaid` while it is still waiting. Until 20 Sep this recorded every
+ * completed session as paid, so a debit that bounced would have left an
+ * invoice reading **Paid** with nothing behind it, and no second event was
+ * listened for that could have set it right.
+ *
+ * So: a completed session counts only if it is already paid, and the money
+ * that arrives later comes as `async_payment_succeeded`, which is the same
+ * shape and is read the same way. The failure event is deliberately not
+ * booked as anything — nothing was recorded, so there is nothing to undo.
+ */
+export const paidSessionOf = (event: StripeEvent): PaidSession | null => {
+  const session = event.data?.object
+
+  if (!session) return null
+
+  const arrived =
+    (event.type === 'checkout.session.completed' && session.payment_status === 'paid') ||
+    event.type === 'checkout.session.async_payment_succeeded'
+
+  if (!arrived) return null
+
+  const invoiceId = session.metadata?.invoice_id
+  const amount = session.amount_total
+
+  if (!invoiceId || !amount || amount <= 0) return null
+
+  // The payment intent, not the session: it is the id that appears on his
+  // Stripe dashboard beside the money, so a row here can be traced to it.
+  const external = session.payment_intent ?? session.id ?? event.id
+
+  if (!external) return null
+
+  return {
+    invoiceId,
+    amountCents: amount,
+    currency: session.currency ? session.currency.toLowerCase() : null,
+    external,
+  }
+}
+
 /**
  * Records the money, once.
- *
- * Only `checkout.session.completed`, which is the moment Stripe considers the
- * payment done. Everything else is acknowledged and ignored: an endpoint that
- * argued with events it did not ask for would be a source of retries.
  *
  * `received_on` is **today in Berlin**, because that is the day the money
  * became his and the day his own tax return counts — the Zuflussprinzip, the
@@ -289,28 +348,47 @@ type StripeEvent = {
  * receivers are idempotent, not that senders are careful.
  */
 export const applyStripeEvent = async (event: StripeEvent): Promise<'recorded' | 'ignored'> => {
-  if (event.type !== 'checkout.session.completed') return 'ignored'
+  const paid = paidSessionOf(event)
 
-  const session = event.data?.object
-  const invoiceId = session?.metadata?.invoice_id
-  const amount = session?.amount_total
+  if (!paid) return 'ignored'
 
-  if (!invoiceId || !amount || amount <= 0) return 'ignored'
+  const { invoiceId, external } = paid
 
-  // The payment intent, not the session: it is the id that appears on his
-  // Stripe dashboard beside the money, so a row here can be traced to it.
-  const external = session.payment_intent ?? session.id ?? event.id
+  const found = await getDb().query<{ currency: string; total_cents: number | string }>(
+    'SELECT currency, total_cents FROM invoices WHERE id = $1;',
+    [invoiceId],
+  )
 
-  if (!external) return 'ignored'
+  const invoice = found.rows[0]
+
+  // An invoice that has since been deleted — a draft, then, which cannot
+  // have had a link. Not a failure worth a retry, so it is simply ignored.
+  if (!invoice) return 'ignored'
+
+  /*
+   * The amount, in *his* currency.
+   *
+   * Stripe can show a client abroad the price in their own money and settle
+   * it in his (Adaptive Pricing). When it does, `amount_total` is in the
+   * client's currency — 1 150 US cents for a 990 € invoice — and booking that
+   * number as euro cents would record the wrong figure with the right label.
+   * The link charges exactly the invoice's total and nothing else, so when the
+   * currencies differ the client paid the total, and that is what is written.
+   */
+  const converted = paid.currency !== null && paid.currency !== invoice.currency.toLowerCase()
+  const amount = converted ? Number(invoice.total_cents) : paid.amountCents
+  const note = converted
+    ? `Paid by card in ${paid.currency?.toUpperCase()} — booked at the invoice total`
+    : 'Paid by card'
 
   const written = await getDb().query(
     `INSERT INTO payments (invoice_id, amount_cents, method, received_on, reference, note, external_id)
      SELECT $1, $2, 'CARD',
             ((CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Berlin')::date),
-            $3, 'Paid by card', $4
+            $3, $5, $4
       WHERE EXISTS (SELECT 1 FROM invoices WHERE id = $1)
      ON CONFLICT (external_id) WHERE external_id IS NOT NULL DO NOTHING;`,
-    [invoiceId, amount, external, external],
+    [invoiceId, amount, external, external, note],
   )
 
   const recorded = Boolean(written.rowCount && written.rowCount > 0)
