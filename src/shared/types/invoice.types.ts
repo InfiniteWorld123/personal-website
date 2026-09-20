@@ -222,6 +222,8 @@ export type Subscription = {
   description: string
   amountCents: number
   currency: string
+  /** Carried onto every line this writes. Zero while `§19` applies. */
+  taxRate: number
   /** 1–28. The 28th is the last day every month has. */
   billingDay: number
   startedOn: string

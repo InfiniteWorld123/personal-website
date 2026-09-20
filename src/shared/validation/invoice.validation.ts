@@ -401,6 +401,19 @@ export const SubscriptionWriteSchema = v.object({
     v.minValue(1, 'Pick a day between 1 and 28'),
     v.maxValue(LAST_BILLING_DAY, `The 28th is the last day every month has — pick 1 to ${LAST_BILLING_DAY}`),
   ),
+  /**
+   * The rate every invoice it writes will carry.
+   *
+   * Zero while `§19` applies, and `issueInvoice` refuses anything else. It is
+   * a field rather than a literal in the generator for the day after that: a
+   * subscription that kept billing 0 % silently, with nothing on any screen to
+   * say so, would be found out months of sent invoices later.
+   */
+  taxRate: v.pipe(
+    v.number('That is not a rate'),
+    v.minValue(0, 'A rate cannot be negative'),
+    v.maxValue(100, 'That is not a rate'),
+  ),
   note: optionalText(500),
 })
 

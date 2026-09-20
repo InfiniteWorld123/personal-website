@@ -6,6 +6,7 @@ import {
   firstPeriod,
   nextPeriod,
   subscriptionLine,
+  totalsOf,
   type SubscriptionWriteInput,
 } from '#/shared/validation/invoice.validation'
 import { DATE_TEXT, TODAY, toInt } from './invoice.sql'
@@ -61,6 +62,7 @@ type Shape = {
   description: string
   amount_cents: number | string
   currency: string
+  tax_rate: number | string
   billing_day: number
   started_on: string
   next_period: string
@@ -71,7 +73,7 @@ type Shape = {
 
 const COLUMNS = `s.id, s.client_id,
         COALESCE(NULLIF(btrim(c.company), ''), c.contact_name) AS client_name,
-        s.description, s.amount_cents, s.currency, s.billing_day,
+        s.description, s.amount_cents, s.currency, s.tax_rate, s.billing_day,
         ${DATE_TEXT('s.started_on')} AS started_on,
         ${DATE_TEXT('s.next_period')} AS next_period,
         ${DATE_TEXT('s.cancelled_on')} AS cancelled_on,
@@ -85,6 +87,7 @@ const project = (row: Shape): Subscription => ({
   description: row.description,
   amountCents: toInt(row.amount_cents),
   currency: row.currency,
+  taxRate: Number(row.tax_rate),
   billingDay: row.billing_day,
   startedOn: row.started_on,
   nextPeriod: row.next_period,
@@ -134,12 +137,13 @@ export const createSubscription = async (
 
   const result = await db.query<{ id: string }>(
     `INSERT INTO subscriptions
-       (client_id, description, amount_cents, billing_day, next_period, note)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`,
+       (client_id, description, amount_cents, tax_rate, billing_day, next_period, note)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`,
     [
       input.clientId,
       input.description,
       Math.round(input.amountEuros * 100),
+      input.taxRate,
       input.billingDay,
       start,
       input.note,
@@ -162,14 +166,15 @@ export const updateSubscription = async (
 ): Promise<Subscription> => {
   await getDb().query(
     `UPDATE subscriptions
-        SET client_id = $2, description = $3, amount_cents = $4, billing_day = $5,
-            note = $6, updated_at = CURRENT_TIMESTAMP
+        SET client_id = $2, description = $3, amount_cents = $4, tax_rate = $5,
+            billing_day = $6, note = $7, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1;`,
     [
       id,
       input.clientId,
       input.description,
       Math.round(input.amountEuros * 100),
+      input.taxRate,
       input.billingDay,
       input.note,
     ],
@@ -218,6 +223,7 @@ type Due = {
   client_id: string
   description: string
   amount_cents: number | string
+  tax_rate: number | string
   billing_day: number
   next_period: string
   language: 'de' | 'en'
@@ -249,17 +255,28 @@ const draftPeriod = async (row: Due, period: string): Promise<string> =>
 
     await db.query(
       `INSERT INTO invoice_lines (invoice_id, position, description, quantity, unit_cents, tax_rate)
-       VALUES ($1, 1, $2, 1, $3, 0);`,
-      [invoiceId, subscriptionLine(row.description, period, row.language), toInt(row.amount_cents)],
+       VALUES ($1, 1, $2, 1, $3, $4);`,
+      [
+        invoiceId,
+        subscriptionLine(row.description, period, row.language),
+        toInt(row.amount_cents),
+        row.tax_rate,
+      ],
     )
 
-    // The draft's stored totals, recomputed the way `updateInvoice` does. A
-    // draft with a line and a zero total reads as broken on the list.
-    const net = toInt(row.amount_cents)
+    /*
+     * The draft's stored totals, by the same arithmetic the editor and the
+     * paper use. Rounded once, on the line, which is what `§14` expects — and
+     * calling `totalsOf` rather than repeating the sum here is what stops a
+     * generated draft ever disagreeing with a hand-written one by a cent.
+     */
+    const totals = totalsOf([
+      { quantity: 1, unitEuros: toInt(row.amount_cents), taxRate: Number(row.tax_rate) },
+    ])
 
     await db.query(
-      'UPDATE invoices SET net_cents = $2, tax_cents = 0, total_cents = $2 WHERE id = $1;',
-      [invoiceId, net],
+      'UPDATE invoices SET net_cents = $2, tax_cents = $3, total_cents = $4 WHERE id = $1;',
+      [invoiceId, totals.netCents, totals.taxCents, totals.totalCents],
     )
 
     await db.query(
@@ -289,7 +306,7 @@ export const runDueSubscriptions = async (): Promise<string[]> => {
   const db = getDb()
 
   const due = await db.query<Due & { today: string }>(
-    `SELECT s.id, s.client_id, s.description, s.amount_cents, s.billing_day,
+    `SELECT s.id, s.client_id, s.description, s.amount_cents, s.tax_rate, s.billing_day,
             ${DATE_TEXT('s.next_period')} AS next_period,
             c.language, 14 AS due_days,
             ${DATE_TEXT(TODAY)} AS today

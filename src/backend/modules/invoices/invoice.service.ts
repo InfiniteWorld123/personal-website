@@ -236,26 +236,28 @@ export const getSummary = async (): Promise<InvoiceSummary> => {
     /*
      * The one number that says whether he can live.
      *
-     * There is no `subscriptions` table — he refused to model one on 17 Sep,
-     * with no clients and prices still moving, and that was right. So this is
-     * measured from what he actually billed: **the latest subscription
-     * invoice per client, if it was issued in the last forty days**. Forty,
-     * not thirty, because a monthly invoice sent on the 2nd and the next on
-     * the 3rd must not leave a gap where a live client disappears.
+     * Read from `subscriptions`, which is the arrangement itself — what he has
+     * agreed to be paid every month, whether or not this month's paper has
+     * been written yet.
      *
-     * `money_kind = 'SUBSCRIPTION'` is what keeps build money out of it. No
-     * setup fee, no instalment and no one-off can reach this figure — by
-     * construction, not by remembering to filter.
+     * It used to be inferred instead: the latest subscription invoice per
+     * client, if issued in the last forty days. That was the honest answer
+     * while no subscriptions table existed — `0013` had deleted it — and it
+     * became a lie the moment `0020` brought one back. On 20 Sep he had one
+     * subscription running and had not yet issued its first invoice, so this
+     * screen said **0,00 €** while the subscriptions screen said 49,00 €. Two
+     * screens, one question, two answers, and no way to tell which to believe.
+     *
+     * A cancelled subscription is excluded, which is the whole of the
+     * arithmetic — and build money cannot reach this figure by construction,
+     * because a row in this table *is* a subscription. That is stronger than
+     * the old `money_kind = 'SUBSCRIPTION'` filter, which depended on the
+     * filter being remembered.
      */
     db.query<{ cents: string }>(
-      `SELECT COALESCE(SUM(latest.total_cents), 0) AS cents
-         FROM (SELECT DISTINCT ON (i.client_id) i.client_id, i.total_cents
-                 FROM invoices i
-                WHERE i.money_kind = 'SUBSCRIPTION'
-                  AND i.kind = 'INVOICE'
-                  AND i.status = 'ISSUED'
-                  AND i.issued_on >= ${TODAY} - 40
-                ORDER BY i.client_id, i.issued_on DESC) latest;`,
+      `SELECT COALESCE(SUM(s.amount_cents), 0) AS cents
+         FROM subscriptions s
+        WHERE s.cancelled_on IS NULL;`,
     ),
   ])
 

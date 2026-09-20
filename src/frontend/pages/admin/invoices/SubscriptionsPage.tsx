@@ -51,6 +51,8 @@ const EMPTY: SubscriptionWriteInput = {
   clientId: '',
   description: '',
   amountEuros: 0,
+  // Zero while §19 applies, which is every subscription he writes this year.
+  taxRate: 0,
   billingDay: 1,
   note: '',
 }
@@ -132,6 +134,29 @@ function Form({
             onChange={(event) => set('amountEuros', Number(event.target.value))}
             placeholder="49.00"
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="sub-tax">VAT %</Label>
+          <Input
+            id="sub-tax"
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            value={value.taxRate}
+            onChange={(event) => set('taxRate', Number(event.target.value))}
+          />
+          {/*
+            Shown rather than hidden behind the generator.
+            It is 0 for every subscription he writes this year, and the whole
+            reason it is on screen is the year after: a subscription quietly
+            billing 0 % once §19 no longer applies would be found out months of
+            sent invoices later.
+          */}
+          <p className="text-muted-foreground text-xs">
+            0 while you are a Kleinunternehmer. Every invoice this writes carries this rate.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -234,10 +259,25 @@ function Row({
           ) : (
             <>stopped {day(subscription.cancelledOn)}</>
           )}
-          {subscription.invoiceCount > 0
-            ? ` · ${subscription.invoiceCount} invoice${subscription.invoiceCount === 1 ? '' : 's'} so far`
-            : null}
-        </span>
+          </span>
+
+        {/*
+          The invoices it has written, reachable.
+          "2 invoices so far" as plain text was a fact he could see and not
+          follow — and the invoice is where the PDF lives, which is what he
+          asked for. A subscription has no document of its own; it is an
+          arrangement, and its paper is the invoices underneath it.
+        */}
+        {subscription.invoiceCount > 0 ? (
+          <Link
+            to="/admin/invoices"
+            search={{ search: subscription.description }}
+            className="text-muted-foreground hover:text-primary block truncate text-xs underline-offset-2 hover:underline"
+          >
+            {subscription.invoiceCount} invoice{subscription.invoiceCount === 1 ? '' : 's'} written
+            so far — open them
+          </Link>
+        ) : null}
 
         {error ? <span className="block text-xs text-rose-600 dark:text-rose-400">{error}</span> : null}
       </span>
@@ -430,6 +470,7 @@ export function SubscriptionsPage() {
                   clientId: subscription.clientId,
                   description: subscription.description,
                   amountEuros: subscription.amountCents / 100,
+                  taxRate: subscription.taxRate,
                   billingDay: subscription.billingDay,
                   note: subscription.note,
                 })
