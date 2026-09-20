@@ -47,7 +47,7 @@ export const isTurnstileResponseValid = (
   return result.action === action && hostnameAllowed
 }
 
-const getSecret = (): string => {
+export const getTurnstileSecret = (): string => {
   if (env.TURNSTILE_SECRET_KEY) return env.TURNSTILE_SECRET_KEY
   if (process.env.NODE_ENV !== 'production') return TEST_SECRET
 
@@ -73,7 +73,7 @@ export const assertTurnstile = async ({
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        secret: getSecret(),
+        secret: getTurnstileSecret(),
         response: token,
         remoteip: clientIp,
         idempotency_key: crypto.randomUUID(),

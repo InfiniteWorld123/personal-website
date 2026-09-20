@@ -3,17 +3,22 @@ import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { captcha } from 'better-auth/plugins'
 import * as v from 'valibot'
-import { env } from '#/shared/env'
 import { PasswordSchema } from '#/shared/validation/auth.validation'
 import { getDb, livePool } from '../db/client'
 import { consumeRateLimit } from './rate-limit'
-import { getTurnstileAllowedHostnames } from './turnstile'
+import { getTurnstileAllowedHostnames, getTurnstileSecret } from './turnstile'
 
-const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA'
-
-const turnstileSecret =
-  env.TURNSTILE_SECRET_KEY ??
-  (process.env.NODE_ENV !== 'production' ? TURNSTILE_TEST_SECRET : 'missing-production-secret')
+/**
+ * The same secret the rest of the app verifies against, rather than a second
+ * copy of the rule. It hands back Cloudflare's testing key off production and
+ * refuses to return anything at all when the real key is missing in it.
+ *
+ * Read here at startup on purpose. The previous fallback was the literal
+ * string `missing-production-secret`, which Cloudflare rejects — so a missing
+ * key did not stop the deploy, it locked the owner out of his own admin and
+ * called it `Security verification failed`.
+ */
+const turnstileSecret = getTurnstileSecret()
 
 const passwordFieldByPath = new Map<string, string>([
   ['/reset-password', 'newPassword'],
