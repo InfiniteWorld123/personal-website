@@ -3,6 +3,7 @@ import { epcPayload, money } from '#/backend/modules/invoices/pdf.service'
 import type { Seller } from '#/backend/modules/invoices/seller'
 import {
   settlementOf,
+  THE_CURRENCY,
   totalsOf,
   vatConflict,
   type InvoiceKind,
@@ -211,5 +212,31 @@ describe('vatConflict', () => {
     // The day he crosses the threshold, 19 % is correct and this must not
     // stand in the way of it.
     expect(vatConflict([{ taxRate: 19 }], false)).toBe(false)
+  })
+})
+
+/**
+ * One currency, and why it is a refusal rather than a feature.
+ *
+ * The figures on the front page sum `total_cents` across every row and print
+ * one € sign over the answer. Correct for exactly as long as every row is in
+ * euros, and silently wrong the moment one is not — a total that adds dollars
+ * to euros is the kind of number that cost the last system its trust.
+ *
+ * A client in America pays in euros too; their card does the conversion. The
+ * day that stops being good enough, `THE_CURRENCY` is the thread to pull, and
+ * the work is the summary grouping by currency — not a column change.
+ */
+
+describe('THE_CURRENCY', () => {
+  it('is the euro, and the database agrees', () => {
+    expect(THE_CURRENCY).toBe('EUR')
+  })
+
+  it('is the sign the paper actually prints', () => {
+    // The guard against the one number nobody could trace: the front page
+    // says EUR because every row is EUR, not because 'EUR' was typed in.
+    expect(money(149_000, 'de', THE_CURRENCY)).toContain('€')
+    expect(money(149_000, 'en', THE_CURRENCY)).toContain('€')
   })
 })

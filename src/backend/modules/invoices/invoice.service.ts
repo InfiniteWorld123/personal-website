@@ -11,6 +11,7 @@ import type {
 import {
   DOCUMENT_TITLE,
   settlementOf,
+  THE_CURRENCY,
   totalsOf,
   vatConflict,
   type CorrectionInput,
@@ -154,6 +155,28 @@ export const listInvoices = async (query: InvoiceQueryInput): Promise<InvoiceLis
  * could not trace, and every number below can be followed to the invoices and
  * payments that make it.
  */
+/**
+ * Refuses an invoice in anything but euros.
+ *
+ * The figures on the section's front page sum `total_cents` across every row
+ * and print one € sign over the answer. That is correct for exactly as long
+ * as every row is in euros, and silently wrong the moment one is not — a
+ * total that adds dollars to euros is the kind of number he deleted a whole
+ * system over.
+ *
+ * Refusing here rather than adding currency handling everywhere is the honest
+ * trade: he sells from Erfurt and gets paid in euros, including by clients
+ * abroad, whose bank or card does the conversion. See `THE_CURRENCY` for what
+ * the day he wants dollars actually costs.
+ */
+const assertOneCurrency = (currency: string): void => {
+  if (currency !== THE_CURRENCY) {
+    throw badRequestError(
+      `This system invoices in ${THE_CURRENCY} only. A client abroad pays in ${THE_CURRENCY} too — their bank converts it.`,
+    )
+  }
+}
+
 export const getSummary = async (): Promise<InvoiceSummary> => {
   const db = getDb()
 
@@ -228,7 +251,9 @@ export const getSummary = async (): Promise<InvoiceSummary> => {
     // Switch 18, which he turned on knowing what it is. A flat 30 % of what
     // arrived — not a calculation of anything, and the card says so in words.
     taxPotCents: Math.round(thisMonthCents * 0.3),
-    currency: 'EUR',
+    // True because `assertOneCurrency` makes it true, not because it was
+    // typed here and hoped for.
+    currency: THE_CURRENCY,
     month: first?.month ?? '',
   }
 }
@@ -630,6 +655,11 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
    * Nothing here can pick for him. Dropping the sentence leaves the VAT and
    * the liability standing; dropping the VAT changes what he charged.
    */
+  // Nothing in the application can set another currency — `createInvoice`
+  // leaves the column to its default. This catches the row that got one some
+  // other way, at the last moment before it becomes a permanent fact.
+  assertOneCurrency(invoice.currency)
+
   if (vatConflict(invoice.lines, seller.smallBusiness)) {
     throw badRequestError(
       'This invoice charges VAT while you are registered as a Kleinunternehmer under §19. ' +

@@ -112,6 +112,27 @@ export const LETTER_KINDS = ['INVOICE', 'REMINDER'] as const
 
 export type LetterKind = (typeof LETTER_KINDS)[number]
 
+/**
+ * One currency, said once.
+ *
+ * `invoices.currency` is a column and every screen reads it per row, which
+ * makes the system look as though it handles several. It does not, and one
+ * place gives that away: `getSummary` sums `total_cents` across every row and
+ * labels the result EUR. The day a dollar invoice exists, the figures on top
+ * would add dollars to euros and print a € sign over the answer — exactly the
+ * kind of untraceable number this admin was built to never show.
+ *
+ * Nothing offers him a choice today, so the lie is only latent. This makes it
+ * impossible instead: an invoice in anything else is refused at the door.
+ *
+ * **The day he does want dollars**, this constant is the thread to pull. The
+ * summary has to group by currency and the screen has to show more than one
+ * figure — and that is a real piece of work, not a column change. Refusing
+ * now is what keeps that an honest decision later rather than a bug he finds
+ * in a total.
+ */
+export const THE_CURRENCY = 'EUR'
+
 /** His answer: fourteen days. Seven reads as impatient, thirty is a month without money. */
 export const DEFAULT_DUE_DAYS = 14
 
