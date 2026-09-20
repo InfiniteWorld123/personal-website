@@ -35,7 +35,7 @@ import {
   type LineShape,
   type PaymentShape,
 } from './invoice.sql'
-import { assertPrintable, renderInvoicePdf } from './pdf.service'
+import { assertPrintable, draftWord, renderInvoicePdf } from './pdf.service'
 import { sellerGaps } from './seller'
 
 /**
@@ -860,10 +860,9 @@ export const documentBytes = async (invoice: Invoice): Promise<Uint8Array> => {
 }
 
 const filenameFor = (invoice: Invoice): string =>
-  `${DOCUMENT_TITLE[invoice.language][invoice.kind]}-${invoice.number ?? 'Entwurf'}.pdf`.replace(
-    /[^\w.-]/g,
-    '-',
-  )
+  `${DOCUMENT_TITLE[invoice.language][invoice.kind]}-${
+    invoice.number ?? draftWord(invoice.language)
+  }.pdf`.replace(/[^\w.-]/g, '-')
 
 /**
  * Hands the document back, behind the admin guard.
