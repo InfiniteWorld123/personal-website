@@ -26,6 +26,8 @@ import { cn } from '#/frontend/lib/utils'
 import type { Invoice } from '#/shared/types/invoice.types'
 import {
   DEFAULT_DUE_DAYS,
+  periodLabel,
+  periodOf,
   totalsOf,
   VAT_RATES,
   vatConflict,
@@ -612,6 +614,33 @@ function Draft({
           </span>
         )}
       </div>
+
+      {/*
+        What deleting THIS draft means, said before the click.
+
+        A hand-written draft is cheap: delete it, type it again. A draft a
+        subscription wrote is not — the subscription moved on to the next
+        month when it wrote this one, so deleting it skips this month
+        permanently and in silence. Verified on 20 Sep: delete the draft,
+        re-run the generator, and September is simply never billed, with no
+        trace anywhere.
+
+        Skipping a month is a legitimate act (a waived month, goodwill). Doing
+        it without knowing is not, and the difference between the two is
+        exactly this sentence.
+      */}
+      {invoice?.fromSubscription && invoice.serviceFrom ? (
+        <p className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+          <span>
+            A subscription wrote this draft. Deleting it means{' '}
+            <span className="font-medium">
+              {periodLabel(periodOf(invoice.serviceFrom), 'en')} is never billed
+            </span>{' '}
+            for that subscription — it has already moved on to the next month.
+          </span>
+        </p>
+      ) : null}
 
       {/* Beside the button it explains, not in the panel the rate lives in. */}
       {invoice && blocked ? (

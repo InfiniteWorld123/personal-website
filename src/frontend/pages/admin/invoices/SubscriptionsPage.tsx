@@ -88,6 +88,7 @@ function Form({
   editing: boolean
 }) {
   const clients = useQuery(clientsQuery(''))
+  const seller = useQuery(sellerQuery())
   const set = <K extends keyof SubscriptionWriteInput>(
     key: K,
     next: SubscriptionWriteInput[K],
@@ -158,9 +159,23 @@ function Form({
               </option>
             ))}
           </select>
-          <p className="text-muted-foreground text-xs">
-            Every invoice this writes carries this rate.
-          </p>
+          {/*
+            The same fact the invoice editor states, missing here until 20 Sep:
+            picking 19 % while §19 applies writes a draft every month that
+            `issueInvoice` will refuse — correctly, but he would only find out
+            at the last step, thirty days from now, on a document he did not
+            write. The moment to say it is while his hand is on the rate.
+          */}
+          {value.taxRate > 0 && seller.data?.smallBusiness ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              You are a Kleinunternehmer — every draft this writes will be refused at issue
+              until the rate is 0 or seller.ts says otherwise.
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-xs">
+              Every invoice this writes carries this rate.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
