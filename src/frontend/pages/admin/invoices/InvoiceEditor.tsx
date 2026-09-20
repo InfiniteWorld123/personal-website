@@ -212,6 +212,25 @@ function Draft({
     seller.data?.smallBusiness ?? false,
   )
 
+  /*
+   * Why **Issue it** cannot be pressed, in words, or null when it can.
+   *
+   * One value feeding both the `disabled` flag and the sentence printed beside
+   * the button, because they were allowed to drift and did: the VAT warning
+   * lived up in the lines panel, next to the rate it is about, and he scrolled
+   * to the bottom, found a grey button, and had no idea why. A control that
+   * refuses has to say so where it refuses — the explanation being *somewhere*
+   * on the page is not the same as it being where he is looking.
+   *
+   * It still says it in the lines panel too. That one is for the moment he
+   * types the rate; this one is for the moment he tries to act.
+   */
+  const blocked = vatConflicted
+    ? 'Every rate has to be 0 while you are a Kleinunternehmer — see above.'
+    : seller.data && !seller.data.ready
+      ? `Your own details are still placeholders: ${seller.data.gaps.join(', ')}.`
+      : null
+
   const setLine = (key: string, patch: Partial<LineDraft>) =>
     setLines((current) => current.map((line) => (line.key === key ? { ...line, ...patch } : line)))
 
@@ -581,7 +600,8 @@ function Draft({
             <Button
               className="rounded-full"
               variant="outline"
-              disabled={!seller.data?.ready || vatConflicted || issue.isPending}
+              disabled={blocked !== null || issue.isPending}
+              title={blocked ?? undefined}
               onClick={() => setConfirming(true)}
             >
               <Stamp className="size-4" /> Issue it
@@ -609,6 +629,16 @@ function Draft({
           </span>
         )}
       </div>
+
+      {/* Beside the button it explains, not in the panel the rate lives in. */}
+      {invoice && blocked ? (
+        <p className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+          <span>
+            <span className="font-medium">This cannot be issued yet.</span> {blocked}
+          </span>
+        </p>
+      ) : null}
 
       {/*
         The one irreversible act in the section, so it asks first and says
