@@ -42,7 +42,7 @@ import {
 import { assertPrintable, draftWord, renderInvoicePdf } from './pdf.service'
 import { runDueSubscriptions } from './subscription.service'
 import { resolveSeller, sellerGaps } from './seller'
-import { closePaymentLink, createPaymentLink } from './stripe.service'
+import { createPaymentLink, syncPaymentLink } from './stripe.service'
 
 /**
  * Invoicing.
@@ -948,19 +948,17 @@ export const correctInvoice = async (
   await freezePdf(correction).catch(() => {})
 
   /*
-   * A voided invoice must stop being payable.
+   * A corrected invoice must stop being payable at the full amount.
    *
-   * The worst thing in this feature would be a live card link on a cancelled
-   * document: the client pays, Stripe reports it, and money lands against an
-   * invoice that officially never happened. The link is switched off at
-   * Stripe, where it is served from — removing the row here would leave it
-   * working and merely hide it from him.
+   * For a cancellation that is obvious — a live card link on a voided
+   * document takes money against an invoice that officially never happened.
+   * A credit note is the same trap one street over: the link still charges
+   * the original total, so a client who follows it after a 400 € credit pays
+   * 400 € too much. One rule covers both — see `syncPaymentLink`.
    */
-  if (input.kind === 'CANCELLATION') {
-    await closePaymentLink(invoiceId).catch((error: unknown) => {
-      console.error('[invoices] the card link is still live on', invoiceId, error)
-    })
-  }
+  await syncPaymentLink(invoiceId).catch((error: unknown) => {
+    console.error('[invoices] the card link may still be live on', invoiceId, error)
+  })
 
   return correction
 }
@@ -1074,6 +1072,12 @@ export const addPayment = async (
     [invoiceId, input.amountEuros, input.method, input.receivedOn, input.reference, input.note],
   )
 
+  // The client just paid — by bank, most likely — and the card link in their
+  // mail still offers the full amount. See `syncPaymentLink`.
+  await syncPaymentLink(invoiceId).catch((error: unknown) => {
+    console.error('[invoices] the card link may still be live on', invoiceId, error)
+  })
+
   return getInvoice(invoiceId)
 }
 
@@ -1082,6 +1086,12 @@ export const deletePayment = async (invoiceId: string, paymentId: string): Promi
     paymentId,
     invoiceId,
   ])
+
+  // The same rule read backwards: a mistyped payment removed leaves the
+  // invoice whole again, and the link on the paper should work again.
+  await syncPaymentLink(invoiceId).catch((error: unknown) => {
+    console.error('[invoices] the card link state may be stale on', invoiceId, error)
+  })
 
   return getInvoice(invoiceId)
 }

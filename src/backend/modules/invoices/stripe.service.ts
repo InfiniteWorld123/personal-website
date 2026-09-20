@@ -32,14 +32,18 @@ const form = (fields: Record<string, string | number>): string =>
     Object.entries(fields).map(([key, value]) => [key, String(value)]),
   ).toString()
 
-const call = async <T>(path: string, fields: Record<string, string | number>): Promise<T> => {
+const call = async <T>(
+  path: string,
+  fields: Record<string, string | number>,
+  method: 'POST' | 'GET' = 'POST',
+): Promise<T> => {
   const response = await fetch(`${API}/${path}`, {
-    method: 'POST',
+    method,
     headers: {
       authorization: `Bearer ${env.STRIPE_SECRET_KEY ?? ''}`,
       'content-type': 'application/x-www-form-urlencoded',
     },
-    body: form(fields),
+    ...(method === 'POST' ? { body: form(fields) } : {}),
   })
 
   const body = (await response.json()) as { error?: { message?: string } }
@@ -107,28 +111,63 @@ export const createPaymentLink = async (
 }
 
 /**
- * Switches a link off, for an invoice that no longer stands.
+ * Keeps the link's life tied to one rule: **it is on exactly while paying the
+ * full amount is the right thing to do.**
  *
- * The worst thing this file could do is leave a working link on a cancelled
- * document: the client pays, Stripe reports it, and money arrives against an
- * invoice that officially never happened.
+ * Found the hard way on 20 Sep, from the paid side: an invoice was settled by
+ * card and its link stayed active at Stripe. A client's accountant finding
+ * that link in the mail a month later pays the whole invoice a second time —
+ * a real double charge off a client's card, which this system would then
+ * politely record as an overpayment he owes back.
  *
- * Deactivating rather than deleting, because Stripe keeps its own record
- * either way and a deleted link would lose the trail back to why.
+ * So instead of closing the link at each place that might settle an invoice
+ * (and missing one, which is how the paid case slipped past the cancelled
+ * case), every event that moves money calls this one function, and it derives
+ * the answer from the books:
+ *
+ *     active  ⇔  ISSUED invoice, and what is owed still equals the total
+ *
+ * That kills the link on full payment, on any partial payment or credit note
+ * (the link's fixed amount no longer matches what is owed — paying it would
+ *  overcharge), and on cancellation. And it **revives** the link when a
+ * mistyped payment is deleted and the invoice is whole again — the same rule
+ * read in the other direction.
+ *
+ * Deactivating rather than deleting, because Stripe keeps its record either
+ * way and a deleted link loses the trail back to why.
  */
-export const closePaymentLink = async (invoiceId: string): Promise<void> => {
+export const syncPaymentLink = async (invoiceId: string): Promise<void> => {
   if (!stripeReady()) return
 
-  const found = await getDb().query<{ pay_link_id: string | null }>(
-    'SELECT pay_link_id FROM invoices WHERE id = $1;',
+  const found = await getDb().query<{
+    pay_link_id: string | null
+    status: string
+    kind: string
+    total_cents: number | string
+    settled_cents: number | string
+  }>(
+    `SELECT i.pay_link_id, i.status, i.kind, i.total_cents,
+            ((SELECT COALESCE(SUM(p.amount_cents), 0) FROM payments p WHERE p.invoice_id = i.id)
+             + (SELECT COALESCE(SUM(n.total_cents), 0) FROM invoices n
+                 WHERE n.corrects_id = i.id AND n.kind = 'CREDIT_NOTE' AND n.status = 'ISSUED')
+            ) AS settled_cents
+       FROM invoices i WHERE i.id = $1;`,
     [invoiceId],
   )
 
-  const linkId = found.rows[0]?.pay_link_id
+  const row = found.rows[0]
 
-  if (!linkId) return
+  if (!row?.pay_link_id) return
 
-  await call(`payment_links/${linkId}`, { active: 'false' })
+  const untouched = Number(row.settled_cents) === 0
+  const shouldBeActive =
+    row.status === 'ISSUED' && row.kind === 'INVOICE' && untouched && Number(row.total_cents) > 0
+
+  const link = await call<{ active: boolean }>(`payment_links/${row.pay_link_id}`, {}, 'GET')
+
+  if (link.active !== shouldBeActive) {
+    await call(`payment_links/${row.pay_link_id}`, { active: String(shouldBeActive) })
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -274,5 +313,19 @@ export const applyStripeEvent = async (event: StripeEvent): Promise<'recorded' |
     [invoiceId, amount, external, external],
   )
 
-  return written.rowCount && written.rowCount > 0 ? 'recorded' : 'ignored'
+  const recorded = Boolean(written.rowCount && written.rowCount > 0)
+
+  /*
+   * The payment that just landed almost certainly settled the invoice, and
+   * the link that took it must not take a second one. Best-effort: the
+   * payment is booked whatever happens here, and the webhook must answer 200
+   * either way — see the route.
+   */
+  if (recorded) {
+    await syncPaymentLink(invoiceId).catch((error: unknown) => {
+      console.error('[stripe] paid, but its link may still be live:', invoiceId, error)
+    })
+  }
+
+  return recorded ? 'recorded' : 'ignored'
 }
