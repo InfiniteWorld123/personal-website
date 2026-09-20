@@ -42,6 +42,7 @@ import {
 import { assertPrintable, draftWord, renderInvoicePdf } from './pdf.service'
 import { runDueSubscriptions } from './subscription.service'
 import { resolveSeller, sellerGaps } from './seller'
+import { closePaymentLink, createPaymentLink } from './stripe.service'
 
 /**
  * Invoicing.
@@ -737,6 +738,23 @@ export const issueInvoice = async (invoiceId: string): Promise<Invoice> => {
 
   if (!number) throw internalError('The invoice could not be numbered')
 
+  /*
+   * The card link, before the PDF — because the PDF prints it.
+   *
+   * Order matters and cost me one wrong draft to see: freeze first and the
+   * frozen paper carries no link, for ever, while the screen shows one. The
+   * file is the thing a client keeps, so it has to be drawn last.
+   *
+   * Not rethrown, for the same reason the freeze below is not: the invoice is
+   * issued, numbered and lawful. An invoice with no card link is an invoice
+   * that says "pay by transfer", which is what every invoice said until today.
+   */
+  await createPaymentLink(await getInvoice(invoiceId)).catch((error: unknown) => {
+    console.error('[invoices] no card link for', number, error)
+
+    return null
+  })
+
   const issued = await getInvoice(invoiceId)
 
   await freezePdf(issued).catch((error: unknown) => {
@@ -928,6 +946,21 @@ export const correctInvoice = async (
   // round trip. A freeze that fails leaves the document reachable anyway —
   // `documentBytes` draws it.
   await freezePdf(correction).catch(() => {})
+
+  /*
+   * A voided invoice must stop being payable.
+   *
+   * The worst thing in this feature would be a live card link on a cancelled
+   * document: the client pays, Stripe reports it, and money lands against an
+   * invoice that officially never happened. The link is switched off at
+   * Stripe, where it is served from — removing the row here would leave it
+   * working and merely hide it from him.
+   */
+  if (input.kind === 'CANCELLATION') {
+    await closePaymentLink(invoiceId).catch((error: unknown) => {
+      console.error('[invoices] the card link is still live on', invoiceId, error)
+    })
+  }
 
   return correction
 }

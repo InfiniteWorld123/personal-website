@@ -111,6 +111,21 @@ export const env = {
    * `CHAT_MODEL` names the model within that provider; absent, the provider
    * picks its own cheap default.
    */
+  /**
+   * Paying an invoice by card (B10).
+   *
+   * `STRIPE_SECRET_KEY` makes the payment link at issue. `STRIPE_WEBHOOK_SECRET`
+   * is what proves a message really came from Stripe — without it the endpoint
+   * refuses every message, which is the only safe way to fail: an unverified
+   * webhook is a stranger able to mark invoices paid.
+   *
+   * Both optional, and the whole section works without them. An invoice with
+   * no card link is an invoice that says "pay by transfer", which is what
+   * every invoice said until today.
+   */
+  STRIPE_SECRET_KEY: getOptionalEnvVar('STRIPE_SECRET_KEY'),
+  STRIPE_WEBHOOK_SECRET: getOptionalEnvVar('STRIPE_WEBHOOK_SECRET'),
+
   CHAT_PROVIDER: getOptionalEnvVar('CHAT_PROVIDER'),
   CHAT_API_KEY: getOptionalEnvVar('CHAT_API_KEY'),
   CHAT_MODEL: getOptionalEnvVar('CHAT_MODEL'),

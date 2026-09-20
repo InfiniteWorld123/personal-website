@@ -116,6 +116,8 @@ type Words = {
   test: string
   /** And the sentence that says which part of it is invented. */
   testNotice: string
+  /** Above the card link, for the client who would rather not transfer. */
+  payCard: string
 }
 
 /**
@@ -236,6 +238,7 @@ const WORDS: Record<InvoiceLanguage, Words> = {
     draftNotice: 'Entwurf — keine Rechnung, nicht zur Zahlung. Der Inhalt kann sich noch ändern.',
     test: 'TEST',
     testNotice: 'Testdokument — die Anschrift, Steuernummer und Bankverbindung unten sind erfunden.',
+    payCard: 'Oder mit Karte bezahlen:',
   },
   en: {
     number: 'Number',
@@ -268,6 +271,7 @@ const WORDS: Record<InvoiceLanguage, Words> = {
     draftNotice: 'Draft — not an invoice, not payable. The content can still change.',
     test: 'TEST',
     testNotice: 'Test document — the address, tax number and bank details below are invented.',
+    payCard: 'Or pay by card:',
   },
 }
 
@@ -942,6 +946,31 @@ export const renderInvoicePdf = async (
 
   for (const line of wrap(ink, payText, payWidth, { size: 8 })) {
     write(ink, line, LEFT, y, { size: 8, color: GREY })
+    y -= 11
+  }
+
+  /*
+   * The card link, under the bank details rather than instead of them.
+   *
+   * A transfer costs him nothing and a card costs a percentage, so the bank
+   * stays the first thing offered and its QR code stays where it is. This is
+   * the second door, for the client who would rather not type an IBAN — and
+   * for the one abroad, whose bank would charge them more to wire it than the
+   * card costs him.
+   *
+   * Drawn in blue so it reads as a link on paper, and left unwrapped: a
+   * Stripe link is short, and a URL broken across two lines cannot be typed
+   * back in by anyone holding a printout.
+   */
+  if (invoice.payUrl) {
+    y -= 3
+    write(ink, words.payCard, LEFT, y, { size: 8, color: GREY })
+    y -= 11
+    write(ink, invoice.payUrl.replace(/^https?:\/\//, ''), LEFT, y, {
+      size: 8.5,
+      bold: true,
+      color: BLUE,
+    })
     y -= 11
   }
 

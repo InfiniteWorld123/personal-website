@@ -102,6 +102,14 @@ export type InvoiceRow = {
   letterCount: number
   lastLetterAt: string | null
   /**
+   * The Stripe link that pays this invoice, or null.
+   *
+   * Null on a draft, on a correction, and whenever Stripe is not configured —
+   * in which case the invoice simply says "pay by transfer", the way every
+   * invoice did before today.
+   */
+  payUrl: string | null
+  /**
    * True when a subscription wrote this rather than he did.
    *
    * On the row because a draft he did not create appearing in his list is

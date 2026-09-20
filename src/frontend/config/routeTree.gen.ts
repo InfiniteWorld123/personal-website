@@ -27,6 +27,7 @@ import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
 import { Route as ApiInboundEmailRouteImport } from './../routes/api/inbound-email'
+import { Route as ApiStripeWebhookRouteImport } from './../routes/api/stripe-webhook'
 import { Route as RssArDotxmlRouteImport } from './../routes/rss.ar[.]xml'
 import { Route as RssDeDotxmlRouteImport } from './../routes/rss.de[.]xml'
 import { Route as RssEnDotxmlRouteImport } from './../routes/rss.en[.]xml'
@@ -155,6 +156,11 @@ const ApiContactRoute = ApiContactRouteImport.update({
 const ApiInboundEmailRoute = ApiInboundEmailRouteImport.update({
   id: '/api/inbound-email',
   path: '/api/inbound-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe-webhook',
+  path: '/api/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RssArDotxmlRoute = RssArDotxmlRouteImport.update({
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
@@ -552,6 +561,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/contact'
     | '/api/inbound-email'
+    | '/api/stripe-webhook'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/contact'
     | '/api/inbound-email'
+    | '/api/stripe-webhook'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/api/contact'
     | '/api/inbound-email'
+    | '/api/stripe-webhook'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
@@ -720,6 +732,7 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   ApiContactRoute: typeof ApiContactRoute
   ApiInboundEmailRoute: typeof ApiInboundEmailRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   RssArDotxmlRoute: typeof RssArDotxmlRoute
   RssDeDotxmlRoute: typeof RssDeDotxmlRoute
   RssEnDotxmlRoute: typeof RssEnDotxmlRoute
@@ -851,6 +864,13 @@ declare module '@tanstack/react-router' {
       path: '/api/inbound-email'
       fullPath: '/api/inbound-email'
       preLoaderRoute: typeof ApiInboundEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe-webhook': {
+      id: '/api/stripe-webhook'
+      path: '/api/stripe-webhook'
+      fullPath: '/api/stripe-webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rss/ar.xml': {
@@ -1246,6 +1266,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   ApiContactRoute: ApiContactRoute,
   ApiInboundEmailRoute: ApiInboundEmailRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   RssArDotxmlRoute: RssArDotxmlRoute,
   RssDeDotxmlRoute: RssDeDotxmlRoute,
   RssEnDotxmlRoute: RssEnDotxmlRoute,

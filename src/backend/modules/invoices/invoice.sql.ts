@@ -193,6 +193,7 @@ export type InvoiceRowShape = {
   pdf_key: string | null
   letter_count: number | string
   last_letter_at: Date | null
+  pay_url: string | null
   subscription_id: string | null
   today: string
 }
@@ -216,7 +217,7 @@ export const INVOICE_ROW_COLUMNS = `i.id, i.number, i.kind, i.status,
         i.pdf_key,
         ${LETTERS_COUNT} AS letter_count,
         ${LETTERS_LAST} AS last_letter_at,
-        i.subscription_id,
+        i.subscription_id, i.pay_url,
         ${DATE_TEXT(TODAY)} AS today`
 
 const daysBetween = (from: string, to: string): number =>
@@ -262,6 +263,7 @@ export const projectRow = (row: InvoiceRowShape): InvoiceRow => {
     letterCount: toInt(row.letter_count),
     lastLetterAt: toIso(row.last_letter_at),
     fromSubscription: row.subscription_id !== null,
+    payUrl: row.pay_url,
   }
 }
 

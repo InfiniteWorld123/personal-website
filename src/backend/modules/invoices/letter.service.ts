@@ -229,6 +229,9 @@ export const prepareLetter = async (
               'Wahrscheinlich ist sie schlicht untergegangen — falls die Zahlung schon unterwegs ist, betrachten Sie diese Nachricht bitte als gegenstandslos.',
               '',
               'Die Rechnung liegt zur Sicherheit noch einmal bei.',
+              // On the reminder above all: the one letter whose whole purpose
+              // is to make paying take ten seconds rather than ten minutes.
+              ...(invoice.payUrl ? ['', 'Mit Karte bezahlen:', invoice.payUrl] : []),
             ]
           : [
               greeting(name, language),
@@ -237,6 +240,7 @@ export const prepareLetter = async (
               'It has most likely just slipped through — if the payment is already on its way, please ignore this note.',
               '',
               'The invoice is attached again for convenience.',
+              ...(invoice.payUrl ? ['', 'Pay by card:', invoice.payUrl] : []),
             ],
       ),
       attachment,
@@ -256,6 +260,11 @@ export const prepareLetter = async (
             invoice.dueOn
               ? `Zahlbar ohne Abzug bis ${readableDay(invoice.dueOn, language)}.`
               : null,
+            // Clickable here, where the paper can only print it. The bank
+            // details stay on the invoice and stay the first offer.
+            ...(invoice.payUrl
+              ? ['', 'Sie können auch direkt mit Karte bezahlen:', invoice.payUrl]
+              : []),
             '',
             invoice.note.trim() || null,
           ]
@@ -264,6 +273,7 @@ export const prepareLetter = async (
             '',
             `please find ${title.toLowerCase()} ${invoice.number} attached, for ${total}.`,
             invoice.dueOn ? `Payable in full by ${readableDay(invoice.dueOn, language)}.` : null,
+            ...(invoice.payUrl ? ['', 'You can also pay by card:', invoice.payUrl] : []),
             '',
             invoice.note.trim() || null,
           ],

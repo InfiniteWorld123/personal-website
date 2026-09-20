@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Ban,
   BellRing,
+  CreditCard,
   FileText,
   Mail,
   Receipt,
@@ -75,6 +76,7 @@ const SELECT =
 export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
   const [panel, setPanel] = useState<'none' | 'payment' | 'cancel' | 'credit'>('none')
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
   const [handing, setHanding] = useState<LetterKind | null>(null)
 
   const prefetch = usePrefetch()
@@ -227,6 +229,51 @@ export function IssuedInvoice({ invoice }: { invoice: Invoice }) {
           ) : null}
         </dl>
       </Panel>
+
+      {/*
+        The card link, where he can copy it.
+
+        It is already on the paper and already in the letter, so this is for
+        the third case: a client on the phone who wants it now. Shown only
+        while the invoice can still be paid — on a cancelled or settled
+        document it is an offer that leads nowhere.
+      */}
+      {invoice.payUrl && owed > 0 && invoice.status === 'ISSUED' ? (
+        <Panel className="flex flex-wrap items-center gap-3 p-4">
+          <CreditCard className="text-primary size-4 shrink-0" aria-hidden="true" />
+          <span className="text-sm">
+            <span className="font-medium">Pay by card</span>{' '}
+            <span className="text-muted-foreground">
+              — on the invoice and in the letter already.
+            </span>
+          </span>
+          <span className="ms-auto flex gap-2">
+            <Button
+              className="rounded-full"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  void navigator.clipboard?.writeText(invoice.payUrl ?? '')
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1800)
+                } catch {
+                  // A browser that refuses the clipboard is not an error worth
+                  // a red panel: the link is a click away below.
+                  setCopied(false)
+                }
+              }}
+            >
+              {copied ? 'Copied' : 'Copy the link'}
+            </Button>
+            <Button className="rounded-full" size="sm" variant="ghost" asChild>
+              <a href={invoice.payUrl} target="_blank" rel="noreferrer">
+                Open
+              </a>
+            </Button>
+          </span>
+        </Panel>
+      ) : null}
 
       {/* ── What was billed ─────────────────────────────────────────── */}
       <Panel className="overflow-hidden">

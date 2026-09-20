@@ -27,10 +27,11 @@ const requestBodyLimits: Array<{ path: string; bytes: number }> = [
  *
  * Exempting these is safe because they read no cookies and carry no session:
  * `/api/inbound-email` believes nothing that is not signed with
- * `INBOUND_MAIL_SECRET`, which no web page can produce. The body limit above
- * still applies.
+ * `INBOUND_MAIL_SECRET`, and `/api/stripe-webhook` nothing that is not signed
+ * with `STRIPE_WEBHOOK_SECRET` — neither of which a web page can produce. The
+ * body limit above still applies.
  */
-const signedWebhookPaths = new Set(['/api/inbound-email'])
+const signedWebhookPaths = new Set(['/api/inbound-email', '/api/stripe-webhook'])
 
 const noStorePath = (pathname: string): boolean =>
   pathname.startsWith('/admin') ||
