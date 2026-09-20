@@ -96,13 +96,10 @@ export const SELLER: Seller = {
  *
  * Three things keep it from becoming a liability:
  *
- *   1. **It is never used in production.** `resolveSeller` asks for a
- *      positive `NODE_ENV === 'development'` rather than checking for
- *      `!== 'production'`, and the difference is the whole safety argument:
- *      if the variable is missing, unset or spelled differently in some
- *      future runtime, the negative form quietly hands a live Worker an
- *      invented IBAN. The positive form falls back to his real details, which
- *      still carry `TODO`, which blocks issuing. Wrong in the safe direction.
+ *   1. **It is used only while he says so.** `USE_TEST_DETAILS` below is a
+ *      value in this file, not an environment variable — a deploy carries
+ *      exactly what he can read here, rather than depending on a variable
+ *      being set correctly in a runtime he cannot see.
  *   2. **It stops being used the moment the real details exist.** Even in
  *      development, `resolveSeller` prefers `SELLER` as soon as it has no
  *      gaps — so he never finds himself testing against invented data while
@@ -115,6 +112,34 @@ export const SELLER: Seller = {
  * digits by construction — no bank will accept it, and no banking app will
  * scan the payment code into a transfer that goes anywhere.
  */
+/**
+ * ─────────────────────────────────────────────────────────────────────────
+ *  THE SWITCH
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * `true`  — print the invented details below, everywhere, including the live
+ *           site. Every page comes out stamped TEST and nobody can pay one.
+ * `false` — print his own, and refuse to issue anything while they say TODO.
+ *
+ * This exists because of a real dead end he hit on 20 Sep 2026. The one part
+ * of the section that cannot run on his laptop is sending — the letter copies
+ * the PDF into the client's files, and his machine has no bucket. So sending
+ * can only be tried on the live site. And the live site refused to issue
+ * anything at all, because his details still say TODO. He could not reach the
+ * one thing he needed to test.
+ *
+ * Turning this on is safe for exactly one reason, and it is not a promise —
+ * it is mechanical. `paperRules` stamps every page drawn from a seller
+ * carrying `isTest`, and the bank account below fails the IBAN check digits,
+ * so no banking app will turn the payment code into a transfer. A page that
+ * escaped could not be paid even by someone trying.
+ *
+ * **Set it back to `false` the day real details go in.** Nothing here can do
+ * that for him, which is why the admin says, on the section's front page and
+ * in words, that he is on invented details.
+ */
+export const USE_TEST_DETAILS = true
+
 export const TEST_SELLER: Seller = {
   name: 'Yaman Warda',
   trade: { de: 'Webentwicklung', en: 'Web development' },
@@ -145,11 +170,23 @@ export const TEST_SELLER: Seller = {
  * Real ones whenever they are real. Invented ones only on his own machine, and
  * only while the real ones are still placeholders.
  */
-export const resolveSeller = (): Seller => {
-  if (process.env.NODE_ENV !== 'development') return SELLER
+export const chooseSeller = (own: Seller, useTest: boolean, test: Seller): Seller => {
+  // His own details win the moment they are real, wherever this runs and
+  // whatever the switch says. He can never find himself testing against
+  // invented data while believing it is his, and he cannot ship invented data
+  // by forgetting to turn the switch off after filling his own in.
+  if (sellerGaps(own).length === 0) return own
 
-  return sellerGaps(SELLER).length > 0 ? TEST_SELLER : SELLER
+  if (useTest) return test
+
+  // Off, and his own are still placeholders: hand back the placeholders. They
+  // fail `isSellerReady`, which is what stops anything being issued — the
+  // behaviour before the switch existed.
+  return own
 }
+
+/** The choice above, made with what this file actually holds. */
+export const resolveSeller = (): Seller => chooseSeller(SELLER, USE_TEST_DETAILS, TEST_SELLER)
 
 /**
  * The sentence that replaces the VAT row.

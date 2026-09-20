@@ -1,86 +1,76 @@
 import { describe, expect, it } from 'vitest'
 import {
+  chooseSeller,
   isSellerReady,
   resolveSeller,
   SELLER,
   sellerGaps,
   TEST_SELLER,
-  type Seller,
+  USE_TEST_DETAILS,
 } from '#/backend/modules/invoices/seller'
 
 /**
- * Which details get printed, and the one way that could go badly wrong.
+ * Which details get printed, and the two ways that could go badly wrong.
  *
- * `TEST_SELLER` exists so the section can be walked through before the
- * Finanzamt has answered: invoices issue, take numbers, land in the register.
- * Its bank account does not exist.
+ * `TEST_SELLER` exists because of a real dead end: the one part of the
+ * section that cannot run on his laptop is sending, so it can only be tried
+ * on the live site — and the live site refused to issue anything at all while
+ * his own details still said TODO. He could not reach the thing he needed to
+ * test.
  *
- * The danger is obvious and worth stating: if that set ever reached the live
- * site, real clients would receive real invoices naming an account nobody can
- * pay into, and the first anyone would hear of it is a client saying the
- * transfer bounced.
+ * Its bank account does not exist. Two failures matter:
  *
- * So `resolveSeller` asks for a positive `NODE_ENV === 'development'`. The
- * negative form — `!== 'production'` — is the one that fails the wrong way:
- * a runtime that leaves the variable unset would hand a live Worker the
- * invented IBAN. This file exists to keep anyone from "simplifying" it back.
+ *   1. Shipping it **by accident**, so real clients receive invoices naming an
+ *      account nobody can pay into.
+ *   2. Shipping it **after filling his own details in**, by leaving the switch
+ *      on — the likelier of the two, because by then he has stopped thinking
+ *      about it.
+ *
+ * `chooseSeller` closes the second one structurally: real details win, always,
+ * whatever the switch says. The first is his own deliberate act, and every
+ * page it draws is stamped TEST.
  */
 
-/**
- * `resolveSeller` reads the variable when it is called, not when the module
- * loads, so this is a plain set-call-restore rather than a module reset.
- */
-const withNodeEnv = (value: string | undefined): Seller => {
-  const before = process.env.NODE_ENV
+const real: Seller = { ...TEST_SELLER, isTest: undefined }
+const placeholders = SELLER
 
-  try {
-    if (value === undefined) delete process.env.NODE_ENV
-    else process.env.NODE_ENV = value
-
-    return resolveSeller()
-  } finally {
-    if (before === undefined) delete process.env.NODE_ENV
-    else process.env.NODE_ENV = before
-  }
-}
+type Seller = typeof TEST_SELLER
 
 describe('which details get printed', () => {
-  it('uses the invented set on his own machine, while his own are TODO', () => {
-    expect(withNodeEnv('development')).toBe(TEST_SELLER)
+  it('prints his own the moment they are real, switch or no switch', () => {
+    // The failure that would otherwise be likeliest: details filled in, switch
+    // forgotten, invented bank account shipped to real clients.
+    expect(chooseSeller(real, true, TEST_SELLER)).toBe(real)
+    expect(chooseSeller(real, false, TEST_SELLER)).toBe(real)
   })
 
-  it('never uses it in production', () => {
-    expect(withNodeEnv('production')).toBe(SELLER)
+  it('prints the invented set only while his own are placeholders and he asked', () => {
+    expect(chooseSeller(placeholders, true, TEST_SELLER)).toBe(TEST_SELLER)
   })
 
-  it('never uses it when NODE_ENV is missing', () => {
-    // The whole reason the check is positive. An unset variable must land on
-    // his real details — which still say TODO, which blocks issuing — rather
-    // than on an IBAN nobody can pay into.
-    expect(withNodeEnv(undefined)).toBe(SELLER)
-  })
-
-  it('never uses it under a name nobody anticipated', () => {
-    expect(withNodeEnv('staging')).toBe(SELLER)
-    expect(withNodeEnv('test')).toBe(SELLER)
+  it('falls back to the placeholders when the switch is off', () => {
+    // Which blocks issuing, because placeholders fail `isSellerReady`. That
+    // is the behaviour from before the switch existed, and the safe default.
+    expect(chooseSeller(placeholders, false, TEST_SELLER)).toBe(placeholders)
+    expect(isSellerReady(chooseSeller(placeholders, false, TEST_SELLER))).toBe(false)
   })
 })
 
-describe('what blocks issuing', () => {
-  it('his own details are still placeholders, so the live site refuses', () => {
-    // The day this fails is the day he filled seller.ts in, and this line
-    // should be deleted along with TEST_SELLER.
+describe('what this file is set to right now', () => {
+  it('is on, while his own details are still TODO', () => {
+    // Both lines change together the day he fills `seller.ts` in: the gaps
+    // disappear, and this file should be edited to turn the switch off. If the
+    // second is forgotten, the first still wins — see above.
+    expect(USE_TEST_DETAILS).toBe(true)
     expect(sellerGaps(SELLER).length).toBeGreaterThan(0)
-    expect(isSellerReady(SELLER)).toBe(false)
+    expect(resolveSeller()).toBe(TEST_SELLER)
   })
+})
 
-  it('the invented set is complete, or it would block issuing too', () => {
-    expect(sellerGaps(TEST_SELLER)).toEqual([])
-  })
-
+describe('what makes the invented set survivable', () => {
   it('carries a mark that follows it onto every page it draws', () => {
-    // `paperRules` stamps on this, so a test invoice that escapes as a file
-    // still cannot be mistaken for one a client could pay.
+    // `paperRules` stamps on this, so a page that escaped as a file still
+    // cannot be mistaken for one a client could pay.
     expect(TEST_SELLER.isTest).toBe(true)
     expect(SELLER.isTest).toBeUndefined()
   })
@@ -89,5 +79,9 @@ describe('what blocks issuing', () => {
     // DE00 fails the IBAN check digits by construction: no bank accepts it,
     // and no banking app will turn the payment code into a transfer.
     expect(TEST_SELLER.iban.replace(/\s+/g, '')).toMatch(/^DE00/)
+  })
+
+  it('is complete, or it would block issuing just like the placeholders', () => {
+    expect(sellerGaps(TEST_SELLER)).toEqual([])
   })
 })
