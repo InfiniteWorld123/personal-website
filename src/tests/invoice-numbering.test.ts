@@ -36,6 +36,10 @@ vi.mock('#/shared/env', () => ({ env: { DATABASE_URL: 'postgres://localhost/test
 
 vi.mock('#/backend/shared/image-storage', () => ({ resolveObjectStore: async () => null }))
 
+vi.mock('#/backend/modules/invoices/client.service', () => ({
+  getClient: async (id: string) => ({ id, name: 'A client' }),
+}))
+
 vi.mock('pg', () => ({
   Pool: class {
     query = (text: string, values?: unknown[]) => holder.engine.autocommit(text, values ?? [])
@@ -329,7 +333,11 @@ class Engine {
       const row = this.readInvoice(txn, first)
       const matches = row && (!/status = 'DRAFT'/i.test(sql) || row.status === 'DRAFT')
 
-      return matches ? { rows: [{ id: row!.id }], rowCount: 1 } : { rows: [], rowCount: 0 }
+      // Both columns, because a caller that selects `status` needs to tell a
+      // row that is not a draft apart from a row that is not there at all.
+      return matches
+        ? { rows: [{ id: row!.id, status: row!.status }], rowCount: 1 }
+        : { rows: [], rowCount: 0 }
     }
 
     if (/INSERT INTO invoice_numbers/i.test(sql) && /UPDATE invoices/i.test(sql)) {
@@ -402,6 +410,50 @@ class Engine {
       if (row) txn.invoices.set(first, { ...row, status: 'CANCELLED' })
 
       return { rows: [], rowCount: row ? 1 : 0 }
+    }
+
+    if (/^UPDATE invoices\s+SET client_id/i.test(sql)) {
+      const row = this.readInvoice(txn, first)
+      const matches = row && (!/status = 'DRAFT'/i.test(sql) || row.status === 'DRAFT')
+
+      if (!matches) return { rows: [], rowCount: 0 }
+
+      txn.invoices.set(first, {
+        ...row!,
+        clientId: values[1] as string,
+        dealId: values[2] as string | null,
+        moneyKind: values[3] as Invoice['moneyKind'],
+        language: values[4] as Invoice['language'],
+      })
+
+      return { rows: [], rowCount: 1 }
+    }
+
+    if (/^UPDATE invoices SET net_cents/i.test(sql)) {
+      const row = this.readInvoice(txn, first)
+
+      if (!row) return { rows: [], rowCount: 0 }
+
+      txn.invoices.set(first, {
+        ...row,
+        netCents: values[1] as number,
+        taxCents: values[2] as number,
+        totalCents: values[3] as number,
+      })
+
+      return { rows: [], rowCount: 1 }
+    }
+
+    if (/^DELETE FROM invoice_lines WHERE invoice_id/i.test(sql)) {
+      const row = this.readInvoice(txn, first)
+
+      if (!row) return { rows: [], rowCount: 0 }
+
+      const removed = row.lines.length
+
+      txn.invoices.set(first, { ...row, lines: [] })
+
+      return { rows: [], rowCount: removed }
     }
 
     if (/FROM invoices i JOIN clients c/i.test(sql)) {
@@ -500,7 +552,12 @@ class Engine {
 }
 
 import { closePool, withTransaction } from '#/backend/db/client'
-import { allocateAndIssue, correctInvoice } from '#/backend/modules/invoices/invoice.service'
+import type { InvoiceWriteInput } from '#/shared/validation/invoice.validation'
+import {
+  allocateAndIssue,
+  correctInvoice,
+  updateInvoice,
+} from '#/backend/modules/invoices/invoice.service'
 
 let engine: Engine
 
@@ -784,5 +841,116 @@ describe('a transaction inside a transaction', () => {
     // Nothing committed: not the number, not the status.
     expect(engine.numbers.get(THIS_YEAR)).toBeUndefined()
     expect(engine.invoices.get('inv-1')?.status).toBe('DRAFT')
+  })
+})
+
+/* -------------------------------------------------------------------------- */
+/* Editing                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The other way a numbered document can end up holding a figure nobody agreed
+ * to. Issuing was made safe first, and editing was left loose: `updateInvoice`
+ * checked the status, updated the header under `AND status = 'DRAFT'`, then
+ * called `writeLines`, which carried no status predicate at all. Issue the
+ * invoice in the gap and the header update correctly matched nothing while
+ * `writeLines` deleted the lines of a numbered invoice and wrote a fresh
+ * `total_cents` over it — on a document already sent to the client.
+ */
+const edit = (overrides: Partial<InvoiceWriteInput> = {}): InvoiceWriteInput =>
+  ({
+    clientId: 'client-1',
+    dealId: null,
+    moneyKind: 'BUILD',
+    language: 'de',
+    serviceFrom: null,
+    serviceTo: null,
+    note: '',
+    dueDays: 14,
+    lines: [{ description: 'Rewritten', detail: '', quantity: 1, unitEuros: 10, taxRate: 0 }],
+    ...overrides,
+  }) as InvoiceWriteInput
+
+describe('editing a draft while it is being issued', () => {
+  it('refuses the edit once the number has been handed out, and rewrites nothing', async () => {
+    engine.seed({
+      id: 'inv-1',
+      totalCents: 99_000,
+      netCents: 99_000,
+      lines: [
+        {
+          id: 'l1',
+          position: 1,
+          description: 'Agreed work',
+          detail: '',
+          quantity: 1,
+          unit_cents: 99_000,
+          tax_rate: 0,
+        },
+      ],
+    })
+
+    expect(await allocateAndIssue('inv-1', true)).toBe('2026-001')
+
+    await expect(updateInvoice('inv-1', edit())).rejects.toThrow(/credit note/)
+
+    const after = engine.invoices.get('inv-1')!
+
+    expect(after.totalCents).toBe(99_000)
+    expect(after.lines.map((line) => line.description)).toEqual(['Agreed work'])
+  })
+
+  /**
+   * The sequential case above passes even without a transaction, because by
+   * then the status has settled. This one is the actual race: the edit must
+   * still be holding its lock when the issue arrives, so the two cannot
+   * interleave between the status check and `writeLines`.
+   */
+  it('holds the row against a concurrent issue rather than interleaving with it', async () => {
+    engine.seed({
+      id: 'inv-1',
+      totalCents: 99_000,
+      netCents: 99_000,
+      lines: [
+        {
+          id: 'l1',
+          position: 1,
+          description: 'Agreed work',
+          detail: '',
+          quantity: 1,
+          unit_cents: 99_000,
+          tax_rate: 0,
+        },
+      ],
+    })
+
+    const gate = engine.holdAtLock('')
+
+    const editing = updateInvoice('inv-1', edit())
+    let issued = false
+    let issuing!: Promise<string | null>
+
+    try {
+      await gate.reached
+      issuing = allocateAndIssue('inv-1', true)
+      issuing.finally(() => (issued = true)).catch(() => {})
+
+      // A lock that is merely taken and dropped would let this settle.
+      await engine.untilBlockedOr(() => issued)
+      expect(issued).toBe(false)
+    } finally {
+      gate.release()
+    }
+
+    await deadline(editing, 'the edit to finish')
+    expect(await deadline(issuing, 'the issue to finish')).toBe('2026-001')
+
+    // The edit won the row first, so the client is billed for what it wrote —
+    // once, and before any number existed.
+    const after = engine.invoices.get('inv-1')!
+
+    expect(after.number).toBe('2026-001')
+    expect(after.lines.map((line) => line.description)).toEqual(['Rewritten'])
+    expect(engine.numbers.get(THIS_YEAR)).toBe(2)
   })
 })

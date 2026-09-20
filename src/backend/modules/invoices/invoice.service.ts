@@ -1,4 +1,4 @@
-import { getDb, withTransaction } from '#/backend/db/client'
+import { type Db, getDb, withTransaction } from '#/backend/db/client'
 import { badRequestError, internalError, notFoundError } from '#/backend/shared/error'
 import { resolveObjectStore } from '#/backend/shared/image-storage'
 import type {
@@ -348,9 +348,11 @@ const assertDraft = async (invoiceId: string): Promise<void> => {
  * anybody refers to, and matching them up would be code that exists only to
  * avoid two cheap statements on a table with at most forty rows.
  */
-const writeLines = async (invoiceId: string, input: InvoiceWriteInput): Promise<void> => {
-  const db = getDb()
-
+const writeLines = async (
+  invoiceId: string,
+  input: InvoiceWriteInput,
+  db: Db = getDb(),
+): Promise<void> => {
   await db.query('DELETE FROM invoice_lines WHERE invoice_id = $1;', [invoiceId])
 
   let position = 0
@@ -404,33 +406,64 @@ export const createInvoice = async (input: InvoiceWriteInput): Promise<Invoice> 
   return getInvoice(invoiceId)
 }
 
+/**
+ * Editing a draft, under the lock issuing takes.
+ *
+ * The three statements below used to run loose, and only the middle one
+ * carried `AND status = 'DRAFT'`. Between the check and `writeLines` the
+ * invoice could be issued by a second tab — the header update would then
+ * match nothing, correctly, while `writeLines` went on to delete the lines of
+ * a numbered invoice and write a new `total_cents` over it. A document already
+ * sent to a client, quietly holding a different amount.
+ *
+ * `FOR UPDATE` is the same row lock `allocateAndIssue` takes, so an edit and
+ * an issue can no longer overlap: whichever arrives second finds the status it
+ * was not expecting and is refused. Correcting an issued invoice is what
+ * `correctInvoice` is for, and it leaves both documents standing.
+ */
 export const updateInvoice = async (
   invoiceId: string,
   input: InvoiceWriteInput,
 ): Promise<Invoice> => {
-  await assertDraft(invoiceId)
   await getClient(input.clientId)
 
-  await getDb().query(
-    `UPDATE invoices
-        SET client_id = $2, deal_id = $3, money_kind = $4, language = $5,
-            service_from = $6, service_to = $7, note = $8, due_days = $9,
-            updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND status = 'DRAFT';`,
-    [
-      invoiceId,
-      input.clientId,
-      input.dealId ?? null,
-      input.moneyKind,
-      input.language,
-      input.serviceFrom ?? null,
-      input.serviceTo ?? null,
-      input.note,
-      input.dueDays,
-    ],
-  )
+  await withTransaction(async (db) => {
+    const draft = await db.query<{ status: string }>(
+      'SELECT status FROM invoices WHERE id = $1 FOR UPDATE;',
+      [invoiceId],
+    )
 
-  await writeLines(invoiceId, input)
+    const status = draft.rows[0]?.status
+
+    if (status === undefined) throw notFoundError('That invoice is not here')
+
+    if (status !== 'DRAFT') {
+      throw badRequestError(
+        'That invoice has been issued, so its figures can no longer change. Cancel it with a credit note and issue a corrected one.',
+      )
+    }
+
+    await db.query(
+      `UPDATE invoices
+          SET client_id = $2, deal_id = $3, money_kind = $4, language = $5,
+              service_from = $6, service_to = $7, note = $8, due_days = $9,
+              updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1 AND status = 'DRAFT';`,
+      [
+        invoiceId,
+        input.clientId,
+        input.dealId ?? null,
+        input.moneyKind,
+        input.language,
+        input.serviceFrom ?? null,
+        input.serviceTo ?? null,
+        input.note,
+        input.dueDays,
+      ],
+    )
+
+    await writeLines(invoiceId, input, db)
+  })
 
   return getInvoice(invoiceId)
 }
