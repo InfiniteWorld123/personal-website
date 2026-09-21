@@ -1,0 +1,654 @@
+/* ── Dashboard V2 tokens ─────────────────────────────────────
+   Every rule in this file is scoped to `[data-dashboard]`, which only the
+   `/dashboard` shell sets. Nothing here can reach the public site or the
+   legacy `/admin`, and nothing there reaches in: the dashboard deliberately
+   does not inherit `--background`, `--card` or `--radius` from `styles.css`,
+   because V2 is a different surface with a different rhythm — flat work area,
+   hairlines instead of shadows, a smaller radius.
+
+   Dark mode rides on the same `html.dark` class the rest of the site uses, so
+   the existing ThemeProvider and its no-flash boot script keep working. Only
+   the values below change; the mechanism is shared.
+
+   To change the brand colour of the whole dashboard, change `--dash-brand`.  */
+
+/*
+ * Everything below sits in Tailwind's `components` layer.
+ *
+ * It has to. Unlayered CSS beats anything inside a layer, so while these rules
+ * were unlayered they quietly outranked every Tailwind utility written beside
+ * them: `hidden lg:inline-flex` on a `.dash-btn` lost to the class's own
+ * `display`, and the sidebar-collapse control — desktop only — sat in the
+ * mobile bar next to the drawer button. `h-7` on a small button lost the same
+ * way. Layered, the relationship is the usual one: a class states the default
+ * and a utility beside it overrides.
+ *
+ * The order line is stated rather than inherited, so this file behaves the
+ * same whether or not it happens to load after the main stylesheet.
+ */
+@layer theme, base, components, utilities;
+
+@layer components {
+
+  [data-dashboard] {
+    --dash-brand: #355cff;
+
+    /* The ground the work sits on. Flat, it is the same white as a panel,
+       so a panel is defined only by its hairline. Floating, it goes tinted and
+       the panels lift off it. */
+    --dash-canvas: #ffffff;
+    --dash-surface: #ffffff;
+    --dash-furniture: #f3f5fb;
+    --dash-input: #ffffff;
+
+    --dash-panel-radius: 12px;
+    --dash-panel-border: var(--dash-line);
+    --dash-panel-shadow: none;
+
+    /* The app is always drawn inside a frame. Flush against the window these
+       four are inert and you cannot tell it is there; `framed` gives them
+       values and the whole dashboard lifts off the page as one object. */
+    --dash-page: var(--dash-canvas);
+    --dash-frame-pad: 0px;
+    --dash-frame-radius: 0px;
+    --dash-frame-shadow: none;
+    --dash-frame-clip: hidden;
+
+    /* The three parts of the shell — rail, bar, work area — are drawn as three
+       separate things or as one joined surface, and these four decide which.
+       At zero they are joined by a hairline and you cannot tell there was ever
+       a choice; `detached` pulls them apart and gives each its own edge. */
+    --dash-shell-gap: 0px;
+    --dash-shell-radius: 0px;
+    --dash-shell-shadow: none;
+    --dash-shell-edge: var(--dash-line);
+    --dash-main-bg: transparent;
+
+    --dash-ink: #10172f;
+    --dash-quiet: #5b6a8f;
+
+    --dash-line: rgba(16, 23, 47, 0.09);
+    --dash-soft: rgba(16, 23, 47, 0.07);
+    --dash-hover: rgba(16, 23, 47, 0.05);
+    --dash-chip: rgba(16, 23, 47, 0.06);
+
+    /* Two blues, not one: the fill stays saturated so a filled surface reads as
+       the brand, while the text blue is darkened until small type passes AA. */
+    --dash-blue: #355cff;
+    --dash-blue-ink: #2447e0;
+    --dash-blue-tint: #e9eeff;
+    --dash-blue-label: #eef2ff;
+
+    /* Same split for red. #ca4152 clears AA on white at 4.8:1, but not on its
+       own tint, where an 11px pill label sits — that one is darkened. */
+    --dash-red: #ca4152;
+    --dash-red-ink: #b3202f;
+    --dash-red-tint: #faecee;
+
+    --dash-slab: #10172f;
+    --dash-slab-ink: #ffffff;
+    --dash-slab-quiet: #a9b4d0;
+
+    --dash-quietbar: #ccd7f7;
+    --dash-live: #21a179;
+
+    /* The only shadow in the system. It belongs to things that genuinely float
+       above the work surface — menus, the search panel, the mobile drawer, the
+       label that slides out of a collapsed rail. Panels never get one. */
+    --dash-shadow: 0 18px 44px rgba(16, 23, 47, 0.16);
+  }
+
+  /* Dark is built to the same rule, not inverted: the furniture recedes and the
+     work surface comes forward, which in dark means the rails go *below* the
+     page colour rather than above it. */
+  .dark [data-dashboard] {
+    --dash-canvas: #101728;
+    --dash-surface: #101728;
+    --dash-furniture: #0a0e1a;
+    --dash-input: #151d33;
+
+    --dash-ink: #edf3ff;
+    --dash-quiet: #9aa8ca;
+
+    --dash-line: rgba(237, 243, 255, 0.1);
+    --dash-soft: rgba(237, 243, 255, 0.08);
+    --dash-hover: rgba(237, 243, 255, 0.06);
+    --dash-chip: rgba(237, 243, 255, 0.08);
+
+    --dash-blue: #7aa2ff;
+    --dash-blue-ink: #a8c2ff;
+    --dash-blue-tint: #1b2748;
+
+    --dash-red: #ff6b7d;
+    --dash-red-ink: #ff8d9b;
+    --dash-red-tint: #2f2233;
+
+    --dash-slab: #05080f;
+    --dash-slab-ink: #edf3ff;
+    --dash-slab-quiet: #9aa8ca;
+
+    --dash-quietbar: #2b3a63;
+    --dash-live: #5ce1a6;
+
+    --dash-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  }
+
+  /* ── Floating ─────────────────────────────────────────────────
+     The other way to build the same screen: a soft tinted ground with the
+     panels lifted above it, rather than one flat surface divided by hairlines.
+     It is the shape the legacy `/admin` already had, and the owner asked for
+     it back as a choice rather than a replacement — so both live here and
+     Settings decides which is on.
+
+     Only the ground, the fill, the radius and the shadow change. Every colour
+     that carries meaning — the brand blue, the red on late money, the text —
+     is identical in both, so nothing about what a screen says depends on
+     which surface is chosen. */
+
+  [data-dashboard][data-surface='floating'] {
+    --dash-canvas: #eff2f9;
+    --dash-furniture: #ffffff;
+    --dash-panel-radius: 16px;
+    --dash-panel-border: rgba(16, 23, 47, 0.05);
+    /* Two layers, and the wide one is the brand blue rather than grey: a
+       neutral spread at this size reads as dirt under the card. */
+    --dash-panel-shadow:
+      0 1px 2px rgba(16, 23, 47, 0.06),
+      0 8px 24px rgba(53, 92, 255, 0.07);
+  }
+
+  .dark [data-dashboard][data-surface='floating'] {
+    /* Inverted the same way the flat theme is: the ground drops below the page
+       colour so the panels are the lit things rather than the holes. */
+    --dash-canvas: #080b16;
+    --dash-surface: #141a2d;
+    --dash-furniture: #141a2d;
+    --dash-input: #1b2340;
+    --dash-panel-border: rgba(237, 243, 255, 0.06);
+    --dash-panel-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 12px 32px rgba(20, 44, 140, 0.34);
+  }
+
+  /* ── Framed ───────────────────────────────────────────────────
+     The whole dashboard as one rounded object resting on a page, with the
+     sidebar white and the work area a shade below it. It is the third of the
+     three and the only one that changes the outline of the app rather than
+     the inside of it. */
+
+  [data-dashboard][data-surface='framed'] {
+    --dash-page: #e6eaf3;
+    --dash-canvas: #f7f8fc;
+    --dash-surface: #ffffff;
+    --dash-furniture: #ffffff;
+
+    --dash-frame-pad: 18px;
+    --dash-frame-radius: 22px;
+    --dash-frame-shadow:
+      0 1px 2px rgba(16, 23, 47, 0.05),
+      0 24px 60px rgba(16, 23, 47, 0.1);
+
+    --dash-panel-radius: 16px;
+    --dash-panel-border: rgba(16, 23, 47, 0.06);
+    --dash-panel-shadow: 0 1px 2px rgba(16, 23, 47, 0.04);
+  }
+
+  .dark [data-dashboard][data-surface='framed'] {
+    --dash-page: #04060c;
+    --dash-canvas: #0c1220;
+    --dash-surface: #141a2d;
+    --dash-furniture: #111728;
+    --dash-input: #1b2340;
+
+    --dash-frame-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    --dash-panel-border: rgba(237, 243, 255, 0.07);
+    --dash-panel-shadow: none;
+  }
+
+  /* A frame on a phone spends width the phone does not have. Below `sm` the
+     framed surface simply meets the edges, like the other two. */
+  @media (max-width: 639px) {
+    [data-dashboard][data-surface='framed'] {
+      --dash-frame-pad: 0px;
+      --dash-frame-radius: 0px;
+      --dash-frame-shadow: none;
+    }
+  }
+
+  /* ── Detached ─────────────────────────────────────────────────
+     Three things on a desk rather than one object: the rail, the bar and the
+     work area each keep their own corners and their own shadow, with the page
+     showing through the gaps between them.
+
+     Inside the work area the panels go back to the flat treatment — hairlines,
+     no shadow. Stacking a shadow inside a shadow reads as a card that has come
+     loose, and the separation is already being done by the gap. */
+
+  [data-dashboard][data-surface='detached'] {
+    --dash-page: #e6eaf3;
+    --dash-canvas: #e6eaf3;
+    --dash-furniture: #ffffff;
+    --dash-main-bg: #ffffff;
+    --dash-surface: #ffffff;
+
+    --dash-frame-pad: 14px;
+    --dash-frame-clip: visible;
+
+    --dash-shell-gap: 14px;
+    --dash-shell-radius: 18px;
+    --dash-shell-edge: transparent;
+    --dash-shell-shadow:
+      0 1px 2px rgba(16, 23, 47, 0.05),
+      0 8px 24px rgba(53, 92, 255, 0.06);
+
+    --dash-panel-radius: 12px;
+    --dash-panel-border: var(--dash-line);
+    --dash-panel-shadow: none;
+  }
+
+  .dark [data-dashboard][data-surface='detached'] {
+    --dash-page: #05080f;
+    --dash-canvas: #05080f;
+    --dash-furniture: #111728;
+    --dash-main-bg: #101728;
+    --dash-surface: #101728;
+    --dash-input: #1b2340;
+
+    --dash-shell-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  /* A phone has no width to spend on three gaps, but collapsing the whole
+     idea would make this surface indistinguishable from flat. It keeps the
+     separation and gives up the generosity. */
+  @media (max-width: 639px) {
+    [data-dashboard][data-surface='detached'] {
+      --dash-frame-pad: 9px;
+      --dash-shell-gap: 9px;
+      --dash-shell-radius: 14px;
+    }
+  }
+
+  /* ── Surfaces ─────────────────────────────────────────────── */
+
+  [data-dashboard] {
+    background: var(--dash-page);
+    color: var(--dash-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* The dashboard fills the window and scrolls inside itself rather than
+     scrolling the page. That is what lets the frame be a frame — it has to
+     stay put — and it also means the rail and the bar hold their place
+     without `position: sticky` doing it for them. */
+  .dash-root {
+    height: 100dvh;
+    padding: var(--dash-frame-pad);
+  }
+
+  .dash-frame {
+    height: 100%;
+    gap: var(--dash-shell-gap);
+    /* Joined, the frame clips to its own rounded corner. Detached, the panels
+       inside it cast shadows that must not be cut off at its edge. */
+    overflow: var(--dash-frame-clip);
+    border-radius: var(--dash-frame-radius);
+    background: var(--dash-canvas);
+    box-shadow: var(--dash-frame-shadow);
+  }
+
+  /* The bar and the work area, stacked. */
+  .dash-shell-column {
+    gap: var(--dash-shell-gap);
+  }
+
+  .dash-topbar,
+  .dash-main {
+    border-radius: var(--dash-shell-radius);
+    box-shadow: var(--dash-shell-shadow);
+  }
+
+  .dash-main {
+    background: var(--dash-main-bg);
+  }
+
+  /* A short window cannot hold the sidebar's footer card as well as its
+     sections, and the sections are the ones you came for. */
+  @media (max-height: 780px) {
+    .dash-promo {
+      display: none;
+    }
+  }
+
+  .dash-panel {
+    border: 1px solid var(--dash-panel-border);
+    border-radius: var(--dash-panel-radius);
+    background: var(--dash-surface);
+    box-shadow: var(--dash-panel-shadow);
+  }
+
+  /* The one filled card on the Overview. It is not a `.dash-panel` — it has no
+     border and no surface fill — but it has to lift with the rest of them. */
+  .dash-card {
+    border-radius: var(--dash-panel-radius);
+    box-shadow: var(--dash-panel-shadow);
+  }
+
+  .dash-slab {
+    border-radius: var(--dash-panel-radius);
+    background: var(--dash-slab);
+    color: var(--dash-slab-ink);
+  }
+
+  .dash-title {
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
+  /* The one place the public site's voice shows up in the dashboard. */
+  .dash-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--dash-blue);
+  }
+
+  .dash-eyebrow-quiet {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--dash-quiet);
+  }
+
+  /* Every figure is tabular so columns of money line up down the page. */
+  .dash-figure {
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dash-num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Status chips ─────────────────────────────────────────── */
+
+  .dash-tone-blue {
+    background: var(--dash-blue-tint);
+    color: var(--dash-blue-ink);
+  }
+
+  .dash-tone-grey {
+    background: var(--dash-chip);
+    color: var(--dash-quiet);
+  }
+
+  .dash-tone-red {
+    background: var(--dash-red-tint);
+    color: var(--dash-red-ink);
+  }
+
+  .dash-tone-ink {
+    background: var(--dash-slab);
+    color: var(--dash-slab-ink);
+  }
+
+  .dash-tone-outline {
+    border: 1px solid var(--dash-line);
+    color: var(--dash-quiet);
+  }
+
+  /* ── Controls ─────────────────────────────────────────────── */
+
+  .dash-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .dash-btn-primary {
+    background: var(--dash-brand);
+    color: #ffffff;
+  }
+
+  .dash-btn-primary:hover {
+    filter: brightness(0.92);
+  }
+
+  .dash-btn-quiet {
+    border: 1px solid var(--dash-line);
+    background: var(--dash-input);
+    color: var(--dash-ink);
+  }
+
+  .dash-btn-quiet:hover {
+    background: var(--dash-hover);
+  }
+
+  .dash-btn-ghost {
+    color: var(--dash-quiet);
+  }
+
+  .dash-btn-ghost:hover {
+    background: var(--dash-hover);
+    color: var(--dash-ink);
+  }
+
+  .dash-btn:disabled {
+    background: var(--dash-chip);
+    color: var(--dash-quiet);
+    cursor: not-allowed;
+    filter: none;
+  }
+
+  /* One focus ring for the whole surface, visible in both themes. */
+  [data-dashboard] :focus-visible {
+    outline: 2px solid var(--dash-blue);
+    outline-offset: 2px;
+  }
+
+  /* ── Rows that answer a pointer ───────────────────────────── */
+
+  .dash-row:hover {
+    background: var(--dash-hover);
+  }
+
+  .dash-menu-item:hover {
+    background: var(--dash-hover);
+  }
+
+  .dash-seg[data-on='true'] {
+    background: var(--dash-surface);
+    color: var(--dash-ink);
+    font-weight: 600;
+  }
+
+  /* ── Sidebar ──────────────────────────────────────────────── */
+
+  .dash-side {
+    width: 264px;
+    /* No `overflow: hidden` to go with the radius, deliberately: the label that
+       slides out of a collapsed rail is wider than the rail, and clipping here
+       cuts it off at 72px. The corners stay clean because the brand block and
+       the footer card have no fill of their own. */
+    border-radius: var(--dash-shell-radius);
+    box-shadow: var(--dash-shell-shadow);
+    transition: width 220ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  [data-dashboard][data-rail='true'] .dash-side {
+    width: 72px;
+  }
+
+  /* Collapsed, the rail keeps only what is legible at 72px: the mark, the icons,
+     and the blue edge that says where you are. Everything that needs width —
+     the wordmark, the group headings, the row labels, the counts, the site card
+     — goes away rather than being squeezed. The counts come back inside the
+     floating label, which is why the Inbox row names its own number there. */
+  [data-dashboard][data-rail='true'] .dash-wordmark,
+  [data-dashboard][data-rail='true'] .dash-group-label,
+  [data-dashboard][data-rail='true'] .dash-promo,
+  [data-dashboard][data-rail='true'] .dash-nav-text,
+  [data-dashboard][data-rail='true'] .dash-nav-badge {
+    display: none;
+  }
+
+  [data-dashboard][data-rail='true'] .dash-nav-row {
+    justify-content: center;
+    gap: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .dash-nav-row {
+    color: var(--dash-quiet);
+  }
+
+  .dash-nav:hover .dash-nav-row {
+    background: var(--dash-hover);
+    color: var(--dash-ink);
+  }
+
+  .dash-nav[data-active='true'] .dash-nav-row {
+    background: var(--dash-blue-tint);
+    color: var(--dash-blue-ink);
+    font-weight: 600;
+  }
+
+  .dash-nav[data-active='true'] .dash-nav-edge {
+    background: var(--dash-blue);
+  }
+
+  .dash-nav-icon {
+    transition: transform 170ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  /* The label that lives inside the collapsed rail, and comes out of it.
+     It is not only a hover affordance: keyboard focus brings it out too, so a
+     collapsed rail stays usable without a pointer. */
+  .dash-nav-float {
+    display: none;
+  }
+
+  [data-dashboard][data-rail='true'] .dash-nav-float {
+    display: flex;
+    opacity: 0;
+    transform: translate(-8px, -50%);
+    transition:
+      opacity 140ms ease,
+      transform 170ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  [data-dashboard][data-rail='true'] .dash-nav:hover .dash-nav-float,
+  [data-dashboard][data-rail='true'] .dash-nav:focus-visible .dash-nav-float {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  [data-dashboard][data-rail='true'] .dash-nav:hover .dash-nav-icon {
+    transform: scale(1.16);
+  }
+
+  /* ── The chart ────────────────────────────────────────────── */
+
+  .dash-bar-fill {
+    background: var(--dash-quietbar);
+    transition: background 160ms ease;
+  }
+
+  .dash-bar:hover .dash-bar-fill {
+    background: var(--dash-blue-tint);
+  }
+
+  .dash-bar[data-on='true'] .dash-bar-fill {
+    background: var(--dash-brand);
+  }
+
+  .dash-bar-tip {
+    opacity: 0;
+    transition: opacity 140ms ease;
+  }
+
+  .dash-bar[data-on='true'] .dash-bar-tip {
+    opacity: 1;
+  }
+
+  /* ── The one signature moment ─────────────────────────────────
+     Panels arrive together when a screen opens, one shortly after the next.
+     Nothing else on this surface animates on its own. */
+
+  @keyframes dash-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .dash-rise {
+    animation: dash-rise 260ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  }
+
+  .dash-rise-1 { animation-delay: 0ms; }
+  .dash-rise-2 { animation-delay: 40ms; }
+  .dash-rise-3 { animation-delay: 80ms; }
+  .dash-rise-4 { animation-delay: 120ms; }
+  .dash-rise-5 { animation-delay: 160ms; }
+  .dash-rise-6 { animation-delay: 200ms; }
+
+  @keyframes dash-shimmer {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+
+  .dash-skeleton {
+    background: var(--dash-chip);
+    border-radius: 4px;
+    animation: dash-shimmer 1.4s ease-in-out infinite;
+  }
+
+  /* Reduced motion keeps every meaning and drops every movement: panels are
+     simply already there, the rail label is simply already out. */
+  @media (prefers-reduced-motion: reduce) {
+    .dash-side,
+    .dash-nav-icon,
+    .dash-bar-fill,
+    .dash-bar-tip,
+    [data-dashboard][data-rail='true'] .dash-nav-float {
+      transition: none;
+    }
+
+    [data-dashboard][data-rail='true'] .dash-nav:hover .dash-nav-icon {
+      transform: none;
+    }
+
+    [data-dashboard][data-rail='true'] .dash-nav:hover .dash-nav-float,
+    [data-dashboard][data-rail='true'] .dash-nav:focus-visible .dash-nav-float {
+      transform: translate(0, -50%);
+    }
+
+    .dash-rise {
+      animation: none;
+    }
+
+    .dash-skeleton {
+      animation: none;
+      opacity: 0.8;
+    }
+  }
+
+}

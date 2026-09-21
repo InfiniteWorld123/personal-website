@@ -4,9 +4,8 @@ import type { ReactNode } from 'react'
 import {
   LANGUAGE_COOKIE,
   type Language,
-  defaultLanguage,
   directionFor,
-  languageFromPathname,
+  documentLanguageFor,
   withLanguage,
 } from './language'
 
@@ -55,7 +54,7 @@ export function LanguageProvider({
   const pathname = useLocation({ select: (location) => location.pathname })
   const navigate = useNavigate()
 
-  const language = forced ?? languageFromPathname(pathname) ?? defaultLanguage
+  const language = forced ?? documentLanguageFor(pathname)
   const direction = directionFor(language)
 
   useEffect(() => {

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './../routes/__root'
 import { Route as IndexRouteImport } from './../routes/index'
 import { Route as LangRouteImport } from './../routes/$lang'
 import { Route as AdminRouteImport } from './../routes/admin'
+import { Route as DashboardRouteImport } from './../routes/dashboard'
 import { Route as SitemapDotxmlRouteImport } from './../routes/sitemap[.]xml'
 import { Route as LangIndexRouteImport } from './../routes/$lang.index'
 import { Route as LangAboutRouteImport } from './../routes/$lang.about'
@@ -28,6 +29,15 @@ import { Route as ApiSplatRouteImport } from './../routes/api.$'
 import { Route as ApiContactRouteImport } from './../routes/api/contact'
 import { Route as ApiInboundEmailRouteImport } from './../routes/api/inbound-email'
 import { Route as ApiStripeWebhookRouteImport } from './../routes/api/stripe-webhook'
+import { Route as DashboardIndexRouteImport } from './../routes/dashboard.index'
+import { Route as DashboardBlogRouteImport } from './../routes/dashboard.blog'
+import { Route as DashboardCalendarRouteImport } from './../routes/dashboard.calendar'
+import { Route as DashboardContentRouteImport } from './../routes/dashboard.content'
+import { Route as DashboardInboxRouteImport } from './../routes/dashboard.inbox'
+import { Route as DashboardInvoicesRouteImport } from './../routes/dashboard.invoices'
+import { Route as DashboardLeadsRouteImport } from './../routes/dashboard.leads'
+import { Route as DashboardProjectsRouteImport } from './../routes/dashboard.projects'
+import { Route as DashboardSettingsRouteImport } from './../routes/dashboard.settings'
 import { Route as RssArDotxmlRouteImport } from './../routes/rss.ar[.]xml'
 import { Route as RssDeDotxmlRouteImport } from './../routes/rss.de[.]xml'
 import { Route as RssEnDotxmlRouteImport } from './../routes/rss.en[.]xml'
@@ -81,6 +91,11 @@ const LangRoute = LangRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -162,6 +177,51 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe-webhook',
   path: '/api/stripe-webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBlogRoute = DashboardBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardContentRoute = DashboardContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardInboxRoute = DashboardInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardInvoicesRoute = DashboardInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const RssArDotxmlRoute = RssArDotxmlRouteImport.update({
   id: '/rss/ar.xml',
@@ -367,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$lang': typeof LangRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
   '/$lang/contact': typeof LangContactRoute
@@ -381,11 +442,20 @@ export interface FileRoutesByFullPath {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/blog': typeof DashboardBlogRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/invoices': typeof DashboardInvoicesRoute
+  '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
@@ -439,11 +509,20 @@ export interface FileRoutesByTo {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/blog': typeof DashboardBlogRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/invoices': typeof DashboardInvoicesRoute
+  '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang': typeof LangIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
@@ -486,6 +565,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$lang': typeof LangRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
   '/$lang/contact': typeof LangContactRoute
@@ -500,11 +580,20 @@ export interface FileRoutesById {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/blog': typeof DashboardBlogRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
+  '/dashboard/content': typeof DashboardContentRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/invoices': typeof DashboardInvoicesRoute
+  '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
@@ -548,6 +637,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$lang'
     | '/admin'
+    | '/dashboard'
     | '/sitemap.xml'
     | '/$lang/about'
     | '/$lang/contact'
@@ -562,11 +652,20 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/blog'
+    | '/dashboard/calendar'
+    | '/dashboard/content'
+    | '/dashboard/inbox'
+    | '/dashboard/invoices'
+    | '/dashboard/leads'
+    | '/dashboard/projects'
+    | '/dashboard/settings'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang/'
     | '/admin/'
+    | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
@@ -620,11 +719,20 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/blog'
+    | '/dashboard/calendar'
+    | '/dashboard/content'
+    | '/dashboard/inbox'
+    | '/dashboard/invoices'
+    | '/dashboard/leads'
+    | '/dashboard/projects'
+    | '/dashboard/settings'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang'
     | '/admin'
+    | '/dashboard'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
@@ -666,6 +774,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$lang'
     | '/admin'
+    | '/dashboard'
     | '/sitemap.xml'
     | '/$lang/about'
     | '/$lang/contact'
@@ -680,11 +789,20 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/blog'
+    | '/dashboard/calendar'
+    | '/dashboard/content'
+    | '/dashboard/inbox'
+    | '/dashboard/invoices'
+    | '/dashboard/leads'
+    | '/dashboard/projects'
+    | '/dashboard/settings'
     | '/rss/ar.xml'
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang/'
     | '/admin/'
+    | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/work/$slug'
@@ -727,6 +845,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LangRoute: typeof LangRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
+  DashboardRoute: typeof DashboardRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminLoginRoute: typeof AdminLoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
@@ -759,6 +878,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -872,6 +998,69 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/stripe-webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/blog': {
+      id: '/dashboard/blog'
+      path: '/blog'
+      fullPath: '/dashboard/blog'
+      preLoaderRoute: typeof DashboardBlogRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/calendar': {
+      id: '/dashboard/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/calendar'
+      preLoaderRoute: typeof DashboardCalendarRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/content': {
+      id: '/dashboard/content'
+      path: '/content'
+      fullPath: '/dashboard/content'
+      preLoaderRoute: typeof DashboardContentRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/inbox': {
+      id: '/dashboard/inbox'
+      path: '/inbox'
+      fullPath: '/dashboard/inbox'
+      preLoaderRoute: typeof DashboardInboxRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices': {
+      id: '/dashboard/invoices'
+      path: '/invoices'
+      fullPath: '/dashboard/invoices'
+      preLoaderRoute: typeof DashboardInvoicesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/leads': {
+      id: '/dashboard/leads'
+      path: '/leads'
+      fullPath: '/dashboard/leads'
+      preLoaderRoute: typeof DashboardLeadsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/projects': {
+      id: '/dashboard/projects'
+      path: '/projects'
+      fullPath: '/dashboard/projects'
+      preLoaderRoute: typeof DashboardProjectsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/rss/ar.xml': {
       id: '/rss/ar.xml'
@@ -1257,10 +1446,39 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface DashboardRouteChildren {
+  DashboardBlogRoute: typeof DashboardBlogRoute
+  DashboardCalendarRoute: typeof DashboardCalendarRoute
+  DashboardContentRoute: typeof DashboardContentRoute
+  DashboardInboxRoute: typeof DashboardInboxRoute
+  DashboardInvoicesRoute: typeof DashboardInvoicesRoute
+  DashboardLeadsRoute: typeof DashboardLeadsRoute
+  DashboardProjectsRoute: typeof DashboardProjectsRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardBlogRoute: DashboardBlogRoute,
+  DashboardCalendarRoute: DashboardCalendarRoute,
+  DashboardContentRoute: DashboardContentRoute,
+  DashboardInboxRoute: DashboardInboxRoute,
+  DashboardInvoicesRoute: DashboardInvoicesRoute,
+  DashboardLeadsRoute: DashboardLeadsRoute,
+  DashboardProjectsRoute: DashboardProjectsRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LangRoute: LangRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
+  DashboardRoute: DashboardRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminLoginRoute: AdminLoginRoute,
   ApiSplatRoute: ApiSplatRoute,

@@ -31,6 +31,28 @@ export const languageFromPathname = (pathname: string): Language | null => {
   return isLanguage(first) ? first : null
 }
 
+/**
+ * Dashboard V2 is English-only for its first version, and it carries no
+ * language segment to say so.
+ */
+const isEnglishOnlyPath = (pathname: string) =>
+  pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+
+/**
+ * What `<html lang>` should say for this path.
+ *
+ * Both the document shell and `LanguageProvider` need this answer, and for a
+ * while they each worked it out for themselves. They disagreed the moment
+ * `/dashboard` arrived: the server rendered `lang="en"` and the provider's
+ * effect overwrote it with the default, `de`, a tick after hydration — so the
+ * document announced an English page as German and nothing said why.
+ *
+ * Public routes get exactly the answer they got before: the language in the
+ * URL, falling back to the default.
+ */
+export const documentLanguageFor = (pathname: string): Language =>
+  isEnglishOnlyPath(pathname) ? 'en' : (languageFromPathname(pathname) ?? defaultLanguage)
+
 /** Swap the language segment of a public path, keeping the rest of the URL. */
 export const withLanguage = (pathname: string, language: Language) => {
   const segments = pathname.split('/').filter(Boolean)

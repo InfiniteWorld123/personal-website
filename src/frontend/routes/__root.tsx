@@ -7,7 +7,7 @@ import { ThemeProvider } from '#/frontend/components/theme/theme-provider'
 import { THEME_STORAGE_KEY } from '#/frontend/components/theme/theme'
 import { site } from '#/frontend/content/site'
 import { LanguageProvider } from '#/frontend/i18n/language-provider'
-import { defaultLanguage, directionFor, languageFromPathname } from '#/frontend/i18n/language'
+import { directionFor, documentLanguageFor } from '#/frontend/i18n/language'
 import { MOTION_BOOT_SCRIPT, useMotionPreference } from '#/frontend/motion'
 import { NotFoundPage } from '#/frontend/pages/public/NotFoundPage'
 
@@ -61,7 +61,7 @@ export const Route = createRootRoute({
 function RootDocument({ children }: { children: ReactNode }) {
   const router = useRouter()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const language = languageFromPathname(pathname) ?? defaultLanguage
+  const language = documentLanguageFor(pathname)
   const nonce = typeof router.options.ssr === 'object' ? router.options.ssr.nonce : undefined
 
   useMotionPreference()

@@ -1,0 +1,8 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { ModuleScreen } from '#/frontend/pages/dashboard/ModuleScreen'
+
+/** Shape only. The module's behaviour is not specified yet. */
+export const Route = createFileRoute('/dashboard/content')({
+  head: () => ({ meta: [{ title: 'Content · Dashboard' }] }),
+  component: () => <ModuleScreen module="content" />,
+})
