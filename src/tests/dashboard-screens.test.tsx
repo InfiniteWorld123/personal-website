@@ -203,6 +203,12 @@ describe('nothing in the sidebar overrides a rule that has two states', () => {
       why: "the collapsed rail takes away this row's padding, gap and alignment",
     },
     {
+      klass: 'dash-brand-block',
+      exact: [],
+      prefixes: ['p-', 'px-', 'pl-', 'pr-', 'justify-'],
+      why: 'the collapsed rail drops its padding so the mark can centre itself',
+    },
+    {
       klass: 'dash-nav-edge',
       exact: [],
       prefixes: ['bg-', 'w-', 'h-'],

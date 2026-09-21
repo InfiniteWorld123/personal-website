@@ -510,6 +510,18 @@
     display: none;
   }
 
+  /* The rail is 72px and the mark is 34, so the block's own 20px of padding
+     leaves it two pixels short. Collapsed, the padding goes and the mark
+     centres itself instead. */
+  .dash-brand-block {
+    padding-inline: 20px;
+  }
+
+  [data-dashboard][data-rail='true'] .dash-brand-block {
+    padding-inline: 0;
+    justify-content: center;
+  }
+
   [data-dashboard][data-rail='true'] .dash-nav-row {
     justify-content: center;
     gap: 0;

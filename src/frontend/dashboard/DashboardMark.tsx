@@ -1,35 +1,36 @@
+import type { CSSProperties } from 'react'
+import { BrandMark } from '#/frontend/components/layout/public/BrandMark'
 import { cn } from '#/frontend/lib/utils'
 
 /**
- * The dashboard's own mark.
+ * The owner's own mark, in the dashboard's colours.
  *
- * The public site's `BrandMark` is a drawn `Y` with an animated caret; it
- * introduces the site to a visitor who has never seen it. This one sits in a
- * corner the owner looks at every morning, so it is the same letter with the
- * caret folded into it, set solid inside the brand square — legible at 32px,
- * still the same shape, and it never animates.
+ * It is the public site's `BrandMark` rather than a drawing of its own, so the
+ * two can never drift apart: the letter, the caret and the proportions are
+ * defined once. Only the colours are answered here.
+ *
+ * The glyph strokes its arms with `currentColor`, which the sidebar already
+ * sets, and its caret with `--primary` — a public-site token the dashboard
+ * deliberately does not inherit. That variable is reassigned on this wrapper
+ * alone, so the caret takes the dashboard's accent and nothing outside this
+ * span is affected.
+ *
+ * The accent, not the brand fill: on the public site the caret follows
+ * `--primary`, which lightens in dark so it still reads against a dark header.
+ * `--dash-blue` is the dashboard's token that does the same, and it is the
+ * same `#355cff` in light.
+ *
+ * It is set inline rather than in `dashboard.css` because the rule it has to
+ * beat is unlayered, and everything in that file sits in Tailwind's
+ * `components` layer — where it would lose.
  */
-export function DashboardMark({ className, size = 32 }: { className?: string; size?: number }) {
+export function DashboardMark({ className, size = 34 }: { className?: string; size?: number }) {
   return (
     <span
-      aria-hidden="true"
-      className={cn('grid shrink-0 place-items-center rounded-[9px]', className)}
-      style={{ width: size, height: size, background: 'var(--dash-brand)' }}
+      className={cn('grid shrink-0 place-items-center', className)}
+      style={{ '--primary': 'var(--dash-blue)' } as CSSProperties}
     >
-      <svg
-        width={Math.round(size * 0.53)}
-        height={Math.round(size * 0.53)}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#ffffff"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        focusable="false"
-      >
-        <path d="M6 6l6 8 6-8" />
-        <path d="M12 15v4" />
-      </svg>
+      <BrandMark size={size} />
     </span>
   )
 }

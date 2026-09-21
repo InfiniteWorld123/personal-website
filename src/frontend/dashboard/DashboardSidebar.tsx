@@ -35,7 +35,7 @@ export function DashboardSidebar({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-[var(--dash-line)] px-5">
+      <div className="dash-brand-block flex h-16 shrink-0 items-center gap-3 border-b border-[var(--dash-line)]">
         <DashboardMark />
         <div className={cn('min-w-0', !forceExpanded && 'dash-wordmark')}>
           <p className="text-[10px] font-semibold tracking-[0.15em] text-[var(--dash-quiet)]">
