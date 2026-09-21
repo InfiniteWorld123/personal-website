@@ -1,122 +1,74 @@
-# Personal Platform — Agent Guide
+# Personal Platform V2 — Agent Guide
 
-Rules every AI agent and contributor follows on this repository.
-Detailed decisions live under `docs/`. This file is intentionally short.
+This repository is transitioning from a legacy platform to V2. Read
+`docs/v2/foundation.md` before planning or changing V2.
 
-## Read Before Working
+## Sources of truth
 
-1. `docs/project.md` — what this platform is, who it serves, what is excluded.
-2. `docs/architecture.md` — the system-wide technical picture.
-3. `docs/data-model.md` — the tables and their boundaries.
-4. `docs/roadmap.md` — phases, slices, and current focus.
-5. `docs/decisions.md` — why things are the way they are. Read before proposing a change to them.
-6. The current code, migrations, and tests for implemented behavior.
+- `docs/v2/foundation.md` owns the approved V2 foundation.
+- An approved module specification under `docs/v2/` owns that module's intended
+  behavior once it exists.
+- Current code and tests describe legacy behavior only. They are evidence, not
+  automatic V2 requirements.
+- The two PDFs under `docs/services/` are the preserved service-pricing
+  documents. Do not edit or delete them without an explicit request.
 
-Do not read every document when the task concerns one slice.
+When a requirement is missing, ask. Do not recover a deleted legacy decision
+from Git history and silently treat it as a V2 decision.
 
-## Source-of-Truth Rules
+## Transition boundaries
 
-- `docs/project.md` owns product scope and boundaries.
-- `docs/positioning.md` owns how the business is described to visitors.
-- `src/backend/db/migrations/` is authoritative for the implemented schema.
-  Never rewrite an applied migration; add a new numbered migration.
-- Backend route, validation, service, and shared-type code is authoritative for
-  the currently implemented HTTP contract.
-- `docs/roadmap.md` owns delivery status and current focus.
-- When documentation and implementation disagree, do not silently pick one.
-  Report the mismatch and ask whether the task changes the plan or fixes the code.
+- New backend code belongs under `src/backend2/`.
+- The new private application lives at `/dashboard`.
+- V2 uses a new database and a new migration history.
+- Keep `/admin`, `src/backend/`, the legacy database, and the current public
+  behavior operational until an approved cutover removes them.
+- Do not make V2 write to the legacy and V2 databases simultaneously without an
+  approved migration design.
+- Do not delete legacy code, routes, configuration, or data merely because a V2
+  replacement has started.
 
-## Product Invariants
+## Public website boundary
 
-- This platform serves one person: Yaman Warda. It is not a SaaS product.
-- There is exactly one administrative user. Do not add organizations, tenants,
-  team roles, staff permissions, or user registration.
-- Clients and referrers are records in the database. They do not get accounts,
-  portals, or logins.
-- Market assumptions: Germany, EUR, Europe/Berlin time, German invoicing rules.
-- The public site is trilingual: German, English, Arabic. This includes blog
-  posts: a post carries one translation per language and cannot be published
-  until all three are written. See `docs/decisions.md` D23, which reversed D7.
-- Never fabricate testimonials, client names, revenue figures, project counts,
-  ratings, or years of experience. If a number is not real, it does not ship.
-- Never promise business results the work cannot guarantee — no revenue lifts,
-  no conversion percentages, no ranking guarantees.
+The public website keeps its current accepted design. Backend2 will eventually
+serve its data and operations, but V2 integration work must preserve the public
+layout, styling, motion, routes, languages, copy, and responsive behavior unless
+the owner explicitly approves a visible change.
 
-## Scope Boundary
+## Dashboard boundary
 
-In scope across all phases: public marketing site, case studies, blog,
-admin dashboard, content management, leads, bookings, clients, projects,
-invoices, payments, subscriptions, referrals, analytics overview.
+- Dashboard V2 is English-only for the initial version.
+- A compact full mailbox with sending, receiving, and attachments is in scope.
+- The AI assistant is public-facing only; do not place an AI assistant in the
+  dashboard.
+- Module details are not approved until their individual specifications exist.
 
-Explicitly out of scope. Do not build, plan, or advertise these:
+## Working method
 
-- A full email client (IMAP sync, folders, threading a real mailbox).
-  Lead conversations are the only email surface. See `docs/decisions.md` D11.
-- A visual page builder or drag-and-drop layout editor.
-  Content is editable; structure is code. See `docs/decisions.md` D12.
-- Client portals, customer logins, or any second user role. A booked visitor
-  reaches their own call through the manage-link token, not an account.
-- Automated referral payouts or any programmatic movement of money out.
-- A legal accounting system. Invoicing is an operational tool, not bookkeeping.
-- Multi-currency, multi-country tax handling.
-- Real-time chat, notifications infrastructure, or mobile apps. The one
-  exception is the video call held inside a booking: it lives only for that
-  meeting's window, stores nothing, and is not a chat surface. See
-  `docs/decisions.md` D33.
-
-## Backend Rules
-
-- TypeScript, Elysia, Valibot, `pg`, parameterized raw SQL. No ORM without an
-  explicit decision recorded in `docs/decisions.md`.
-- Public routes use `/api`. Admin routes use `/api/admin` and require a valid
-  session with the `ADMIN` role.
-- Controllers stay thin. Business rules live in services. Request contracts live
-  in shared validation and types. Expected failures go through the central error flow.
-- Every schema change is a new numbered migration plus proportional service and
-  HTTP verification.
-- Public endpoints expose explicit field projections, never raw database rows,
-  and never secrets, storage keys, internal notes, or client PII.
-- Persist the business record before any optional side effect. A failed email
-  must never lose a lead, a booking, or an invoice.
-- Money is stored as integer cents, never floating point.
-- Timestamps are stored as `timestamptz`. Booking logic always carries an
-  explicit IANA timezone; never rely on server local time.
-
-## Frontend Rules
-
-- Route files are thin: URL behavior, boundaries, and page rendering only. No markup.
-- Page components compose sections. Reusable domain components live under
-  `features/`. Page-only sections stay with their page.
-- API modules perform transport and do not import React.
-- React Query owns server state. TanStack Router owns shareable URL state.
-- TanStack Form owns non-trivial form state and validation.
-- Components never call the backend client directly.
-- No global client store until a real cross-page requirement exists.
-- `shadcn/ui` provides owned accessible primitives, not the visual identity.
-- Every page works in German, English, and Arabic, including RTL layout.
-- Every animation respects `prefers-reduced-motion`. Motion is progressive
-  enhancement: content is readable and complete with animation disabled.
-- Preserve loading, empty, error, and success states. An admin table without an
-  empty state is unfinished.
-
-## Delivery Rules
-
-- Work in small vertical slices as listed in `docs/roadmap.md`. One slice per session.
-- Do not broaden a slice because an adjacent feature sounds useful. Note it and move on.
-- Phases 0 and 1 land on the `platform` branch. After cutover, work is
-  incremental on `main`.
-- Preserve existing user changes. Avoid unrelated refactors.
-- Before completing a slice, run the relevant subset of: format, typecheck,
-  tests, build, and a real runtime check.
-- `typecheck` and `test` must both be green before a slice is reported as done.
-  A Stop hook enforces this; do not work around it by deleting or skipping tests.
-- Every new behavior ships with a test that would fail without it. A service
-  rule, a validation boundary, or a money calculation with no test is unfinished.
-- When building or reshaping a user-facing surface, apply the `frontend-design`
-  skill rather than reaching for default component styling.
-- Leave no scratch files in `src/`. Temporary probes belong in the scratchpad.
-
-## Missing or Conflicting Information
-
-When a requirement is missing, state what is unknown and ask. Do not invent
-product behavior, prices, service descriptions, or legal text.
+- Plan one bounded module at a time and obtain approval before implementation.
+- Keep route files thin and separate transport, domain behavior, and UI state,
+  but do not invent a detailed architecture before it is approved.
+- For every new or materially changed form, use TanStack Form for form state and
+  validation. Follow the Prime Estate interaction pattern: validate on the
+  first submit attempt, then revalidate as the user changes fields; do not show
+  untouched-field errors immediately on first render. With the current API,
+  `revalidateLogic({ mode: "submit", modeAfterSubmission: "change" })` expresses
+  this behavior.
+- Show validation errors next to their fields with accessible labels,
+  `aria-invalid`, and an error description; focus the first invalid field after
+  an invalid submit. Show pending, success, and server-error states, and prevent
+  duplicate submissions. Keep client-side limits and messages aligned with the
+  shared contract, and enforce the authoritative rules again on the server.
+- When a form saves drafts and publishes content, validate those actions
+  separately: an incomplete private draft must remain saveable, while publishing
+  must satisfy every approved public-content requirement.
+- Every implemented behavior needs proportional automated tests.
+- Cover loading, empty, error, success, unauthorized, forbidden, and not-found
+  states where they apply.
+- Before reporting implementation complete, run typecheck, relevant tests,
+  build, and real runtime or browser verification proportional to the change.
+- Preserve unrelated user changes and avoid unrelated refactors.
+- Never put secrets, real client data, credentials, or private attachments in
+  source control, logs, fixtures, or responses.
+- Use the `frontend-design` skill before building or reshaping a user-facing
+  surface.
