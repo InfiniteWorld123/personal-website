@@ -548,6 +548,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--dash-chip);
+    color: var(--dash-ink);
+  }
+
+  .dash-nav-dot {
+    background: var(--dash-red);
   }
 
   .dash-nav:hover .dash-nav-row {
@@ -567,6 +573,48 @@
 
   .dash-nav-icon {
     transition: transform 170ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  /* ── The open section: a bar, or a pill ───────────────────────
+     Two ways of saying which section you are on. The bar is welded to the
+     sidebar's own edge and leaves the row where it is; the pill pulls the row
+     in from both sides and fills it with the brand colour. Settings decides.
+
+     Both mark the row with a shape as well as a colour, so neither depends on
+     telling blue from grey. */
+
+  [data-dashboard][data-nav='pill'] .dash-nav-edge {
+    display: none;
+  }
+
+  [data-dashboard][data-nav='pill'] .dash-nav-row {
+    margin-inline: 12px;
+    padding-inline: 14px;
+    border-radius: 10px;
+  }
+
+  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-row {
+    background: var(--dash-brand);
+    color: #ffffff;
+  }
+
+  /* On a filled pill the count and the overdue dot have to leave the neutral
+     palette, or they read as holes punched in the brand colour. */
+  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-badge {
+    background: rgba(255, 255, 255, 0.24);
+    color: #ffffff;
+  }
+
+  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-dot {
+    background: #ffffff;
+  }
+
+  /* Collapsed, the pill becomes a rounded square around the icon. The rail's
+     rule and the pill's carry the same weight, so the pair is named outright
+     rather than left to whichever happens to be written last. */
+  [data-dashboard][data-rail='true'][data-nav='pill'] .dash-nav-row {
+    margin-inline: 12px;
+    padding-inline: 0;
   }
 
   /* The label that lives inside the collapsed rail, and comes out of it.

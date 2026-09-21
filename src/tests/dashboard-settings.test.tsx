@@ -30,8 +30,14 @@ beforeEach(() => {
 })
 
 const { ThemeProvider } = await import('#/frontend/components/theme/theme-provider')
-const { DashboardPreferencesProvider, useDashboardPreferences, defaultSurface, dashboardSurfaces } =
-  await import('#/frontend/dashboard/preferences')
+const {
+  DashboardPreferencesProvider,
+  useDashboardPreferences,
+  defaultSurface,
+  dashboardSurfaces,
+  defaultNavShape,
+  dashboardNavShapes,
+} = await import('#/frontend/dashboard/preferences')
 const { SettingsPage } = await import('#/frontend/pages/dashboard/settings/SettingsPage')
 
 afterEach(cleanup)
@@ -46,6 +52,9 @@ const open = () =>
   )
 
 const surfaceRadio = (label: string) => screen.getByRole('radio', { name: new RegExp(label) })
+
+const radiosOf = (name: string) =>
+  [...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)]
 
 describe('choosing how the surface is built', () => {
   it('opens on the flat surface', () => {
@@ -84,7 +93,7 @@ describe('choosing how the surface is built', () => {
   it('offers every surface and keeps exactly one chosen', () => {
     open()
 
-    const radios = screen.getAllByRole('radio') as HTMLInputElement[]
+    const radios = radiosOf('dashboard-surface')
 
     expect(radios).toHaveLength(dashboardSurfaces.length)
     expect(radios.filter((radio) => radio.checked)).toHaveLength(1)
@@ -182,5 +191,61 @@ describe('the preferences themselves', () => {
     expect(() => render(<Probe />)).toThrow(/inside the dashboard shell/)
 
     quiet.mockRestore()
+  })
+})
+
+describe('choosing how the open section is marked', () => {
+  const navRadio = (label: string) =>
+    screen.getByRole('radio', { name: new RegExp(label) }) as HTMLInputElement
+
+  it('opens on the edge bar', () => {
+    open()
+
+    expect(defaultNavShape).toBe('bar')
+    expect(navRadio('Edge bar').checked).toBe(true)
+  })
+
+  it('switches to the filled pill and remembers it', () => {
+    open()
+
+    fireEvent.click(navRadio('Filled pill'))
+
+    expect(navRadio('Filled pill').checked).toBe(true)
+    expect(window.localStorage.getItem('dashboard-nav-shape')).toBe('pill')
+  })
+
+  it('opens on the stored choice the next time', () => {
+    window.localStorage.setItem('dashboard-nav-shape', 'pill')
+    open()
+
+    expect(navRadio('Filled pill').checked).toBe(true)
+  })
+
+  it('falls back when the stored value is not a shape it knows', () => {
+    window.localStorage.setItem('dashboard-nav-shape', 'underline')
+    open()
+
+    expect(navRadio('Edge bar').checked).toBe(true)
+  })
+
+  it('offers both and keeps exactly one chosen', () => {
+    open()
+
+    const radios = radiosOf('dashboard-nav-shape')
+
+    expect(radios).toHaveLength(dashboardNavShapes.length)
+    expect(radios.filter((radio) => radio.checked)).toHaveLength(1)
+  })
+
+  /** The surface and the marker are separate choices and must not collide. */
+  it('keeps the two appearance choices independent', () => {
+    open()
+
+    fireEvent.click(navRadio('Filled pill'))
+    fireEvent.click(surfaceRadio('Framed'))
+
+    expect(navRadio('Filled pill').checked).toBe(true)
+    expect(window.localStorage.getItem('dashboard-surface')).toBe('framed')
+    expect(window.localStorage.getItem('dashboard-nav-shape')).toBe('pill')
   })
 })

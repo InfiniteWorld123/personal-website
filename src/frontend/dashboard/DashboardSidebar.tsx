@@ -144,17 +144,13 @@ function NavRow({
         <span className="dash-nav-text">{item.label}</span>
 
         {item.badge === 'unread' ? (
-          <span className="dash-nav-badge ms-auto h-5 min-w-[22px] rounded-md bg-[var(--dash-chip)] px-1.5 text-[11px] font-semibold text-[var(--dash-ink)]">
+          <span className="dash-nav-badge ms-auto h-5 min-w-[22px] rounded-md px-1.5 text-[11px] font-semibold">
             {sampleFigures.unread}
           </span>
         ) : null}
 
         {item.badge === 'overdue' ? (
-          <span
-            aria-hidden="true"
-            className="dash-nav-badge ms-auto size-[7px] rounded-full"
-            style={{ background: 'var(--dash-red)' }}
-          />
+          <span aria-hidden="true" className="dash-nav-badge dash-nav-dot ms-auto size-[7px] rounded-full" />
         ) : null}
       </span>
 

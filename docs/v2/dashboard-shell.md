@@ -45,6 +45,20 @@ It is one attribute, `data-surface`, on the same element that carries
 `data-dashboard`. CSS reads it; no component branches on it except the little
 drawing of each option in Settings.
 
+## Two ways to mark the open section
+
+Also chosen in Settings, and independent of the surface:
+
+- **Edge bar** (the default) — a 3px bar welded to the sidebar's own edge, with
+  the row tinted behind it.
+- **Filled pill** — the row pulled in 12px from both sides, rounded, and filled
+  with the brand colour. Collapsed, it becomes a rounded square around the icon.
+
+Both mark the row with a *shape* as well as a colour, so neither depends on
+telling the blue from the grey. On a filled pill the unread count and the
+overdue dot leave the neutral palette, or they read as holes punched in the
+brand colour.
+
 ### The scroll model
 
 The dashboard fills the window and `main` scrolls inside it, rather than the
@@ -102,13 +116,14 @@ invoices. Replacing the fixture means changing one import per screen.
 
 ## Verified
 
-Typecheck, 496 tests, production build. In the browser: the guard refuses a
+Typecheck, 505 tests, production build. In the browser: the guard refuses a
 request without a session (307) and admits one with it; the sidebar collapses
 and remembers it; the rail label comes out on hover and on keyboard focus; the
 invoice filter narrows the rows and the total follows; the mailbox swaps its
 reading pane; the drawer opens below `lg`; no horizontal scrolling at 375px;
-the surface switches from Settings and survives a reload; and an automated
-audit found no text below WCAG AA in any of the eight surface/theme pairs.
+the surface and the active-section marker switch from Settings and survive a
+reload; and an automated audit found no text below WCAG AA in any surface,
+marker or theme combination that was checked.
 
 ## Still open
 

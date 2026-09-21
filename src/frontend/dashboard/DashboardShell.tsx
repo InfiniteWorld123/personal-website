@@ -9,14 +9,17 @@ import { DashboardPreferencesProvider, useDashboardPreferences } from './prefere
 /**
  * The workbench.
  *
- * Two attributes on one element carry the whole shell state, and CSS reads
- * both rather than the components re-rendering around them:
+ * Four attributes on one element carry the whole shell state, and CSS reads
+ * them rather than the components re-rendering around them:
  *
  *  - `data-dashboard` is the scope every token in `dashboard.css` hangs off, so
  *    nothing in here can reach the public site or `/admin`, and nothing there
  *    reaches in.
- *  - `data-surface` chooses how the surface is built — one flat plane divided
- *    by hairlines, or panels lifted off a tinted ground. Settings switches it.
+ *  - `data-surface` chooses how the surface is built: one flat plane divided
+ *    by hairlines, panels lifted off a ground, the whole thing as a rounded
+ *    object, or the three parts held apart. Settings switches it.
+ *  - `data-nav` chooses how the section you are on is marked: a bar welded to
+ *    the sidebar's edge, or a filled pill inset from it.
  *  - `data-rail` is the collapsed sidebar, which is why the width animates
  *    instead of the tree being rebuilt.
  */
@@ -47,11 +50,17 @@ function Workbench({
   userEmail: string
   children: ReactNode
 }) {
-  const { surface, rail, toggleRail } = useDashboardPreferences()
+  const { surface, navShape, rail, toggleRail } = useDashboardPreferences()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div data-dashboard data-surface={surface} data-rail={rail} className="dash-root">
+    <div
+      data-dashboard
+      data-surface={surface}
+      data-nav={navShape}
+      data-rail={rail}
+      className="dash-root"
+    >
       {/*
         The frame. Flush against the window for two of the three surfaces — you
         cannot tell it is there — and a rounded object resting on the page for
@@ -93,6 +102,7 @@ function Workbench({
         <SheetContent
           data-dashboard
           data-surface={surface}
+          data-nav={navShape}
           side="left"
           className="w-[300px] border-[var(--dash-line)] bg-[var(--dash-furniture)] p-0"
         >

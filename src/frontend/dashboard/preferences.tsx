@@ -10,7 +10,18 @@ export const defaultSurface: DashboardSurface = 'flat'
 const isSurface = (value: unknown): value is DashboardSurface =>
   typeof value === 'string' && (dashboardSurfaces as readonly string[]).includes(value)
 
+/** How the section you are on is marked in the sidebar. */
+export const dashboardNavShapes = ['bar', 'pill'] as const
+
+export type DashboardNavShape = (typeof dashboardNavShapes)[number]
+
+export const defaultNavShape: DashboardNavShape = 'bar'
+
+const isNavShape = (value: unknown): value is DashboardNavShape =>
+  typeof value === 'string' && (dashboardNavShapes as readonly string[]).includes(value)
+
 const SURFACE_KEY = 'dashboard-surface'
+const NAV_SHAPE_KEY = 'dashboard-nav-shape'
 const RAIL_KEY = 'dashboard-rail'
 
 type DashboardPreferences = {
@@ -21,6 +32,12 @@ type DashboardPreferences = {
    */
   surface: DashboardSurface
   setSurface: (surface: DashboardSurface) => void
+  /**
+   * Whether the open section is marked by a bar welded to the sidebar's edge,
+   * or by a filled pill inset from it.
+   */
+  navShape: DashboardNavShape
+  setNavShape: (shape: DashboardNavShape) => void
   /** Whether the sidebar is collapsed to a rail. */
   rail: boolean
   toggleRail: () => void
@@ -60,16 +77,23 @@ const write = (key: string, value: string) => {
  */
 export function DashboardPreferencesProvider({ children }: { children: ReactNode }) {
   const [surface, setSurfaceState] = useState<DashboardSurface>(defaultSurface)
+  const [navShape, setNavShapeState] = useState<DashboardNavShape>(defaultNavShape)
   const [rail, setRail] = useState(false)
 
   useEffect(() => {
     setSurfaceState(read(SURFACE_KEY, (raw) => (isSurface(raw) ? raw : defaultSurface)))
+    setNavShapeState(read(NAV_SHAPE_KEY, (raw) => (isNavShape(raw) ? raw : defaultNavShape)))
     setRail(read(RAIL_KEY, (raw) => raw === 'true'))
   }, [])
 
   const setSurface = useCallback((next: DashboardSurface) => {
     setSurfaceState(next)
     write(SURFACE_KEY, next)
+  }, [])
+
+  const setNavShape = useCallback((next: DashboardNavShape) => {
+    setNavShapeState(next)
+    write(NAV_SHAPE_KEY, next)
   }, [])
 
   const toggleRail = useCallback(() => {
@@ -82,7 +106,9 @@ export function DashboardPreferencesProvider({ children }: { children: ReactNode
   }, [])
 
   return (
-    <PreferencesContext.Provider value={{ surface, setSurface, rail, toggleRail }}>
+    <PreferencesContext.Provider
+      value={{ surface, setSurface, navShape, setNavShape, rail, toggleRail }}
+    >
       {children}
     </PreferencesContext.Provider>
   )
