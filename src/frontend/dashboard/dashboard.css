@@ -468,6 +468,12 @@
     background: var(--dash-hover);
   }
 
+  /* Same reason as the nav rules above: the chosen segment changes colour, so
+     the resting colour cannot be a utility sitting beside the class. */
+  .dash-seg {
+    color: var(--dash-quiet);
+  }
+
   .dash-seg[data-on='true'] {
     background: var(--dash-surface);
     color: var(--dash-ink);
@@ -511,8 +517,37 @@
     padding-right: 0;
   }
 
+  /* ── A rule with two states owns its properties ───────────────
+     Everything from here down describes something that looks one way normally
+     and another way collapsed, or normally and another way when it is the page
+     you are on. Those properties cannot be written as Tailwind utilities beside
+     the class: utilities sit in a later layer and win, so the second state
+     never arrives. That is not theory — it shipped: the Inbox count stayed on
+     in the collapsed rail and dragged the row's padding out past the 72px
+     edge, and the blue bar marking the active section was transparent
+     everywhere, because `flex` and `bg-transparent` were quietly outranking
+     the rules below. */
+
   .dash-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 44px;
+    padding: 0 20px 0 17px;
     color: var(--dash-quiet);
+  }
+
+  .dash-nav-edge {
+    width: 3px;
+    height: 44px;
+    flex-shrink: 0;
+    background: transparent;
+  }
+
+  .dash-nav-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .dash-nav:hover .dash-nav-row {

@@ -27,7 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/frontend/components/ui/dropdown-menu'
-import { cn } from '#/frontend/lib/utils'
 import type { ThemePreference } from '#/frontend/components/theme/theme'
 import { useDashboardPreferences } from './preferences'
 import { sampleFigures } from './sample-data'
@@ -264,9 +263,7 @@ function AccountMenu({ userName, userEmail }: { userName: string; userEmail: str
                 aria-pressed={preference === choice.value}
                 data-on={preference === choice.value}
                 onClick={() => setPreference(choice.value)}
-                className={cn(
-                  'dash-seg h-7 rounded-md px-2.5 text-xs text-[var(--dash-quiet)]',
-                )}
+                className="dash-seg h-7 rounded-md px-2.5 text-xs"
               >
                 {choice.label}
               </button>

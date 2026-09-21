@@ -23,6 +23,7 @@ const { OverviewPage } = await import('#/frontend/pages/dashboard/overview/Overv
 const { InvoicesPage } = await import('#/frontend/pages/dashboard/invoices/InvoicesPage')
 const { InboxPage } = await import('#/frontend/pages/dashboard/inbox/InboxPage')
 const { sampleFigures } = await import('#/frontend/dashboard/sample-data')
+const { DashboardSidebar } = await import('#/frontend/dashboard/DashboardSidebar')
 
 afterEach(cleanup)
 
@@ -173,6 +174,62 @@ describe('the mailbox', () => {
 
     for (const name of ['Reply', 'Send', 'Attach a file']) {
       expect(screen.getByRole('button', { name }).hasAttribute('disabled')).toBe(true)
+    }
+  })
+})
+
+/**
+ * The dashboard stylesheet lives in Tailwind's `components` layer, so a utility
+ * written beside one of its classes wins. That is the right relationship almost
+ * everywhere — it is what lets `p-0` shrink a `.dash-btn` — but it is fatal for
+ * a class whose whole job is to look different in a second state, because the
+ * override in the stylesheet never arrives.
+ *
+ * It shipped twice. The Inbox count stayed lit in the collapsed rail and pulled
+ * the row's padding out past the 72px edge, and the blue bar marking the active
+ * section was transparent on every screen, because `flex` and `bg-transparent`
+ * sat in the markup beside the rules meant to change them.
+ *
+ * jsdom will not resolve layered CSS, so this cannot be checked by computing a
+ * style. What it checks instead is the thing that actually went wrong: whether
+ * the markup still hands those properties to a utility.
+ */
+describe('nothing in the sidebar overrides a rule that has two states', () => {
+  const OWNED: { klass: string; exact: string[]; prefixes: string[]; why: string }[] = [
+    {
+      klass: 'dash-nav-row',
+      exact: ['flex'],
+      prefixes: ['gap-', 'p-', 'px-', 'py-', 'pl-', 'pr-', 'pt-', 'pb-', 'h-', 'items-', 'justify-'],
+      why: "the collapsed rail takes away this row's padding, gap and alignment",
+    },
+    {
+      klass: 'dash-nav-edge',
+      exact: [],
+      prefixes: ['bg-', 'w-', 'h-'],
+      why: 'this bar turns blue when its section is the page you are on',
+    },
+    {
+      klass: 'dash-nav-badge',
+      exact: ['flex', 'hidden', 'block', 'inline-flex'],
+      prefixes: [],
+      why: 'the collapsed rail hides this count',
+    },
+  ]
+
+  it.each(OWNED)('leaves $klass alone, because $why', ({ klass, exact, prefixes }) => {
+    render(<DashboardSidebar />)
+
+    const nodes = document.querySelectorAll(`.${klass}`)
+    expect(nodes.length).toBeGreaterThan(0)
+
+    for (const node of nodes) {
+      const offenders = [...node.classList].filter(
+        (name) =>
+          name !== klass &&
+          (exact.includes(name) || prefixes.some((prefix) => name.startsWith(prefix))),
+      )
+
+      expect(offenders).toEqual([])
     }
   })
 })

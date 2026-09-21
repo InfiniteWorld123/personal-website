@@ -9,7 +9,6 @@ import {
   StatusChip,
 } from '#/frontend/dashboard/primitives'
 import { sampleInvoices } from '#/frontend/dashboard/sample-data'
-import { cn } from '#/frontend/lib/utils'
 
 type Filter = 'all' | 'open' | 'overdue' | 'paid'
 
@@ -66,7 +65,7 @@ export function InvoicesPage() {
             aria-selected={filter === option.value}
             data-on={filter === option.value}
             onClick={() => setFilter(option.value)}
-            className={cn('dash-seg h-[30px] rounded-[7px] px-3.5 text-xs text-[var(--dash-quiet)]')}
+            className="dash-seg h-[30px] rounded-[7px] px-3.5 text-xs"
           >
             {option.label} {countFor(option.value)}
           </button>

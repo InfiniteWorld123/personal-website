@@ -266,7 +266,7 @@ function ThemeChoice() {
             aria-pressed={preference === choice.value}
             data-on={preference === choice.value}
             onClick={() => setPreference(choice.value)}
-            className="dash-seg h-8 rounded-[7px] px-4 text-xs text-[var(--dash-quiet)]"
+            className="dash-seg h-8 rounded-[7px] px-4 text-xs"
           >
             {choice.label}
           </button>

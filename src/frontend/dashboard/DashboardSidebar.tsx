@@ -83,8 +83,8 @@ export function DashboardSidebar({
           className="dash-nav group relative flex w-full items-center text-left"
           title="Sign-out belongs to Backend2, which does not exist yet"
         >
-          <span aria-hidden="true" className="dash-nav-edge h-11 w-[3px] shrink-0" />
-          <span className="dash-nav-row flex h-11 flex-1 items-center gap-3 pr-5 pl-[17px] text-sm opacity-50">
+          <span aria-hidden="true" className="dash-nav-edge" />
+          <span className="dash-nav-row flex-1 text-sm opacity-50">
             <LogOut aria-hidden="true" className="dash-nav-icon size-[18px] shrink-0" />
             <span className="dash-nav-text">Log out</span>
           </span>
@@ -138,13 +138,13 @@ function NavRow({
       aria-current={active ? 'page' : undefined}
       className="dash-nav relative flex items-center"
     >
-      <span aria-hidden="true" className="dash-nav-edge h-11 w-[3px] shrink-0 bg-transparent" />
-      <span className="dash-nav-row flex h-11 flex-1 items-center gap-3 pr-5 pl-[17px] text-sm">
+      <span aria-hidden="true" className="dash-nav-edge" />
+      <span className="dash-nav-row flex-1 text-sm">
         <Icon aria-hidden="true" className="dash-nav-icon size-[18px] shrink-0" />
         <span className="dash-nav-text">{item.label}</span>
 
         {item.badge === 'unread' ? (
-          <span className="dash-nav-badge ms-auto flex h-5 min-w-[22px] items-center justify-center rounded-md bg-[var(--dash-chip)] px-1.5 text-[11px] font-semibold text-[var(--dash-ink)]">
+          <span className="dash-nav-badge ms-auto h-5 min-w-[22px] rounded-md bg-[var(--dash-chip)] px-1.5 text-[11px] font-semibold text-[var(--dash-ink)]">
             {sampleFigures.unread}
           </span>
         ) : null}
