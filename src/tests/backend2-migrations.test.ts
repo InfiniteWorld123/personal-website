@@ -1,0 +1,121 @@
+import { describe, expect, it } from 'vitest'
+import { PGlite } from '@electric-sql/pglite'
+
+/**
+ * An empty database, and the migrations run against it in order.
+ *
+ * This suite exists because of a real failure: `0001_projects.sql` was applied
+ * to the owner's development database on 21 Sep 2026 and never committed, so
+ * for a day any fresh database was missing the Projects tables while the
+ * owner's had them. Nothing failed loudly — the two simply differed.
+ *
+ * PGlite is PostgreSQL compiled to WebAssembly: a real server, in this
+ * process, with no account and no connection string. So "a new database can be
+ * built from this repository alone" is a thing the suite can actually check,
+ * rather than something someone has to remember to try.
+ */
+
+const { readMigrationSql } = await import('#/backend2/db/migrate')
+
+describe('building a database from nothing', () => {
+  it('applies every migration in order, and the numbers say the order', async () => {
+    const files = await readMigrationSql()
+
+    expect(files.map((f) => f.name)).toEqual([
+      '0001_projects.sql',
+      '0002_auth.sql',
+      '0003_media.sql',
+    ])
+
+    // The runner sorts by filename, so the names have to sort into the order
+    // the dependencies need. Stated as a test because a file added later with
+    // a lower number would run before these on a new database and never at
+    // all on an existing one.
+    expect([...files.map((f) => f.name)].sort()).toEqual(files.map((f) => f.name))
+  })
+
+  it('leaves a schema the whole application can use, and no rows at all', async () => {
+    const database = new PGlite()
+
+    try {
+      for (const file of await readMigrationSql()) {
+        // One at a time, so a failure names the migration that caused it.
+        await database.exec(file.sql).catch((error: unknown) => {
+          throw new Error(
+            `${file.name} failed on an empty database: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
+        })
+      }
+
+      const { rows } = (await database.query(
+        `SELECT tablename FROM pg_tables
+          WHERE schemaname = 'public' AND tablename LIKE 'v2\\_%'
+          ORDER BY tablename`,
+      )) as { rows: Array<{ tablename: string }> }
+
+      const tables = rows.map((row) => row.tablename)
+
+      // Projects, from the recovered 0001.
+      expect(tables).toContain('v2_projects')
+      expect(tables).toContain('v2_project_versions')
+      expect(tables).toContain('v2_media_objects')
+      // Auth, from 0002.
+      expect(tables).toContain('v2_owner')
+      expect(tables).toContain('v2_owner_sessions')
+      // The shared vault, from 0003.
+      expect(tables).toContain('v2_media_assets')
+      expect(tables).toContain('v2_media_folders')
+      expect(tables).toContain('v2_media_references')
+
+      /*
+       * A migration builds structure. Anything that arrived with rows would be
+       * data in source control — a fixture, a test account, or worse — so the
+       * count is asserted rather than assumed.
+       */
+      for (const table of tables) {
+        const counted = (await database.query(`SELECT count(*) AS total FROM ${table}`)) as {
+          rows: Array<{ total: string | number }>
+        }
+
+        expect(Number(counted.rows[0]?.total ?? 0), `${table} should start empty`).toBe(0)
+      }
+    } finally {
+      await database.close()
+    }
+  })
+
+  it('keeps the two halves of Projects able to reference each other', async () => {
+    const database = new PGlite()
+
+    try {
+      for (const file of await readMigrationSql()) await database.exec(file.sql)
+
+      /*
+       * `v2_projects` points at `v2_project_versions` and that table points
+       * straight back. Both keys are deferrable, so one transaction can write
+       * the pair; this is what the ordering inside 0001 exists to preserve.
+       */
+      await database.exec(`
+        BEGIN;
+        SET CONSTRAINTS ALL DEFERRED;
+        INSERT INTO v2_projects (id, position) VALUES ('11111111-1111-4111-8111-111111111111', 1);
+        INSERT INTO v2_project_versions (id, project_id, kind, type)
+          VALUES ('22222222-2222-4222-8222-222222222222',
+                  '11111111-1111-4111-8111-111111111111', 'draft', 'client');
+        UPDATE v2_projects SET draft_version_id = '22222222-2222-4222-8222-222222222222'
+          WHERE id = '11111111-1111-4111-8111-111111111111';
+        COMMIT;
+      `)
+
+      const { rows } = (await database.query(
+        'SELECT draft_version_id FROM v2_projects',
+      )) as { rows: Array<{ draft_version_id: string }> }
+
+      expect(rows[0]?.draft_version_id).toBe('22222222-2222-4222-8222-222222222222')
+    } finally {
+      await database.close()
+    }
+  })
+})
