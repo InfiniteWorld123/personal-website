@@ -77,11 +77,12 @@ function Workbench({
       */}
       <div className="dash-frame flex">
         {/*
-          `overflow-visible`, deliberately: the label that slides out of a
-          collapsed rail is wider than the rail it comes from, and anything
-          hiding overflow here cuts it off at 72px.
+          The sidebar's overflow is decided in the stylesheet, not here: it has
+          to stay visible while collapsed, so the label sliding out of the rail
+          is not cut off at 72px, and clip while open so the contents can be
+          laid out at full width before the box has finished widening.
         */}
-        <aside className="dash-side z-30 hidden h-full shrink-0 overflow-visible border-r border-[var(--dash-shell-edge)] bg-[var(--dash-furniture)] lg:block">
+        <aside className="dash-side z-30 hidden h-full shrink-0 border-r border-[var(--dash-shell-edge)] bg-[var(--dash-furniture)] lg:block">
           <DashboardSidebar />
         </aside>
 

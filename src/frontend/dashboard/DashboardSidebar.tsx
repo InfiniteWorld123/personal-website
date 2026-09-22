@@ -33,7 +33,7 @@ export function DashboardSidebar({
   const pathname = useRouterState({ select: (state) => state.location.pathname })
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="dash-side-inner flex h-full flex-col">
       <div className="dash-brand-block flex h-16 shrink-0 items-center gap-3 border-b border-[var(--dash-line)]">
         <DashboardMark />
         <div className={cn('min-w-0', !forceExpanded && 'dash-wordmark')}>

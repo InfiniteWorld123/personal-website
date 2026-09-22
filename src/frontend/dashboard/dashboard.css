@@ -537,10 +537,11 @@
 
   .dash-side {
     width: 264px;
-    /* No `overflow: hidden` to go with the radius, deliberately: the label that
-       slides out of a collapsed rail is wider than the rail, and clipping here
-       cuts it off at 72px. The corners stay clean because the brand block and
-       the footer card have no fill of their own. */
+    /* Overflow is left visible here and only clipped when the rail is open
+       (below): the label that slides out of a collapsed rail is wider than the
+       rail, and clipping while collapsed cuts it off at 72px. The corners stay
+       clean either way, because the brand block and the footer card have no
+       fill of their own. */
     border-radius: var(--dash-shell-radius);
     box-shadow: var(--dash-shell-shadow);
     transition: width 220ms var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1));
@@ -552,13 +553,54 @@
 
   /* Collapsed, the rail keeps only what is legible at 72px: the mark, the icons,
      and the blue edge that says where you are. Everything that needs width —
-     the wordmark, the group headings, the row labels, the counts, the site card
-     — goes away rather than being squeezed. The counts come back inside the
-     floating label, which is why the Inbox row names its own number there. */
+     the wordmark, the group headings, the row labels, the site card — goes
+     away rather than being squeezed.
+
+     The closing brace matters more than it looks. This list once ended on a
+     fifth selector, `.dash-nav-badge`, and when the counts were taken out of
+     the navigation that line went with them — taking `display: none` with it.
+     The list was left hanging on a comma, swallowed the rule written after it,
+     and every one of these came back at 72px wide: the name broke over two
+     lines, the labels wrapped, the site card folded into a column of
+     three-letter lines. A test now reads this file and checks the rule is
+     still whole. */
   [data-dashboard][data-rail='true'] .dash-wordmark,
   [data-dashboard][data-rail='true'] .dash-group-label,
   [data-dashboard][data-rail='true'] .dash-promo,
-  [data-dashboard][data-rail='true'] .dash-nav-text,
+  [data-dashboard][data-rail='true'] .dash-nav-text {
+    display: none;
+  }
+
+  /* ── Opening the rail must not reflow it ──────────────────────
+     `data-rail` flips the moment the control is pressed, so the labels, the
+     wordmark and the footer card all come back instantly — while the sidebar
+     is still 72px wide and has 220ms of animation left to run. Laid out in
+     that column they wrap: the name breaks over two lines, "Log out" breaks,
+     the footer card folds into a stack of three-letter lines. For a fifth of
+     a second the sidebar looks broken, every single time it is opened.
+
+     So the contents are given the open width from the first frame and the
+     sidebar clips them. Opening now slides the labels into view instead of
+     squeezing them. Closing needs none of this: the labels go at once and the
+     box shrinks around icons that were already centred.
+
+     `overflow` is set here rather than in the markup because it has two
+     states, and a utility beside the class would win. Vertically it scrolls
+     rather than clips, so a short window cannot swallow the last section. */
+  [data-dashboard]:not([data-rail='true']) .dash-side {
+    overflow: hidden auto;
+  }
+
+  [data-dashboard]:not([data-rail='true']) .dash-side-inner {
+    width: 264px;
+  }
+
+  /* A nav row runs the full width of the sidebar, so a ring drawn 2px outside
+     it would be shaved off at both edges now that the sidebar clips. Drawn
+     just inside, the whole ring is always there. */
+  [data-dashboard] .dash-nav:focus-visible {
+    outline-offset: -2px;
+  }
 
   /* The rail is 72px and the mark is 34, so the block's own 20px of padding
      leaves it two pixels short. Collapsed, the padding goes and the mark

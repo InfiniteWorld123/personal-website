@@ -73,6 +73,12 @@ describe('nothing in the sidebar overrides a rule that has two states', () => {
       why: "the collapsed rail takes away this row's padding, gap and alignment",
     },
     {
+      klass: 'dash-side-inner',
+      exact: [],
+      prefixes: ['w-'],
+      why: 'it holds the open width while the rail is still widening',
+    },
+    {
       klass: 'dash-brand-block',
       exact: [],
       prefixes: ['p-', 'px-', 'pl-', 'pr-', 'justify-'],
