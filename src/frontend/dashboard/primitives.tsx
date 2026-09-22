@@ -1,6 +1,10 @@
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '#/frontend/lib/utils'
-import type { Tone } from './sample-data'
+/**
+ * The five meanings a chip can carry. It lived in the fixture file until that
+ * file was deleted; it is a property of the design system, not of any data.
+ */
+export type Tone = 'blue' | 'grey' | 'red' | 'ink' | 'outline'
 
 /**
  * The pieces every dashboard screen is built from.
@@ -59,36 +63,6 @@ export function PageHead({
         </div>
       ) : null}
     </header>
-  )
-}
-
-/**
- * Says out loud that none of the figures below are counted.
- *
- * It is not decoration and it is not temporary politeness. Backend2 does not
- * exist, so every number on this surface comes from a fixture; a dashboard
- * whose figures look counted but are not is the failure this platform is being
- * rebuilt to avoid. It comes off the day a screen reads from a real query.
- */
-export function SampleBadge() {
-  return (
-    <span className="flex h-[26px] items-center gap-1.5 rounded-[7px] border border-[var(--dash-blue)] px-2.5 text-[11px] font-semibold text-[var(--dash-blue-ink)]">
-      <span
-        aria-hidden="true"
-        className="size-1.5 rounded-full"
-        style={{ background: 'var(--dash-blue)' }}
-      />
-      SAMPLE DATA
-    </span>
-  )
-}
-
-/** Marks a screen whose behaviour has not been agreed with the owner yet. */
-export function NotSpecifiedBadge() {
-  return (
-    <span className="flex h-[30px] items-center gap-1.5 rounded-lg border border-dashed border-[var(--dash-line)] px-3 text-[11px] font-semibold text-[var(--dash-quiet)]">
-      NOT SPECIFIED YET
-    </span>
   )
 }
 

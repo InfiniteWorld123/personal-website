@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ModuleScreen } from '#/frontend/pages/dashboard/ModuleScreen'
+import { NotBuiltYet } from '#/frontend/pages/dashboard/NotBuiltYet'
 
-/** Shape only. The module's behaviour is not specified yet. */
+/** In the navigation, and honest about having no behaviour yet. */
 export const Route = createFileRoute('/dashboard/blog')({
   head: () => ({ meta: [{ title: 'Blog · Dashboard' }] }),
-  component: () => <ModuleScreen module="blog" />,
+  component: () => <NotBuiltYet module="blog" />,
 })

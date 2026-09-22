@@ -16,14 +16,10 @@ export type DashboardNavItem = {
   to: string
   icon: LucideIcon
   /**
-   * What the row says when the rail is collapsed to icons. Usually the label,
-   * but a row carrying a count says the count too — collapsed, the badge is
-   * gone, and "Inbox" alone would hide the only thing worth knowing about it.
+   * What the row says when the rail is collapsed to icons. Usually the label.
+   * A row that one day carries a real count will say it here too.
    */
   railLabel?: string
-  /** A live figure drawn on the row. Named, not passed, so this file stays a
-      description of the menu rather than a piece of it. */
-  badge?: 'unread' | 'overdue'
 }
 
 /**
@@ -38,11 +34,11 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Projects', to: '/dashboard/projects', icon: FolderKanban },
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
-  { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox, badge: 'unread', railLabel: 'Inbox · 7 unread' },
+  { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox },
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
   { label: 'Content', to: '/dashboard/content', icon: FileText },
   { label: 'Blog', to: '/dashboard/blog', icon: Newspaper },
-  { label: 'Invoices', to: '/dashboard/invoices', icon: ReceiptEuro, badge: 'overdue', railLabel: 'Invoices · 3 overdue' },
+  { label: 'Invoices', to: '/dashboard/invoices', icon: ReceiptEuro },
 ]
 
 /** Kept apart in the sidebar footer: these are the session, not the work. */

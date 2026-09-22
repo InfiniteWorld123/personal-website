@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { InvoicesPage } from '#/frontend/pages/dashboard/invoices/InvoicesPage'
+import { NotBuiltYet } from '#/frontend/pages/dashboard/NotBuiltYet'
 
+/** In the navigation, and honest about having no behaviour yet. */
 export const Route = createFileRoute('/dashboard/invoices')({
   head: () => ({ meta: [{ title: 'Invoices · Dashboard' }] }),
-  component: InvoicesPage,
+  component: () => <NotBuiltYet module="invoices" />,
 })

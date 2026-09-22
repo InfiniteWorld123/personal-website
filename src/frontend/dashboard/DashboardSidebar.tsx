@@ -3,7 +3,6 @@ import { LogOut } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '#/frontend/lib/utils'
 import { DashboardMark } from './DashboardMark'
-import { sampleFigures } from './sample-data'
 import {
   dashboardFooterNavigation,
   dashboardNavigation,
@@ -142,16 +141,6 @@ function NavRow({
       <span className="dash-nav-row flex-1 text-sm">
         <Icon aria-hidden="true" className="dash-nav-icon size-[18px] shrink-0" />
         <span className="dash-nav-text">{item.label}</span>
-
-        {item.badge === 'unread' ? (
-          <span className="dash-nav-badge ms-auto h-5 min-w-[22px] rounded-md px-1.5 text-[11px] font-semibold">
-            {sampleFigures.unread}
-          </span>
-        ) : null}
-
-        {item.badge === 'overdue' ? (
-          <span aria-hidden="true" className="dash-nav-badge dash-nav-dot ms-auto size-[7px] rounded-full" />
-        ) : null}
       </span>
 
       <RailLabel>{item.railLabel ?? item.label}</RailLabel>

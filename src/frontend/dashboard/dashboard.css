@@ -559,9 +559,6 @@
   [data-dashboard][data-rail='true'] .dash-group-label,
   [data-dashboard][data-rail='true'] .dash-promo,
   [data-dashboard][data-rail='true'] .dash-nav-text,
-  [data-dashboard][data-rail='true'] .dash-nav-badge {
-    display: none;
-  }
 
   /* The rail is 72px and the mark is 34, so the block's own 20px of padding
      leaves it two pixels short. Collapsed, the padding goes and the mark
@@ -609,17 +606,7 @@
     background: transparent;
   }
 
-  .dash-nav-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--dash-chip);
-    color: var(--dash-ink);
-  }
 
-  .dash-nav-dot {
-    background: var(--dash-red);
-  }
 
   .dash-nav:hover .dash-nav-row {
     background: var(--dash-hover);
@@ -665,14 +652,7 @@
 
   /* On a filled pill the count and the overdue dot have to leave the neutral
      palette, or they read as holes punched in the brand colour. */
-  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-badge {
-    background: rgba(255, 255, 255, 0.24);
-    color: #ffffff;
-  }
 
-  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-dot {
-    background: #ffffff;
-  }
 
   /* Collapsed, the pill becomes a rounded square around the icon. The rail's
      rule and the pill's carry the same weight, so the pair is named outright

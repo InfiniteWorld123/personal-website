@@ -1,26 +1,13 @@
 import { Link } from '@tanstack/react-router'
 import {
   ChevronDown,
-  Handshake,
-  Inbox,
-  Mail,
   Menu,
   PanelLeft,
-  Plus,
-  ReceiptEuro,
-  Search,
   Settings,
   ShieldCheck,
 } from 'lucide-react'
-import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTheme } from '#/frontend/components/theme/theme-provider'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '#/frontend/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +18,6 @@ import {
 import type { ThemePreference } from '#/frontend/components/theme/theme'
 import { signOut } from '#/frontend/features/auth-v2/api'
 import { useDashboardPreferences } from './preferences'
-import { sampleFigures } from './sample-data'
 
 /**
  * The bar above the work, and everything it opens.
@@ -64,8 +50,6 @@ export function DashboardTopBar({
   onToggleRail: () => void
   onOpenDrawer: () => void
 }) {
-  const [searchOpen, setSearchOpen] = useState(false)
-
   return (
     <header className="dash-topbar relative z-20 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--dash-shell-edge)] bg-[var(--dash-furniture)] px-4 sm:px-5">
       <button
@@ -87,82 +71,10 @@ export function DashboardTopBar({
         <PanelLeft className="size-[18px]" />
       </button>
 
-      <button
-        type="button"
-        onClick={() => setSearchOpen(true)}
-        className="flex h-9 w-full max-w-[360px] items-center gap-2.5 rounded-[9px] border border-[var(--dash-line)] bg-[var(--dash-input)] px-3 text-left text-[13px] text-[var(--dash-quiet)] hover:bg-[var(--dash-hover)]"
-      >
-        <Search aria-hidden="true" className="size-4 shrink-0" />
-        <span className="hidden flex-1 truncate sm:block">
-          Search projects, invoices, messages
-        </span>
-        <span className="hidden rounded border border-[var(--dash-line)] px-1.5 py-px text-[11px] font-medium sm:block">
-          ⌘ K
-        </span>
-      </button>
-
       <div className="flex-1" />
 
-      <NewMenu />
-
-      <Link
-        to="/dashboard/inbox"
-        aria-label={`Open the inbox, ${sampleFigures.unread} unread`}
-        className="relative hidden size-9 shrink-0 items-center justify-center rounded-[9px] border border-[var(--dash-line)] bg-[var(--dash-input)] text-[var(--dash-quiet)] hover:bg-[var(--dash-hover)] sm:inline-flex"
-      >
-        <Mail aria-hidden="true" className="size-[17px]" />
-        <span
-          aria-hidden="true"
-          className="absolute -top-1.5 -right-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-md px-1 text-[10px] font-bold text-white"
-          style={{ background: 'var(--dash-brand)' }}
-        >
-          {sampleFigures.unread}
-        </span>
-      </Link>
-
       <AccountMenu userName={userName} userEmail={userEmail} sessionKind={sessionKind} />
-
-      <SearchPanel open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
-  )
-}
-
-/* ── New ──────────────────────────────────────────────────── */
-
-function NewMenu() {
-  const { surface } = useDashboardPreferences()
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button type="button" className="dash-btn dash-btn-primary h-9 shrink-0 pr-3 pl-2.5">
-          <Plus aria-hidden="true" className="size-4" />
-          New
-          <ChevronDown aria-hidden="true" className="size-[13px]" />
-        </button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        data-dashboard
-        data-surface={surface}
-        align="end"
-        className="w-60 rounded-xl border-[var(--dash-line)] bg-[var(--dash-surface)] p-1.5"
-      >
-        <MenuLink to="/dashboard/projects" icon={<Plus className="size-4" />}>
-          New project
-        </MenuLink>
-        <MenuLink to="/dashboard/invoices" icon={<ReceiptEuro className="size-4" />}>
-          New invoice
-        </MenuLink>
-        <MenuLink to="/dashboard/blog" icon={<Plus className="size-4" />}>
-          New article
-        </MenuLink>
-        <DropdownMenuSeparator className="my-1.5 bg-[var(--dash-line)]" />
-        <MenuLink to="/dashboard/calendar" icon={<Plus className="size-4" />}>
-          New booking
-        </MenuLink>
-      </DropdownMenuContent>
-    </DropdownMenu>
   )
 }
 
@@ -322,95 +234,3 @@ function AccountMenu({
   )
 }
 
-/* ── Search ───────────────────────────────────────────────── */
-
-/**
- * A panel, not a page. It shows what searching should feel like — results
- * grouped by where the thing lives, the first one already selected — without
- * claiming a search behaviour that has not been specified. The results are
- * fixed, and the panel says so at its foot.
- */
-function SearchPanel({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const { surface } = useDashboardPreferences()
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        data-dashboard
-        data-surface={surface}
-        className="top-24 w-[min(40rem,calc(100vw-2rem))] translate-y-0 rounded-2xl border-[var(--dash-line)] bg-[var(--dash-surface)] p-0"
-      >
-        <DialogTitle className="sr-only">Search</DialogTitle>
-        <DialogDescription className="sr-only">
-          A prototype. The results below are fixed sample data.
-        </DialogDescription>
-
-        <div className="flex h-14 items-center gap-3 border-b border-[var(--dash-line)] px-5">
-          <Search aria-hidden="true" className="size-[18px] text-[var(--dash-blue)]" />
-          <span className="flex-1 text-[15px]">kolb</span>
-        </div>
-
-        <div className="max-h-[50vh] overflow-y-auto">
-          <p className="px-5 pt-3.5 pb-2 text-[10px] font-bold tracking-[0.16em] text-[var(--dash-quiet)]">
-            INVOICES
-          </p>
-          <Link
-            to="/dashboard/invoices"
-            onClick={() => onOpenChange(false)}
-            className="flex h-[50px] items-center gap-3 bg-[var(--dash-blue-tint)] px-5"
-          >
-            <ReceiptEuro aria-hidden="true" className="size-[17px] text-[var(--dash-blue)]" />
-            <span className="flex-1 truncate text-[13px] font-semibold">
-              INV-2026-038 · Kolb &amp; Sohn
-            </span>
-            <span className="dash-tone-red flex h-[22px] items-center rounded-md px-2.5 text-[11px] font-semibold">
-              22 days late
-            </span>
-            <span className="dash-num text-[13px] font-semibold">620 €</span>
-          </Link>
-
-          <p className="border-t border-[var(--dash-soft)] px-5 pt-3.5 pb-2 text-[10px] font-bold tracking-[0.16em] text-[var(--dash-quiet)]">
-            MESSAGES
-          </p>
-          <Link
-            to="/dashboard/inbox"
-            onClick={() => onOpenChange(false)}
-            className="dash-row flex h-[50px] items-center gap-3 px-5"
-          >
-            <Inbox aria-hidden="true" className="size-[17px] text-[var(--dash-quiet)]" />
-            <span className="flex-1 truncate text-[13px]">
-              Kolb &amp; Sohn — Zahlung Rechnung INV-2026-038
-            </span>
-            <span className="dash-num text-[11px] text-[var(--dash-quiet)]">08:15</span>
-          </Link>
-
-          <p className="border-t border-[var(--dash-soft)] px-5 pt-3.5 pb-2 text-[10px] font-bold tracking-[0.16em] text-[var(--dash-quiet)]">
-            LEADS
-          </p>
-          <Link
-            to="/dashboard/leads"
-            onClick={() => onOpenChange(false)}
-            className="dash-row flex h-[50px] items-center gap-3 px-5"
-          >
-            <Handshake aria-hidden="true" className="size-[17px] text-[var(--dash-quiet)]" />
-            <span className="flex-1 truncate text-[13px]">Kolb &amp; Sohn — Wartungsvertrag</span>
-            <span className="dash-tone-grey flex h-[22px] items-center rounded-md px-2.5 text-[11px] font-semibold">
-              Won
-            </span>
-          </Link>
-        </div>
-
-        <p className="border-t border-[var(--dash-line)] bg-[var(--dash-furniture)] px-5 py-3 text-[11px] text-[var(--dash-quiet)]">
-          Prototype — these results are fixed sample data, and what search
-          actually covers is not specified yet.
-        </p>
-      </DialogContent>
-    </Dialog>
-  )
-}

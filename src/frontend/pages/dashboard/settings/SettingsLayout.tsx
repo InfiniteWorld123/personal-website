@@ -29,7 +29,7 @@ const SECTIONS = [
   },
 ] as const
 
-/** Named in `sample-modules.ts`, and not designed yet. */
+/** Settings sections named in `docs/v2/foundation.md`, and not designed yet. */
 const LATER = ['Mailbox', 'Invoicing', 'Booking', 'Public site'] as const
 
 export function SettingsLayout() {

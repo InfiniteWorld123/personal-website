@@ -18,7 +18,8 @@ import { getOwnerRouteSession } from '#/frontend/features/auth-v2/server/getOwne
  * moves this route from the legacy admin session to the V2 owner session, and
  * it is absent by default. Both positions are guarded; neither is open.
  *
- * The data behind these screens is still a fixture, and every screen says so.
+ * Security is the one section that reads real data. Every other section in
+ * the navigation says plainly that it is not built yet, and shows nothing.
  *
  * The stylesheet is linked here rather than imported by a component so the
  * server renders with it already in the document. Every rule inside is scoped
