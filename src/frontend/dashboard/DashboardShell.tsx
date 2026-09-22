@@ -26,15 +26,17 @@ import { DashboardPreferencesProvider, useDashboardPreferences } from './prefere
 export function DashboardShell({
   userName,
   userEmail,
+  sessionKind,
   children,
 }: {
   userName: string
   userEmail: string
+  sessionKind: 'legacy' | 'v2'
   children: ReactNode
 }) {
   return (
     <DashboardPreferencesProvider>
-      <Workbench userName={userName} userEmail={userEmail}>
+      <Workbench userName={userName} userEmail={userEmail} sessionKind={sessionKind}>
         {children}
       </Workbench>
     </DashboardPreferencesProvider>
@@ -44,10 +46,12 @@ export function DashboardShell({
 function Workbench({
   userName,
   userEmail,
+  sessionKind,
   children,
 }: {
   userName: string
   userEmail: string
+  sessionKind: 'legacy' | 'v2'
   children: ReactNode
 }) {
   const { surface, navShape, rail, toggleRail } = useDashboardPreferences()
@@ -85,6 +89,7 @@ function Workbench({
           <DashboardTopBar
             userName={userName}
             userEmail={userEmail}
+            sessionKind={sessionKind}
             railCollapsed={rail}
             onToggleRail={toggleRail}
             onOpenDrawer={() => setDrawerOpen(true)}

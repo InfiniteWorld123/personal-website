@@ -30,3 +30,11 @@ my images/
 .codex/
 PROMPT.md
 REVIEW-PROMPT.md
+
+# Backend2's development image store. `bun run dev` writes uploaded project
+# images here instead of an R2 bucket, so the whole module works locally with
+# no Cloudflare account and no credentials. Never part of the site.
+.backend2-media/
+
+# The local V2 development database (`bun run db2:dev`).
+.backend2-db/

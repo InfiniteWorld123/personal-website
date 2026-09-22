@@ -1,14 +1,5 @@
 import { useTheme } from '#/frontend/components/theme/theme-provider'
-import {
-  DashboardPage,
-  Initials,
-  NotSpecifiedBadge,
-  PageHead,
-  Panel,
-  PanelHead,
-  StatusChip,
-} from '#/frontend/dashboard/primitives'
-import { modulePreviews } from '#/frontend/dashboard/sample-modules'
+import { Panel, PanelHead } from '#/frontend/dashboard/primitives'
 import {
   useDashboardPreferences,
   type DashboardNavShape,
@@ -16,28 +7,24 @@ import {
 } from '#/frontend/dashboard/preferences'
 import { cn } from '#/frontend/lib/utils'
 import type { ThemePreference } from '#/frontend/components/theme/theme'
+import { SettingsSection } from './SettingsLayout'
 
 /**
- * The first settings screen that actually does something.
+ * Appearance: the one settings section that belongs to this browser rather
+ * than to the account.
  *
- * Only one section is real: how the dashboard looks. Both of those choices
- * belong to this browser, not to an account, so they need nothing from
- * Backend2 and can exist now — everything below them is still shape.
+ * It needs nothing from Backend2, which is why it could exist long before
+ * Security did. The list of sections that are still only a shape moved to the
+ * settings navigation, where it belongs.
  */
 export function SettingsPage() {
-  const preview = modulePreviews.settings
-
   return (
-    <DashboardPage>
-      <PageHead
-        eyebrow="SETTINGS"
-        title="Settings"
-        description="How the dashboard looks, and the rest of it once it is designed."
-        className="dash-rise dash-rise-1"
-      />
-
-      <Panel className="dash-rise dash-rise-2 mt-5">
-        <PanelHead title="Appearance" note="Saved in this browser" />
+    <SettingsSection
+      title="Appearance"
+      description="These are saved in this browser, not on the account — another machine can look however it likes."
+    >
+      <Panel>
+        <PanelHead title="Surface" note="Saved in this browser" />
 
         <div className="border-t border-[var(--dash-soft)] px-5 py-5">
           <SurfaceChoice />
@@ -51,40 +38,7 @@ export function SettingsPage() {
           <ThemeChoice />
         </div>
       </Panel>
-
-      <div className="dash-rise dash-rise-3 mt-7 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="dash-eyebrow-quiet">EVERYTHING ELSE</p>
-          <p className="mt-1.5 max-w-[68ch] text-[13px] text-[var(--dash-quiet)]">{preview.open}</p>
-        </div>
-        <NotSpecifiedBadge />
-      </div>
-
-      <Panel className="dash-rise dash-rise-4 mt-3 overflow-hidden">
-        <ul>
-          {preview.rows.map((row, index) => (
-            <li
-              key={row.id}
-              className={cn(
-                'flex h-[74px] items-center gap-4 px-5 opacity-70',
-                index > 0 && 'border-t border-[var(--dash-soft)]',
-              )}
-            >
-              <Initials className="size-9 rounded-[10px] text-xs">{row.initials}</Initials>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold">{row.title}</span>
-                <span className="mt-0.5 block truncate text-xs text-[var(--dash-quiet)]">
-                  {row.detail}
-                </span>
-              </span>
-              <StatusChip tone={row.tone} className="h-6 px-2.5">
-                {row.status}
-              </StatusChip>
-            </li>
-          ))}
-        </ul>
-      </Panel>
-    </DashboardPage>
+    </SettingsSection>
   )
 }
 

@@ -8,6 +8,12 @@ Projects is the owner's portfolio and case-study collection. An entry can stay p
 
 The existing project form and public project page are references, not V2 specifications. Public-site integration must respect the preservation contract in `foundation.md`; any visible layout change needs separate approval.
 
+## Current implementation, not V2 approval
+
+- `/dashboard/projects` is a temporary shape-only screen. There is no `src/backend2/` Projects implementation or new V2 database yet.
+- The existing `/admin/projects` form, API, and database tables belong to the legacy system. They do not satisfy this V2 plan automatically.
+- The public `/work` page currently loads the complete list and reveals it in groups of six in the browser. The V2 public read should request one batch at a time from Backend2 while retaining the accepted page design.
+
 ## Confirmed product decisions
 
 - Each project has a type: **Demo**, **Personal**, or **Client**. The type is visible to visitors when the project is published, so a demo is not presented as client work.
@@ -16,6 +22,7 @@ The existing project form and public project page are references, not V2 specifi
 - The owner controls the order of published projects manually. The homepage uses the first projects in that same order; there is no separate featured ordering.
 - Every published project has a public detail page, even when its optional case study is empty. The page shows the available summary, links, and images.
 - A project may be published without a full case study, including while it is in progress. The full case study remains optional after completion.
+- Editing a published project creates private pending changes. Saving those changes does not alter what visitors see; the existing published version stays live until the owner explicitly chooses **Publish update**. Publication validation applies to the pending version before it replaces the live version.
 - Publication requires a project name, type, and short summary in German, English, and Arabic. A cover image and case study are optional. Every published image requires alternative text in all three languages.
 - A case study uses one flexible rich-text body per language, with optional editorial guidance or a starter outline. The owner can change or omit the suggested sections.
 - The editor supports headings, emphasis, lists, links, images within the story, code blocks, and tables.
@@ -24,6 +31,10 @@ The existing project form and public project page are references, not V2 specifi
 - The owner decides which client details and links to publish. Website URL, source-code URL, and other relevant links are independent and optional. A private repository URL is never required or automatically exposed.
 - Demonstrated business results may be described in the case study when available, but no growth metrics or outcome claims are required.
 - Existing legacy projects will be recreated by the owner in V2 rather than imported automatically.
+- Images are uploaded from the owner's computer through the Dashboard. A separate Media Library is optional later, not a prerequisite for adding project images.
+- Both the public work list and the Dashboard project list use real Backend2 pagination, even while the number of projects is small. Manual ordering must work across Dashboard page boundaries.
+- Keep the existing login guard on `/dashboard` during local development. This does not start a new V2 authentication module or change the legacy `/admin` login.
+- Defer the V2 authentication design, including MFA, to a separate planning session. Projects may be built and tested locally without making the legacy session an implementation prerequisite for Backend2; owner-only V2 APIs must remain unavailable on non-local deployments until an approved authentication plan exists.
 
 ## Proposed authoring flow — not yet approved
 
@@ -32,7 +43,8 @@ The existing project form and public project page are references, not V2 specifi
 3. Optionally write the richer case study and add cover, inline images, and gallery images.
 4. Preview the public page in each language.
 5. Publish when the agreed minimum content is complete; publish and work status remain independent.
-6. Change visibility, content, links, and manual display order later.
+6. For an already published project, save further content, link, and image edits privately; preview them and choose **Publish update** when ready. The previous public version remains visible in the meantime.
+7. Change visibility and manual display order separately when needed.
 
 ## Frontend direction agreed with the owner
 
@@ -41,16 +53,93 @@ The existing project form and public project page are references, not V2 specifi
 - Keep optional editorial guidance inside the rich-text case-study editor without constraining the owner's structure.
 - Extend the existing public project page to render the approved rich-text content, inline images, and tables while preserving the public website's accepted visual identity. This is an approved content-layout extension, not a general public-site redesign.
 
-## Pagination proposal — awaiting owner confirmation
+## Proposed Projects screen design — awaiting visual approval
+
+Reuse the existing Studio Workbench shell, type, blue accent, light/dark themes, and four surface choices. Do not create a separate visual theme for Projects. The distinctive visual focus is the project's real cover/preview and its publication state, not decorative dashboard cards or invented performance metrics.
+
+```text
+Projects list
+Projects                                      [New project]
+[Search] [Visibility] [Type / status]
+Cover  Project + slug  Type  Status  Visibility  Updated  Order
+...                                              [Move / Edit]
+[Previous]              Page 1 of N              [Next]
+
+One-page editor
+Back to Projects     Project name            [Preview] [Save draft]
+Main column: basics → DE/EN/AR content → case study → images → technology
+Side column: private/published state → missing items → [Publish]
+```
+
+- On a small screen, the list becomes readable project rows/cards and the editor side column moves below the content; save/preview/publish remain reachable without covering the rich-text toolbar.
+- Reordering should be accessible without drag-and-drop. Proposed controls: move up/down globally and move to a chosen position, including positions on another page. The exact interaction must be reviewed in a rendered prototype.
+- The editor shows which language is incomplete and which fields block publication. The case-study outline is optional guidance inside the rich editor, never a fixed set of required text boxes.
+- The public `/work` and detail pages retain their accepted visual identity. New content blocks must fit their existing typography, spacing, motion, and RTL behavior rather than introducing a second design system.
+
+## Proposed first complete slice — for discussion
+
+This is one Projects module delivered end to end, not permission to implement it yet:
+
+1. Establish only the V2 database, migration, and API foundation needed for Projects, without writing to the legacy database or changing `/admin`. V2 authentication is deferred during this local-only slice; private V2 operations must not be available from a non-local deployment.
+2. Replace the Dashboard Projects placeholder with a real list and a one-page editor: create a private draft, save incomplete work, preview, publish or unpublish, and reorder published projects.
+3. Connect the public work list, homepage selection, and project detail pages to V2 Projects in a verified local preview first. Preserve current public appearance and behavior; any remote preview or production cutover remains separate and requires the approved access/security plan.
+4. Review real desktop and mobile browser flows, plus API and database tests, before declaring the module complete.
+
+Once this specification is approved, implementation proceeds backend-first: Claude completes and verifies the V2 data/API portion, then connects the Dashboard and public frontend, then shows the owner rendered browser results. A passing API test alone is not a finished Projects module.
+
+### Proposed information and editor layout
+
+- **Project facts:** stable internal ID, public URL slug, Demo/Personal/Client type, work status, private/public visibility, and manual public order.
+- **Privacy and links:** optional client name with an explicit show/hide choice; optional website, source-code, and other links that are never published implicitly. The editor makes clear which values a visitor will see.
+- **Per language (DE/EN/AR):** name, short category label for the existing public eyebrow, card summary, and optional rich-text case study. The case study may be blank in any language; publishing still requires the agreed name and summary in all three.
+- **Images:** optional cover, ordered gallery, and images inserted within the case study. Upload from the owner's computer through the Dashboard. Every public image has alt text in all three languages. A standalone Media Library is not required for the first Projects slice.
+- **Technology:** optional ordered technology labels, as seen on the current public project page.
+- **Dashboard list:** clearly distinguish published and private projects, show type/status/translation readiness, and paginate from Backend2 even when there are few entries. Manual ordering must work across pages; a proposed control is "Move to position" plus adjacent up/down actions. Search or filters must not silently reorder hidden projects.
+- **Editor:** grouped sections on one page, DE/EN/AR language tabs, visible draft/publish state, clear missing-publication checklist, preview, and save/publish actions. Draft validation and publication validation are separate.
+- **Published edits:** show when saved changes are still pending, and provide a distinct **Publish update** action. The preview shows pending content; public pages keep using the last published version until that action succeeds.
+
+### Proposed Backend2 capabilities, not final route names
+
+- Local-only private operations for the initial slice: list projects with bounded pagination, create a private draft, read one draft, save edits (including private edits to a published project), publish or publish an update, unpublish, reorder published projects across pages, upload/manage project images, and preview pending content. These endpoints must be unavailable outside a verified local development environment until V2 authentication is approved.
+- Public: list only published projects in manual order by language and six-item batch, read one published project by slug and language, and return the first published projects for the homepage in that same order.
+- Public responses contain only explicitly publishable fields. Private drafts, hidden client names, private repository links, internal IDs/notes, and upload storage keys must not leak into them.
+- The exact URLs, HTTP methods, response shapes, error codes, storage provider, and database schema are still to be specified after the foundation choices are approved.
+
+### Cloudflare media direction
+
+- The owner prefers Cloudflare. R2 is the proposed storage service, and the repository already declares an R2 Worker binding for legacy media. The V2 implementation must isolate its objects from legacy media; the exact bucket or prefix and preview environment remain to be decided.
+- A local-only Dashboard upload endpoint receives a file, validates its actual image format and size, writes it through an R2 binding or local R2 emulation during development, and records only metadata/object key in the V2 database. Do not expose storage credentials to the browser or put image bytes in PostgreSQL. A remotely available upload requires the later authentication plan.
+- Keep the bucket private. A draft image is readable only in the local preview during this phase; after V2 authentication exists, preview access must be owner-authorized. A public image is served only while attached to a published project. The implementation plan must address cache invalidation on unpublish and cleanup of removed images.
+- Cloudflare Images transformations may be evaluated for responsive delivery, but are not required merely to make direct R2 uploads work. Do not introduce Cloudinary unless the owner changes the provider decision.
+
+### Provisional choices awaiting owner confirmation
+
+- Preview an unpublished project only inside the local Dashboard during the initial slice; do not create shareable preview links in the first version.
+- The local Projects slice does not need to integrate Backend2 with the legacy login session. The existing `/dashboard` page guard stays, but it does not protect an API called directly. Therefore owner-only Backend2 endpoints must be restricted to verified local development and absent or denied in non-local deployments; a Git branch, hidden route, or 404 on today's live site does not replace this requirement. Never write Projects data to the legacy database.
+- Generate a suggested slug from a name, allow the owner to edit it before publication, and avoid casually changing public URLs after publication.
+- Prefer unpublishing/keeping a private draft to accidental permanent deletion; the exact delete or archive behavior remains open.
+
+### Proof required before a Claude build can be accepted
+
+- A private draft survives incomplete translations and cannot be fetched through public endpoints.
+- A publish attempt explains every missing required translation or image alt text, and leaves the draft intact.
+- Saving an edit to a published project leaves the public version and its images unchanged. An invalid **Publish update** leaves that public version intact and keeps the pending changes for correction.
+- Public list, detail, and homepage respect one manual order; public pagination requests only the needed batch. The Dashboard list is also server-paginated, and moving a published project across page boundaries preserves the intended global order.
+- Client name and source link appear only when explicitly allowed; an unpublished project returns not found publicly.
+- The editor and public pages are checked in DE, EN, and AR, including RTL, on desktop and mobile. Loading, empty, validation, server-error, and success states are visibly verified.
+- Typecheck, relevant automated tests, build, local private/public browser checks, and explicit tests that owner-only Backend2 endpoints are unavailable outside local development pass. Production cutover is not implied.
+
+## Pagination — agreed with the owner
 
 - Preserve the public `/work` page's existing pattern: initially show six projects and reveal more in batches of six with the existing Load more control.
-- Backend2 should return only the requested batch, in the owner's manual order, with a stable secondary order and an indication of whether more projects exist. It must not expose private projects.
-- The dashboard list may show all projects without pagination controls for the initial version so manual ordering remains easy. Its list API can support bounded paging for future growth.
+- Backend2 should return only each requested public batch, in the owner's manual order, with a stable secondary order and an indication of whether more projects exist. It must not expose private projects. The current public implementation slices an already loaded list; V2 should fetch successive batches from Backend2 instead. When the URL requests a later page directly, the frontend still shows all preceding batches so the existing "Load more" experience is preserved.
+- The dashboard list also uses server-side pagination and visible page controls. Reordering is global rather than limited to the current page; the exact cross-page control is part of the frontend design review.
 
 ## Validation direction
 
 - Follow the repository-wide form validation behavior in `AGENTS.md`: first submit, then revalidate on change; show accessible inline errors and focus the first invalid field.
 - Saving a private draft permits incomplete translations and images. Publishing requires the approved minimum content in all three languages and translated alternative text for every image that will be public.
+- Saving pending changes to a published project likewise permits incomplete work; only **Publish update** replaces the public version after full validation. Pending image additions or removals must not change the public version before then.
 - The server independently enforces publication rules. A rejected publish attempt must leave the saved draft available and explain what needs attention.
 
 ## Specification sections still to complete

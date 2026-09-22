@@ -4,11 +4,23 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, children, ...rest }: { to: string; children: ReactNode }) => (
+  Link: ({
+    to,
+    children,
+    activeOptions: _activeOptions,
+    activeProps: _activeProps,
+    ...rest
+  }: {
+    to: string
+    children: ReactNode
+    activeOptions?: unknown
+    activeProps?: unknown
+  }) => (
     <a href={to} {...rest}>
       {children}
     </a>
   ),
+  Outlet: () => <div data-testid="settings-outlet" />,
   useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
     select({ location: { pathname: '/dashboard/settings' } }),
 }))
@@ -39,6 +51,7 @@ const {
   dashboardNavShapes,
 } = await import('#/frontend/dashboard/preferences')
 const { SettingsPage } = await import('#/frontend/pages/dashboard/settings/SettingsPage')
+const { SettingsLayout } = await import('#/frontend/pages/dashboard/settings/SettingsLayout')
 
 afterEach(cleanup)
 
@@ -143,12 +156,36 @@ describe('choosing the theme', () => {
 
 describe('the rest of the settings screen', () => {
   /** Appearance is real. Nothing else on this screen is, and it says so. */
+  /**
+   * The list of unbuilt sections moved out of the Appearance page and into the
+   * settings navigation when Security arrived. Where it lives changed; that it
+   * is shown, and shown as unbuilt, did not.
+   */
   it('still marks everything that has no specification yet', () => {
-    open()
+    render(
+      <ThemeProvider>
+        <DashboardPreferencesProvider>
+          <SettingsLayout />
+        </DashboardPreferencesProvider>
+      </ThemeProvider>,
+    )
 
-    expect(screen.getByText('NOT SPECIFIED YET')).toBeTruthy()
+    expect(screen.getByText('NOT DESIGNED YET')).toBeTruthy()
     expect(screen.getByText('Mailbox')).toBeTruthy()
     expect(screen.getByText('Invoicing')).toBeTruthy()
+
+    // The two that are real are links; the rest are plain text.
+    expect(screen.getByRole('link', { name: /Appearance/ })).toBeTruthy()
+    expect(screen.getByRole('link', { name: /Security/ })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /Mailbox/ })).toBeNull()
+  })
+
+  it('opens on Appearance and keeps it a section of its own', () => {
+    open()
+
+    expect(screen.getByRole('heading', { name: 'Appearance' })).toBeTruthy()
+    // The page head belongs to the shell now, not to this section.
+    expect(screen.queryByText('SETTINGS')).toBeNull()
   })
 })
 

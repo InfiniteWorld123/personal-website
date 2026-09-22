@@ -10,6 +10,7 @@ import {
   ReceiptEuro,
   Search,
   Settings,
+  ShieldCheck,
 } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '#/frontend/components/ui/dropdown-menu'
 import type { ThemePreference } from '#/frontend/components/theme/theme'
+import { signOut } from '#/frontend/features/auth-v2/api'
 import { useDashboardPreferences } from './preferences'
 import { sampleFigures } from './sample-data'
 
@@ -50,12 +52,14 @@ import { sampleFigures } from './sample-data'
 export function DashboardTopBar({
   userName,
   userEmail,
+  sessionKind,
   railCollapsed,
   onToggleRail,
   onOpenDrawer,
 }: {
   userName: string
   userEmail: string
+  sessionKind: 'legacy' | 'v2'
   railCollapsed: boolean
   onToggleRail: () => void
   onOpenDrawer: () => void
@@ -116,7 +120,7 @@ export function DashboardTopBar({
         </span>
       </Link>
 
-      <AccountMenu userName={userName} userEmail={userEmail} />
+      <AccountMenu userName={userName} userEmail={userEmail} sessionKind={sessionKind} />
 
       <SearchPanel open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
@@ -186,7 +190,15 @@ const THEME_CHOICES: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
 ]
 
-function AccountMenu({ userName, userEmail }: { userName: string; userEmail: string }) {
+function AccountMenu({
+  userName,
+  userEmail,
+  sessionKind,
+}: {
+  userName: string
+  userEmail: string
+  sessionKind: 'legacy' | 'v2'
+}) {
   const { preference, setPreference } = useTheme()
   const { surface } = useDashboardPreferences()
   const initials = userName
@@ -275,15 +287,36 @@ function AccountMenu({ userName, userEmail }: { userName: string; userEmail: str
           Settings
         </MenuLink>
 
+        <MenuLink to="/dashboard/settings/security" icon={<ShieldCheck className="size-4" />}>
+          Security
+        </MenuLink>
+
         <DropdownMenuSeparator className="my-1.5 bg-[var(--dash-line)]" />
 
-        {/* Disabled on purpose: V2 has no session of its own until Backend2. */}
-        <DropdownMenuItem
-          disabled
-          className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
-        >
-          Log out — waiting on Backend2
-        </DropdownMenuItem>
+        {/*
+          Enabled only where it would tell the truth. Under the V2 session it
+          ends that session and returns to the V2 sign-in; while the legacy
+          guard is still the boundary, ending the V2 session would leave the
+          Dashboard open and look like a log-out that did nothing.
+        */}
+        {sessionKind === 'v2' ? (
+          <DropdownMenuItem
+            className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
+            onSelect={async () => {
+              await signOut().catch(() => {})
+              window.location.assign('/dashboard/login')
+            }}
+          >
+            Log out
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            disabled
+            className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
+          >
+            Log out — sign out from /admin for now
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

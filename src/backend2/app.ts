@@ -1,0 +1,127 @@
+import { Elysia } from 'elysia'
+import { withRequestScope } from './db/client'
+import { isApiError } from './http/error'
+import { normalizeError } from './http/error-handler'
+import { responseFailure, responseOk } from './http/response'
+import { HttpStatus } from './http/status'
+import { ownerRoutesEnabled } from './security/local-only'
+import { publicAuthRoutes } from './modules/auth/auth.route'
+import { ownerSecurityRoutes } from './modules/auth/security.route'
+
+/**
+ * Backend2.
+ *
+ * A separate Elysia application from the legacy one, mounted under `/api/v2`,
+ * importing nothing from `src/backend/`. Duplicating a small envelope and an
+ * error module is the price of being able to delete the legacy backend at
+ * cutover without breaking V2.
+ *
+ * Authentication is the first module here. Every later one registers itself in
+ * `buildApp` beside it — public reads outside the fence, owner routes inside
+ * the `/owner` group, which `ownerSessionGuard` already protects.
+ */
+
+/**
+ * Elysia compiles its router with `new Function`, which Cloudflare Workers
+ * forbid. The capability is probed rather than keyed off a build flag, so one
+ * bundle runs on a Worker and on a Node server without a second code path.
+ */
+const supportsCodeGeneration = (() => {
+  try {
+    new Function('')
+
+    return true
+  } catch {
+    return false
+  }
+})()
+
+/**
+ * The owner half exists only where it is allowed to.
+ *
+ * This is the first of the two layers: with the opt-in flag absent — which is
+ * every deployment — these routes are never registered, so there is nothing to
+ * reach. The per-request guard is the second, and either alone refuses a
+ * stranger.
+ */
+const buildApp = () => {
+  const app = new Elysia({ prefix: '/api/v2', aot: supportsCodeGeneration }).onError(
+    ({ code, error, status }) => {
+      /*
+       * Our own errors are answered first, on purpose. Elysia derives `code`
+       * from the error's own `code` field, and ours uses `NOT_FOUND` — the
+       * same name Elysia gives an unmatched route. Checked in the other order,
+       * every "that project does not exist" arrives as "Route not found".
+       */
+      if (!isApiError(error)) {
+        if (code === 'NOT_FOUND') {
+          return status(
+            HttpStatus.NOT_FOUND,
+            responseFailure({ message: 'Route not found', code: 'NOT_FOUND' }),
+          )
+        }
+
+        if (code === 'PARSE') {
+          return status(
+            HttpStatus.BAD_REQUEST,
+            responseFailure({ message: 'The request could not be read', code: 'BAD_REQUEST' }),
+          )
+        }
+      }
+
+      const normalized = normalizeError(error)
+
+      return status(normalized.status, normalized.body)
+    },
+  )
+
+  /*
+   * Auth V2 rides the same fence, for now.
+   *
+   * `docs/v2/auth.md`: "Introduce V2 auth behind the current local-only
+   * fence... Only then switch to V2 session authorization and enable remote
+   * owner routes in a separately reviewed environment." So the sign-in routes
+   * are public *by contract* but not yet reachable from a deployment; making
+   * them so is one deliberate change to `security/local-only.ts`, reviewed on
+   * its own, rather than a side effect of this module landing.
+   */
+  if (ownerRoutesEnabled()) {
+    app.use(publicAuthRoutes)
+
+    app.group('/owner', (owner) => owner.use(ownerSecurityRoutes))
+  }
+
+  return app.get('/', () =>
+    responseOk({ data: { status: 'ok', version: 2 }, message: 'Backend2 is running' }),
+  )
+}
+
+export const app = buildApp()
+
+export type Backend2App = typeof app
+
+/**
+ * Rebuilds the application. Only for tests, which need to see what a different
+ * environment would have mounted.
+ */
+export const createAppForTest = () => buildApp()
+
+/**
+ * Elysia returns an empty 404 body for an unmatched route. Normalised here so
+ * every Backend2 response has the same envelope.
+ */
+export const handleApiV2Request = (request: Request): Promise<Response> =>
+  withRequestScope(async () => {
+    const response = await app.fetch(request)
+
+    if (response.status !== HttpStatus.NOT_FOUND) return response
+
+    const body = await response.clone().text()
+
+    if (body.trim() !== '') return response
+
+    return Response.json(
+      responseFailure({ message: 'Route not found', code: 'NOT_FOUND' }),
+      { status: HttpStatus.NOT_FOUND, headers: { 'Cache-Control': 'no-store' } },
+    )
+  })

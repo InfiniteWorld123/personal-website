@@ -118,6 +118,32 @@ Before V2 touches real data, planning must decide:
 - cutover order and rollback;
 - backup and restore verification.
 
+## Authentication timing during local development
+
+The owner does not want to build V2 authentication as part of the initial,
+local-only Projects work. The future single-owner V2 login uses email and
+password, followed by authenticator-app MFA with one-time recovery codes.
+The later Auth-module planning also approved passwordless passkey sign-in as
+the primary route; email, password, and Authenticator remain the fallback.
+The passkey is verified on the owner's device and does not send a fingerprint
+to the website. `docs/v2/auth.md` owns the detailed sign-in and session policy.
+The owner also wants to remove the Cloudflare human-verification challenge
+from the future sign-in experience. Detailed recovery and session policies,
+and whether Turnstile should also be removed from public contact and booking
+forms, are separate decisions for that later module.
+MFA protects the account after a password attempt; it does not replace
+anti-abuse controls such as login rate limiting. Those controls must be reviewed
+when the sign-in challenge is removed.
+
+This postponement is not approval to expose owner-only V2 APIs without access
+control. Until V2 authentication is specified and implemented, private V2
+operations may run only in a verified local development environment and must
+be unavailable from non-local or production deployments. Keep the existing
+legacy `/admin` authentication and current `/dashboard` guard in place during
+this phase; do not remove live Turnstile or other existing protections while
+building Projects. A remote preview or production cutover needs its own
+approved authentication and security plan.
+
 ## Documentation reset
 
 Legacy planning, architecture, roadmap, design, and decision Markdown files were
@@ -170,7 +196,7 @@ The following are deliberately open:
 
 - Backend2 framework and internal architecture;
 - final public and private API namespaces;
-- authentication and session design;
+- MFA recovery and authentication/session design before any non-local V2 private API;
 - V2 database hosting and environment strategy;
 - data-import scope;
 - exact dashboard information architecture and visual system;

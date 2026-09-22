@@ -458,6 +458,59 @@
     outline-offset: 2px;
   }
 
+  /* ── Form controls ────────────────────────────────────────────
+     One class for every input, select and textarea on this surface. Stated
+     here rather than as utilities beside each field because the border and
+     the fill are tokens, and a field that picks them up by hand is a field
+     that will be wrong in dark mode the first time one is copied. */
+
+  .dash-field {
+    border: 1px solid var(--dash-line);
+    border-radius: 9px;
+    background: var(--dash-input);
+    color: var(--dash-ink);
+    font: inherit;
+  }
+
+  .dash-field::placeholder {
+    color: var(--dash-quiet);
+    opacity: 0.75;
+  }
+
+  /* The red is the one already reserved for a problem, and it never travels
+     alone: every invalid field also carries a sentence underneath it. */
+  .dash-field[aria-invalid='true'] {
+    border-color: var(--dash-red);
+  }
+
+  .dash-field:disabled,
+  .dash-field[readonly] {
+    color: var(--dash-quiet);
+  }
+
+  /* ── Translation readiness ────────────────────────────────────
+     Three small squares saying which languages a project could be published
+     in. Filled is ready; the label inside is the language, so the state never
+     rests on the colour alone. */
+
+  .dash-lang {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 19px;
+    border-radius: 5px;
+    background: var(--dash-chip);
+    color: var(--dash-quiet);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .dash-lang[data-done='true'] {
+    background: var(--dash-blue-tint);
+    color: var(--dash-blue-ink);
+  }
+
   /* ── Rows that answer a pointer ───────────────────────────── */
 
   .dash-row:hover {
