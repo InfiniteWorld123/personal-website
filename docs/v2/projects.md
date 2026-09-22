@@ -10,7 +10,7 @@ The existing project form and public project page are references, not V2 specifi
 
 ## Current implementation, not V2 approval
 
-- `/dashboard/projects` is a temporary shape-only screen. There is no `src/backend2/` Projects implementation or new V2 database yet.
+- `/dashboard/projects` is still a screen that says the section is not built. There is no `src/backend2/` Projects implementation. **The V2 database does exist now** — it holds Auth, the shared Media vault, and the Projects tables from `0001_projects.sql`, which were applied without the code that was meant to use them. Read the warning above before adding to it.
 - The existing `/admin/projects` form, API, and database tables belong to the legacy system. They do not satisfy this V2 plan automatically.
 - The public `/work` page currently loads the complete list and reveals it in groups of six in the browser. The V2 public read should request one batch at a time from Backend2 while retaining the accepted page design.
 
@@ -31,10 +31,9 @@ The existing project form and public project page are references, not V2 specifi
 - The owner decides which client details and links to publish. Website URL, source-code URL, and other relevant links are independent and optional. A private repository URL is never required or automatically exposed.
 - Demonstrated business results may be described in the case study when available, but no growth metrics or outcome claims are required.
 - Existing legacy projects will be recreated by the owner in V2 rather than imported automatically.
-- Every Project image—cover, gallery, or inline case-study image—must be chosen through the shared `/dashboard/media` picker. If the image is not in Media, **Upload from computer** adds it to the persistent shared library first, then selects it for the project. Projects must not keep a separate project-only upload path or asset store after integration. The shared Media contract and safe migration from the current project-scoped implementation are planned in `media.md`.
+- Every Project image—cover, gallery, or inline case-study image—must be chosen through the shared `/dashboard/media` picker. If the image is not in Media, **Upload from computer** adds it to the persistent shared library first, then selects it for the project. Projects must not keep a separate project-only upload path or asset store after integration. The shared library is built and running; `media.md` records it. There is no data to migrate — the old `v2_media_objects` table has always been empty — so Projects simply uses the picker.
 - Both the public work list and the Dashboard project list use real Backend2 pagination, even while the number of projects is small. Manual ordering must work across Dashboard page boundaries.
-- Keep the existing login guard on `/dashboard` during local development. This does not start a new V2 authentication module or change the legacy `/admin` login.
-- Defer the V2 authentication design, including MFA, to a separate planning session. Projects may be built and tested locally without making the legacy session an implementation prerequisite for Backend2; owner-only V2 APIs must remain unavailable on non-local deployments until an approved authentication plan exists.
+- ~~Defer the V2 authentication design, including MFA, to a separate planning session.~~ **Done.** V2 authentication is built and the owner signs in with it; `docs/v2/auth.md` owns it. Projects' owner-only routes use the same guard every other V2 owner route uses — `ownerGuard` from `src/backend2/security/owner-guard.ts` — which is the deployment fence plus a real owner session. Do not invent a second one, and do not expose an owner route without it. The legacy `/admin` login is untouched and stays that way until a separate cutover.
 
 ## Proposed authoring flow — not yet approved
 
@@ -144,6 +143,34 @@ Once this specification is approved, implementation proceeds backend-first: Clau
 ## Specification sections still to complete
 
 After the open product decisions are resolved: exact content fields, editor and image behavior, publication and preview rules, ordering behavior, private and public API contracts, permissions, data and migration rules, failure states, tests, and definition of done. Backend2 database, authentication, and API namespace decisions are prerequisites for implementation under `foundation.md`.
+
+## Before you touch the database — read this first
+
+**Updated 22 Sep 2026.**
+
+- **`0001_projects.sql` exists. Do not create it and do not overwrite it.**
+  These tables were applied to the owner's development database on 21 Sep 2026
+  while the file itself was never committed; it was recovered on 22 Sep by
+  reading the schema back out of that database. It matches what is installed,
+  which the design block in `projects-backend.md` §4.3 does not, in two places.
+- **The owner's database already holds these tables and two real project rows.**
+  A new Projects migration is a *change* to what is there, not a fresh
+  creation of it, and it takes the next free number — **`0004`** — never
+  `0001`. The runner sorts by filename, so a second `0001` would run before the
+  Media migration on a new database and never run at all on the owner's.
+- **Images are not Projects' to store.** Shared Media is built and running.
+  Import `MediaPicker` from `src/frontend/features/media/MediaPicker` for
+  choosing files, and call `replaceReferences` from
+  `src/backend2/modules/media/media.service` in-process — never over HTTP — to
+  declare which files a project version uses. Use scope `draft` while editing
+  and `published` for the live snapshot: `published` is what makes a file
+  reachable by a visitor, and any reference is what makes it undeletable. Alt
+  text, ordering and the cover/gallery/inline role belong to Projects' own
+  tables, because the same photograph needs different alt text per language.
+- The old project-scoped upload, the `v2_media_objects` table and its automatic
+  orphan cleanup are **superseded**. They still exist in the database because
+  0001 created them; nothing reads them, and the vault never deletes a file
+  merely because nothing references it.
 
 ## Handoff on the owner's read-to-build request
 

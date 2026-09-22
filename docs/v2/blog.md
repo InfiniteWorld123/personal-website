@@ -1,6 +1,6 @@
 # Blog V2 — product and implementation plan
 
-Status: planning specification recording the owner's decisions. The owner's read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps must still be asked about rather than invented. Shared Media is specified in `media.md` and must be integrated safely before Blog's media-backed flows can be completed. This document does not authorize unrelated changes to Projects or Auth.
+Status: planning specification recording the owner's decisions. The owner's read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps must still be asked about rather than invented. Shared Media is **built and running** as of 22 Sep 2026, so Blog's image flows have nothing to wait for: select through the shared picker, never build storage of its own. This document does not authorize unrelated changes to Projects or Auth.
 
 ## Goal and boundaries
 
@@ -15,7 +15,7 @@ V2 uses `src/backend2/` and its own database. Do not write to the legacy databas
 - Each language has its own body, optional editable SEO title and meta description with defaults from title/summary, and image alternative text. SEO overrides are not required merely to publish.
 - A single cover image can be used across languages. It is optional; the editor warns if missing. When present, its alternative text is required in all three languages before publication.
 - Inline images belong to the language-specific body and require suitable alternative text in that language before publication. Do not force the same body layout or inline image set across languages.
-- Every Blog image, including the cover and images inserted in rich text, is selected through the shared `/dashboard/media` picker. If the file is not there, **Upload from computer** first creates a persistent asset in Media, then selects it for the article. Blog has no separate upload path or image store. The library is shared with Projects and other modules; its full implementation contract remains open in `media.md`.
+- Every Blog image, including the cover and images inserted in rich text, is selected through the shared `/dashboard/media` picker. If the file is not there, **Upload from computer** first creates a persistent asset in Media, then selects it for the article. Blog has no separate upload path or image store. The library is shared with Projects and other modules. It is built; `media.md` records the contract and the delivery.
 - The rich-text editor should be reusable across V2 content modules, with module-specific capabilities where needed. Blog supports headings, emphasis, lists, links, quotes, inline images, tables, code blocks, and YouTube embeds. Store structured content and render it safely; do not accept arbitrary executable HTML or arbitrary embed code.
 - Tags, not categories, organize articles. A tag has names in DE/EN/AR and can be created/edited in the dashboard. Keep a curated set and the public tag-filter pattern; do not create empty/thin tag landing pages solely for SEO.
 - An article may link to one portfolio project, or none. No project link is required.
@@ -91,7 +91,7 @@ Public routes (published, enabled content only):
 | POST | `/api/v2/blog/posts/:slug/read` | Increment simple read count with abuse limits |
 | POST | `/api/v2/blog/posts/:slug/like` | Add/remove simple article like with abuse limits |
 
-The public `/rss/{de,en,ar}.xml` and `/sitemap.xml` routes remain at their current public URLs. Image, video, and PDF upload/select/serve endpoints belong to the later approved shared Media module, not duplicate Blog-specific storage endpoints.
+The public `/rss/{de,en,ar}.xml` and `/sitemap.xml` routes remain at their current public URLs. Image, video and document upload/select/serve endpoints belong to the shared Media module — built on 22 Sep 2026 and running at `/api/v2/owner/media` — not to duplicate Blog-specific storage endpoints.
 
 ## Verification and acceptance
 
@@ -113,4 +113,8 @@ The public `/rss/{de,en,ar}.xml` and `/sitemap.xml` routes remain at their curre
 
 ## Unresolved cross-module dependency, not another Blog questionnaire
 
-`docs/v2/media.md` records the shared-library contract, but Blog must verify the actual Media implementation and its public/private delivery before connecting images. A missing implementation is a dependency, not permission to build Blog-only storage. This does not reopen the Blog product questions answered here.
+~~Unresolved cross-module dependency.~~ **Resolved, 22 Sep 2026: shared Media is built.** The library, its public/private delivery and the shared picker all exist and are verified, so Blog has nothing to wait for and still no reason to build storage of its own.
+
+What Blog does when it is built: import `MediaPicker` from `src/frontend/features/media/MediaPicker`, and declare which files an article uses by calling `replaceReferences` from `src/backend2/modules/media/media.service` — in-process, never over HTTP, because a reference is what makes a file undeletable and, at `published` scope, publicly reachable. Use the scope that matches the snapshot: `draft` while editing, `published` once live, `scheduled` for a frozen future publication. Alt text belongs to Blog's own tables, not to Media: the same photograph needs different alt text in each language.
+
+None of this reopens the Blog product questions answered above.

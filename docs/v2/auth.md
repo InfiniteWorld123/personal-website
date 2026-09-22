@@ -1,6 +1,13 @@
 # Authentication V2 — module specification
 
-Status: owner decisions recorded; verify current implementation state before continuing. The owner's explicit read-to-build instruction supplies approval to implement or finish this V2 module under `AGENTS.md`. This document alone does not authorize changing the live legacy sign-in, deployment, or cutover.
+Status: **implemented and in daily use, confirmed 22 Sep 2026.** The owner signs
+in with it, and `BACKEND2_OWNER_AUTH=required` is set locally, which means V2
+sessions — not the legacy admin session — are what guard `/dashboard` and every
+`/api/v2/owner/**` route, including the shared Media library. What is *not*
+claimed here is that every item in the verification list below has been ticked;
+check the implementation against it before changing anything.
+
+Owner decisions recorded; verify current implementation state before continuing. The owner's explicit read-to-build instruction supplies approval to implement or finish this V2 module under `AGENTS.md`. This document alone does not authorize changing the live legacy sign-in, deployment, or cutover.
 
 ## Purpose
 

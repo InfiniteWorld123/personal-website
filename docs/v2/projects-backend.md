@@ -131,9 +131,33 @@ Archiving a published project unpublishes it first, in the same transaction.
 
 ### 4.2 Migration history
 
+> **Read this before writing any migration. Updated 22 Sep 2026.**
+>
+> **`0001_projects.sql` already exists. Do not create it, and do not write over
+> it.** These tables were applied to the owner's development database on
+> 21 Sep 2026; the file was recovered on 22 Sep by reading the schema back out
+> of that database, so it matches what is installed. Rewriting it from §4.3
+> below would produce a *different* schema from the one holding the owner's
+> real rows.
+>
+> **A new Projects migration takes the next free number — `0004` — never
+> `0001`.** The runner sorts by filename. A second `0001` would run *before*
+> `0003_media.sql` on a fresh database and would never run on the owner's,
+> where that name is already recorded. Two environments, silently different.
+>
+> **The owner's database already has these tables and two real project rows.**
+> A new migration must therefore be written as a *change* to what is there —
+> `ALTER TABLE`, a new table — not as a fresh creation of it.
+>
+> `src/backend2/db/migrations/0001_projects.sql` carries the same warning in
+> its own header, along with the two places where the installed schema differs
+> from §4.3 below.
+
 ```
-src/backend2/db/migrations/0001_projects.sql
-src/backend2/db/migrate.ts          -- the runner
+src/backend2/db/migrations/0001_projects.sql   -- exists; recovered 22 Sep 2026
+src/backend2/db/migrations/0002_auth.sql       -- exists
+src/backend2/db/migrations/0003_media.sql      -- exists
+src/backend2/db/migrate.ts                     -- the runner
 ```
 
 New script: `bun run db2:migrate`. The runner is the same shape as the legacy
@@ -141,6 +165,13 @@ one — ledger table, sorted filenames, one transaction per file — with the
 `DATABASE_URL_V2` safety check added before the first statement.
 
 ### 4.3 Schema — `0001_projects.sql`
+
+**This is the schema as it was designed, and the file on disk is the schema as
+it was installed. They differ in two places, and the file wins:
+`v2_media_objects` also carries a `public_token`, and
+`v2_project_images.media_object_id` is a deferrable foreign key with the
+default NO ACTION rather than `ON DELETE RESTRICT`. Read the file, not this
+block, when the exact shape matters.**
 
 ```sql
 -- Identity, order, lifecycle. No visitor-visible content lives here (D7).
@@ -867,10 +898,17 @@ because it matches on the `/api` prefix. That is free CSRF cover and is kept.
   `yamanwarda-media`. Object keys are `projects/<projectId>/<uuid>.<ext>` —
   generated, never derived from the uploaded filename.
 - The bucket stays private. Its `r2.dev` URL stays off. No public hostname.
-- **Owner action required before any deploy:** create the bucket in Cloudflare.
-  Until then the `r2_buckets` binding is deliberately **not** added to
-  `wrangler.jsonc`, because a binding to a bucket that does not exist fails the
-  deploy. Nothing in this phase needs it.
+- ~~**Owner action required before any deploy:** create the bucket in
+  Cloudflare.~~ **Done, 22 Sep 2026.** The bucket exists, in Western Europe,
+  with public access switched off, and `wrangler.jsonc` carries the binding
+  `MEDIA_V2`. Verified by writing an object to it, reading it back and
+  deleting it. What is still unverified — because it cannot be without
+  deploying — is the binding arriving inside a running Worker.
+- **The rest of this section describes the superseded project-scoped design.**
+  Storage now belongs to the shared vault in `docs/v2/media.md`: object keys,
+  the drivers, serving, and cleanup are all implemented there, and Projects
+  selects files through the shared picker rather than owning any of it. Read
+  §10.2 to §10.4 below as history.
 
 ### 10.2 Three drivers, one interface
 

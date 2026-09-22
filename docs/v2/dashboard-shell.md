@@ -9,13 +9,19 @@ a specification for any module.
 The private V2 interface at `/dashboard`, frontend only:
 
 - the shell — collapsible sidebar, top bar, light and dark, mobile drawer;
-- the **Overview** screen, complete;
-- **Invoices** — a real table with a working filter;
-- **Inbox** — a two-pane mailbox where choosing a message works;
-- **Settings** — real: it chooses the surface and the theme. Everything else
-  on it is shape.
-- **Projects, Calendar, Leads, Content, Blog** — one shared screen showing the
-  shape only, each marked `Not specified yet`.
+- the **Overview** screen;
+- **Settings** — real: it chooses the surface and the theme, and Security is a
+  working screen backed by V2 authentication.
+- **Media** — real, and the first module built end to end: the shared library
+  at `/dashboard/media` with folders, uploads, search and the picker every
+  other module will use. Added 22 Sep 2026; `docs/v2/media.md` owns it.
+- **Projects, Calendar, Inbox, Leads, Content, Blog, Invoices** — one shared
+  screen showing that the section is not built yet.
+
+**Corrected 22 Sep 2026.** This list previously described an Invoices table
+with a working filter and a two-pane Inbox. Those were built on invented
+sample data and were deleted along with it, so those screens now say plainly
+that nothing is built behind them.
 
 ## Four surfaces
 

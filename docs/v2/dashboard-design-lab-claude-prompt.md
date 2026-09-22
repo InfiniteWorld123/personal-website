@@ -1,5 +1,11 @@
 # Dashboard V2 Design Lab — Claude Code Handoff
 
+Status: **historical.** This exploration was run and its result approved; the
+shell it produced is live at `/dashboard` and recorded in
+`docs/v2/dashboard-shell.md`. Kept because it explains why the dashboard looks
+the way it does. It is not a task waiting to be done, and re-running it would
+redesign a surface the owner has already accepted.
+
 Use this entire document as the prompt and source of truth for the Dashboard V2
 design exploration. Do not treat it as authorization to implement the production
 dashboard, Backend2, a database, APIs, or a cutover.
