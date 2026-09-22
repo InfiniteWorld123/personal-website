@@ -1,6 +1,6 @@
 # Projects V2 — planning draft
 
-Status: historical planning draft with some stale implementation notes. The owner's explicit read-to-build instruction activates the agreed Projects scope under `AGENTS.md`, but the implementation agent must first inspect actual Projects code and reconcile this document with `projects-backend.md` and the later shared Media decision. Do not blindly rebuild Projects or rewrite its existing media migrations.
+Status: **built on 22 Sep 2026** — Backend2 and the Dashboard screens, on the design the owner approved in the Design Lab that day. The public website is not connected to it yet; that remains a separate step. "What is built" below is the current state and the list of what is still missing. Everything after it is the planning record the module was built from: where a dated note corrects it, the note wins, and statements about what does or does not exist are evidence to verify against the code, not current fact. Do not rebuild Projects from this record, and do not rewrite its existing migrations — extend what is there.
 
 ## Purpose and boundary
 
@@ -18,9 +18,47 @@ later public release. Keep English identifiers in backticks, avoid unnecessary
 internal detail, and ask small batches of material questions while saying how
 many remain. The complete rule is in `AGENTS.md`.
 
+## What is built — 22 Sep 2026
+
+### Backend2
+
+- `src/backend2/modules/projects/` — drafts, publishing, the one global order, archive, restore and permanent delete. Owner routes live under `/api/v2/owner/projects` behind `ownerGuard`; public reads live under `/api/v2/projects`. `docs/v2/projects-backend.md` describes the routes.
+- Saving cannot change what visitors see. The draft and the published copy are separate versions, and the public queries join only the published one. A publish that fails validation writes nothing.
+- Images come only from the shared Media vault. A project declares its files with `replaceReferences`, at scope `draft` while editing and `published` for the live copy, so a file a project uses cannot be deleted from Media.
+- `0004_projects_media.sql` repointed `v2_project_images` from the dead `v2_media_objects` at `v2_media_assets`, and added `v2_projects.published_draft_revision`, which is how "live, with saved changes" is one integer comparison. It is applied to the owner's database.
+- Public project JSON is cached for one minute, not an hour. An hour would have made **Publish update** look like it did nothing. Images keep the hour the Media route gives them, because an asset never changes.
+
+### Dashboard
+
+- `/dashboard/projects` — every project in the one order visitors see: search, a state filter, a type filter, server-side pages of 20, and moving by arrows or by typing a position.
+- `/dashboard/projects/$projectId` — the one-page editor. Sections: basics, the three languages, the case study, images, links and technology. The publish checklist sits beside them. **Publish** saves first, then publishes. Once a project is live, the editor puts what visitors see beside what was saved, and the button becomes **Publish update**.
+- The case study has its own rich-text editor, because V2 stores an inline image by library id, never by URL. What a pasted web page may turn into is decided in `src/frontend/features/projects/case-study-document.ts`, which has its own tests.
+
+### Approved in the Design Lab, 22 Sep 2026
+
+| Question | Chosen | Turned down |
+|---|---|---|
+| Reordering | Arrows, plus "move to position" | Drag and drop — it cannot reach another page and cannot be done from a keyboard; a position box on every row |
+| Publish checklist | A column beside the work | A bar pinned to the bottom — it covers the writing toolbar |
+| The three languages | One tab per language | All three stacked — the page becomes three times as long |
+| Row height | Roomy, with the cover | Compact rows, left for later |
+| Showing the state | A word, with colour behind it | A coloured dot alone |
+
+The lab itself was deleted after approval.
+
+### Not built yet
+
+- **Preview.** The backend answers `GET /api/v2/owner/projects/:id/preview?language=` with the draft in the public shape, but no Dashboard screen calls it yet. The approved design had a Preview button, and it is missing from the editor.
+- **A live check of the web address.** A taken address is refused when publishing, with a message. It is not flagged while typing, although `GET .../slug-available` exists for exactly that.
+- **The public website.** `/work`, the homepage selection and the project pages still read the legacy backend. Moving them onto Backend2 needs its own approval and must keep their accepted design.
+
+### Verified
+
+Typecheck, the full test suite and a production build all pass. The Backend2 tests run against a real PostgreSQL inside the test process. In the owner's own signed-in browser: create, fill all three languages, publish, read it back from the public API, edit and save while the public copy stays unchanged, then permanently delete.
+
 ## Current implementation, not V2 approval
 
-- `/dashboard/projects` is still a screen that says the section is not built. There is no `src/backend2/` Projects implementation. **The V2 database does exist now** — it holds Auth, the shared Media vault, and the Projects tables from `0001_projects.sql`, which were applied without the code that was meant to use them. Read the warning above before adding to it.
+- ~~`/dashboard/projects` is still a screen that says the section is not built. There is no `src/backend2/` Projects implementation.~~ **Corrected 22 Sep 2026:** both exist now — see "What is built" above. **The V2 database does exist now** — it holds Auth, the shared Media vault, and the Projects tables from `0001_projects.sql`, which were applied without the code that was meant to use them. Read the warning above before adding to it.
 - The existing `/admin/projects` form, API, and database tables belong to the legacy system. They do not satisfy this V2 plan automatically.
 - The public `/work` page currently loads the complete list and reveals it in groups of six in the browser. The V2 public read should request one batch at a time from Backend2 while retaining the accepted page design.
 
@@ -62,7 +100,9 @@ many remain. The complete rule is in `AGENTS.md`.
 - Keep optional editorial guidance inside the rich-text case-study editor without constraining the owner's structure.
 - Extend the existing public project page to render the approved rich-text content, inline images, and tables while preserving the public website's accepted visual identity. This is an approved content-layout extension, not a general public-site redesign.
 
-## Proposed Projects screen design — awaiting visual approval
+## Projects screen design — approved 22 Sep 2026
+
+**Approved in the Design Lab and built.** The choices made are in the table under "What is built" above. The sketch below is the proposal as it was reviewed.
 
 Reuse the existing Studio Workbench shell, type, blue accent, light/dark themes, and four surface choices. Do not create a separate visual theme for Projects. The distinctive visual focus is the project's real cover/preview and its publication state, not decorative dashboard cards or invented performance metrics.
 
@@ -122,6 +162,13 @@ Once this specification is approved, implementation proceeds backend-first: Clau
 
 ### Provisional choices awaiting owner confirmation
 
+**Where these stand, 22 Sep 2026.** Kept as written below, because they are the record of what was proposed:
+
+- *Preview:* owner-only on the backend, as proposed, with no shareable links. There is no Dashboard screen for it yet (see "Not built yet").
+- *Local-only fence and the legacy login:* superseded. Owner routes use `ownerGuard` — the deployment fence, plus a real V2 owner session when `BACKEND2_OWNER_AUTH=required`. See `docs/v2/auth.md`.
+- *Slug:* built as proposed. A new project gets a suggested address from its name, the owner can edit it, and every address it was ever published under keeps resolving.
+- *Delete or archive:* settled. Archive is the safe default. Permanent delete asks for the project's id to be typed back, and the images stay in Media either way.
+
 - Preview an unpublished project only inside the local Dashboard during the initial slice; do not create shareable preview links in the first version.
 - The local Projects slice does not need to integrate Backend2 with the legacy login session. The existing `/dashboard` page guard stays, but it does not protect an API called directly. Therefore owner-only Backend2 endpoints must be restricted to verified local development and absent or denied in non-local deployments; a Git branch, hidden route, or 404 on today's live site does not replace this requirement. Never write Projects data to the legacy database.
 - Generate a suggested slug from a name, allow the owner to edit it before publication, and avoid casually changing public URLs after publication.
@@ -165,9 +212,15 @@ After the open product decisions are resolved: exact content fields, editor and 
   which the design block in `projects-backend.md` §4.3 does not, in two places.
 - **The owner's database already holds these tables and two real project rows.**
   A new Projects migration is a *change* to what is there, not a fresh
-  creation of it, and it takes the next free number — **`0004`** — never
-  `0001`. The runner sorts by filename, so a second `0001` would run before the
-  Media migration on a new database and never run at all on the owner's.
+  creation of it, and it takes the next free number — never a number already
+  used. The runner sorts by filename, so a repeated low number runs before the
+  wrong migrations on a new database and never runs at all on the owner's.
+- **`0004_projects_media.sql` exists and is applied** (22 Sep 2026), so the next
+  free number is **`0005`**. It repointed `v2_project_images.asset_id` at the
+  shared `v2_media_assets` with `ON DELETE RESTRICT`, and added
+  `v2_projects.published_draft_revision`. It refuses to run if either affected
+  table holds rows, because moving existing rows needs a reviewed copy, not a
+  rename.
 - **Images are not Projects' to store.** Shared Media is built and running.
   Import `MediaPicker` from `src/frontend/features/media/MediaPicker` for
   choosing files, and call `replaceReferences` from
@@ -181,6 +234,12 @@ After the open product decisions are resolved: exact content fields, editor and 
   orphan cleanup are **superseded**. They still exist in the database because
   0001 created them; nothing reads them, and the vault never deletes a file
   merely because nothing references it.
+- **`v2_media_objects` stays for now, by the owner's decision on 22 Sep 2026.**
+  After 0004 nothing points at it — its only remaining key points outward, at
+  `v2_projects`. It stays empty and unread until the Projects image design has
+  settled, and dropping it is a separate, reviewed step. `v2_project_images` is
+  **not** dead: it is where each image's role, order and use are recorded, and
+  `v2_project_image_texts` holds its alt text in each language.
 
 ## Handoff on the owner's read-to-build request
 

@@ -25,8 +25,14 @@ The private V2 interface at `/dashboard`, frontend only:
 - **Media** — real, and the first module built end to end: the shared library
   at `/dashboard/media` with folders, uploads, search and the picker every
   other module will use. Added 22 Sep 2026; `docs/v2/media.md` owns it.
-- **Projects, Calendar, Inbox, Leads, Content, Blog, Invoices** — one shared
-  screen showing that the section is not built yet.
+- **Projects** — real, and the second module built end to end: the list at
+  `/dashboard/projects` in the one order visitors see, and a one-page editor at
+  `/dashboard/projects/$projectId` with the publish checklist beside it. Images
+  come only from the Media picker. Added 22 Sep 2026; `docs/v2/projects.md`
+  owns it, including what is not built yet — the preview screen, and the
+  public website, which still reads the legacy backend.
+- **Calendar, Inbox, Leads, Content, Blog, Invoices** — one shared screen
+  showing that the section is not built yet.
 
 **Corrected 22 Sep 2026.** This list previously described an Invoices table
 with a working filter and a two-pane Inbox. Those were built on invented
