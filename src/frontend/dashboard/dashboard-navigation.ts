@@ -9,6 +9,7 @@ import {
   Newspaper,
   ReceiptEuro,
   Settings,
+  Tags,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -37,12 +38,17 @@ export type DashboardNavItem = {
  * most — Projects and Blog — are above it, and Invoices ends the list on
  * money, as it did before.
  *
+ * Services is the tenth, added on 22 Sep 2026 directly after Projects — the
+ * place the owner chose when the Services module was built. It sits beside
+ * the portfolio because both are what the public site shows about the work.
+ *
  * There is no AI item, and there will not be one: the assistant is a
  * visitor-facing feature of the public site.
  */
 export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Projects', to: '/dashboard/projects', icon: FolderKanban },
+  { label: 'Services', to: '/dashboard/services', icon: Tags },
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
   { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox },
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },

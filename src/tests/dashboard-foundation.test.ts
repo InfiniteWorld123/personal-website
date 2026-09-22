@@ -44,12 +44,14 @@ describe('the sidebar knows which section you are in', () => {
    * Nine since 22 Sep 2026. Media joined the eight the owner first approved,
    * because the shared vault is a place the owner visits — to tidy folders,
    * delete old files and see what of theirs is public — and none of that has
-   * a home inside the picker other modules open.
+   * a home inside the picker other modules open. Ten since the Services
+   * module, placed directly after Projects by the owner.
    */
-  it('carries the nine approved sections in order', () => {
+  it('carries the ten approved sections in order', () => {
     expect(dashboardNavigation.map((item) => item.label)).toEqual([
       'Overview',
       'Projects',
+      'Services',
       'Calendar',
       'Inbox',
       'Leads',

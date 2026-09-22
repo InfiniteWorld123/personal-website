@@ -116,10 +116,10 @@ afterEach(cleanup)
 /* ------------------------------------------------------------ navigation */
 
 describe('where Media lives', () => {
-  it('is the ninth section, between Blog and Invoices', () => {
+  // Its place, not a count: the foundation approves no number of sections.
+  it('sits between Blog and Invoices', () => {
     const labels = dashboardNavigation.map((item) => item.label)
 
-    expect(labels).toHaveLength(9)
     expect(labels.indexOf('Media')).toBe(labels.indexOf('Blog') + 1)
     expect(labels.indexOf('Media')).toBe(labels.indexOf('Invoices') - 1)
     expect(dashboardNavigation.find((item) => item.label === 'Media')?.to).toBe('/dashboard/media')
