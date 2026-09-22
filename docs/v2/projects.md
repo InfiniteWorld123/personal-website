@@ -1,6 +1,6 @@
 # Projects V2 — planning draft
 
-Status: discussion draft. This document records product decisions made with the owner and open questions. It is not approved for implementation.
+Status: discussion draft. This document records product decisions made with the owner and open questions. It is not approved for implementation. The earlier project-only image-upload direction is superseded by the owner's shared Media decision below; existing Projects code and the detailed `projects-backend.md` media sections need a separately reviewed integration plan, not an unreviewed rewrite.
 
 ## Purpose and boundary
 
@@ -31,7 +31,7 @@ The existing project form and public project page are references, not V2 specifi
 - The owner decides which client details and links to publish. Website URL, source-code URL, and other relevant links are independent and optional. A private repository URL is never required or automatically exposed.
 - Demonstrated business results may be described in the case study when available, but no growth metrics or outcome claims are required.
 - Existing legacy projects will be recreated by the owner in V2 rather than imported automatically.
-- Images are uploaded from the owner's computer through the Dashboard. A separate Media Library is optional later, not a prerequisite for adding project images.
+- Every Project image—cover, gallery, or inline case-study image—must be chosen through the shared `/dashboard/media` picker. If the image is not in Media, **Upload from computer** adds it to the persistent shared library first, then selects it for the project. Projects must not keep a separate project-only upload path or asset store after integration. The shared Media contract and safe migration from the current project-scoped implementation are planned in `media.md`.
 - Both the public work list and the Dashboard project list use real Backend2 pagination, even while the number of projects is small. Manual ordering must work across Dashboard page boundaries.
 - Keep the existing login guard on `/dashboard` during local development. This does not start a new V2 authentication module or change the legacy `/admin` login.
 - Defer the V2 authentication design, including MFA, to a separate planning session. Projects may be built and tested locally without making the legacy session an implementation prerequisite for Backend2; owner-only V2 APIs must remain unavailable on non-local deployments until an approved authentication plan exists.
@@ -92,7 +92,7 @@ Once this specification is approved, implementation proceeds backend-first: Clau
 - **Project facts:** stable internal ID, public URL slug, Demo/Personal/Client type, work status, private/public visibility, and manual public order.
 - **Privacy and links:** optional client name with an explicit show/hide choice; optional website, source-code, and other links that are never published implicitly. The editor makes clear which values a visitor will see.
 - **Per language (DE/EN/AR):** name, short category label for the existing public eyebrow, card summary, and optional rich-text case study. The case study may be blank in any language; publishing still requires the agreed name and summary in all three.
-- **Images:** optional cover, ordered gallery, and images inserted within the case study. Upload from the owner's computer through the Dashboard. Every public image has alt text in all three languages. A standalone Media Library is not required for the first Projects slice.
+- **Images:** optional cover, ordered gallery, and images inserted within the case study. Select through shared Media, or upload from the owner's computer *into Media first* through its picker. Every public image has alt text in all three languages. A file can be reused by another module; its role, order, and alt text belong to this project use.
 - **Technology:** optional ordered technology labels, as seen on the current public project page.
 - **Dashboard list:** clearly distinguish published and private projects, show type/status/translation readiness, and paginate from Backend2 even when there are few entries. Manual ordering must work across pages; a proposed control is "Move to position" plus adjacent up/down actions. Search or filters must not silently reorder hidden projects.
 - **Editor:** grouped sections on one page, DE/EN/AR language tabs, visible draft/publish state, clear missing-publication checklist, preview, and save/publish actions. Draft validation and publication validation are separate.
@@ -100,17 +100,16 @@ Once this specification is approved, implementation proceeds backend-first: Clau
 
 ### Proposed Backend2 capabilities, not final route names
 
-- Local-only private operations for the initial slice: list projects with bounded pagination, create a private draft, read one draft, save edits (including private edits to a published project), publish or publish an update, unpublish, reorder published projects across pages, upload/manage project images, and preview pending content. These endpoints must be unavailable outside a verified local development environment until V2 authentication is approved.
+- Local-only private operations for the initial slice: list projects with bounded pagination, create a private draft, read one draft, save edits (including private edits to a published project), publish or publish an update, unpublish, reorder published projects across pages, select shared Media references, and preview pending content. Upload, file management, and the picker belong to the shared Media module. These owner operations must be unavailable outside a verified local development environment until V2 authentication is approved.
 - Public: list only published projects in manual order by language and six-item batch, read one published project by slug and language, and return the first published projects for the homepage in that same order.
 - Public responses contain only explicitly publishable fields. Private drafts, hidden client names, private repository links, internal IDs/notes, and upload storage keys must not leak into them.
 - The exact URLs, HTTP methods, response shapes, error codes, storage provider, and database schema are still to be specified after the foundation choices are approved.
 
 ### Cloudflare media direction
 
-- The owner prefers Cloudflare. R2 is the proposed storage service, and the repository already declares an R2 Worker binding for legacy media. The V2 implementation must isolate its objects from legacy media; the exact bucket or prefix and preview environment remain to be decided.
-- A local-only Dashboard upload endpoint receives a file, validates its actual image format and size, writes it through an R2 binding or local R2 emulation during development, and records only metadata/object key in the V2 database. Do not expose storage credentials to the browser or put image bytes in PostgreSQL. A remotely available upload requires the later authentication plan.
-- Keep the bucket private. A draft image is readable only in the local preview during this phase; after V2 authentication exists, preview access must be owner-authorized. A public image is served only while attached to a published project. The implementation plan must address cache invalidation on unpublish and cleanup of removed images.
-- Cloudflare Images transformations may be evaluated for responsive delivery, but are not required merely to make direct R2 uploads work. Do not introduce Cloudinary unless the owner changes the provider decision.
+- The owner prefers Cloudflare R2 for deployed V2 Media storage, isolated from legacy media; `media.md` owns the shared storage, upload, folder, picker, reference, and deletion design. Do not expose storage credentials to the browser or put image bytes in PostgreSQL.
+- Keep the library and bucket private. A Project draft image is owner-only; a selected image may be served publicly only while referenced by a published Project version. Unpublishing must stop new public delivery under the approved cache policy.
+- Shared assets persist when a Project unpublishes or deletes its record. A referenced file cannot be deleted from Media, including while a pending or published Project version still uses it. Removing one Project reference must not remove the file or break other uses. See `media.md` for the safe migration from existing project-owned images and automatic orphan cleanup.
 
 ### Provisional choices awaiting owner confirmation
 

@@ -8,6 +8,21 @@ API, storage, validation, security boundary, and tests. The Dashboard Projects
 UI and the public-site wiring are deliberately **not** in this document; their
 rendered design is reviewed separately before they are built.
 
+**Shared Media amendment (later owner decision):** The owner now requires all
+Project cover, gallery, and inline images to be selected through the private,
+shared `/dashboard/media` library. An upload from a Project editor must first
+create a persistent asset in that library. This supersedes this document's
+project-scoped upload, same-project-only image validation, project-owned object
+keys, and automatic orphan deletion/sweep rules in §§4, 5, 7, and 10, plus the
+corresponding endpoints and tests. Those sections describe the initial Projects
+backend slice and must **not** be copied as the final integrated Media design.
+See `docs/v2/media.md` and `docs/v2/projects.md`. The current Projects code may
+still follow this initial slice: do not silently change its migration or delete
+existing files. Plan and test a separate safe integration/migration preserving
+existing objects, private drafts, published snapshots, and references after the
+shared Media specification is approved. Non-media Projects decisions here are
+not changed by this amendment.
+
 This document assumes `docs/v2/foundation.md`, `docs/v2/projects.md` and
 `AGENTS.md`. Where `projects.md` records a confirmed decision, it wins. Where it
 recorded a provisional choice, the decision is restated here explicitly.
