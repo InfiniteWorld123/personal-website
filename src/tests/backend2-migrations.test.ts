@@ -25,6 +25,7 @@ describe('building a database from nothing', () => {
       '0001_projects.sql',
       '0002_auth.sql',
       '0003_media.sql',
+      '0004_projects_media.sql',
     ])
 
     // The runner sorts by filename, so the names have to sort into the order
@@ -119,6 +120,46 @@ describe('building a database from nothing', () => {
       )) as { rows: Array<{ draft_version_id: string }> }
 
       expect(rows[0]?.draft_version_id).toBe('22222222-2222-4222-8222-222222222222')
+    } finally {
+      await database.close()
+    }
+  })
+
+  /*
+   * 0004 is the migration that joined Projects to the shared vault. The column
+   * it repointed is the one thing standing between "a file a project uses" and
+   * "a file anyone may delete", so the shape is asserted rather than assumed.
+   */
+  it('points project images at the shared Media vault', { timeout: 60_000 }, async () => {
+    const database = new PGlite()
+
+    try {
+      for (const file of await readMigrationSql()) await database.exec(file.sql)
+
+      const { rows } = (await database.query(`
+        SELECT pg_get_constraintdef(con.oid) AS def
+          FROM pg_constraint con
+          JOIN pg_class c ON c.oid = con.conrelid
+         WHERE c.relname = 'v2_project_images' AND con.contype = 'f'
+      `)) as { rows: Array<{ def: string }> }
+
+      const definitions = rows.map((row) => row.def)
+
+      // The old project-scoped table is no longer a destination...
+      expect(definitions.some((def) => def.includes('v2_media_objects'))).toBe(false)
+      // ...and the vault refuses to let go of a file a version still uses.
+      expect(
+        definitions.some(
+          (def) => def.includes('v2_media_assets') && def.includes('ON DELETE RESTRICT'),
+        ),
+      ).toBe(true)
+
+      const { rows: columns } = (await database.query(`
+        SELECT column_name FROM information_schema.columns
+         WHERE table_name = 'v2_projects' AND column_name = 'published_draft_revision'
+      `)) as { rows: Array<{ column_name: string }> }
+
+      expect(columns).toHaveLength(1)
     } finally {
       await database.close()
     }

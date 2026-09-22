@@ -9,6 +9,8 @@ import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
 import { ownerMediaRoutes } from './modules/media/media.owner.route'
 import { publicMediaRoutes } from './modules/media/media.public.route'
+import { ownerProjectRoutes } from './modules/projects/project.owner.route'
+import { publicProjectRoutes } from './modules/projects/project.public.route'
 
 /**
  * Backend2.
@@ -90,7 +92,9 @@ const buildApp = () => {
   if (ownerRoutesEnabled()) {
     app.use(publicAuthRoutes)
 
-    app.group('/owner', (owner) => owner.use(ownerSecurityRoutes).use(ownerMediaRoutes))
+    app.group('/owner', (owner) =>
+      owner.use(ownerSecurityRoutes).use(ownerMediaRoutes).use(ownerProjectRoutes),
+    )
   }
 
   /*
@@ -104,7 +108,13 @@ const buildApp = () => {
    * 404 from an unmounted route is a better answer than a 500 from a missing
    * connection string.
    */
-  if (isDatabaseConfigured()) app.use(publicMediaRoutes)
+  /*
+   * The same reasoning covers the public Projects reads (D13): they answer
+   * only where a V2 database exists, so `DATABASE_URL_V2` being absent in
+   * production means `/api/v2/projects` simply does not answer there and
+   * nothing on the live site changes.
+   */
+  if (isDatabaseConfigured()) app.use(publicMediaRoutes).use(publicProjectRoutes)
 
   return app.get('/', () =>
     responseOk({ data: { status: 'ok', version: 2 }, message: 'Backend2 is running' }),
