@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { OwnerListItem, OwnerProject } from '#/backend2/contracts/project.contract'
+import type {
+  Language,
+  OwnerListItem,
+  OwnerProject,
+  PublicProjectDetail,
+} from '#/backend2/contracts/project.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import type { Page } from '#/backend2/contracts/pagination.contract'
 import {
@@ -9,6 +14,7 @@ import {
   discardPending,
   listProjects,
   moveProject,
+  previewProject,
   publishProject,
   readProject,
   restoreProject,
@@ -31,6 +37,8 @@ export const projectKeys = {
   all: ['backend2', 'projects'] as const,
   list: (query: ProjectsQuery) => [...projectKeys.all, 'list', query] as const,
   one: (id: string) => [...projectKeys.all, 'one', id] as const,
+  preview: (id: string, language: Language, revision: number) =>
+    [...projectKeys.all, 'preview', id, language, revision] as const,
 }
 
 export const useProjects = (query: ProjectsQuery) =>
@@ -54,6 +62,30 @@ export const useProject = (id: string) =>
      * deliberately is taken at its word, and only a real server failure is
      * retried.
      */
+    retry: (attempt, error) =>
+      !(error instanceof ApiRequestError && error.status < 500) && attempt < 2,
+  })
+
+/**
+ * The preview of one saved draft, in one language.
+ *
+ * Keyed by the draft's revision as well as its id and language. A save bumps
+ * the revision, so the preview that opens after a save is always a fresh read
+ * of what was just saved — never a cached copy of the version before it.
+ * Fetched only while the preview is actually open.
+ */
+export const useProjectPreview = (input: {
+  id: string
+  language: Language
+  revision: number
+  enabled: boolean
+}) =>
+  useQuery<PublicProjectDetail>({
+    queryKey: projectKeys.preview(input.id, input.language, input.revision),
+    queryFn: () => previewProject(input.id, input.language),
+    enabled: input.enabled,
+    // Switching back to a language already looked at is instant.
+    placeholderData: (previous) => previous,
     retry: (attempt, error) =>
       !(error instanceof ApiRequestError && error.status < 500) && attempt < 2,
   })

@@ -8,6 +8,11 @@ import {
   type ProjectState,
   type ProjectType,
   type ProjectVersionPayload,
+  type PublicImage,
+  type PublicProjectCard,
+  type PublicProjectDetail,
+  type PublicRichTextDoc,
+  type PublicRichTextNode,
   type WorkStatus,
   completeLanguages,
   displayName,
@@ -26,7 +31,17 @@ import type { ProjectRow, StoredImage, VersionContent, VersionRow } from './proj
  * `WHERE`.
  */
 
-export type { OwnerImage, OwnerListItem, OwnerProject, ProjectVersionPayload }
+export type {
+  OwnerImage,
+  OwnerListItem,
+  OwnerProject,
+  ProjectVersionPayload,
+  PublicImage,
+  PublicProjectCard,
+  PublicProjectDetail,
+  PublicRichTextDoc,
+  PublicRichTextNode,
+}
 
 export const ownerMediaUrl = (assetId: string): string =>
   `/api/v2/owner/media/files/${assetId}/content`
@@ -173,51 +188,25 @@ export const toListItem = (input: {
 
 /* ------------------------------------------------------------- public shape */
 
-export type PublicImage = {
-  url: string
-  width: number | null
-  height: number | null
-  alt: string
-}
-
-export type PublicProjectCard = {
-  slug: string
-  type: ProjectType
-  workStatus: WorkStatus
-  name: string
-  categoryLabel: string | null
-  summary: string
-  cover: PublicImage | null
-  tech: string[]
-  publishedAt: string | null
-}
+/* The shapes live in `project.contract.ts`, next to the owner's. */
 
 /**
- * The case study as a visitor receives it.
+ * Where an image in a response can be fetched from.
  *
- * Identical to the stored tree except at one node type: an `image` carries a
- * `src` a browser can fetch instead of the `mediaId` the database keeps. The
- * id still appears inside that URL — it is the opaque public handle, and
- * `/api/v2/media/:id` serves it only while a published version references it —
- * but no field of the response is a bare internal identifier.
+ * A visitor's copy points at the public route, which serves a file only while
+ * a *published* version uses it. The owner's preview is built by this same
+ * projection from the *draft* — and a draft's images are, by design, not
+ * public yet, so pointed at the public route they answered 404 and the preview
+ * showed broken pictures exactly where the owner was checking them. The
+ * preview passes the owner's route instead; nothing else changes, so the
+ * preview still shows precisely what publishing would produce.
  */
-export type PublicRichTextNode =
-  | Exclude<RichTextNode, { type: 'image' }>
-  | { type: 'image'; attrs: { src: string; alt: string; width: number | null; height: number | null } }
+export type MediaUrl = (assetId: string) => string
 
-export type PublicRichTextDoc = { type: 'doc'; content: PublicRichTextNode[] }
-
-export type PublicProjectDetail = PublicProjectCard & {
-  canonicalSlug: string
-  caseStudy: PublicRichTextDoc | null
-  gallery: PublicImage[]
-  website: string | null
-  source: string | null
-  otherLinks: Array<{ url: string; label: string }>
-  client: { name: string } | null
-}
-
-const resolveInlineImages = (doc: RichTextDoc | null): PublicRichTextDoc | null => {
+const resolveInlineImages = (
+  doc: RichTextDoc | null,
+  mediaUrl: MediaUrl,
+): PublicRichTextDoc | null => {
   if (!doc) return null
 
   const convert = (node: RichTextNode): PublicRichTextNode => {
@@ -225,7 +214,7 @@ const resolveInlineImages = (doc: RichTextDoc | null): PublicRichTextDoc | null 
       return {
         type: 'image',
         attrs: {
-          src: publicMediaUrl(node.attrs.mediaId),
+          src: mediaUrl(node.attrs.mediaId),
           alt: node.attrs.alt,
           width: node.attrs.width,
           height: node.attrs.height,
@@ -247,8 +236,9 @@ const toPublicImage = (
   image: StoredImage,
   language: Language,
   sizes: Map<string, { width: number | null; height: number | null }>,
+  mediaUrl: MediaUrl,
 ): PublicImage => ({
-  url: publicMediaUrl(image.assetId),
+  url: mediaUrl(image.assetId),
   width: sizes.get(image.assetId)?.width ?? image.width,
   height: sizes.get(image.assetId)?.height ?? image.height,
   // One language's sentence. The other two are not sent.
@@ -269,8 +259,11 @@ export const toPublicCard = (input: {
   language: Language
   publishedAt: Date | null
   sizes: Map<string, { width: number | null; height: number | null }>
+  /** Defaults to the public route; only the owner's preview changes it. */
+  mediaUrl?: MediaUrl
 }): PublicProjectCard => {
   const text = input.content.texts[input.language]
+  const mediaUrl = input.mediaUrl ?? publicMediaUrl
 
   return {
     slug: input.version.slug,
@@ -283,7 +276,7 @@ export const toPublicCard = (input: {
     categoryLabel: text.categoryLabel === '' ? null : text.categoryLabel,
     summary: text.summary,
     cover: input.content.cover
-      ? toPublicImage(input.content.cover, input.language, input.sizes)
+      ? toPublicImage(input.content.cover, input.language, input.sizes, mediaUrl)
       : null,
     tech: input.content.tech,
     publishedAt: input.publishedAt ? new Date(input.publishedAt).toISOString() : null,
@@ -297,7 +290,10 @@ export const toPublicDetail = (input: {
   publishedAt: Date | null
   canonicalSlug: string
   sizes: Map<string, { width: number | null; height: number | null }>
+  /** Defaults to the public route; only the owner's preview changes it. */
+  mediaUrl?: MediaUrl
 }): PublicProjectDetail => {
+  const mediaUrl = input.mediaUrl ?? publicMediaUrl
   // A link that exists is not a link that is published. `isPublic` is checked
   // here and nowhere else, so there is one place to read to be sure.
   const publicLinks = input.content.links.filter((link) => link.isPublic && link.url.trim() !== '')
@@ -305,9 +301,9 @@ export const toPublicDetail = (input: {
   return {
     ...toPublicCard(input),
     canonicalSlug: input.canonicalSlug,
-    caseStudy: resolveInlineImages(input.content.texts[input.language].caseStudy),
+    caseStudy: resolveInlineImages(input.content.texts[input.language].caseStudy, mediaUrl),
     gallery: input.content.gallery.map((image) =>
-      toPublicImage(image, input.language, input.sizes),
+      toPublicImage(image, input.language, input.sizes, mediaUrl),
     ),
     website: publicLinks.find((link) => link.kind === 'website')?.url ?? null,
     source: publicLinks.find((link) => link.kind === 'source')?.url ?? null,

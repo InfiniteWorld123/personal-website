@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
 import * as v from 'valibot'
@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  Eye,
   ImagePlus,
   Link2,
   Loader2,
@@ -43,6 +44,7 @@ import {
 } from '#/frontend/features/projects/queries'
 import { cn } from '#/frontend/lib/utils'
 import { LoadFailure, StateBadge } from './project-parts'
+import { ProjectPreview } from './ProjectPreview'
 
 /**
  * One project, on one page.
@@ -141,6 +143,25 @@ const toCaseStudies = (project: OwnerProject): CaseStudies => ({
   en: project.draft.texts.en.caseStudy,
   ar: project.draft.texts.ar.caseStudy,
 })
+
+/**
+ * The draft as one string, with object keys sorted.
+ *
+ * Used to answer "has anything changed since the last save?". Sorting the keys
+ * means the answer depends on the values alone — never on the order a field
+ * happened to be written back in, which would report changes that are not
+ * there.
+ */
+const fingerprint = (draft: ProjectDraftInput): string =>
+  JSON.stringify(draft, (_key, value: unknown) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+            a.localeCompare(b),
+          ),
+        )
+      : value,
+  )
 
 /** The two halves put back together, in the shape the API and the rules want. */
 const toDraft = (values: FormValues, caseStudies: CaseStudies): ProjectDraftInput => ({
@@ -308,6 +329,7 @@ export function ProjectEditorPage() {
   const [picking, setPicking] = useState<'cover' | 'gallery' | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleteText, setDeleteText] = useState('')
+  const [previewing, setPreviewing] = useState(false)
   const announce = useRef<HTMLParagraphElement>(null)
 
   const data = project.data
@@ -367,6 +389,11 @@ export function ProjectEditorPage() {
    * publish, a discard — which is exactly when the form should be refilled.
    */
   const applied = useRef<string | null>(null)
+
+  const savedFingerprint = useMemo(
+    () => (data ? fingerprint(toDraft(toFormValues(data), toCaseStudies(data))) : ''),
+    [data],
+  )
 
   useEffect(() => {
     if (!data) return
@@ -478,6 +505,45 @@ export function ProjectEditorPage() {
     }
   }
 
+  /*
+   * Unsaved means: what is on screen differs from what the server holds. The
+   * preview is built on the server from the *saved* draft, so this is the
+   * difference between previewing the words in front of the owner and
+   * previewing the ones from before.
+   */
+  const unsaved = fingerprint(toDraft(values, caseStudies)) !== savedFingerprint
+
+  /**
+   * Preview saves first — but only when there is something to save.
+   *
+   * Saving unchanged work is not harmless on a live project: every save moves
+   * the revision, and a live project whose revision has moved reports "Live ·
+   * edited" even though nothing was edited. So an unchanged draft opens
+   * straight away, and a changed one is saved and then shown, which is the
+   * same order Publish uses and for the same reason.
+   */
+  const handlePreview = async () => {
+    setFailure(null)
+    setBlockers(null)
+
+    if (unsaved) {
+      try {
+        await persist(toDraft(form.state.values, caseStudies))
+      } catch (caught) {
+        setFailure(
+          failureText(
+            caught,
+            'Your changes could not be saved, so the preview would show the older version. Try again.',
+          ),
+        )
+
+        return
+      }
+    }
+
+    setPreviewing(true)
+  }
+
   const run = async (action: () => Promise<unknown>, fallback: string) => {
     setFailure(null)
     setBlockers(null)
@@ -527,6 +593,27 @@ export function ProjectEditorPage() {
         </span>
 
         <span className="ms-auto flex items-center gap-2">
+          {unsaved ? (
+            <span className="hidden text-[11.5px] text-[var(--dash-quiet)] sm:inline">
+              Unsaved changes
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="dash-btn dash-btn-quiet h-9"
+            onClick={() => void handlePreview()}
+            disabled={busy}
+            title={
+              unsaved
+                ? 'Saves your changes, then shows how the project will look to visitors'
+                : 'Shows how the project will look to visitors'
+            }
+          >
+            {save.isPending && !publish.isPending ? null : (
+              <Eye className="size-4" aria-hidden="true" />
+            )}
+            Preview
+          </button>
           <button
             type="button"
             className="dash-btn dash-btn-quiet h-9"
@@ -1264,6 +1351,16 @@ export function ProjectEditorPage() {
       </form>
 
       <p ref={announce} role="status" aria-live="polite" className="sr-only" />
+
+      {previewing ? (
+        <ProjectPreview
+          projectId={projectId}
+          revision={data.draftRevision}
+          state={state}
+          initialLanguage={language}
+          onClose={() => setPreviewing(false)}
+        />
+      ) : null}
 
       <MediaPicker
         open={picking !== null}

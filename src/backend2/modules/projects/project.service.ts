@@ -24,6 +24,7 @@ import {
   toListItem,
   toOwnerProject,
   toOwnerVersion,
+  ownerMediaUrl,
   toPublicCard,
   toPublicDetail,
 } from './project.mapper'
@@ -430,6 +431,10 @@ export const previewProject = async (input: {
     publishedAt: row.published_at,
     canonicalSlug: version.slug,
     sizes: await repo.loadAssetSizes(referenced),
+    // The draft's images are not public yet, and must not become so because
+    // the owner looked at them. The owner's route serves them to the owner;
+    // the public one would answer 404.
+    mediaUrl: ownerMediaUrl,
   })
 }
 

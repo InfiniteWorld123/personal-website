@@ -961,3 +961,137 @@ describe('archiving and deleting', () => {
     expect(refused.body.code).toBe('DELETE_BLOCKED_BY_REFERENCES')
   })
 })
+
+/* =========================================================== the preview */
+
+describe("the owner's preview", () => {
+  /** Image responses are bytes, not the JSON envelope `call` expects. */
+  const fetchImage = (path: string) =>
+    runWithDb(database.db, async () => app.fetch(new Request(`http://localhost:3000${path}`)))
+
+  it('shows the saved draft, while visitors keep the published version', async () => {
+    const { id } = await makePublishable()
+    const ready = await call('GET', `/owner/projects/${id}`)
+
+    await call('POST', `/owner/projects/${id}/publish`, {
+      draftRevision: ready.body.data.draftRevision,
+    })
+
+    const published = await call('GET', `/owner/projects/${id}`)
+    await call('PUT', `/owner/projects/${id}`, {
+      draftRevision: published.body.data.draftRevision,
+      slug: 'prime-estate',
+      type: 'client',
+      workStatus: 'completed',
+      clientName: null,
+      showClientName: false,
+      tech: [],
+      links: [],
+      texts: texts({ en: { name: 'The name I have not published yet' } }),
+      cover: null,
+      gallery: [],
+    })
+
+    const preview = await call('GET', `/owner/projects/${id}/preview?language=en`)
+    const live = await call('GET', '/projects/prime-estate?language=en')
+
+    expect(preview.status).toBe(200)
+    expect(preview.body.data.name).toBe('The name I have not published yet')
+    expect(live.body.data.name).toBe('Name en')
+    // A private draft must not survive in a cache on its way to the owner.
+    expect(preview.response.headers.get('cache-control')).toContain('no-store')
+  })
+
+  it('previews an unpublished project, in exactly one language', async () => {
+    const { id } = await makePublishable()
+
+    const german = await call('GET', `/owner/projects/${id}/preview?language=de`)
+    const arabic = await call('GET', `/owner/projects/${id}/preview?language=ar`)
+
+    expect(german.body.data.summary).toBe('Summary de')
+    expect(arabic.body.data.summary).toBe('Summary ar')
+    // The other two languages are not sent, as on the public route.
+    expect(JSON.stringify(german.body)).not.toContain('Summary en')
+    expect(JSON.stringify(german.body)).not.toContain('Summary ar')
+    // Previewing publishes nothing.
+    expect((await call('GET', '/projects/prime-estate')).status).toBe(404)
+  })
+
+  it("points the draft's images at the owner's route, so they actually load", async () => {
+    const coverId = await addAsset('cover.png')
+    const inlineId = await addAsset('inline.png')
+    const { id } = await makePublishable()
+    const loaded = await call('GET', `/owner/projects/${id}`)
+
+    await call('PUT', `/owner/projects/${id}`, {
+      draftRevision: loaded.body.data.draftRevision,
+      slug: 'prime-estate',
+      type: 'client',
+      workStatus: 'completed',
+      clientName: null,
+      showClientName: false,
+      tech: [],
+      links: [],
+      texts: texts({
+        de: {
+          caseStudy: {
+            type: 'doc',
+            content: [
+              {
+                type: 'image',
+                attrs: { mediaId: inlineId, alt: 'Im Text', width: 120, height: 90 },
+              },
+            ],
+          },
+        },
+      }),
+      cover: { mediaId: coverId, alt: alt('Das Titelbild') },
+      gallery: [],
+    })
+
+    const preview = await call('GET', `/owner/projects/${id}/preview?language=de`)
+    const coverUrl = preview.body.data.cover.url as string
+    const inlineUrl = preview.body.data.caseStudy.content[0].attrs.src as string
+
+    // The bug this guards: built with the public route, both of these answered
+    // 404 — the pictures were broken exactly where the owner was checking them.
+    expect(coverUrl).toBe(`/api/v2/owner/media/files/${coverId}/content`)
+    expect(inlineUrl).toBe(`/api/v2/owner/media/files/${inlineId}/content`)
+    expect((await fetchImage(coverUrl)).status).toBe(200)
+    expect((await fetchImage(inlineUrl)).status).toBe(200)
+
+    // And looking at a draft did not make its images public.
+    expect((await fetchImage(`/api/v2/media/${coverId}`)).status).toBe(404)
+    expect((await fetchImage(`/api/v2/media/${inlineId}`)).status).toBe(404)
+  })
+
+  it('follows the public rules for what is shown at all', async () => {
+    const { id } = await makePublishable({
+      clientName: 'Geheime Firma GmbH',
+      showClientName: false,
+      links: [
+        { kind: 'source', url: 'https://github.test/private-repo', isPublic: false, labels: alt('') },
+        { kind: 'website', url: 'https://public.test', isPublic: true, labels: alt('') },
+      ],
+    })
+
+    const preview = await call('GET', `/owner/projects/${id}/preview?language=de`)
+    const serialised = JSON.stringify(preview.body)
+
+    // What the owner previews is what publishing would produce — so what a
+    // visitor would never see does not appear in the preview either.
+    expect(serialised).not.toContain('Geheime Firma GmbH')
+    expect(serialised).not.toContain('private-repo')
+    expect(preview.body.data.website).toBe('https://public.test')
+    expect(preview.body.data.client).toBeNull()
+  })
+
+  it('answers 404 for a project that does not exist', async () => {
+    const missing = await call(
+      'GET',
+      '/owner/projects/11111111-1111-4111-8111-111111111111/preview?language=de',
+    )
+
+    expect(missing.status).toBe(404)
+  })
+})

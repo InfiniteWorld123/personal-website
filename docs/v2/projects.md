@@ -32,6 +32,7 @@ many remain. The complete rule is in `AGENTS.md`.
 
 - `/dashboard/projects` — every project in the one order visitors see: search, a state filter, a type filter, server-side pages of 20, and moving by arrows or by typing a position.
 - `/dashboard/projects/$projectId` — the one-page editor. Sections: basics, the three languages, the case study, images, links and technology. The publish checklist sits beside them. **Publish** saves first, then publishes. Once a project is live, the editor puts what visitors see beside what was saved, and the button becomes **Publish update**.
+- **Preview** (added 22 Sep 2026, evening) — a button in the editor that shows the saved draft as a visitor will receive it, in any of the three languages, with Arabic right to left. It is built on the server by the same projection the public route uses, so a hidden client name or a private link is absent from the preview for the same reason it will be absent from the website. If there are unsaved changes it saves them first; if there are none it does not save, because saving an unchanged live project would mark it "Live · edited" for nothing. The two link buttons and the technology heading use the public site's own wording in each language.
 - The case study has its own rich-text editor, because V2 stores an inline image by library id, never by URL. What a pasted web page may turn into is decided in `src/frontend/features/projects/case-study-document.ts`, which has its own tests.
 
 ### Approved in the Design Lab, 22 Sep 2026
@@ -48,13 +49,14 @@ The lab itself was deleted after approval.
 
 ### Not built yet
 
-- **Preview.** The backend answers `GET /api/v2/owner/projects/:id/preview?language=` with the draft in the public shape, but no Dashboard screen calls it yet. The approved design had a Preview button, and it is missing from the editor.
+- ~~**Preview.**~~ **Built 22 Sep 2026** — see the Dashboard list above. Building it exposed a real bug in the backend preview, fixed with it: the draft's images pointed at the public media route, which serves a file only while a *published* version uses it, so every image in a preview answered 404. The preview now points at the owner's route, and a test fails without that fix. The preview is a faithful copy of the *content*, not of the public page's look — that page still reads the legacy backend.
+- **Public wording for the project type.** "Demo", "Personal" and "Client" have no approved German or Arabic wording on the public site yet, so the preview shows them in English. That has to be decided when the website is connected, because visitors will see it.
 - **A live check of the web address.** A taken address is refused when publishing, with a message. It is not flagged while typing, although `GET .../slug-available` exists for exactly that.
 - **The public website.** `/work`, the homepage selection and the project pages still read the legacy backend. Moving them onto Backend2 needs its own approval and must keep their accepted design.
 
 ### Verified
 
-Typecheck, the full test suite and a production build all pass. The Backend2 tests run against a real PostgreSQL inside the test process. In the owner's own signed-in browser: create, fill all three languages, publish, read it back from the public API, edit and save while the public copy stays unchanged, then permanently delete.
+Typecheck, the full test suite and a production build all pass. The Backend2 tests run against a real PostgreSQL inside the test process. In the owner's own signed-in browser: create, fill all three languages, publish, read it back from the public API, edit and save while the public copy stays unchanged, then permanently delete. The preview was checked the same way, with real images: in all three languages, with unsaved changes (saved first, then shown), on a live project with none (not saved, so it stayed "Live"), and closing with Escape. The phone-size layout of the preview has not been checked in a real browser yet.
 
 ## Current implementation, not V2 approval
 

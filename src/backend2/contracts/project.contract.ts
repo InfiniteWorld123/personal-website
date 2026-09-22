@@ -2,6 +2,7 @@ import * as v from 'valibot'
 import {
   type RichTextDoc,
   RichTextDocSchema,
+  type RichTextNode,
   collectImageNodes,
   collectMediaIds,
   isRichTextEmpty,
@@ -553,6 +554,74 @@ export type OwnerListItem = {
   hasPendingChanges: boolean
   updatedAt: string
   publishedAt: string | null
+}
+
+/* ------------------------------------------------ the shapes visitors get */
+
+/**
+ * What a public response carries — and what the owner's preview carries,
+ * because the preview is built by the same projection.
+ *
+ * In the contract for the same reason as the owner shapes above: the
+ * Dashboard renders the preview, and the public site will render the real
+ * thing, and neither may import from `src/backend2/modules/`.
+ */
+export type PublicImage = {
+  url: string
+  width: number | null
+  height: number | null
+  alt: string
+}
+
+export type PublicProjectCard = {
+  slug: string
+  type: ProjectType
+  workStatus: WorkStatus
+  name: string
+  categoryLabel: string | null
+  summary: string
+  cover: PublicImage | null
+  tech: string[]
+  publishedAt: string | null
+}
+
+/**
+ * The case study as a visitor receives it.
+ *
+ * Identical to the stored tree except at one node type: an `image` carries a
+ * `src` a browser can fetch instead of the `mediaId` the database keeps. The
+ * id still appears inside that URL — it is the opaque public handle, and
+ * `/api/v2/media/:id` serves it only while a published version references it —
+ * but no field of the response is a bare internal identifier.
+ */
+export type PublicRichTextNode = ToPublicNode<RichTextNode>
+
+/**
+ * One stored node, as a visitor receives it — all the way down.
+ *
+ * Mapped rather than listed, so a node type added to the rich-text contract
+ * later is carried across without anyone remembering to add it here. The
+ * first version of this type only swapped the *top-level* image and left every
+ * container's children typed as stored nodes, so an image inside a paragraph
+ * still claimed to carry a `mediaId` and no `src`; drawing the tree
+ * recursively was what exposed it.
+ */
+type ToPublicNode<TNode> = TNode extends { type: 'image' }
+  ? { type: 'image'; attrs: { src: string; alt: string; width: number | null; height: number | null } }
+  : 'content' extends keyof TNode
+    ? Omit<TNode, 'content'> & { content?: PublicRichTextNode[] }
+    : TNode
+
+export type PublicRichTextDoc = { type: 'doc'; content: PublicRichTextNode[] }
+
+export type PublicProjectDetail = PublicProjectCard & {
+  canonicalSlug: string
+  caseStudy: PublicRichTextDoc | null
+  gallery: PublicImage[]
+  website: string | null
+  source: string | null
+  otherLinks: Array<{ url: string; label: string }>
+  client: { name: string } | null
 }
 
 /* ------------------------------------------------------------ the wording */

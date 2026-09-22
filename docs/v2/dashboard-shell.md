@@ -29,8 +29,8 @@ The private V2 interface at `/dashboard`, frontend only:
   `/dashboard/projects` in the one order visitors see, and a one-page editor at
   `/dashboard/projects/$projectId` with the publish checklist beside it. Images
   come only from the Media picker. Added 22 Sep 2026; `docs/v2/projects.md`
-  owns it, including what is not built yet — the preview screen, and the
-  public website, which still reads the legacy backend.
+  owns it, including what is not built yet — above all the public website,
+  which still reads the legacy backend.
 - **Calendar, Inbox, Leads, Content, Blog, Invoices** — one shared screen
   showing that the section is not built yet.
 

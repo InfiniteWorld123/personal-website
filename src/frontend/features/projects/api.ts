@@ -5,6 +5,7 @@ import type {
   OwnerProject,
   ProjectDraftInput,
   ProjectType,
+  PublicProjectDetail,
   WorkStatus,
 } from '#/backend2/contracts/project.contract'
 import type { Page } from '#/backend2/contracts/pagination.contract'
@@ -154,3 +155,12 @@ export const checkSlug = (slug: string, projectId: string) =>
   request<{ available: boolean; reason?: string }>(
     `${OWNER}/slug-available?slug=${encodeURIComponent(slug)}&projectId=${projectId}`,
   )
+
+/**
+ * The saved draft, in exactly the shape a visitor will receive once it is
+ * published — built on the server by the same projection the public route
+ * uses, so the preview cannot drift from the real thing. Only the one language
+ * asked for is sent, as on the public route.
+ */
+export const previewProject = (id: string, language: Language) =>
+  request<PublicProjectDetail>(`${OWNER}/${id}/preview?language=${language}`)
