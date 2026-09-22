@@ -53,6 +53,21 @@ the owner explicitly approves a visible change.
 
 ## Working method
 
+- **Owner communication is part of the work.** Speak to the owner in very
+  simple Arabic, even when the owner writes in English. Lead with the outcome
+  and whether the owner needs to decide or do anything. Do not assume knowledge
+  of Git, Cloudflare, deployment, databases, or other technical vocabulary:
+  explain a necessary term in the same sentence in plain language and say
+  whether it matters locally now or only before publication. Do not overload
+  the owner with code, file paths, commands, test totals, or implementation
+  detail unless it affects a decision, risk, or requested review. Write Arabic
+  prose in its natural right-to-left order, and keep English identifiers,
+  commands, filenames, and links inside backticks so mixed Arabic and English
+  remains readable. Ask small, bounded batches of material
+  questions and say how many important questions remain; do not create an
+  endless questionnaire. Before any Cloudflare change, deployment, push,
+  deletion, or other external change, state in simple Arabic what will change
+  and wait for explicit authority when it was not already requested.
 - Plan one bounded module at a time and obtain approval before implementation.
 - This read-to-build convention applies to **every V2 module specification**
   under `docs/v2/`, not only Media. When the owner tells an implementation

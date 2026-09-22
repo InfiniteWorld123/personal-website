@@ -6,6 +6,16 @@ email/video setup, legacy removal, a commit, or a push. Read `foundation.md`
 and `inbox.md` for V2 boundaries and Inbox correspondence. Legacy booking/call
 code is evidence, not an automatic V2 requirement.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Agreed product direction
 
 - One owner manages the appointment calendar. Visitors can book from the public website without an account. The owner can create different free appointment types and configure each duration.

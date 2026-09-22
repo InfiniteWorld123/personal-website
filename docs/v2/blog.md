@@ -2,6 +2,16 @@
 
 Status: planning specification recording the owner's decisions. The owner's read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps must still be asked about rather than invented. Shared Media is **built and running** as of 22 Sep 2026, so Blog's image flows have nothing to wait for: select through the shared picker, never build storage of its own. This document does not authorize unrelated changes to Projects or Auth.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Goal and boundaries
 
 Build an owner-managed, trilingual blog in Backend2 and `/dashboard/blog`. Preserve the accepted public blog routes and visual identity while replacing their data source at an explicitly approved cutover. The owner wants useful articles, strong technical SEO foundations, and a low-friction place for readers to comment. SEO implementation is not a promise of rankings or traffic.

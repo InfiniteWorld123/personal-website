@@ -2,6 +2,16 @@
 
 Status: planning specification recording all Services product decisions made with the owner. No product question remains open. The owner's explicit read-to-build instruction supplies implementation approval under `AGENTS.md`. This document alone is not permission to change live prices, public pages, Leads, Invoices, or legacy content now.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Purpose and boundaries
 
 Manage the services Yaman Warda offers from `/dashboard/services`, and show selected published services on the public site. This is an owner-operated catalogue, not a SaaS marketplace, checkout, subscription billing system, booking system, or lead-management workflow. There is no fixed limit of three services and no predefined service categories. The owner may change the catalogue in a few months without rebuilding unrelated modules.

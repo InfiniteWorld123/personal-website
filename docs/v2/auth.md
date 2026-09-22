@@ -9,6 +9,16 @@ check the implementation against it before changing anything.
 
 Owner decisions recorded; verify current implementation state before continuing. The owner's explicit read-to-build instruction supplies approval to implement or finish this V2 module under `AGENTS.md`. This document alone does not authorize changing the live legacy sign-in, deployment, or cutover.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Purpose
 
 Give the owner secure access to Dashboard V2 and every owner-only Backend2 operation before any of them becomes available outside local development. A hidden route, private Git branch, client-side redirect, or CORS rule is not authorization.

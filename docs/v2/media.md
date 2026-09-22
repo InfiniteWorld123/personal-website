@@ -4,6 +4,16 @@ Status: **built and verified, 22 Sep 2026.** The backend, the Dashboard library 
 
 The repository-wide read-to-build convention in `AGENTS.md` applies here as it does to every V2 module specification. The Media scope included necessary Projects-media integration—not a full Blog, Services, or Invoices build, deployment, or public cutover.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Purpose and scope
 
 `/dashboard/media` is the owner's private, reusable file vault for V2. It is not a Blog gallery, a public media site, or separate upload storage for each module. Projects, Blog, future Services, and other modules may select assets from this same library. Invoices and other private modules may also use it later, but their business workflows and generated documents are planned in their own specifications. The Media module does not generate invoices.

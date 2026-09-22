@@ -8,6 +8,16 @@ Projects is the owner's portfolio and case-study collection. An entry can stay p
 
 The existing project form and public project page are references, not V2 specifications. Public-site integration must respect the preservation contract in `foundation.md`; any visible layout change needs separate approval.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Current implementation, not V2 approval
 
 - `/dashboard/projects` is still a screen that says the section is not built. There is no `src/backend2/` Projects implementation. **The V2 database does exist now** — it holds Auth, the shared Media vault, and the Projects tables from `0001_projects.sql`, which were applied without the code that was meant to use them. Read the warning above before adding to it.

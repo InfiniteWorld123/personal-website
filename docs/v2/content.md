@@ -2,6 +2,16 @@
 
 Status: planning specification recording the owner's decisions. The owner's explicit read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps still require a question before coding. This document does not authorize a live cutover, legacy deletion, or changes to public copy now.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Purpose and ownership
 
 `/dashboard/content` manages the existing public website's **static copy**: page headings, descriptions, calls to action, fixed explanatory sections, SEO title/description, site facts, and legal-page text in German, English, and Arabic. The owner likes the old `/admin/content` information architecture and wants to retain its page/section grouping, language switch, field search, visitor preview, history, and ability to restore original wording. Adapt that experience to the accepted Dashboard V2 shell; do not turn it into a general page builder or redesign the public website.

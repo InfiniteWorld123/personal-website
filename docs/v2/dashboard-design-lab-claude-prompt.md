@@ -10,6 +10,16 @@ Use this entire document as the prompt and source of truth for the Dashboard V2
 design exploration. Do not treat it as authorization to implement the production
 dashboard, Backend2, a database, APIs, or a cutover.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Your role
 
 Act as a senior product designer and frontend design engineer working directly

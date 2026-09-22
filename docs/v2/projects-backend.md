@@ -10,6 +10,16 @@ API, storage, validation, security boundary, and tests. The Dashboard Projects
 UI and the public-site wiring are deliberately **not** in this document; their
 rendered design is reviewed separately before they are built.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 **Shared Media amendment (later owner decision):** The owner now requires all
 Project cover, gallery, and inline images to be selected through the private,
 shared `/dashboard/media` library. An upload from a Project editor must first

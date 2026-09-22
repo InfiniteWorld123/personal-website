@@ -2,6 +2,16 @@
 
 Status: planning complete from the owner's answers, with the public-form handoff amended below. Under the read-to-build convention in `AGENTS.md`, telling an implementation agent to read this module document starts the handoff below, not a summary. The documented public-form change is for the approved V2 integration; this document alone does not authorize changing the live site, email routing, deployment, or unrelated modules ahead of that cutover.
 
+## Owner communication — mandatory
+
+Use very simple Arabic with the owner, even when the owner writes English, in
+natural right-to-left Arabic prose.
+Explain any necessary technical word in the same sentence, lead with what
+happened and whether the owner needs to act, and distinguish local work from a
+later public release. Keep English identifiers in backticks, avoid unnecessary
+internal detail, and ask small batches of material questions while saying how
+many remain. The complete rule is in `AGENTS.md`.
+
 ## Purpose and boundaries
 
 Build a compact, real, single-owner mailbox at `/dashboard/inbox` for `info@yamanwarda.de`. It receives all mail addressed to that address, not only website contact submissions, and can compose and reply to one person at a time. The V2 mailbox starts empty; legacy messages are not imported. Keep `/admin/inbox`, the legacy database, and current mail delivery working until a separately approved and verified cutover.

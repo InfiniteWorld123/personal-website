@@ -10,6 +10,18 @@ Rebuild the private dashboard and the complete backend so the owner understands
 and trusts the whole system. The public website keeps its current design and
 visitor experience, but it will eventually use the V2 backend and database.
 
+## Owner communication rule
+
+All implementation agents must follow the mandatory communication rule in
+`AGENTS.md`. They speak to the owner in very simple Arabic even when the owner
+writes English, using natural right-to-left Arabic prose, explain any necessary technical word immediately in plain
+language, and say whether it affects local work now or only a later public
+release. They lead with the outcome and required decision, keep English
+identifiers inside backticks, avoid unnecessary internal detail, ask bounded
+batches of material questions while stating how many remain, and explain an
+external change plainly before taking it. This rule applies to every V2 module
+and is part of a complete handoff, not an optional writing preference.
+
 V2 is a clean rewrite, not an in-place refactor of the legacy backend.
 
 ## Approved boundaries
