@@ -37,7 +37,6 @@ import { Route as DashboardInboxRouteImport } from './../routes/dashboard.inbox'
 import { Route as DashboardInvoicesRouteImport } from './../routes/dashboard.invoices'
 import { Route as DashboardLeadsRouteImport } from './../routes/dashboard.leads'
 import { Route as DashboardMediaRouteImport } from './../routes/dashboard.media'
-import { Route as DashboardProjectsRouteImport } from './../routes/dashboard.projects'
 import { Route as DashboardSettingsRouteImport } from './../routes/dashboard.settings'
 import { Route as DashboardLoginRouteImport } from './../routes/dashboard_.login'
 import { Route as RssArDotxmlRouteImport } from './../routes/rss.ar[.]xml'
@@ -74,6 +73,8 @@ import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projec
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
 import { Route as ApiV2SplatRouteImport } from './../routes/api.v2.$'
+import { Route as DashboardProjectsIndexRouteImport } from './../routes/dashboard.projects.index'
+import { Route as DashboardProjectsProjectIdRouteImport } from './../routes/dashboard.projects.$projectId'
 import { Route as DashboardSettingsIndexRouteImport } from './../routes/dashboard.settings.index'
 import { Route as DashboardSettingsSecurityRouteImport } from './../routes/dashboard.settings.security'
 import { Route as DashboardLoginConfirmEmailRouteImport } from './../routes/dashboard_.login_.confirm-email'
@@ -223,11 +224,6 @@ const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
 const DashboardMediaRoute = DashboardMediaRouteImport.update({
   id: '/media',
   path: '/media',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
@@ -412,6 +408,17 @@ const ApiV2SplatRoute = ApiV2SplatRouteImport.update({
   path: '/api/v2/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProjectsIndexRoute = DashboardProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProjectsProjectIdRoute =
+  DashboardProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -493,7 +500,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/media': typeof DashboardMediaRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
@@ -524,6 +530,7 @@ export interface FileRoutesByFullPath {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -536,6 +543,7 @@ export interface FileRoutesByFullPath {
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
@@ -567,7 +575,6 @@ export interface FileRoutesByTo {
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/media': typeof DashboardMediaRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/login': typeof DashboardLoginRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
   '/rss/de.xml': typeof RssDeDotxmlRoute
@@ -597,6 +604,7 @@ export interface FileRoutesByTo {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -609,6 +617,7 @@ export interface FileRoutesByTo {
   '/admin/invoices': typeof AdminInvoicesIndexRoute
   '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
+  '/dashboard/projects': typeof DashboardProjectsIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
@@ -644,7 +653,6 @@ export interface FileRoutesById {
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
   '/dashboard/media': typeof DashboardMediaRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard_/login': typeof DashboardLoginRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
@@ -675,6 +683,7 @@ export interface FileRoutesById {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard_/login_/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard_/login_/reset': typeof DashboardLoginResetRoute
@@ -687,6 +696,7 @@ export interface FileRoutesById {
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
@@ -723,7 +733,6 @@ export interface FileRouteTypes {
     | '/dashboard/invoices'
     | '/dashboard/leads'
     | '/dashboard/media'
-    | '/dashboard/projects'
     | '/dashboard/settings'
     | '/dashboard/login'
     | '/rss/ar.xml'
@@ -754,6 +763,7 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/projects/$projectId'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -766,6 +776,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
+    | '/dashboard/projects/'
     | '/dashboard/settings/'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
@@ -797,7 +808,6 @@ export interface FileRouteTypes {
     | '/dashboard/invoices'
     | '/dashboard/leads'
     | '/dashboard/media'
-    | '/dashboard/projects'
     | '/dashboard/login'
     | '/rss/ar.xml'
     | '/rss/de.xml'
@@ -827,6 +837,7 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/projects/$projectId'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -839,6 +850,7 @@ export interface FileRouteTypes {
     | '/admin/invoices'
     | '/admin/leads'
     | '/admin/projects'
+    | '/dashboard/projects'
     | '/dashboard/settings'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
@@ -873,7 +885,6 @@ export interface FileRouteTypes {
     | '/dashboard/invoices'
     | '/dashboard/leads'
     | '/dashboard/media'
-    | '/dashboard/projects'
     | '/dashboard/settings'
     | '/dashboard_/login'
     | '/rss/ar.xml'
@@ -904,6 +915,7 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/projects/$projectId'
     | '/dashboard/settings/security'
     | '/dashboard_/login_/confirm-email'
     | '/dashboard_/login_/reset'
@@ -916,6 +928,7 @@ export interface FileRouteTypes {
     | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
+    | '/dashboard/projects/'
     | '/dashboard/settings/'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
@@ -1141,13 +1154,6 @@ declare module '@tanstack/react-router' {
       path: '/media'
       fullPath: '/dashboard/media'
       preLoaderRoute: typeof DashboardMediaRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/projects': {
-      id: '/dashboard/projects'
-      path: '/projects'
-      fullPath: '/dashboard/projects'
-      preLoaderRoute: typeof DashboardProjectsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/settings': {
@@ -1402,6 +1408,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV2SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/projects/': {
+      id: '/dashboard/projects/'
+      path: '/projects'
+      fullPath: '/dashboard/projects/'
+      preLoaderRoute: typeof DashboardProjectsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/projects/$projectId': {
+      id: '/dashboard/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/dashboard/projects/$projectId'
+      preLoaderRoute: typeof DashboardProjectsProjectIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings/': {
       id: '/dashboard/settings/'
       path: '/'
@@ -1604,9 +1624,10 @@ interface DashboardRouteChildren {
   DashboardInvoicesRoute: typeof DashboardInvoicesRoute
   DashboardLeadsRoute: typeof DashboardLeadsRoute
   DashboardMediaRoute: typeof DashboardMediaRoute
-  DashboardProjectsRoute: typeof DashboardProjectsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProjectsProjectIdRoute: typeof DashboardProjectsProjectIdRoute
+  DashboardProjectsIndexRoute: typeof DashboardProjectsIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -1617,9 +1638,10 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardInvoicesRoute: DashboardInvoicesRoute,
   DashboardLeadsRoute: DashboardLeadsRoute,
   DashboardMediaRoute: DashboardMediaRoute,
-  DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProjectsProjectIdRoute: DashboardProjectsProjectIdRoute,
+  DashboardProjectsIndexRoute: DashboardProjectsIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
