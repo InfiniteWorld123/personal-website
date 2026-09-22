@@ -174,8 +174,11 @@ export const folderTree = async (): Promise<{
   tree: MediaFolderNode[]
   total: number
   truncated: boolean
+  /** The whole library, and the part of it in no folder. */
+  files: { total: number; atRoot: number }
 }> => {
   const rows = await repo.listFolders()
+  const files = await repo.countLibrary()
   const truncated = rows.length > MEDIA_LIMITS.maxFolders
   const visible = truncated ? rows.slice(0, MEDIA_LIMITS.maxFolders) : rows
 
@@ -205,7 +208,7 @@ export const folderTree = async (): Promise<{
 
   sort(roots)
 
-  return { tree: roots, total: visible.length, truncated }
+  return { tree: roots, total: visible.length, truncated, files }
 }
 
 /** Confirms a folder id before a file is put in it. `null` — the root — always exists. */

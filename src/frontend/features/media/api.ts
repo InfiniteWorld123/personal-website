@@ -96,7 +96,14 @@ export const fileContentUrl = (id: string): string => `${OWNER}/files/${id}/cont
 
 /* ---------------------------------------------------------------- folders */
 
-export type FolderTree = { tree: MediaFolderNode[]; total: number; truncated: boolean }
+export type FolderTree = {
+  tree: MediaFolderNode[]
+  total: number
+  truncated: boolean
+  /** The whole library and its root, counted by the server rather than by the
+   *  page on screen — which is filtered, and would report the wrong thing. */
+  files: { total: number; atRoot: number }
+}
 
 export const listFolders = () => request<FolderTree>(`${OWNER}/folders`)
 

@@ -101,7 +101,12 @@ beforeEach(() => {
     if (typeof fn === 'function' && 'mockReset' in fn) (fn as ReturnType<typeof vi.fn>).mockReset()
   }
 
-  api.listFolders.mockResolvedValue({ tree: [folder()], total: 1, truncated: false })
+  api.listFolders.mockResolvedValue({
+    tree: [folder()],
+    total: 1,
+    truncated: false,
+    files: { total: 7, atRoot: 2 },
+  })
   api.listFiles.mockResolvedValue(page([asset()]))
   api.listReferences.mockResolvedValue(page([]))
 })
@@ -165,14 +170,14 @@ describe('the library', () => {
     )
   })
 
-  it('offers the whole library and the loose files as different places', async () => {
+  it('offers the whole library and the unfiled files as different places', async () => {
     renderWith(<MediaPage />)
 
     // The rail button, not the phone-width <option> that carries the same
     // name — and only once the folder tree has actually arrived.
     const railRow = await waitFor(() => {
       const found = screen
-        .getAllByText('Loose files')
+        .getAllByText('Not in a folder')
         .map((node) => node.closest('button'))
         .find((node): node is HTMLButtonElement => node !== null)
 
@@ -353,6 +358,43 @@ describe('the library', () => {
     fireEvent.click(within(confirm).getByRole('button', { name: /delete folder/i }))
 
     await waitFor(() => expect(api.deleteFolder).toHaveBeenCalledWith('f-projects'))
+  })
+
+  /**
+   * Found by the owner asking what the two rows meant, which is usually how a
+   * wrong number gets noticed. "Not in a folder" was hard-coded to zero, and
+   * "All files" was showing the size of the filtered page — so standing inside
+   * a folder made it report that folder's count.
+   */
+  it('counts the whole library beside the rail, not the page on screen', async () => {
+    api.listFiles.mockResolvedValue(page([asset()]))
+
+    renderWith(<MediaPage />)
+
+    const railCount = async (label: string) =>
+      await waitFor(() => {
+        const row = screen
+          .getAllByText(label)
+          .map((node) => node.closest('button'))
+          .find((node): node is HTMLButtonElement => node !== null)
+
+        expect(row).toBeTruthy()
+
+        return row!.textContent ?? ''
+      })
+
+    // One file is listed, seven are in the library, two of them unfiled.
+    expect(await railCount('All files')).toContain('7')
+    expect(await railCount('Not in a folder')).toContain('2')
+
+    // Narrowing the list must not change what the library says it holds.
+    fireEvent.change(screen.getByLabelText('File type'), { target: { value: 'image' } })
+
+    await waitFor(() =>
+      expect(api.listFiles).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'image' })),
+    )
+
+    expect(await railCount('All files')).toContain('7')
   })
 
   it('says the library is empty in a way that offers the next step', async () => {

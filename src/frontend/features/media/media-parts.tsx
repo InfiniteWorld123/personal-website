@@ -186,22 +186,30 @@ export type FolderChoice = 'all' | 'root' | string
 /**
  * The folder rail, flattened for rendering but nested in meaning.
  *
- * "All files" and "Library root" are both real places and not the same one:
- * the first is the whole vault, the second is the files that are in no folder.
- * Without both, "show me everything" and "show me the loose files" would be
- * one request.
+ * "All files" and "Not in a folder" are both real places and not the same one:
+ * the first is the whole vault, the second is only the files that were never
+ * filed. Without both, "show me everything" and "show me what I still need to
+ * tidy" would be the same request.
+ *
+ * Both counts come from the server's own count of the library, never from the
+ * page of files on screen — that page is filtered, so standing inside one
+ * folder would otherwise have "All files" reporting the size of that folder.
  */
 export function FolderRail({
   tree,
   current,
   onChoose,
   total,
+  rootTotal,
   action,
 }: {
   tree: MediaFolderNode[]
   current: FolderChoice
   onChoose: (choice: FolderChoice) => void
+  /** Every file in the library, whatever folder it is in. */
   total: number
+  /** Only the files in no folder at all. */
+  rootTotal: number
   action?: React.ReactNode
 }) {
   const row = (choice: FolderChoice, name: string, depth: number, count: number, key: string) => {
@@ -245,7 +253,7 @@ export function FolderRail({
         {action ? <span className="ms-auto">{action}</span> : null}
       </p>
       {row('all', 'All files', 0, total, 'all')}
-      {row('root', 'Loose files', 0, 0, 'root')}
+      {row('root', 'Not in a folder', 0, rootTotal, 'root')}
       {walk(tree)}
     </nav>
   )

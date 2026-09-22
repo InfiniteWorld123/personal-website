@@ -102,6 +102,23 @@ export const listFolders = async (): Promise<Array<FolderRow & { file_count: num
   return rows.map((row) => ({ ...row, file_count: count(row.file_count) }))
 }
 
+/**
+ * The two counts the folder rail shows beside "All files" and the root.
+ *
+ * Read here rather than taken from the file list, because that list is
+ * filtered: standing inside one folder, or narrowed to images, it would have
+ * "All files" reporting the size of whatever is on screen.
+ */
+export const countLibrary = async (): Promise<{ total: number; atRoot: number }> => {
+  const { rows } = await getDb().query<{ total: string | number; at_root: string | number }>(
+    `SELECT count(*) AS total,
+            count(*) FILTER (WHERE folder_id IS NULL) AS at_root
+       FROM v2_media_assets`,
+  )
+
+  return { total: count(rows[0]?.total), atRoot: count(rows[0]?.at_root) }
+}
+
 export const countFoldersInParent = async (input: {
   parentId: string | null
   excludeId?: string

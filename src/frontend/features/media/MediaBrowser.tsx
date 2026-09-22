@@ -165,7 +165,8 @@ export function MediaBrowser({
               tree={folders.data?.tree ?? []}
               current={state.folder}
               onChoose={(folder) => update({ folder })}
-              total={page?.total ?? 0}
+              total={folders.data?.files.total ?? 0}
+              rootTotal={folders.data?.files.atRoot ?? 0}
               action={toolbarExtra}
             />
             {folders.data?.truncated ? (
@@ -202,7 +203,7 @@ export function MediaBrowser({
             onChange={(event) => update({ folder: event.target.value as FolderChoice })}
           >
             <option value="all">All files</option>
-            <option value="root">Loose files</option>
+            <option value="root">Not in a folder</option>
             {folderOptions(folders.data?.tree ?? [])}
           </select>
 

@@ -34,7 +34,12 @@ describe('building a database from nothing', () => {
     expect([...files.map((f) => f.name)].sort()).toEqual(files.map((f) => f.name))
   })
 
-  it('leaves a schema the whole application can use, and no rows at all', async () => {
+  /*
+   * Generous, because each of these builds a whole PostgreSQL in WebAssembly
+   * and runs three migrations through it. Slow on purpose beats fast and
+   * mocked: the point is that the real SQL works on a real empty database.
+   */
+  it('leaves a schema the whole application can use, and no rows at all', { timeout: 60_000 }, async () => {
     const database = new PGlite()
 
     try {
@@ -86,7 +91,7 @@ describe('building a database from nothing', () => {
     }
   })
 
-  it('keeps the two halves of Projects able to reference each other', async () => {
+  it('keeps the two halves of Projects able to reference each other', { timeout: 60_000 }, async () => {
     const database = new PGlite()
 
     try {
