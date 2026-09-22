@@ -65,19 +65,38 @@ is implemented.
 
 ## Dashboard modules
 
-The intended Dashboard V2 navigation currently contains:
+**The navigation is a starting point, not a fixed shape.** It is expected to
+grow, shrink and reorder as modules are planned and built, and no count is
+approved — not eight, not nine, not any number. A module that turns out to
+need its own place gets one; a section that turns out to belong inside another
+loses one. What stays fixed is the rule that a section appears only when the
+owner has agreed what it is for, and that adding or removing one is a decision
+made with the owner rather than a side effect of building something else.
 
-1. Overview
-2. Projects
-3. Calendar
-4. Inbox
-5. Leads
-6. Content
-7. Blog
-8. Invoices
+Where the list stands today:
+
+- Overview
+- Projects
+- Calendar
+- Inbox
+- Leads
+- Content
+- Blog
+- Media
+- Invoices
+
+Media was added on 22 Sep 2026, when the shared library was built: it is a
+place the owner visits to organise folders, delete old files and see which of
+their files a visitor can currently reach, and none of that belongs inside the
+picker other modules open. `docs/v2/media.md` records that decision.
 
 Video calls belong to the booking and calendar domain. Their exact navigation
 placement is undecided.
+
+The code is the current answer, not this list — `dashboardNavigation` in
+`src/frontend/dashboard/dashboard-navigation.ts`, with a test asserting the
+order. When the two disagree, the code is what the owner is actually using and
+this paragraph is what needs updating.
 
 ### Current module meanings
 
@@ -94,6 +113,8 @@ placement is undecided.
   not designed yet.
 - **Blog:** the article-management system. Editor, languages, publishing rules,
   media, and workflow are not designed yet.
+- **Media:** one private library of files that every module selects from, so a
+  file is uploaded once and reused anywhere. Built; `docs/v2/media.md` owns it.
 - **Invoices:** the invoicing system. Its legal and operational boundary is not
   designed yet.
 - **Public AI assistant:** a visitor-facing assistant using retrieval from an
