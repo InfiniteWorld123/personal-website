@@ -12,6 +12,21 @@ export type ApiErrorCode =
   | 'RATE_LIMITED'
   | 'INTERNAL_ERROR'
   | 'STORAGE_UNAVAILABLE'
+  /*
+   * Media (`docs/v2/media.md`): "Use typed responses and stable error codes for
+   * unsupported type, oversize file, missing file/folder, storage unavailable,
+   * upload failure, forbidden access, and deletion blocked by references." They
+   * sit in the same union rather than inside `details` so the Dashboard
+   * switches on one field for every failure Backend2 can report.
+   */
+  | 'UNSUPPORTED_FILE_TYPE'
+  | 'FILE_TOO_LARGE'
+  | 'UPLOAD_FAILED'
+  | 'DELETE_BLOCKED_BY_REFERENCES'
+  | 'FOLDER_NOT_EMPTY'
+  | 'FOLDER_CYCLE'
+  | 'FOLDER_DEPTH_EXCEEDED'
+  | 'NAME_TAKEN'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -99,4 +114,52 @@ export const storageUnavailable = make(
   HttpStatus.SERVICE_UNAVAILABLE,
   'STORAGE_UNAVAILABLE',
   'Image storage is not available in this environment',
+)
+
+/* ---------------------------------------------------------------- the vault */
+
+export const unsupportedFileType = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'UNSUPPORTED_FILE_TYPE',
+  'That file type is not accepted',
+)
+export const fileTooLarge = make(
+  HttpStatus.PAYLOAD_TOO_LARGE,
+  'FILE_TOO_LARGE',
+  'That file is too large',
+)
+export const uploadFailed = make(
+  HttpStatus.BAD_REQUEST,
+  'UPLOAD_FAILED',
+  'That upload did not finish. Nothing was added to the library.',
+)
+
+/**
+ * A file that something still uses. The `details` carry the uses themselves,
+ * because a refusal the owner cannot act on is not much better than a failure.
+ */
+export const deleteBlockedByReferences = make(
+  HttpStatus.CONFLICT,
+  'DELETE_BLOCKED_BY_REFERENCES',
+  'That file is still in use',
+)
+export const folderNotEmpty = make(
+  HttpStatus.CONFLICT,
+  'FOLDER_NOT_EMPTY',
+  'Empty the folder before deleting it',
+)
+export const folderCycle = make(
+  HttpStatus.CONFLICT,
+  'FOLDER_CYCLE',
+  'A folder cannot be moved inside itself',
+)
+export const folderDepthExceeded = make(
+  HttpStatus.CONFLICT,
+  'FOLDER_DEPTH_EXCEEDED',
+  'That would nest folders too deeply',
+)
+export const nameTaken = make(
+  HttpStatus.CONFLICT,
+  'NAME_TAKEN',
+  'Something with that name is already here',
 )

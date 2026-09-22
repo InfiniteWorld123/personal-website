@@ -3,6 +3,7 @@ import {
   FileText,
   FolderKanban,
   Handshake,
+  Images,
   Inbox,
   LayoutDashboard,
   Newspaper,
@@ -23,9 +24,18 @@ export type DashboardNavItem = {
 }
 
 /**
- * The order the owner approved. It is the same eight sections the legacy
- * `/admin` carries, which is evidence that the list is right — not that the
+ * The order the owner approved. It was the same eight sections the legacy
+ * `/admin` carries, which was evidence that the list was right — not that the
  * screens behind it are.
+ *
+ * Media is the ninth, added on the owner's decision of 22 Sep 2026. It is a
+ * place rather than a setting: the shared vault is where folders get tidied,
+ * old files get deleted and "what of mine is public right now" gets answered,
+ * and none of that has a home inside the picker that other modules open.
+ *
+ * It sits after Blog and before Invoices because the two sections that use it
+ * most — Projects and Blog — are above it, and Invoices ends the list on
+ * money, as it did before.
  *
  * There is no AI item, and there will not be one: the assistant is a
  * visitor-facing feature of the public site.
@@ -38,6 +48,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
   { label: 'Content', to: '/dashboard/content', icon: FileText },
   { label: 'Blog', to: '/dashboard/blog', icon: Newspaper },
+  { label: 'Media', to: '/dashboard/media', icon: Images },
   { label: 'Invoices', to: '/dashboard/invoices', icon: ReceiptEuro },
 ]
 

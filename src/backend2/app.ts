@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia'
-import { withRequestScope } from './db/client'
+import { isDatabaseConfigured, withRequestScope } from './db/client'
 import { isApiError } from './http/error'
 import { normalizeError } from './http/error-handler'
 import { responseFailure, responseOk } from './http/response'
@@ -7,6 +7,8 @@ import { HttpStatus } from './http/status'
 import { ownerRoutesEnabled } from './security/local-only'
 import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
+import { ownerMediaRoutes } from './modules/media/media.owner.route'
+import { publicMediaRoutes } from './modules/media/media.public.route'
 
 /**
  * Backend2.
@@ -88,8 +90,21 @@ const buildApp = () => {
   if (ownerRoutesEnabled()) {
     app.use(publicAuthRoutes)
 
-    app.group('/owner', (owner) => owner.use(ownerSecurityRoutes))
+    app.group('/owner', (owner) => owner.use(ownerSecurityRoutes).use(ownerMediaRoutes))
   }
+
+  /*
+   * Media's public half is outside the fence, because it is genuinely public:
+   * `GET /api/v2/media/:id` serves an asset only while a live published
+   * snapshot references it, and answers 404 for everything else — including
+   * every private file, every draft's image and the existence of the library.
+   *
+   * Registered only when the V2 database is configured. Without one the route
+   * could not answer the "is this published?" question it exists to ask, and a
+   * 404 from an unmounted route is a better answer than a 500 from a missing
+   * connection string.
+   */
+  if (isDatabaseConfigured()) app.use(publicMediaRoutes)
 
   return app.get('/', () =>
     responseOk({ data: { status: 'ok', version: 2 }, message: 'Backend2 is running' }),

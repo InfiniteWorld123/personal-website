@@ -36,6 +36,7 @@ import { Route as DashboardContentRouteImport } from './../routes/dashboard.cont
 import { Route as DashboardInboxRouteImport } from './../routes/dashboard.inbox'
 import { Route as DashboardInvoicesRouteImport } from './../routes/dashboard.invoices'
 import { Route as DashboardLeadsRouteImport } from './../routes/dashboard.leads'
+import { Route as DashboardMediaRouteImport } from './../routes/dashboard.media'
 import { Route as DashboardProjectsRouteImport } from './../routes/dashboard.projects'
 import { Route as DashboardSettingsRouteImport } from './../routes/dashboard.settings'
 import { Route as DashboardLoginRouteImport } from './../routes/dashboard_.login'
@@ -217,6 +218,11 @@ const DashboardInvoicesRoute = DashboardInvoicesRouteImport.update({
 const DashboardLeadsRoute = DashboardLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMediaRoute = DashboardMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
@@ -486,6 +492,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
@@ -559,6 +566,7 @@ export interface FileRoutesByTo {
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/login': typeof DashboardLoginRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
@@ -635,6 +643,7 @@ export interface FileRoutesById {
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/leads': typeof DashboardLeadsRoute
+  '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard_/login': typeof DashboardLoginRoute
@@ -713,6 +722,7 @@ export interface FileRouteTypes {
     | '/dashboard/inbox'
     | '/dashboard/invoices'
     | '/dashboard/leads'
+    | '/dashboard/media'
     | '/dashboard/projects'
     | '/dashboard/settings'
     | '/dashboard/login'
@@ -786,6 +796,7 @@ export interface FileRouteTypes {
     | '/dashboard/inbox'
     | '/dashboard/invoices'
     | '/dashboard/leads'
+    | '/dashboard/media'
     | '/dashboard/projects'
     | '/dashboard/login'
     | '/rss/ar.xml'
@@ -861,6 +872,7 @@ export interface FileRouteTypes {
     | '/dashboard/inbox'
     | '/dashboard/invoices'
     | '/dashboard/leads'
+    | '/dashboard/media'
     | '/dashboard/projects'
     | '/dashboard/settings'
     | '/dashboard_/login'
@@ -1122,6 +1134,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/dashboard/leads'
       preLoaderRoute: typeof DashboardLeadsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/media': {
+      id: '/dashboard/media'
+      path: '/media'
+      fullPath: '/dashboard/media'
+      preLoaderRoute: typeof DashboardMediaRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/projects': {
@@ -1584,6 +1603,7 @@ interface DashboardRouteChildren {
   DashboardInboxRoute: typeof DashboardInboxRoute
   DashboardInvoicesRoute: typeof DashboardInvoicesRoute
   DashboardLeadsRoute: typeof DashboardLeadsRoute
+  DashboardMediaRoute: typeof DashboardMediaRoute
   DashboardProjectsRoute: typeof DashboardProjectsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -1596,6 +1616,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardInboxRoute: DashboardInboxRoute,
   DashboardInvoicesRoute: DashboardInvoicesRoute,
   DashboardLeadsRoute: DashboardLeadsRoute,
+  DashboardMediaRoute: DashboardMediaRoute,
   DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,

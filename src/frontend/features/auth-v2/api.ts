@@ -36,7 +36,7 @@ type Envelope = {
  * page can make the browser send the cookie but cannot read this value out to
  * copy it here.
  */
-const csrfToken = (): string | null => {
+export const csrfToken = (): string | null => {
   if (typeof document === 'undefined') return null
 
   for (const part of document.cookie.split(';')) {

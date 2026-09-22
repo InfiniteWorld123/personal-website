@@ -40,7 +40,13 @@ describe('the sidebar knows which section you are in', () => {
   })
 
   /** The order the owner approved, and no AI item — the assistant is public. */
-  it('carries the eight approved sections in order', () => {
+  /**
+   * Nine since 22 Sep 2026. Media joined the eight the owner first approved,
+   * because the shared vault is a place the owner visits — to tidy folders,
+   * delete old files and see what of theirs is public — and none of that has
+   * a home inside the picker other modules open.
+   */
+  it('carries the nine approved sections in order', () => {
     expect(dashboardNavigation.map((item) => item.label)).toEqual([
       'Overview',
       'Projects',
@@ -49,6 +55,7 @@ describe('the sidebar knows which section you are in', () => {
       'Leads',
       'Content',
       'Blog',
+      'Media',
       'Invoices',
     ])
   })
