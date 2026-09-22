@@ -11,6 +11,8 @@ import { ownerMediaRoutes } from './modules/media/media.owner.route'
 import { publicMediaRoutes } from './modules/media/media.public.route'
 import { ownerProjectRoutes } from './modules/projects/project.owner.route'
 import { publicProjectRoutes } from './modules/projects/project.public.route'
+import { ownerServiceRoutes } from './modules/services/service.owner.route'
+import { publicServiceRoutes } from './modules/services/service.public.route'
 
 /**
  * Backend2.
@@ -93,7 +95,11 @@ const buildApp = () => {
     app.use(publicAuthRoutes)
 
     app.group('/owner', (owner) =>
-      owner.use(ownerSecurityRoutes).use(ownerMediaRoutes).use(ownerProjectRoutes),
+      owner
+        .use(ownerSecurityRoutes)
+        .use(ownerMediaRoutes)
+        .use(ownerProjectRoutes)
+        .use(ownerServiceRoutes),
     )
   }
 
@@ -114,7 +120,14 @@ const buildApp = () => {
    * production means `/api/v2/projects` simply does not answer there and
    * nothing on the live site changes.
    */
-  if (isDatabaseConfigured()) app.use(publicMediaRoutes).use(publicProjectRoutes)
+  /*
+   * And the public Services reads (`docs/v2/services.md`), for the same
+   * reason: where no V2 database exists they do not answer, so the live
+   * `/services` page keeps its current content until an approved cutover.
+   */
+  if (isDatabaseConfigured()) {
+    app.use(publicMediaRoutes).use(publicProjectRoutes).use(publicServiceRoutes)
+  }
 
   return app.get('/', () =>
     responseOk({ data: { status: 'ok', version: 2 }, message: 'Backend2 is running' }),
