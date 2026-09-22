@@ -53,10 +53,26 @@
   //
   // The signed S3 driver is still in the code for the Node dev server, which
   // has no bindings; without keys there, files simply cannot be stored locally.
+  // The V2 bucket sits beside it, and stays separate on purpose: the two
+  // systems have to be deletable independently, so nothing V2 writes ever
+  // lands among the legacy files.
+  //
+  // Created 22 Sep 2026 in Western Europe, like the one above. Its public
+  // `r2.dev` URL is switched OFF and must stay off — the shared library is
+  // private, and the one way a file reaches a visitor is the application's own
+  // route, which checks on every request that a published page still uses it.
+  //
+  // `MEDIA_V2` is the name `src/backend2/media/store.r2-binding.ts` looks for.
+  // Renaming it here silently disables deployed storage: the code would find
+  // no bucket and answer "storage unavailable" rather than fail loudly.
   "r2_buckets": [
     {
       "binding": "MEDIA",
       "bucket_name": "yamanwarda-media"
+    },
+    {
+      "binding": "MEDIA_V2",
+      "bucket_name": "yamanwarda-v2-media"
     }
   ],
 
