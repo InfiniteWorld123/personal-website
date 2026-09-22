@@ -1,6 +1,6 @@
 # Blog V2 — product and implementation plan
 
-Status: planning draft recording the owner's decisions. Review and approve this whole document before implementation. The shared Media module in `media.md` is a dependency that still needs its own approved specification before Blog's media-backed backend can be completed. This document does not authorize changes to the partially built Projects or Auth modules.
+Status: planning specification recording the owner's decisions. The owner's read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps must still be asked about rather than invented. Shared Media is specified in `media.md` and must be integrated safely before Blog's media-backed flows can be completed. This document does not authorize unrelated changes to Projects or Auth.
 
 ## Goal and boundaries
 
@@ -101,16 +101,16 @@ The public `/rss/{de,en,ar}.xml` and `/sitemap.xml` routes remain at their curre
 - Verify typecheck, relevant tests, build, real Backend2 runtime, and browser flows in desktop/mobile and DE/EN/AR (including RTL) before reporting completion. A passing backend suite is not evidence that frontend or cutover is complete.
 - No legacy data import or live cutover is part of this module's ordinary implementation. The old test article may disappear only at a separately approved cutover; do not delete it as a planning side effect.
 
-## Handoff prompt for Claude — use after owner approval and Media planning
+## Handoff prompt for Claude — execute on the owner's read-to-build request
 
-> Read `AGENTS.md`, `docs/v2/foundation.md`, this entire `docs/v2/blog.md`, the approved shared Media specification, and the current Backend2/Auth/Projects code before changing anything. This Blog specification records the owner's decisions; preserve legacy `/admin`, the current public site, the V2 database boundary, and all unrelated in-progress work. If the shared Media specification is still only the planning note in `docs/v2/media.md`, stop before implementing media-backed Blog work and report that dependency. Do not invent a project-only Blog upload system or silently refactor Projects media.
+> Read `AGENTS.md`, `docs/v2/foundation.md`, this entire `docs/v2/blog.md`, the shared Media specification, and the current Backend2/Auth/Projects code before changing anything. This Blog specification records the owner's decisions; preserve legacy `/admin`, the current public site, the V2 database boundary, and all unrelated in-progress work. Verify the shared Media contract is actually implemented before connecting media-backed Blog flows; if it is not, report the dependency rather than invent a Blog-only upload system or silently refactor Projects media.
 >
 > If a material product decision is genuinely unanswered, ask the owner first. Otherwise implement and fully test the Backend2 Blog phase: article drafts and publication/scheduling snapshots, translations, tags, SEO/RSS data, counters, anonymous nested comments and owner actions, security/privacy controls, pagination, migrations, and typed API contracts. Use the V2 owner authentication guard for owner routes; never expose them remotely without it. Report exact tests and runtime evidence, plus anything not verified. Stop before production frontend.
 >
-> Then use the `frontend-design` skill to create an isolated interactive Blog Design Lab. Show rendered desktop/mobile dashboard flows and the approved public comment/rich-content additions in DE/EN/AR, including RTL and deep replies. Explain recommendations and tradeoffs; ask the owner only about material visual/UX choices and wait for explicit approval. After approval, build the production frontend with TanStack Form, connect it to the verified backend, and browser-test the complete flows.
+> After backend verification, ask the owner only about material frontend/UX decisions still unanswered. Then use the `frontend-design` skill to create an isolated interactive Blog Design Lab. Show rendered desktop/mobile dashboard flows and the approved public comment/rich-content additions in DE/EN/AR, including RTL and deep replies. Explain recommendations and tradeoffs; wait for explicit visual approval. After approval, build the production frontend with TanStack Form, connect it to the verified backend, and browser-test the complete flows.
 >
-> Finally review the exact Blog and approved Media-integration diff, tests, build, and staged files. Commit/push only the agreed module changes to `main-v2` after the whole connected module is complete and reviewed. Do not push `main`, deploy, migrate/delete legacy content, or cut over production without separate approval.
+> Finally review the exact Blog and approved Media-integration diff, tests, build, and staged files. Commit/push only if the owner requests that Git action, with the agreed module changes going to `main-v2`. Do not push `main`, deploy, migrate/delete legacy content, or cut over production without separate approval.
 
 ## Unresolved cross-module dependency, not another Blog questionnaire
 
-`docs/v2/media.md` currently records the shared-library direction only. Its object model, public/private delivery, existing V2 project-image integration, reuse, video/PDF rules, and deletion policy must be planned and approved in a separate bounded Media session before the Blog implementation prompt above can run end to end. This does not reopen the Blog product questions answered here.
+`docs/v2/media.md` records the shared-library contract, but Blog must verify the actual Media implementation and its public/private delivery before connecting images. A missing implementation is a dependency, not permission to build Blog-only storage. This does not reopen the Blog product questions answered here.

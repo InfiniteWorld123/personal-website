@@ -1,6 +1,6 @@
 # Content V2 — static website copy plan
 
-Status: planning specification recording the owner's decisions. Review and approve this whole document before implementation. It does not authorize a live cutover, legacy deletion, or changes to public copy now.
+Status: planning specification recording the owner's decisions. The owner's explicit read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps still require a question before coding. This document does not authorize a live cutover, legacy deletion, or changes to public copy now.
 
 ## Purpose and ownership
 
@@ -68,10 +68,10 @@ Use a stable field version/ETag or equivalent conditional write so simultaneous 
 - Import comparison covers every approved current static field, language, shared fact, and legal text, while excluding dynamic module data and legacy drafts. No dual writes or live changes occur before an approved cutover.
 - Public reads never reveal owner/history/private data. Owner writes are denied without authorization. Fixed fields need no pagination; History has bounded server pagination and a matching frontend control.
 
-## Handoff prompt for Claude — use after whole-document approval
+## Handoff prompt for Claude — execute on the owner's read-to-build request
 
 > Read `AGENTS.md`, `docs/v2/foundation.md`, this entire approved `docs/v2/content.md`, and the current static-copy registry and legacy `/admin/content` implementation as *evidence*, not automatic V2 authority. Read the active Auth, Media, Blog, Projects, and Services specifications before changing shared contracts. Content V2 owns only static public-site copy and approved shared facts; do not duplicate dynamic service prices/items, blog posts, or project entries. Preserve all current published static text, including Legal, through a separately verified one-time import and cutover. Do not dual-write databases, delete legacy data, or change live public behavior during ordinary module implementation.
 >
 > Ask the owner only if a material requirement is genuinely unanswered. Otherwise implement and test Backend2 first: fixed registry, typed owner/public routes, direct-live field saves on blur rather than per keystroke, failure/retry and concurrency protection, history/restore, legal lock behavior, translation review, authorization, import tooling and comparison, and safe caching. Do not add a draft or Publish action to Content. Verify a real local write/read cycle and report exact evidence and anything untested; stop before production frontend.
 >
-> Then use the `frontend-design` skill to present an isolated interactive Design Lab based on the old editor's strengths, with desktop/mobile and DE/EN/AR/RTL states. Wait for explicit approval before building the production frontend. Connect and browser-test the approved UI and public reads, review exact scope and staged files, and commit/push only agreed work to `main-v2`. Do not deploy or cut over the live site without a separate owner-approved plan.
+> After backend verification, ask the owner only about material frontend/UX decisions still unanswered. Then use the `frontend-design` skill to present an isolated interactive Design Lab based on the old editor's strengths, with desktop/mobile and DE/EN/AR/RTL states. Wait for explicit design approval before building the production frontend. Connect and browser-test the approved UI and public reads, review exact scope and staged files, and commit/push only when the owner requests that Git action, to `main-v2`. Do not deploy or cut over the live site without a separate owner-approved plan.

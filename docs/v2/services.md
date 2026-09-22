@@ -1,6 +1,6 @@
 # Services V2 — product and implementation plan
 
-Status: planning draft recording all Services product decisions made with the owner. No product question remains open. Review and approve this whole specification before implementation. This is not permission to change live prices, public pages, Leads, Invoices, or legacy content now.
+Status: planning specification recording all Services product decisions made with the owner. No product question remains open. The owner's explicit read-to-build instruction supplies implementation approval under `AGENTS.md`. This document alone is not permission to change live prices, public pages, Leads, Invoices, or legacy content now.
 
 ## Purpose and boundaries
 
@@ -65,8 +65,8 @@ Owner star/feature changes can be part of the owner PATCH contract; their public
 - Implement and verify Backend2 first: migrations, domain rules, typed API contracts, auth, pagination, tests, build, and real runtime checks. Then use `frontend-design` for an isolated Design Lab, wait for owner approval, build the approved frontend, and browser-test connected flows. Do not report the whole module complete from backend tests alone.
 - Review exact scope, working tree, staged files, and checks before a module-only commit/push to `main-v2`. Do not deploy, alter `main`, or cut over legacy data without separate approval.
 
-## Handoff prompt for Claude — only after approval
+## Handoff prompt for Claude — execute on the owner's read-to-build request
 
 > Read `AGENTS.md`, `docs/v2/foundation.md`, and the complete approved `docs/v2/services.md`. Inspect current Backend2/Auth, public Services/Home routes, and unrelated concurrent changes. Services V2 is an independent owner-managed catalogue, not a lead, invoice, checkout, subscription, referral, or booking workflow. The current PDFs and public content are references only; do not silently import them or change live prices. No asset is required in the initial Services module; if an asset is separately approved, read the approved `docs/v2/media.md` and use only the shared Media picker/upload flow. If a material decision is still open, ask the owner first. Otherwise implement the full Backend2 phase with independent service records, trilingual draft/publish rules, private pending edits, public snapshots, manual order, featured flag, approved price/offer presentation, owner auth, bounded pagination, SEO data, tests, and real runtime verification. Report what was and was not verified; stop before production frontend.
 >
-> Then use the `frontend-design` skill for an isolated interactive Design Lab covering desktop/mobile Dashboard and public list/detail/home in DE/EN/AR and RTL. Show recommendations and tradeoffs; wait for explicit owner approval. Only then build the production frontend, connect it, browser-test the complete flow, review the exact diff/staged scope, and commit/push agreed work only to `main-v2`. No deployment, live cutover, or changes to `main` without separate approval.
+> After backend verification, ask the owner only about material frontend/UX decisions still unanswered. Then use the `frontend-design` skill for an isolated interactive Design Lab covering desktop/mobile Dashboard and public list/detail/home in DE/EN/AR and RTL. Show recommendations and tradeoffs; wait for explicit visual approval. Only then build the production frontend, connect it, browser-test the complete flow, and review the exact diff/staged scope. Commit/push agreed work to `main-v2` only when the owner requests that Git action. No deployment, live cutover, or changes to `main` without separate approval.

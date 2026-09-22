@@ -54,18 +54,41 @@ the owner explicitly approves a visible change.
 ## Working method
 
 - Plan one bounded module at a time and obtain approval before implementation.
+- This read-to-build convention applies to **every V2 module specification**
+  under `docs/v2/`, not only Media. When the owner tells an implementation
+  agent to "read `docs/v2/<module>.md`" to start that module, treat the request
+  as approval of the documented module scope and **execute its handoff plan**;
+  do not merely summarize the file or ask whether the owner wants work to
+  begin. An older "draft" or "awaiting approval" status line is not a second
+  approval gate after that explicit instruction. Inspect the current code and
+  reconcile stale or conflicting text first; ask about genuinely material
+  missing backend decisions before backend implementation, rather than
+  inventing requirements. If the owner instead says "read only", "explain",
+  "review", or "plan", honor that narrower request. Reading `AGENTS.md`,
+  `foundation.md`, an implementation record, or a reference document is not a
+  command to build the whole platform.
+- Every completed module specification must contain a self-contained handoff
+  prompt and this execution order: inspect the current module and ask only
+  material backend questions; implement Backend2; test and verify the backend;
+  then ask only material frontend/UX questions; present an isolated,
+  interactive frontend Design Lab with desktop/mobile results and
+  recommendations; wait for the owner's explicit visual approval; implement
+  the approved production frontend; test the connected flows. If a module has
+  only one side, state the adapted order in its specification. Do not stop at
+  "I read the document" when implementation was requested.
+- The read-to-build shorthand does not itself approve the Design Lab result,
+  production deployment, public cutover, or an unrequested commit/push; those
+  keep their separate approval boundaries below.
 - Discuss backend and frontend requirements with the owner in the conversation,
   not through questionnaire popups unless the owner asks for one. Record the
   answers and open decisions in that module's `docs/v2/` specification before
   handing it to an implementation agent. Do not silently fill material gaps.
-- For a module with both backend and frontend, use this sequence throughout V2:
-  approve the complete specification; implement and verify the backend first;
-  then present an isolated, interactive frontend Design Lab with rendered
-  desktop/mobile results, recommendations, and tradeoffs. Wait for the owner's
-  explicit design approval before building the production frontend. Finally,
-  verify the connected flows and review the exact module changes before
-  committing and pushing them to `main-v2`. Keep unrelated work out of that
-  commit. If a module does not have both halves, adapt the sequence explicitly.
+- For a module with both backend and frontend, follow the sequence above.
+  Backend questions come before backend work; frontend questions come after
+  backend verification and before the Design Lab. Wait for explicit design
+  approval before production frontend work. Finally verify the connected
+  flows and review exact module changes; commit and push only when the owner
+  requests that Git action. Keep unrelated work out of that commit.
 - An implementation agent should ask only about material unanswered decisions;
   when the approved specification is clear, complete and test the agreed phase
   without unnecessary check-ins. Do not treat a passing backend test as proof

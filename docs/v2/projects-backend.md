@@ -1,7 +1,9 @@
 # Projects V2 — backend specification
 
-Status: **awaiting owner approval.** No implementation code may be written
-against this document until the owner approves it.
+Status: historical initial Backend2 Projects specification. The owner's
+explicit read-to-build instruction is approval to work on its agreed backend
+scope under `AGENTS.md`; first compare it with current code and the later
+shared Media amendment below. Do not reproduce superseded media behavior.
 
 Scope: the Backend2 half of the Projects module only — database, migrations,
 API, storage, validation, security boundary, and tests. The Dashboard Projects

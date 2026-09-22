@@ -1,6 +1,6 @@
 # Projects V2 — planning draft
 
-Status: discussion draft. This document records product decisions made with the owner and open questions. It is not approved for implementation. The earlier project-only image-upload direction is superseded by the owner's shared Media decision below; existing Projects code and the detailed `projects-backend.md` media sections need a separately reviewed integration plan, not an unreviewed rewrite.
+Status: historical planning draft with some stale implementation notes. The owner's explicit read-to-build instruction activates the agreed Projects scope under `AGENTS.md`, but the implementation agent must first inspect actual Projects code and reconcile this document with `projects-backend.md` and the later shared Media decision. Do not blindly rebuild Projects or rewrite its existing media migrations.
 
 ## Purpose and boundary
 
@@ -144,3 +144,9 @@ Once this specification is approved, implementation proceeds backend-first: Clau
 ## Specification sections still to complete
 
 After the open product decisions are resolved: exact content fields, editor and image behavior, publication and preview rules, ordering behavior, private and public API contracts, permissions, data and migration rules, failure states, tests, and definition of done. Backend2 database, authentication, and API namespace decisions are prerequisites for implementation under `foundation.md`.
+
+## Handoff on the owner's read-to-build request
+
+Read `AGENTS.md`, `docs/v2/foundation.md`, this whole document, `docs/v2/projects-backend.md`, and `docs/v2/media.md`, then inspect the current implementation and working tree. Treat historical statements about what has or has not been built as evidence to verify, not current fact. Ask the owner only about material missing backend decisions; otherwise complete and verify the agreed Backend2 Projects work without overwriting concurrent changes. The older project-only image upload and automatic deletion design is superseded for final integration by shared Media; use a reviewed migration, not a silent rewrite.
+
+After backend verification, ask only about material frontend/UX decisions still unanswered, then present an isolated interactive Design Lab with desktop/mobile and DE/EN/AR/RTL states. Wait for explicit visual approval before production frontend work. Build and test the approved Dashboard/public flows, preserve the accepted public appearance, and review the exact diff. Commit/push agreed files to `main-v2` only when the owner requests that Git action; do not deploy or cut over the live site without separate approval.

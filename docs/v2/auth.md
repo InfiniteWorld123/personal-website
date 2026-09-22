@@ -1,6 +1,6 @@
 # Authentication V2 — module specification
 
-Status: owner decisions recorded; final specification awaiting owner review/approval. No Auth implementation or change to the live sign-in is approved by this document yet.
+Status: owner decisions recorded; verify current implementation state before continuing. The owner's explicit read-to-build instruction supplies approval to implement or finish this V2 module under `AGENTS.md`. This document alone does not authorize changing the live legacy sign-in, deployment, or cutover.
 
 ## Purpose
 
@@ -51,11 +51,11 @@ Give the owner secure access to Dashboard V2 and every owner-only Backend2 opera
 ## Agreed planning and delivery sequence
 
 1. Discuss all material Backend2 and frontend behavior with the owner in the conversation. Record the answers and the final backend, UI, security, failure-state, and test contracts in this document. Do not use unanswered prompts or legacy behavior as silent requirements.
-2. Obtain the owner's approval of the completed `auth.md` specification before implementation.
+2. The owner's instruction to read `auth.md` to start work supplies implementation approval under the repository-wide convention in `AGENTS.md`; a read-only or review request does not.
 3. Claude implements the Backend2 authentication, database/migrations, and server-side protection first. Claude asks the owner only if an implementation decision is still material; otherwise it completes and verifies the backend, including denied direct API access, MFA, recovery, and existing-system isolation. Report what passed and what was not tested.
-4. Claude then reads the approved frontend portion of this document. If material questions remain, ask the owner. Otherwise build an isolated, interactive Auth Design Lab showing the sign-in, MFA, enrollment, recovery, and Security Settings flows. Explain the recommended design and tradeoffs, and show rendered desktop and mobile results. The Design Lab is not the production frontend.
+4. After backend verification, Claude asks the owner only about material frontend/UX questions still unanswered. Otherwise build an isolated, interactive Auth Design Lab showing the sign-in, MFA, enrollment, recovery, and Security Settings flows. Explain the recommended design and tradeoffs, and show rendered desktop and mobile results. The Design Lab is not the production frontend.
 5. Stop for the owner's explicit approval of the rendered design. Only then implement the real frontend, connect it to the verified backend, and test the complete flows in browser and runtime. Do not remove the legacy sign-in or its protections during this phase.
-6. After the agreed module is complete and verified, review the exact changed files and commit/push the approved Auth work to `main-v2` only. Preserve unrelated owner/Projects changes; do not deploy to production or modify `main` as part of this handoff.
+6. After the agreed module is complete and verified, review the exact changed files. Commit/push the approved Auth work to `main-v2` only when the owner requests that Git action. Preserve unrelated owner/Projects changes; do not deploy to production or modify `main` as part of this handoff.
 
 ## Detailed implementation contract
 
@@ -119,13 +119,13 @@ Public attempts have generic error text; authenticated Security Settings may sho
 3. If passkeys are lost, use password+TOTP or a remaining recovery code. If TOTP is lost but a passkey works, use the passkey and fresh step-up to replace TOTP. If *every* sign-in factor is lost, no email-only reset disables MFA. The emergency runbook is an operator-only CLI performed with verified control of the V2 infrastructure/database, explicit owner confirmation, backup before mutation, audit entry, revocation of all sessions and old factors, then forced re-enrollment. No self-service endpoint. Rehearse in a disposable environment before deployment; do not put recovery secrets in the repository.
 4. Introduce V2 auth behind the current local-only fence. Verify all owner endpoints, dashboard server loaders and private media deny unauthenticated access. Only then switch to V2 session authorization and enable remote owner routes in a separately reviewed environment. Existing `/admin` auth, Turnstile, database and public-site behavior remain unchanged; deployment/cutover to production requires separate approval and a rollback plan.
 
-### Handoff prompt for Claude — use after the owner approves this specification
+### Handoff prompt for Claude — execute on the owner's read-to-build request
 
 > Read `AGENTS.md`, `docs/v2/foundation.md`, and this entire `docs/v2/auth.md` before changing code. Treat this approved Auth specification as the contract. Inspect the current Backend2, V2 database/migrations, Dashboard shell, current guards, and existing libraries; preserve legacy `/admin`, its database and auth, the public website, and unrelated owner changes. If any material decision remains open, ask the owner rather than inventing it.
 >
 > Implement and verify the Backend2 Auth phase first: separate single-owner V2 identity and local bootstrap, seven-day sessions, passwordless passkeys with required device user verification, fallback password+TOTP/recovery codes, reset/change flows, authorization rules, abuse controls, database migration, direct-route denial, and tests. Make sure the temporary local-only fence is replaced only when authenticated protection is verified; do not expose owner routes. Report exact checks, runtime evidence, and anything not tested. Stop before production frontend.
 >
-> Next, use the `frontend-design` skill and create an isolated interactive Auth Design Lab with realistic sample states for desktop and mobile, the existing Dashboard visual identity, and clear design recommendations/tradeoffs. Do not connect it to real credentials or data. Show it to the owner and wait for explicit design approval. Then implement the approved production frontend using TanStack Form, connect it to the backend, and verify end-to-end flows and security states. Review only the agreed module changes; after the whole module is complete, commit and push those files to `main-v2` only. Do not push `main`, deploy, remove legacy auth, or cut over production without separate approval.
+> After backend verification, ask the owner only about material frontend/UX questions still unanswered. Next, use the `frontend-design` skill and create an isolated interactive Auth Design Lab with realistic sample states for desktop and mobile, the existing Dashboard visual identity, and clear design recommendations/tradeoffs. Do not connect it to real credentials or data. Show it to the owner and wait for explicit design approval. Then implement the approved production frontend using TanStack Form, connect it to the backend, and verify end-to-end flows and security states. Review only the agreed module changes; commit and push those files to `main-v2` only when the owner requests that Git action. Do not push `main`, deploy, remove legacy auth, or cut over production without separate approval.
 
 ## Engineering choices and release prerequisites
 
