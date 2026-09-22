@@ -44,7 +44,7 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      <nav aria-label="Dashboard sections" className="flex flex-1 flex-col py-3.5">
+      <nav aria-label="Dashboard sections" className="dash-nav-scroll flex flex-1 flex-col py-3.5">
         <p
           className={cn(
             'dash-eyebrow-quiet px-5 pb-2',

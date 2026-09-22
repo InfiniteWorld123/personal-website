@@ -76,13 +76,34 @@ describe('opening the rail reveals rather than reflows', () => {
   it('clips while open and stays visible while collapsed', () => {
     const open = ruleFor("[data-dashboard]:not([data-rail='true']) .dash-side")
 
-    // Horizontally clipped, vertically scrollable: a short window must not
-    // swallow the last section of the navigation.
-    expect(open?.body).toContain('overflow: hidden auto')
+    expect(open?.body).toContain('overflow: hidden')
 
     // Collapsed, nothing may clip: the label slides out past 72px.
     const collapsed = ruleFor("[data-dashboard][data-rail='true'] .dash-side")
     expect(collapsed?.body ?? '').not.toContain('overflow')
+  })
+
+  /**
+   * The menu scrolls, never the sidebar. A scrollbar on the sidebar sat on
+   * top of contents held at 264px and cut off their right edge — the active
+   * pill and the site card — as soon as a tenth section made the menu taller
+   * than the owner's window.
+   */
+  it('scrolls the menu, not the sidebar, so a scrollbar never covers anything', () => {
+    const open = ruleFor("[data-dashboard]:not([data-rail='true']) .dash-side")
+
+    expect(open?.body).not.toContain('auto')
+
+    const menu = ruleFor("[data-dashboard]:not([data-rail='true']) .dash-nav-scroll")
+
+    expect(menu?.body).toContain('overflow: hidden auto')
+    // Without it a flex child refuses to shrink below its content, and
+    // nothing would ever scroll.
+    expect(menu?.body).toContain('min-height: 0')
+
+    // And the menu actually carries the class.
+    const sidebar = readFileSync('src/frontend/dashboard/DashboardSidebar.tsx', 'utf8')
+    expect(sidebar).toMatch(/<nav[^>]*className="dash-nav-scroll /)
   })
 })
 

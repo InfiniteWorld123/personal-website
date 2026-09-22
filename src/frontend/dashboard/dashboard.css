@@ -312,8 +312,16 @@
   }
 
   /* A short window cannot hold the sidebar's footer card as well as its
-     sections, and the sections are the ones you came for. */
-  @media (max-height: 780px) {
+     sections, and the sections are the ones you came for.
+
+     The height is arithmetic, not taste: the brand block (64px), the menu
+     (28px of padding, two group headings of about 25 and 45px, and 44px per
+     row) and the card (about 164px). With ten sections and two rows under
+     GENERAL that is about 853px, so the card steps aside below 860. It was
+     780 while there were nine sections, and adding Services on 22 Sep 2026
+     is what made the menu outgrow the owner's window. Count it again when a
+     section is added or removed. */
+  @media (max-height: 860px) {
     .dash-promo {
       display: none;
     }
@@ -585,10 +593,31 @@
      box shrinks around icons that were already centred.
 
      `overflow` is set here rather than in the markup because it has two
-     states, and a utility beside the class would win. Vertically it scrolls
-     rather than clips, so a short window cannot swallow the last section. */
+     states, and a utility beside the class would win. */
   [data-dashboard]:not([data-rail='true']) .dash-side {
+    overflow: hidden;
+  }
+
+  /* ── The menu scrolls, the sidebar does not ───────────────────
+     A short window must not swallow the last section, so something has to
+     scroll — and it is the menu, not the whole sidebar.
+
+     It used to be the sidebar. Its scrollbar then sat inside the 264px box,
+     on top of contents that are deliberately held at 264px (above), and
+     covered their right edge: the active pill lost its rounded end and the
+     site card was cut off. Invisible with overlay scrollbars, obvious with
+     the classic kind — found from the owner's screenshot on 22 Sep 2026, the
+     day a tenth section made the menu taller than the window.
+
+     Inside the menu, a scrollbar only narrows the rows, which are fluid. The
+     brand block and the site card stay put. Collapsed, the menu does not
+     scroll at all: a scroller clips, and the label that slides out of a
+     collapsed rail is wider than the rail. */
+  [data-dashboard]:not([data-rail='true']) .dash-nav-scroll {
+    min-height: 0;
     overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 
   [data-dashboard]:not([data-rail='true']) .dash-side-inner {
