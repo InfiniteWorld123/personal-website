@@ -89,6 +89,7 @@ Where the list stands today:
 
 - Overview
 - Projects
+- Services
 - Calendar
 - Inbox
 - Leads
@@ -96,6 +97,9 @@ Where the list stands today:
 - Blog
 - Media
 - Invoices
+
+Services was added on 22 Sep 2026, directly after Projects, when the Services
+module was built; `docs/v2/services.md` owns it.
 
 Media was added on 22 Sep 2026, when the shared library was built: it is a
 place the owner visits to organise folders, delete old files and see which of

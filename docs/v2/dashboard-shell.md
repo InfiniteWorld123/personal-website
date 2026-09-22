@@ -31,6 +31,10 @@ The private V2 interface at `/dashboard`, frontend only:
   come only from the Media picker. Added 22 Sep 2026; `docs/v2/projects.md`
   owns it, including what is not built yet — above all the public website,
   which still reads the legacy backend.
+- **Services** — real, and the third module built end to end: the list at
+  `/dashboard/services` and the editor at `/dashboard/services/$serviceId`,
+  the Projects pattern with the price and the homepage star added. Added 22 Sep
+  2026, after Projects in the sidebar; `docs/v2/services.md` owns it.
 - **Calendar, Inbox, Leads, Content, Blog, Invoices** — one shared screen
   showing that the section is not built yet.
 
