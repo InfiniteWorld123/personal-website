@@ -861,3 +861,24 @@
   }
 
 }
+
+/* ── Analytics chart tokens ───────────────────────────────────
+   Owned by Analytics (`docs/v2/analytics.md`); insert-only block.
+   Validated with the dataviz palette checks on the dashboard surfaces
+   (#ffffff light, #101728 dark). A series colour marks identity only; text
+   beside a chart always wears the ink tokens, never these. */
+@layer components {
+  [data-dashboard] {
+    --dash-series-1: #355cff;
+    --dash-series-2: #eb6834;
+    --dash-compare: #8c97b5;
+    --dash-grid: rgba(16, 23, 47, 0.07);
+  }
+
+  .dark [data-dashboard] {
+    --dash-series-1: #5b82ff;
+    --dash-series-2: #d95926;
+    --dash-compare: #6d7898;
+    --dash-grid: rgba(237, 243, 255, 0.08);
+  }
+}

@@ -570,6 +570,6 @@ export const ASSISTANT = {
 export const NOT_BUILT = {
   money: 'Invoices are not built yet, so there is no money figure. This is not zero.',
   assistant: 'The public AI assistant is not built yet. This is not zero.',
-  contact: 'The public contact form does not send to Backend2 yet. This is not zero.',
+  contact: 'The live contact form still sends to the old system; it moves to Backend2 at the approved public cutover. This is not zero.',
   assistantOutcome: 'The assistant does not record this, so it cannot be shown.',
 } as const

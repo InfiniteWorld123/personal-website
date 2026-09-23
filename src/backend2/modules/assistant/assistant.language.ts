@@ -118,9 +118,9 @@ export const COPY = {
     ar: 'للحصول على عرض سعر مخصص، يرجى التواصل مباشرة عبر نموذج التواصل – أنا أذكر فقط الأسعار المنشورة.',
   },
   notice: {
-    de: 'Hier antwortet ein automatischer Assistent, nur auf Grundlage der veröffentlichten Inhalte dieser Website. Unterhaltungen können gespeichert und vom Website-Inhaber gelesen werden. Bitte gib keine persönlichen Daten ein.',
-    en: 'An automated assistant answers here, using only the content published on this website. Conversations may be saved and read by the site owner. Please do not enter personal information.',
-    ar: 'يجيب هنا مساعد آلي يعتمد فقط على المحتوى المنشور على هذا الموقع. قد يتم حفظ المحادثات وقراءتها من قبل صاحب الموقع. يرجى عدم إدخال معلومات شخصية.',
+    de: 'Automatische Antworten aus dieser Website. Gespräche werden gespeichert und von Yaman gelesen, damit er die Seite verbessern kann. Bitte gib keine persönlichen Daten ein.',
+    en: 'Automatic answers from this website. Conversations are saved and read by Yaman so he can improve the site. Please do not enter personal information.',
+    ar: 'ردود آلية من هذا الموقع. تُحفظ المحادثات ويقرؤها يمان ليحسّن الموقع. يُرجى عدم كتابة معلومات شخصية.',
   },
   price: {
     quote: { de: 'Preis auf Anfrage', en: 'Price on request', ar: 'السعر عند الطلب' },

@@ -48,6 +48,9 @@ export type BillingSummary = {
   errors: Array<{ subscriptionId?: string; chargeId?: string; noticeId?: string; message: string }>
 }
 
+/** How many days before its period a manual subscription's draft is prepared. */
+export const MANUAL_DRAFT_LEAD_DAYS = 7
+
 const message = (error: unknown): string => (error instanceof Error ? error.message : String(error)).slice(0, 300)
 
 /* ------------------------------------------------------------------ periods */
@@ -64,6 +67,14 @@ export const processSubscription = async (
     if (!sub) return
 
     const day = today()
+    /*
+     * Owner decision (24 Sep 2026): a manual subscription's draft is prepared
+     * seven days before its period, so there is time to check and send it.
+     * An automatic-card period is still decided on its first day, when it is
+     * charged. A draft stays editable, so a pause or price change made in
+     * those seven days is applied by editing or deleting it.
+     */
+    const horizon = sub.collection === 'automatic_card' ? day : addDays(day, MANUAL_DRAFT_LEAD_DAYS)
     const terms = await subs.termsOf(sub.id)
     const pauses = await subs.pausesOf(sub.id)
     const freePeriods = await subs.freePeriodsOf(sub.id)
@@ -74,7 +85,7 @@ export const processSubscription = async (
     for (let guard = 0; guard < 120; guard += 1) {
       const start = periodStart(sub.start_date, sub.billing_interval, index)
 
-      if (start > day) break
+      if (start > horizon) break
       if (sub.ends_on !== null && start > sub.ends_on) break
 
       const end = periodEnd(sub.start_date, sub.billing_interval, index)

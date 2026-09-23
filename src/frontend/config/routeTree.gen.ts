@@ -30,10 +30,10 @@ import { Route as ApiContactRouteImport } from './../routes/api/contact'
 import { Route as ApiInboundEmailRouteImport } from './../routes/api/inbound-email'
 import { Route as ApiStripeWebhookRouteImport } from './../routes/api/stripe-webhook'
 import { Route as DashboardIndexRouteImport } from './../routes/dashboard.index'
+import { Route as DashboardAnalyticsRouteImport } from './../routes/dashboard.analytics'
 import { Route as DashboardCalendarRouteImport } from './../routes/dashboard.calendar'
 import { Route as DashboardContentRouteImport } from './../routes/dashboard.content'
 import { Route as DashboardInboxRouteImport } from './../routes/dashboard.inbox'
-import { Route as DashboardInvoicesRouteImport } from './../routes/dashboard.invoices'
 import { Route as DashboardMediaRouteImport } from './../routes/dashboard.media'
 import { Route as DashboardSettingsRouteImport } from './../routes/dashboard.settings'
 import { Route as DashboardLoginRouteImport } from './../routes/dashboard_.login'
@@ -71,6 +71,8 @@ import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projec
 import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
 import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
 import { Route as ApiV2SplatRouteImport } from './../routes/api.v2.$'
+import { Route as DashboardAssistantIndexRouteImport } from './../routes/dashboard.assistant.index'
+import { Route as DashboardAssistantSettingsRouteImport } from './../routes/dashboard.assistant.settings'
 import { Route as DashboardBlogIndexRouteImport } from './../routes/dashboard.blog.index'
 import { Route as DashboardBlogPostIdRouteImport } from './../routes/dashboard.blog.$postId'
 import { Route as DashboardBlogCommentsRouteImport } from './../routes/dashboard.blog.comments'
@@ -78,6 +80,10 @@ import { Route as DashboardBlogTagsRouteImport } from './../routes/dashboard.blo
 import { Route as DashboardClientsIndexRouteImport } from './../routes/dashboard.clients.index'
 import { Route as DashboardClientsNewRouteImport } from './../routes/dashboard.clients.new'
 import { Route as DashboardClientsTrashRouteImport } from './../routes/dashboard.clients.trash'
+import { Route as DashboardInvoicesIndexRouteImport } from './../routes/dashboard.invoices.index'
+import { Route as DashboardInvoicesArchiveRouteImport } from './../routes/dashboard.invoices.archive'
+import { Route as DashboardInvoicesNewRouteImport } from './../routes/dashboard.invoices.new'
+import { Route as DashboardInvoicesSettingsRouteImport } from './../routes/dashboard.invoices.settings'
 import { Route as DashboardLeadsIndexRouteImport } from './../routes/dashboard.leads.index'
 import { Route as DashboardLeadsFollowUpsRouteImport } from './../routes/dashboard.leads.follow-ups'
 import { Route as DashboardLeadsImportRouteImport } from './../routes/dashboard.leads.import'
@@ -99,6 +105,10 @@ import { Route as AdminBookingsTypesIndexRouteImport } from './../routes/admin.b
 import { Route as AdminBookingsTypesIdRouteImport } from './../routes/admin.bookings.types.$id'
 import { Route as AdminBookingsTypesNewRouteImport } from './../routes/admin.bookings.types.new'
 import { Route as DashboardClientsClientIdEditRouteImport } from './../routes/dashboard.clients.$clientId.edit'
+import { Route as DashboardInvoicesInvoiceIdIndexRouteImport } from './../routes/dashboard.invoices.$invoiceId.index'
+import { Route as DashboardInvoicesInvoiceIdPreviewRouteImport } from './../routes/dashboard.invoices.$invoiceId.preview'
+import { Route as DashboardInvoicesSubscriptionsIndexRouteImport } from './../routes/dashboard.invoices.subscriptions.index'
+import { Route as DashboardInvoicesSubscriptionsNewRouteImport } from './../routes/dashboard.invoices.subscriptions.new'
 import { Route as DashboardLeadsLeadIdEditRouteImport } from './../routes/dashboard.leads.$leadId.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -206,6 +216,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -219,11 +234,6 @@ const DashboardContentRoute = DashboardContentRouteImport.update({
 const DashboardInboxRoute = DashboardInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardInvoicesRoute = DashboardInvoicesRouteImport.update({
-  id: '/invoices',
-  path: '/invoices',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardMediaRoute = DashboardMediaRouteImport.update({
@@ -413,6 +423,17 @@ const ApiV2SplatRoute = ApiV2SplatRouteImport.update({
   path: '/api/v2/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardAssistantIndexRoute = DashboardAssistantIndexRouteImport.update({
+  id: '/assistant/',
+  path: '/assistant/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAssistantSettingsRoute =
+  DashboardAssistantSettingsRouteImport.update({
+    id: '/assistant/settings',
+    path: '/assistant/settings',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardBlogIndexRoute = DashboardBlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -448,6 +469,28 @@ const DashboardClientsTrashRoute = DashboardClientsTrashRouteImport.update({
   path: '/clients/trash',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardInvoicesIndexRoute = DashboardInvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardInvoicesArchiveRoute =
+  DashboardInvoicesArchiveRouteImport.update({
+    id: '/invoices/archive',
+    path: '/invoices/archive',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardInvoicesNewRoute = DashboardInvoicesNewRouteImport.update({
+  id: '/invoices/new',
+  path: '/invoices/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardInvoicesSettingsRoute =
+  DashboardInvoicesSettingsRouteImport.update({
+    id: '/invoices/settings',
+    path: '/invoices/settings',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardLeadsIndexRoute = DashboardLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
@@ -560,6 +603,30 @@ const DashboardClientsClientIdEditRoute =
     path: '/clients/$clientId/edit',
     getParentRoute: () => DashboardRoute,
   } as any)
+const DashboardInvoicesInvoiceIdIndexRoute =
+  DashboardInvoicesInvoiceIdIndexRouteImport.update({
+    id: '/invoices/$invoiceId/',
+    path: '/invoices/$invoiceId/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardInvoicesInvoiceIdPreviewRoute =
+  DashboardInvoicesInvoiceIdPreviewRouteImport.update({
+    id: '/invoices/$invoiceId/preview',
+    path: '/invoices/$invoiceId/preview',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardInvoicesSubscriptionsIndexRoute =
+  DashboardInvoicesSubscriptionsIndexRouteImport.update({
+    id: '/invoices/subscriptions/',
+    path: '/invoices/subscriptions/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardInvoicesSubscriptionsNewRoute =
+  DashboardInvoicesSubscriptionsNewRouteImport.update({
+    id: '/invoices/subscriptions/new',
+    path: '/invoices/subscriptions/new',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardLeadsLeadIdEditRoute =
   DashboardLeadsLeadIdEditRouteImport.update({
     id: '/leads/$leadId/edit',
@@ -586,10 +653,10 @@ export interface FileRoutesByFullPath {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
@@ -621,11 +688,15 @@ export interface FileRoutesByFullPath {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
   '/dashboard/clients/new': typeof DashboardClientsNewRoute
   '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
+  '/dashboard/invoices/archive': typeof DashboardInvoicesArchiveRoute
+  '/dashboard/invoices/new': typeof DashboardInvoicesNewRoute
+  '/dashboard/invoices/settings': typeof DashboardInvoicesSettingsRoute
   '/dashboard/leads/follow-ups': typeof DashboardLeadsFollowUpsRoute
   '/dashboard/leads/import': typeof DashboardLeadsImportRoute
   '/dashboard/leads/lists': typeof DashboardLeadsListsRoute
@@ -645,8 +716,10 @@ export interface FileRoutesByFullPath {
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
+  '/dashboard/invoices/': typeof DashboardInvoicesIndexRoute
   '/dashboard/leads/': typeof DashboardLeadsIndexRoute
   '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/services/': typeof DashboardServicesIndexRoute
@@ -657,8 +730,12 @@ export interface FileRoutesByFullPath {
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
+  '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
+  '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
+  '/dashboard/invoices/$invoiceId/': typeof DashboardInvoicesInvoiceIdIndexRoute
+  '/dashboard/invoices/subscriptions/': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -676,10 +753,10 @@ export interface FileRoutesByTo {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/login': typeof DashboardLoginRoute
   '/rss/ar.xml': typeof RssArDotxmlRoute
@@ -710,11 +787,15 @@ export interface FileRoutesByTo {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
   '/dashboard/clients/new': typeof DashboardClientsNewRoute
   '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
+  '/dashboard/invoices/archive': typeof DashboardInvoicesArchiveRoute
+  '/dashboard/invoices/new': typeof DashboardInvoicesNewRoute
+  '/dashboard/invoices/settings': typeof DashboardInvoicesSettingsRoute
   '/dashboard/leads/follow-ups': typeof DashboardLeadsFollowUpsRoute
   '/dashboard/leads/import': typeof DashboardLeadsImportRoute
   '/dashboard/leads/lists': typeof DashboardLeadsListsRoute
@@ -734,8 +815,10 @@ export interface FileRoutesByTo {
   '/admin/invoices': typeof AdminInvoicesIndexRoute
   '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
+  '/dashboard/assistant': typeof DashboardAssistantIndexRoute
   '/dashboard/blog': typeof DashboardBlogIndexRoute
   '/dashboard/clients': typeof DashboardClientsIndexRoute
+  '/dashboard/invoices': typeof DashboardInvoicesIndexRoute
   '/dashboard/leads': typeof DashboardLeadsIndexRoute
   '/dashboard/projects': typeof DashboardProjectsIndexRoute
   '/dashboard/services': typeof DashboardServicesIndexRoute
@@ -746,8 +829,12 @@ export interface FileRoutesByTo {
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
+  '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
+  '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
   '/admin/bookings/types': typeof AdminBookingsTypesIndexRoute
+  '/dashboard/invoices/$invoiceId': typeof DashboardInvoicesInvoiceIdIndexRoute
+  '/dashboard/invoices/subscriptions': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -769,10 +856,10 @@ export interface FileRoutesById {
   '/api/contact': typeof ApiContactRoute
   '/api/inbound-email': typeof ApiInboundEmailRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/invoices': typeof DashboardInvoicesRoute
   '/dashboard/media': typeof DashboardMediaRoute
   '/dashboard/settings': typeof DashboardSettingsRouteWithChildren
   '/dashboard_/login': typeof DashboardLoginRoute
@@ -804,11 +891,15 @@ export interface FileRoutesById {
   '/admin/projects/$id': typeof AdminProjectsIdRoute
   '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
+  '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
   '/dashboard/clients/new': typeof DashboardClientsNewRoute
   '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
+  '/dashboard/invoices/archive': typeof DashboardInvoicesArchiveRoute
+  '/dashboard/invoices/new': typeof DashboardInvoicesNewRoute
+  '/dashboard/invoices/settings': typeof DashboardInvoicesSettingsRoute
   '/dashboard/leads/follow-ups': typeof DashboardLeadsFollowUpsRoute
   '/dashboard/leads/import': typeof DashboardLeadsImportRoute
   '/dashboard/leads/lists': typeof DashboardLeadsListsRoute
@@ -828,8 +919,10 @@ export interface FileRoutesById {
   '/admin/invoices/': typeof AdminInvoicesIndexRoute
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
+  '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
+  '/dashboard/invoices/': typeof DashboardInvoicesIndexRoute
   '/dashboard/leads/': typeof DashboardLeadsIndexRoute
   '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/services/': typeof DashboardServicesIndexRoute
@@ -840,8 +933,12 @@ export interface FileRoutesById {
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
+  '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
+  '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
+  '/dashboard/invoices/$invoiceId/': typeof DashboardInvoicesInvoiceIdIndexRoute
+  '/dashboard/invoices/subscriptions/': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -864,10 +961,10 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
     | '/dashboard/inbox'
-    | '/dashboard/invoices'
     | '/dashboard/media'
     | '/dashboard/settings'
     | '/dashboard/login'
@@ -899,11 +996,15 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
     | '/dashboard/clients/new'
     | '/dashboard/clients/trash'
+    | '/dashboard/invoices/archive'
+    | '/dashboard/invoices/new'
+    | '/dashboard/invoices/settings'
     | '/dashboard/leads/follow-ups'
     | '/dashboard/leads/import'
     | '/dashboard/leads/lists'
@@ -923,8 +1024,10 @@ export interface FileRouteTypes {
     | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
+    | '/dashboard/assistant/'
     | '/dashboard/blog/'
     | '/dashboard/clients/'
+    | '/dashboard/invoices/'
     | '/dashboard/leads/'
     | '/dashboard/projects/'
     | '/dashboard/services/'
@@ -935,8 +1038,12 @@ export interface FileRouteTypes {
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
+    | '/dashboard/invoices/$invoiceId/preview'
+    | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
     | '/admin/bookings/types/'
+    | '/dashboard/invoices/$invoiceId/'
+    | '/dashboard/invoices/subscriptions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -954,10 +1061,10 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
     | '/dashboard/inbox'
-    | '/dashboard/invoices'
     | '/dashboard/media'
     | '/dashboard/login'
     | '/rss/ar.xml'
@@ -988,11 +1095,15 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
     | '/dashboard/clients/new'
     | '/dashboard/clients/trash'
+    | '/dashboard/invoices/archive'
+    | '/dashboard/invoices/new'
+    | '/dashboard/invoices/settings'
     | '/dashboard/leads/follow-ups'
     | '/dashboard/leads/import'
     | '/dashboard/leads/lists'
@@ -1012,8 +1123,10 @@ export interface FileRouteTypes {
     | '/admin/invoices'
     | '/admin/leads'
     | '/admin/projects'
+    | '/dashboard/assistant'
     | '/dashboard/blog'
     | '/dashboard/clients'
+    | '/dashboard/invoices'
     | '/dashboard/leads'
     | '/dashboard/projects'
     | '/dashboard/services'
@@ -1024,8 +1137,12 @@ export interface FileRouteTypes {
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
+    | '/dashboard/invoices/$invoiceId/preview'
+    | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
     | '/admin/bookings/types'
+    | '/dashboard/invoices/$invoiceId'
+    | '/dashboard/invoices/subscriptions'
   id:
     | '__root__'
     | '/'
@@ -1046,10 +1163,10 @@ export interface FileRouteTypes {
     | '/api/contact'
     | '/api/inbound-email'
     | '/api/stripe-webhook'
+    | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
     | '/dashboard/inbox'
-    | '/dashboard/invoices'
     | '/dashboard/media'
     | '/dashboard/settings'
     | '/dashboard_/login'
@@ -1081,11 +1198,15 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/projects/new'
     | '/api/v2/$'
+    | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
     | '/dashboard/clients/new'
     | '/dashboard/clients/trash'
+    | '/dashboard/invoices/archive'
+    | '/dashboard/invoices/new'
+    | '/dashboard/invoices/settings'
     | '/dashboard/leads/follow-ups'
     | '/dashboard/leads/import'
     | '/dashboard/leads/lists'
@@ -1105,8 +1226,10 @@ export interface FileRouteTypes {
     | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/projects/'
+    | '/dashboard/assistant/'
     | '/dashboard/blog/'
     | '/dashboard/clients/'
+    | '/dashboard/invoices/'
     | '/dashboard/leads/'
     | '/dashboard/projects/'
     | '/dashboard/services/'
@@ -1117,8 +1240,12 @@ export interface FileRouteTypes {
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
+    | '/dashboard/invoices/$invoiceId/preview'
+    | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
     | '/admin/bookings/types/'
+    | '/dashboard/invoices/$invoiceId/'
+    | '/dashboard/invoices/subscriptions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1290,6 +1417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/calendar': {
       id: '/dashboard/calendar'
       path: '/calendar'
@@ -1309,13 +1443,6 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/dashboard/inbox'
       preLoaderRoute: typeof DashboardInboxRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/invoices': {
-      id: '/dashboard/invoices'
-      path: '/invoices'
-      fullPath: '/dashboard/invoices'
-      preLoaderRoute: typeof DashboardInvoicesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/media': {
@@ -1577,6 +1704,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV2SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/assistant/': {
+      id: '/dashboard/assistant/'
+      path: '/assistant'
+      fullPath: '/dashboard/assistant/'
+      preLoaderRoute: typeof DashboardAssistantIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/assistant/settings': {
+      id: '/dashboard/assistant/settings'
+      path: '/assistant/settings'
+      fullPath: '/dashboard/assistant/settings'
+      preLoaderRoute: typeof DashboardAssistantSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/blog/': {
       id: '/dashboard/blog/'
       path: '/blog'
@@ -1624,6 +1765,34 @@ declare module '@tanstack/react-router' {
       path: '/clients/trash'
       fullPath: '/dashboard/clients/trash'
       preLoaderRoute: typeof DashboardClientsTrashRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/': {
+      id: '/dashboard/invoices/'
+      path: '/invoices'
+      fullPath: '/dashboard/invoices/'
+      preLoaderRoute: typeof DashboardInvoicesIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/archive': {
+      id: '/dashboard/invoices/archive'
+      path: '/invoices/archive'
+      fullPath: '/dashboard/invoices/archive'
+      preLoaderRoute: typeof DashboardInvoicesArchiveRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/new': {
+      id: '/dashboard/invoices/new'
+      path: '/invoices/new'
+      fullPath: '/dashboard/invoices/new'
+      preLoaderRoute: typeof DashboardInvoicesNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/settings': {
+      id: '/dashboard/invoices/settings'
+      path: '/invoices/settings'
+      fullPath: '/dashboard/invoices/settings'
+      preLoaderRoute: typeof DashboardInvoicesSettingsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/leads/': {
@@ -1773,6 +1942,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClientsClientIdEditRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/invoices/$invoiceId/': {
+      id: '/dashboard/invoices/$invoiceId/'
+      path: '/invoices/$invoiceId'
+      fullPath: '/dashboard/invoices/$invoiceId/'
+      preLoaderRoute: typeof DashboardInvoicesInvoiceIdIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/$invoiceId/preview': {
+      id: '/dashboard/invoices/$invoiceId/preview'
+      path: '/invoices/$invoiceId/preview'
+      fullPath: '/dashboard/invoices/$invoiceId/preview'
+      preLoaderRoute: typeof DashboardInvoicesInvoiceIdPreviewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/subscriptions/': {
+      id: '/dashboard/invoices/subscriptions/'
+      path: '/invoices/subscriptions'
+      fullPath: '/dashboard/invoices/subscriptions/'
+      preLoaderRoute: typeof DashboardInvoicesSubscriptionsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/invoices/subscriptions/new': {
+      id: '/dashboard/invoices/subscriptions/new'
+      path: '/invoices/subscriptions/new'
+      fullPath: '/dashboard/invoices/subscriptions/new'
+      preLoaderRoute: typeof DashboardInvoicesSubscriptionsNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/leads/$leadId/edit': {
       id: '/dashboard/leads/$leadId/edit'
       path: '/leads/$leadId/edit'
@@ -1905,18 +2102,22 @@ const DashboardSettingsRouteWithChildren =
   DashboardSettingsRoute._addFileChildren(DashboardSettingsRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardContentRoute: typeof DashboardContentRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
-  DashboardInvoicesRoute: typeof DashboardInvoicesRoute
   DashboardMediaRoute: typeof DashboardMediaRoute
   DashboardSettingsRoute: typeof DashboardSettingsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAssistantSettingsRoute: typeof DashboardAssistantSettingsRoute
   DashboardBlogPostIdRoute: typeof DashboardBlogPostIdRoute
   DashboardBlogCommentsRoute: typeof DashboardBlogCommentsRoute
   DashboardBlogTagsRoute: typeof DashboardBlogTagsRoute
   DashboardClientsNewRoute: typeof DashboardClientsNewRoute
   DashboardClientsTrashRoute: typeof DashboardClientsTrashRoute
+  DashboardInvoicesArchiveRoute: typeof DashboardInvoicesArchiveRoute
+  DashboardInvoicesNewRoute: typeof DashboardInvoicesNewRoute
+  DashboardInvoicesSettingsRoute: typeof DashboardInvoicesSettingsRoute
   DashboardLeadsFollowUpsRoute: typeof DashboardLeadsFollowUpsRoute
   DashboardLeadsImportRoute: typeof DashboardLeadsImportRoute
   DashboardLeadsListsRoute: typeof DashboardLeadsListsRoute
@@ -1924,28 +2125,38 @@ interface DashboardRouteChildren {
   DashboardLeadsTrashRoute: typeof DashboardLeadsTrashRoute
   DashboardProjectsProjectIdRoute: typeof DashboardProjectsProjectIdRoute
   DashboardServicesServiceIdRoute: typeof DashboardServicesServiceIdRoute
+  DashboardAssistantIndexRoute: typeof DashboardAssistantIndexRoute
   DashboardBlogIndexRoute: typeof DashboardBlogIndexRoute
   DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
+  DashboardInvoicesIndexRoute: typeof DashboardInvoicesIndexRoute
   DashboardLeadsIndexRoute: typeof DashboardLeadsIndexRoute
   DashboardProjectsIndexRoute: typeof DashboardProjectsIndexRoute
   DashboardServicesIndexRoute: typeof DashboardServicesIndexRoute
   DashboardClientsClientIdEditRoute: typeof DashboardClientsClientIdEditRoute
+  DashboardInvoicesInvoiceIdPreviewRoute: typeof DashboardInvoicesInvoiceIdPreviewRoute
+  DashboardInvoicesSubscriptionsNewRoute: typeof DashboardInvoicesSubscriptionsNewRoute
   DashboardLeadsLeadIdEditRoute: typeof DashboardLeadsLeadIdEditRoute
+  DashboardInvoicesInvoiceIdIndexRoute: typeof DashboardInvoicesInvoiceIdIndexRoute
+  DashboardInvoicesSubscriptionsIndexRoute: typeof DashboardInvoicesSubscriptionsIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardContentRoute: DashboardContentRoute,
   DashboardInboxRoute: DashboardInboxRoute,
-  DashboardInvoicesRoute: DashboardInvoicesRoute,
   DashboardMediaRoute: DashboardMediaRoute,
   DashboardSettingsRoute: DashboardSettingsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAssistantSettingsRoute: DashboardAssistantSettingsRoute,
   DashboardBlogPostIdRoute: DashboardBlogPostIdRoute,
   DashboardBlogCommentsRoute: DashboardBlogCommentsRoute,
   DashboardBlogTagsRoute: DashboardBlogTagsRoute,
   DashboardClientsNewRoute: DashboardClientsNewRoute,
   DashboardClientsTrashRoute: DashboardClientsTrashRoute,
+  DashboardInvoicesArchiveRoute: DashboardInvoicesArchiveRoute,
+  DashboardInvoicesNewRoute: DashboardInvoicesNewRoute,
+  DashboardInvoicesSettingsRoute: DashboardInvoicesSettingsRoute,
   DashboardLeadsFollowUpsRoute: DashboardLeadsFollowUpsRoute,
   DashboardLeadsImportRoute: DashboardLeadsImportRoute,
   DashboardLeadsListsRoute: DashboardLeadsListsRoute,
@@ -1953,13 +2164,22 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardLeadsTrashRoute: DashboardLeadsTrashRoute,
   DashboardProjectsProjectIdRoute: DashboardProjectsProjectIdRoute,
   DashboardServicesServiceIdRoute: DashboardServicesServiceIdRoute,
+  DashboardAssistantIndexRoute: DashboardAssistantIndexRoute,
   DashboardBlogIndexRoute: DashboardBlogIndexRoute,
   DashboardClientsIndexRoute: DashboardClientsIndexRoute,
+  DashboardInvoicesIndexRoute: DashboardInvoicesIndexRoute,
   DashboardLeadsIndexRoute: DashboardLeadsIndexRoute,
   DashboardProjectsIndexRoute: DashboardProjectsIndexRoute,
   DashboardServicesIndexRoute: DashboardServicesIndexRoute,
   DashboardClientsClientIdEditRoute: DashboardClientsClientIdEditRoute,
+  DashboardInvoicesInvoiceIdPreviewRoute:
+    DashboardInvoicesInvoiceIdPreviewRoute,
+  DashboardInvoicesSubscriptionsNewRoute:
+    DashboardInvoicesSubscriptionsNewRoute,
   DashboardLeadsLeadIdEditRoute: DashboardLeadsLeadIdEditRoute,
+  DashboardInvoicesInvoiceIdIndexRoute: DashboardInvoicesInvoiceIdIndexRoute,
+  DashboardInvoicesSubscriptionsIndexRoute:
+    DashboardInvoicesSubscriptionsIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

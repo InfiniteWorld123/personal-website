@@ -42,20 +42,31 @@ const renderSidebar = () =>
   )
 
 describe('the Overview', () => {
-  it('shows what is built and what is not, and never a figure', () => {
-    render(<OverviewPage />)
+  /*
+   * The Overview reads real figures now (`docs/v2/analytics.md`); its states
+   * are tested in `analytics-ui.test.tsx`. Here only the promise this file has
+   * always kept: with no Backend2 to answer, nothing invented appears.
+   */
+  it('shows no figure before the server answers, and never an invented one', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
 
-    expect(screen.getByText('WORKING')).toBeTruthy()
-    expect(screen.getByText('Security')).toBeTruthy()
-    expect(screen.getByText('NOT BUILT YET')).toBeTruthy()
-    expect(screen.getByText('Invoices')).toBeTruthy()
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <OverviewPage name="Yaman Warda" />
+      </QueryClientProvider>,
+    )
 
-    // The fixtures are gone, and so is every claim they made.
+    expect(screen.getByText(/, Yaman$/)).toBeTruthy()
+    expect(screen.getByLabelText('Received')).toBeTruthy()
+
     const text = document.body.textContent ?? ''
 
     expect(text).not.toMatch(/SAMPLE DATA/i)
     expect(text).not.toMatch(/8\.450|2\.180|1\.284/)
     expect(text).not.toMatch(/€/)
+    expect(text).not.toMatch(/\b0\b/)
+
+    vi.unstubAllGlobals()
   })
 })
 

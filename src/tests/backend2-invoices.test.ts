@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib'
+import { PDFArray, PDFDocument, PDFRawStream, decodePDFRawStream } from 'pdf-lib'
 import { unzipSync, strFromU8 } from 'fflate'
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryStore, createTestDatabase } from './helpers/backend2-db'
@@ -783,6 +783,36 @@ describe('documents in Media', () => {
     expect(arabic.body.code).toBe('LANGUAGE_NOT_SUPPORTED')
   })
 
+  it('prints the site’s “YW” mark top right on invoices, previews and cancellations', async () => {
+    // The mark is the only thing on the page filled in the site's blue (#355cff).
+    const blue = /0\.2078\d* 0\.3607\d* 1 rg/u
+    const firstPage = async (bytes: Uint8Array): Promise<string> => {
+      const page = (await PDFDocument.load(bytes)).getPages()[0]!
+      const contents = page.node.Contents()
+      const streams = contents instanceof PDFArray ? contents.asArray().map((ref) => page.doc.context.lookup(ref)) : [contents]
+
+      return streams
+        .filter((stream): stream is PDFRawStream => stream instanceof PDFRawStream)
+        .map((stream) => new TextDecoder().decode(decodePDFRawStream(stream).decode()))
+        .join('\n')
+    }
+
+    const draft = await createDraft()
+    const preview = await call('GET', `/owner/invoices/${draft.id}/preview`)
+
+    expect(await firstPage(preview.bytes)).toMatch(blue)
+
+    const invoice = await issue(draft)
+    const pdf = await call('GET', `/owner/invoices/${invoice.id}/pdf?language=en`)
+
+    expect(await firstPage(pdf.bytes)).toMatch(blue)
+
+    const { cancellation } = await ok('POST', `/owner/invoices/${invoice.id}/cancel`, { reason: 'Wrong amount' })
+    const storno = await call('GET', `/owner/invoices/${cancellation.id}/pdf`)
+
+    expect(await firstPage(storno.bytes)).toMatch(blue)
+  })
+
   it('renders a long invoice over several pages', async () => {
     const lines = Array.from({ length: 60 }, (_, index) => ({
       description: `Item ${index + 1}: ${'a detailed description of the work '.repeat(3)}`,
@@ -1155,6 +1185,36 @@ describe('bounded lists', () => {
     expect((await ok('GET', '/owner/invoices?mode=live')).total).toBe(0)
     expect((await ok('GET', '/owner/invoices?search=TEST-2026')).total).toBe(1)
     expect((await call('GET', '/owner/invoices?pageSize=1000')).status).toBe(422)
+  })
+
+  it('sums what is owed per currency for the list, one mode at a time, and filters “open”', async () => {
+    const client = await createClient()
+
+    await createDraft({ clientId: client.id })
+
+    const euros = await issued({ clientId: client.id })
+    const dollars = await issued({ clientId: client.id, currency: 'USD' })
+
+    await issued({ clientId: client.id, lines: [{ description: 'Hosting', quantityMilli: 1000, unitPriceMinor: 5_000 }] })
+    await pay(euros.id, { amountMinor: 20_000 })
+    await pay(dollars.id, { amountMinor: 120_000 })
+
+    const summary = await ok('GET', '/owner/invoices/summary?mode=test')
+
+    expect(summary.open).toEqual([{ currency: 'EUR', count: 2, amountDueMinor: 105_000 }])
+    expect(summary.overdue).toEqual([])
+    expect(summary.counts).toEqual({ all: 4, draft: 1, open: 2, overdue: 0, paid: 1, cancelled: 0 })
+    expect((await ok('GET', '/owner/invoices?status=open&mode=test')).total).toBe(2)
+
+    // Two weeks and a day later the unpaid ones are late; still per currency.
+    useInvoiceClockForTest('2026-10-08T10:00:00Z')
+
+    const later = await ok('GET', '/owner/invoices/summary?mode=test')
+
+    expect(later.overdue).toEqual([{ currency: 'EUR', count: 2, amountDueMinor: 105_000 }])
+    expect(later.counts).toMatchObject({ open: 0, overdue: 2 })
+    expect((await ok('GET', '/owner/invoices/summary')).counts.all).toBe(0)
+    expect((await call('GET', '/owner/invoices/summary?mode=both')).status).toBe(422)
   })
 
   it('pages payments per mode', async () => {

@@ -316,6 +316,7 @@ export const inboxCounts = async (window: Window) => {
        count(*) FILTER (WHERE origin <> 'outgoing' AND created_at >= $3 AND created_at < $1) AS new_prev,
        count(*) FILTER (WHERE origin = 'incoming' AND created_at >= $1 AND created_at < $2) AS incoming_now,
        count(*) FILTER (WHERE origin = 'contact' AND created_at >= $1 AND created_at < $2) AS contact_now,
+       count(*) FILTER (WHERE origin = 'contact' AND created_at >= $3 AND created_at < $1) AS contact_prev,
        count(*) FILTER (WHERE origin = 'booking' AND created_at >= $1 AND created_at < $2) AS booking_now,
        count(*) FILTER (WHERE origin = 'outgoing' AND created_at >= $1 AND created_at < $2) AS outgoing_now
      FROM v2_inbox_conversations`,
@@ -328,6 +329,7 @@ export const inboxCounts = async (window: Window) => {
     'new_prev',
     'incoming_now',
     'contact_now',
+    'contact_prev',
     'booking_now',
     'outgoing_now',
   ])

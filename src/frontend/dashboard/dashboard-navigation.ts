@@ -1,11 +1,13 @@
 import {
   CalendarRange,
+  ChartLine,
   FileText,
   FolderKanban,
   Handshake,
   Images,
   Inbox,
   LayoutDashboard,
+  MessageSquareText,
   Newspaper,
   ReceiptEuro,
   Settings,
@@ -56,11 +58,19 @@ export type DashboardNavItem = {
  * owner's choice, because a lead that is won becomes a client
  * (`docs/v2/clients.md`).
  *
- * There is no AI item, and there will not be one: the assistant is a
- * visitor-facing feature of the public site.
+ * Analytics is added on 24 Sep 2026 directly after Overview, with its working
+ * page (`docs/v2/analytics.md`): Overview is the short glance, Analytics the
+ * place to explore.
+ *
+ * Assistant is added on 24 Sep 2026 at the end, the owner's choice
+ * (`docs/v2/ai-assistant.md`). It is not an AI inside the Dashboard — there
+ * is none, and there will not be one. It is where the owner reads and deletes
+ * what visitors asked the public site's assistant, and switches that
+ * assistant on or off.
  */
 export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Analytics', to: '/dashboard/analytics', icon: ChartLine },
   { label: 'Projects', to: '/dashboard/projects', icon: FolderKanban },
   { label: 'Services', to: '/dashboard/services', icon: Tags },
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
@@ -71,6 +81,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Blog', to: '/dashboard/blog', icon: Newspaper, count: 'newBlogComments' },
   { label: 'Media', to: '/dashboard/media', icon: Images },
   { label: 'Invoices', to: '/dashboard/invoices', icon: ReceiptEuro },
+  { label: 'Assistant', to: '/dashboard/assistant', icon: MessageSquareText },
 ]
 
 /** Kept apart in the sidebar footer: these are the session, not the work. */

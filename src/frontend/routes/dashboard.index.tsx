@@ -3,5 +3,9 @@ import { OverviewPage } from '#/frontend/pages/dashboard/OverviewPage'
 
 export const Route = createFileRoute('/dashboard/')({
   head: () => ({ meta: [{ title: 'Dashboard · Yaman Warda' }] }),
-  component: OverviewPage,
+  component: function OverviewRoute() {
+    const { authSession } = Route.useRouteContext()
+
+    return <OverviewPage name={authSession.user.name} />
+  },
 })

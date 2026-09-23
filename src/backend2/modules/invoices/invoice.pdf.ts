@@ -26,6 +26,10 @@ const INK = rgb(0.1, 0.1, 0.12)
 const MUTED = rgb(0.42, 0.42, 0.46)
 const RULE = rgb(0.82, 0.82, 0.85)
 const MARK = rgb(0.85, 0.15, 0.15)
+/** The site's blue, `#355cff`, for the “YW” mark. */
+export const BRAND_BLUE = rgb(53 / 255, 92 / 255, 1)
+/** The mark's square, in points; it sits in the top-right corner. */
+export const BRAND_MARK_SIZE = 30
 
 type Words = {
   invoice: string
@@ -446,6 +450,44 @@ const banner = (canvas: Canvas, message: string) => {
   canvas.y -= 30
 }
 
+/**
+ * The site's “YW” mark, top right: a blue rounded square with the letters in
+ * white, as approved in the Invoices Design Lab (24 Sep 2026). Drawn, not an
+ * image, so it stays sharp at any zoom and adds no file to the bundle.
+ */
+const brandMark = (canvas: Canvas, top: number) => {
+  const size = BRAND_MARK_SIZE
+  const radius = 8
+  const x = PAGE.width - MARGIN.right - size
+  // `drawSvgPath` measures y downwards from the point it is given.
+  const path = [
+    `M ${radius} 0`,
+    `H ${size - radius}`,
+    `Q ${size} 0 ${size} ${radius}`,
+    `V ${size - radius}`,
+    `Q ${size} ${size} ${size - radius} ${size}`,
+    `H ${radius}`,
+    `Q 0 ${size} 0 ${size - radius}`,
+    `V ${radius}`,
+    `Q 0 0 ${radius} 0`,
+    'Z',
+  ].join(' ')
+
+  canvas.page.drawSvgPath(path, { x, y: top, color: BRAND_BLUE, borderWidth: 0 })
+
+  const letters = clean(canvas, 'YW')
+  const letterSize = 11.5
+  const width = canvas.bold.widthOfTextAtSize(letters, letterSize)
+
+  canvas.page.drawText(letters, {
+    x: x + (size - width) / 2,
+    y: top - size / 2 - letterSize * 0.36,
+    size: letterSize,
+    font: canvas.bold,
+    color: rgb(1, 1, 1),
+  })
+}
+
 /* --------------------------------------------------------------- invoices */
 
 export type RenderOptions = {
@@ -477,8 +519,12 @@ export const renderInvoicePdf = async (
   if (options.watermark === 'test') banner(canvas, words.test)
   if (options.watermark === 'draft') banner(canvas, words.draft)
 
-  // Seller, top right; a one-line sender above the recipient block.
+  // The mark in the corner; the seller under it, right-aligned; a one-line
+  // sender above the recipient block.
   const top = canvas.y
+
+  brandMark(canvas, top)
+
   const sellerLines = [
     document.seller.name,
     ...document.seller.address.split('\n'),
@@ -488,7 +534,7 @@ export const renderInvoicePdf = async (
     document.seller.website,
   ].filter((line) => line.trim() !== '')
 
-  let sellerY = top
+  let sellerY = top - BRAND_MARK_SIZE - 8
 
   for (const [index, line] of sellerLines.entries()) {
     sellerY -= text(canvas, line, {

@@ -7,6 +7,7 @@ import {
   FreePeriodSchema,
   FxProposalSchema,
   InvoiceListQuerySchema,
+  InvoiceSummaryQuerySchema,
   InvoicePatchSchema,
   IssueSchema,
   LanguageQuerySchema,
@@ -37,6 +38,7 @@ import { listRates, proposeConversion } from './invoice.fx'
 import { listPayments, recordManualPayment, recordRefund, voidPayment } from './invoice.payments'
 import * as repo from './invoice.repo'
 import { ensurePaymentLink, sendInvoice } from './invoice.send'
+import { invoiceSummary } from './invoice.summary'
 import {
   createInvoice,
   deleteDraft,
@@ -138,6 +140,14 @@ export const ownerInvoiceRoutes = new Elysia({ prefix: '/invoices' })
 
   .get('/payments', async ({ query }) =>
     ownerJson({ data: await listPayments(parseInput(PaymentListQuerySchema, query)), message: 'Payments loaded' }),
+  )
+
+  /** The figures above the list: owed and overdue per currency, tab counts. */
+  .get('/summary', async ({ query }) =>
+    ownerJson({
+      data: await invoiceSummary(parseInput(InvoiceSummaryQuerySchema, query).mode),
+      message: 'Summary loaded',
+    }),
   )
 
   .get('/notices', async ({ query }) =>
@@ -424,6 +434,7 @@ export const ownerInvoicePaths = [
   { method: 'POST', path: '/api/v2/owner/invoices/fx/proposal' },
   { method: 'GET', path: '/api/v2/owner/invoices/fx/rates' },
   { method: 'GET', path: '/api/v2/owner/invoices/payments' },
+  { method: 'GET', path: '/api/v2/owner/invoices/summary' },
   { method: 'GET', path: '/api/v2/owner/invoices/notices' },
   { method: 'POST', path: '/api/v2/owner/invoices/billing/run' },
   { method: 'GET', path: '/api/v2/owner/invoices/exports/2026' },

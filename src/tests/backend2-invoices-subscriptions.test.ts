@@ -322,6 +322,20 @@ describe('manual subscriptions and the billing job', () => {
     expect(await invoicesOf(subscription.id)).toHaveLength(3)
   })
 
+  it('prepares a manual draft seven days ahead, and an automatic period only on its day', async () => {
+    const manual = await createSubscription({ startDate: '2026-02-10' })
+    const automatic = await createSubscription({ startDate: '2026-02-10', collection: 'automatic_card' })
+
+    at('2026-02-02')
+    await bill()
+    expect(await invoicesOf(manual.id)).toHaveLength(0)
+
+    at('2026-02-03')
+    await bill()
+    expect((await invoicesOf(manual.id)).map((i) => i.period_start)).toEqual(['2026-02-10'])
+    expect(await invoicesOf(automatic.id)).toHaveLength(0)
+  })
+
   it('catches up missed periods without doubling any, even when two runs overlap', async () => {
     const subscription = await createSubscription({ startDate: '2026-01-15' })
 

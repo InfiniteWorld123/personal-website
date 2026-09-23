@@ -46,11 +46,14 @@ describe('the sidebar knows which section you are in', () => {
    * delete old files and see what of theirs is public — and none of that has
    * a home inside the picker other modules open. Ten since the Services
    * module, placed directly after Projects by the owner. Eleven since
-   * Clients, placed directly after Leads by the owner (23 Sep 2026).
+   * Clients, placed directly after Leads by the owner (23 Sep 2026). Twelve
+   * with Assistant at the end (24 Sep 2026) — the owner's page for what
+   * visitors asked, not an AI inside the Dashboard.
    */
-  it('carries the eleven approved sections in order', () => {
+  it('carries the approved sections in order', () => {
     expect(dashboardNavigation.map((item) => item.label)).toEqual([
       'Overview',
+      'Analytics',
       'Projects',
       'Services',
       'Calendar',
@@ -61,6 +64,7 @@ describe('the sidebar knows which section you are in', () => {
       'Blog',
       'Media',
       'Invoices',
+      'Assistant',
     ])
   })
 

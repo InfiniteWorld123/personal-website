@@ -554,6 +554,8 @@ export const listInvoices = async (
 
   if (query.status === 'draft' || query.status === 'issued' || query.status === 'cancelled') {
     where.push(`i.status = ${add(query.status)}`)
+  } else if (query.status === 'open') {
+    where.push(`(${state}) IN ('unpaid', 'partially_paid')`)
   } else if (query.status !== 'all') {
     where.push(`(${state}) = ${add(query.status)}`)
   }

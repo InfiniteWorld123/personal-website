@@ -313,6 +313,8 @@ export const INVOICE_LIST_STATUSES = [
   'draft',
   'issued',
   'cancelled',
+  /** Issued and still owed, not yet late: `unpaid` or `partially_paid`. */
+  'open',
   'unpaid',
   'partially_paid',
   'paid',
@@ -339,6 +341,23 @@ export const InvoiceListQuerySchema = v.object({
 })
 
 export type InvoiceListQuery = v.InferOutput<typeof InvoiceListQuerySchema>
+
+export const InvoiceSummaryQuerySchema = v.object({
+  mode: v.optional(v.picklist(INVOICE_MODES, 'Choose test or live'), 'live'),
+})
+
+/**
+ * What sits above the invoice list: money still owed per currency (never
+ * added across currencies), what is late, and how many invoices each status
+ * tab holds. One mode at a time, so test money never mixes with real money.
+ */
+export type InvoiceSummary = {
+  mode: InvoiceMode
+  /** Issued invoices with money still owed — unpaid, partly paid or overdue. */
+  open: Array<{ currency: Currency; count: number; amountDueMinor: number }>
+  overdue: Array<{ currency: Currency; count: number; amountDueMinor: number }>
+  counts: { all: number; draft: number; open: number; overdue: number; paid: number; cancelled: number }
+}
 
 export const PageOnlyQuerySchema = v.object({
   page: CountFromQuery(1, 100_000),
