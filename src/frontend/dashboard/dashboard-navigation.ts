@@ -10,6 +10,7 @@ import {
   ReceiptEuro,
   Settings,
   Tags,
+  Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -48,6 +49,10 @@ export type DashboardNavItem = {
  * place the owner chose when the Services module was built. It sits beside
  * the portfolio because both are what the public site shows about the work.
  *
+ * Clients is the eleventh, added on 23 Sep 2026 directly after Leads — the
+ * owner's choice, because a lead that is won becomes a client
+ * (`docs/v2/clients.md`).
+ *
  * There is no AI item, and there will not be one: the assistant is a
  * visitor-facing feature of the public site.
  */
@@ -58,6 +63,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
   { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox },
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
+  { label: 'Clients', to: '/dashboard/clients', icon: Users },
   { label: 'Content', to: '/dashboard/content', icon: FileText },
   { label: 'Blog', to: '/dashboard/blog', icon: Newspaper, count: 'newBlogComments' },
   { label: 'Media', to: '/dashboard/media', icon: Images },

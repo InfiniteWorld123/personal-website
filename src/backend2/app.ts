@@ -8,6 +8,8 @@ import { ownerRoutesEnabled } from './security/local-only'
 import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
 import { ownerBlogRoutes } from './modules/blog/blog.owner.route'
+import { ownerClientRoutes } from './modules/clients/client.owner.route'
+import { ownerNicheRoutes } from './modules/niches/niche.owner.route'
 import { ownerContentRoutes } from './modules/content/content.owner.route'
 import { publicContentRoutes } from './modules/content/content.public.route'
 import { publicBlogRoutes } from './modules/blog/blog.public.route'
@@ -104,6 +106,8 @@ const buildApp = () => {
         .use(ownerMediaRoutes)
         .use(ownerProjectRoutes)
         .use(ownerServiceRoutes)
+        .use(ownerClientRoutes)
+        .use(ownerNicheRoutes)
         .use(ownerBlogRoutes)
         .use(ownerContentRoutes),
     )

@@ -45,9 +45,10 @@ describe('the sidebar knows which section you are in', () => {
    * because the shared vault is a place the owner visits — to tidy folders,
    * delete old files and see what of theirs is public — and none of that has
    * a home inside the picker other modules open. Ten since the Services
-   * module, placed directly after Projects by the owner.
+   * module, placed directly after Projects by the owner. Eleven since
+   * Clients, placed directly after Leads by the owner (23 Sep 2026).
    */
-  it('carries the ten approved sections in order', () => {
+  it('carries the eleven approved sections in order', () => {
     expect(dashboardNavigation.map((item) => item.label)).toEqual([
       'Overview',
       'Projects',
@@ -55,6 +56,7 @@ describe('the sidebar knows which section you are in', () => {
       'Calendar',
       'Inbox',
       'Leads',
+      'Clients',
       'Content',
       'Blog',
       'Media',

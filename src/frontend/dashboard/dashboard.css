@@ -320,8 +320,9 @@
      GENERAL that is about 853px, so the card steps aside below 860. It was
      780 while there were nine sections, and adding Services on 22 Sep 2026
      is what made the menu outgrow the owner's window. Count it again when a
-     section is added or removed. */
-  @media (max-height: 860px) {
+     section is added or removed. Clients (23 Sep 2026) added one more row,
+     44px, so the card now steps aside below 904. */
+  @media (max-height: 904px) {
     .dash-promo {
       display: none;
     }

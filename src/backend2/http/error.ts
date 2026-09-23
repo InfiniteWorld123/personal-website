@@ -43,6 +43,15 @@ export type ApiErrorCode =
    * deliberate unlock.
    */
   | 'LEGAL_LOCKED'
+  /*
+   * Clients (`docs/v2/clients.md`): a likely duplicate, a file in Trash, and
+   * a permanent deletion an invoice blocks.
+   */
+  | 'CLIENT_DUPLICATE'
+  | 'CLIENT_IN_TRASH'
+  | 'CLIENT_DELETE_BLOCKED'
+  /* Niches, shared by Clients and Leads: a niche something still uses. */
+  | 'NICHE_IN_USE'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -227,3 +236,28 @@ export const legalLocked = make(
   'LEGAL_LOCKED',
   'Legal text is locked. Unlock it before changing it.',
 )
+
+/* ------------------------------------------------------------------ clients */
+
+/**
+ * Another Client already has this email or phone. A warning, not a merge: the
+ * `details.candidates` let the owner open the match, link it, or continue.
+ */
+export const clientDuplicate = make(
+  HttpStatus.CONFLICT,
+  'CLIENT_DUPLICATE',
+  'A client with this email or phone is already on file',
+)
+
+/** The Client is in Trash; restore it before changing or linking it. */
+export const clientInTrash = make(HttpStatus.CONFLICT, 'CLIENT_IN_TRASH', 'That client is in Trash')
+
+/** An invoice still points at this Client. It can stay Inactive instead. */
+export const clientDeleteBlocked = make(
+  HttpStatus.CONFLICT,
+  'CLIENT_DELETE_BLOCKED',
+  'This client cannot be deleted permanently',
+)
+
+/** A niche a Client or Lead still carries. It can be hidden instead. */
+export const nicheInUse = make(HttpStatus.CONFLICT, 'NICHE_IN_USE', 'That niche is still in use')

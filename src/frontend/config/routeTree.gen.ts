@@ -76,6 +76,9 @@ import { Route as DashboardBlogIndexRouteImport } from './../routes/dashboard.bl
 import { Route as DashboardBlogPostIdRouteImport } from './../routes/dashboard.blog.$postId'
 import { Route as DashboardBlogCommentsRouteImport } from './../routes/dashboard.blog.comments'
 import { Route as DashboardBlogTagsRouteImport } from './../routes/dashboard.blog.tags'
+import { Route as DashboardClientsIndexRouteImport } from './../routes/dashboard.clients.index'
+import { Route as DashboardClientsNewRouteImport } from './../routes/dashboard.clients.new'
+import { Route as DashboardClientsTrashRouteImport } from './../routes/dashboard.clients.trash'
 import { Route as DashboardProjectsIndexRouteImport } from './../routes/dashboard.projects.index'
 import { Route as DashboardProjectsProjectIdRouteImport } from './../routes/dashboard.projects.$projectId'
 import { Route as DashboardServicesIndexRouteImport } from './../routes/dashboard.services.index'
@@ -90,6 +93,7 @@ import { Route as AdminBookingsIdRoomRouteImport } from './../routes/admin.booki
 import { Route as AdminBookingsTypesIndexRouteImport } from './../routes/admin.bookings.types.index'
 import { Route as AdminBookingsTypesIdRouteImport } from './../routes/admin.bookings.types.$id'
 import { Route as AdminBookingsTypesNewRouteImport } from './../routes/admin.bookings.types.new'
+import { Route as DashboardClientsClientIdEditRouteImport } from './../routes/dashboard.clients.$clientId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -428,6 +432,21 @@ const DashboardBlogTagsRoute = DashboardBlogTagsRouteImport.update({
   path: '/blog/tags',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardClientsIndexRoute = DashboardClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardClientsNewRoute = DashboardClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardClientsTrashRoute = DashboardClientsTrashRouteImport.update({
+  id: '/clients/trash',
+  path: '/clients/trash',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardProjectsIndexRoute = DashboardProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -504,6 +523,12 @@ const AdminBookingsTypesNewRoute = AdminBookingsTypesNewRouteImport.update({
   path: '/bookings/types/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const DashboardClientsClientIdEditRoute =
+  DashboardClientsClientIdEditRouteImport.update({
+    id: '/clients/$clientId/edit',
+    path: '/clients/$clientId/edit',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -563,6 +588,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
+  '/dashboard/clients/new': typeof DashboardClientsNewRoute
+  '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
@@ -578,6 +605,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
+  '/dashboard/clients/': typeof DashboardClientsIndexRoute
   '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/services/': typeof DashboardServicesIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
@@ -586,6 +614,7 @@ export interface FileRoutesByFullPath {
   '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -642,6 +671,8 @@ export interface FileRoutesByTo {
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
+  '/dashboard/clients/new': typeof DashboardClientsNewRoute
+  '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
@@ -657,6 +688,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminLeadsIndexRoute
   '/admin/projects': typeof AdminProjectsIndexRoute
   '/dashboard/blog': typeof DashboardBlogIndexRoute
+  '/dashboard/clients': typeof DashboardClientsIndexRoute
   '/dashboard/projects': typeof DashboardProjectsIndexRoute
   '/dashboard/services': typeof DashboardServicesIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
@@ -665,6 +697,7 @@ export interface FileRoutesByTo {
   '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/admin/bookings/types': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRoutesById {
@@ -726,6 +759,8 @@ export interface FileRoutesById {
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
   '/dashboard/blog/comments': typeof DashboardBlogCommentsRoute
   '/dashboard/blog/tags': typeof DashboardBlogTagsRoute
+  '/dashboard/clients/new': typeof DashboardClientsNewRoute
+  '/dashboard/clients/trash': typeof DashboardClientsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
@@ -741,6 +776,7 @@ export interface FileRoutesById {
   '/admin/leads/': typeof AdminLeadsIndexRoute
   '/admin/projects/': typeof AdminProjectsIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
+  '/dashboard/clients/': typeof DashboardClientsIndexRoute
   '/dashboard/projects/': typeof DashboardProjectsIndexRoute
   '/dashboard/services/': typeof DashboardServicesIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
@@ -749,6 +785,7 @@ export interface FileRoutesById {
   '/admin/bookings/$id_/room': typeof AdminBookingsIdRoomRoute
   '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
   '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
+  '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
 }
 export interface FileRouteTypes {
@@ -811,6 +848,8 @@ export interface FileRouteTypes {
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
+    | '/dashboard/clients/new'
+    | '/dashboard/clients/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
     | '/dashboard/settings/security'
@@ -826,6 +865,7 @@ export interface FileRouteTypes {
     | '/admin/leads/'
     | '/admin/projects/'
     | '/dashboard/blog/'
+    | '/dashboard/clients/'
     | '/dashboard/projects/'
     | '/dashboard/services/'
     | '/dashboard/settings/'
@@ -834,6 +874,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/$id/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
+    | '/dashboard/clients/$clientId/edit'
     | '/admin/bookings/types/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -890,6 +931,8 @@ export interface FileRouteTypes {
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
+    | '/dashboard/clients/new'
+    | '/dashboard/clients/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
     | '/dashboard/settings/security'
@@ -905,6 +948,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/projects'
     | '/dashboard/blog'
+    | '/dashboard/clients'
     | '/dashboard/projects'
     | '/dashboard/services'
     | '/dashboard/settings'
@@ -913,6 +957,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/$id/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
+    | '/dashboard/clients/$clientId/edit'
     | '/admin/bookings/types'
   id:
     | '__root__'
@@ -973,6 +1018,8 @@ export interface FileRouteTypes {
     | '/dashboard/blog/$postId'
     | '/dashboard/blog/comments'
     | '/dashboard/blog/tags'
+    | '/dashboard/clients/new'
+    | '/dashboard/clients/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
     | '/dashboard/settings/security'
@@ -988,6 +1035,7 @@ export interface FileRouteTypes {
     | '/admin/leads/'
     | '/admin/projects/'
     | '/dashboard/blog/'
+    | '/dashboard/clients/'
     | '/dashboard/projects/'
     | '/dashboard/services/'
     | '/dashboard/settings/'
@@ -996,6 +1044,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/$id_/room'
     | '/admin/bookings/types/$id'
     | '/admin/bookings/types/new'
+    | '/dashboard/clients/$clientId/edit'
     | '/admin/bookings/types/'
   fileRoutesById: FileRoutesById
 }
@@ -1490,6 +1539,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBlogTagsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/clients/': {
+      id: '/dashboard/clients/'
+      path: '/clients'
+      fullPath: '/dashboard/clients/'
+      preLoaderRoute: typeof DashboardClientsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/clients/new': {
+      id: '/dashboard/clients/new'
+      path: '/clients/new'
+      fullPath: '/dashboard/clients/new'
+      preLoaderRoute: typeof DashboardClientsNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/clients/trash': {
+      id: '/dashboard/clients/trash'
+      path: '/clients/trash'
+      fullPath: '/dashboard/clients/trash'
+      preLoaderRoute: typeof DashboardClientsTrashRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/projects/': {
       id: '/dashboard/projects/'
       path: '/projects'
@@ -1587,6 +1657,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/bookings/types/new'
       preLoaderRoute: typeof AdminBookingsTypesNewRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/dashboard/clients/$clientId/edit': {
+      id: '/dashboard/clients/$clientId/edit'
+      path: '/clients/$clientId/edit'
+      fullPath: '/dashboard/clients/$clientId/edit'
+      preLoaderRoute: typeof DashboardClientsClientIdEditRouteImport
+      parentRoute: typeof DashboardRoute
     }
   }
 }
@@ -1724,11 +1801,15 @@ interface DashboardRouteChildren {
   DashboardBlogPostIdRoute: typeof DashboardBlogPostIdRoute
   DashboardBlogCommentsRoute: typeof DashboardBlogCommentsRoute
   DashboardBlogTagsRoute: typeof DashboardBlogTagsRoute
+  DashboardClientsNewRoute: typeof DashboardClientsNewRoute
+  DashboardClientsTrashRoute: typeof DashboardClientsTrashRoute
   DashboardProjectsProjectIdRoute: typeof DashboardProjectsProjectIdRoute
   DashboardServicesServiceIdRoute: typeof DashboardServicesServiceIdRoute
   DashboardBlogIndexRoute: typeof DashboardBlogIndexRoute
+  DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
   DashboardProjectsIndexRoute: typeof DashboardProjectsIndexRoute
   DashboardServicesIndexRoute: typeof DashboardServicesIndexRoute
+  DashboardClientsClientIdEditRoute: typeof DashboardClientsClientIdEditRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -1743,11 +1824,15 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBlogPostIdRoute: DashboardBlogPostIdRoute,
   DashboardBlogCommentsRoute: DashboardBlogCommentsRoute,
   DashboardBlogTagsRoute: DashboardBlogTagsRoute,
+  DashboardClientsNewRoute: DashboardClientsNewRoute,
+  DashboardClientsTrashRoute: DashboardClientsTrashRoute,
   DashboardProjectsProjectIdRoute: DashboardProjectsProjectIdRoute,
   DashboardServicesServiceIdRoute: DashboardServicesServiceIdRoute,
   DashboardBlogIndexRoute: DashboardBlogIndexRoute,
+  DashboardClientsIndexRoute: DashboardClientsIndexRoute,
   DashboardProjectsIndexRoute: DashboardProjectsIndexRoute,
   DashboardServicesIndexRoute: DashboardServicesIndexRoute,
+  DashboardClientsClientIdEditRoute: DashboardClientsClientIdEditRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

@@ -29,6 +29,7 @@ describe('building a database from nothing', () => {
       '0005_services.sql',
       '0006_blog.sql',
       '0007_content.sql',
+      '0008_clients.sql',
     ])
 
     // The runner sorts by filename, so the names have to sort into the order
@@ -95,6 +96,10 @@ describe('building a database from nothing', () => {
       expect(tables).toContain('v2_content_history')
       expect(tables).toContain('v2_content_review_flags')
       expect(tables).toContain('v2_content_imports')
+      // The Client directory, from 0008.
+      expect(tables).toContain('v2_clients')
+      expect(tables).toContain('v2_client_lead_links')
+      expect(tables).toContain('v2_niches')
 
       /*
        * A migration builds structure. Anything that arrived with rows would be
