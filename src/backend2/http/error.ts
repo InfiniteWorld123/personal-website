@@ -86,6 +86,27 @@ export type ApiErrorCode =
   | 'FOLLOW_UP_EXISTS'
   | 'CHOICE_IN_USE'
   | 'CHOICE_LOCKED'
+  /*
+   * Invoices (`docs/v2/invoices.md`): an issued document that cannot change,
+   * a draft that cannot be issued yet, a seller not ready for a real invoice,
+   * live issuing switched off, amounts that exceed what is owed or paid, the
+   * payment provider or rate source unavailable, and an unsupported language.
+   */
+  | 'INVOICE_LOCKED'
+  | 'INVOICE_NOT_READY'
+  | 'SELLER_NOT_READY'
+  | 'LIVE_INVOICING_DISABLED'
+  | 'PAYMENT_TOO_LARGE'
+  | 'REFUND_TOO_LARGE'
+  | 'STRIPE_UNAVAILABLE'
+  | 'FX_UNAVAILABLE'
+  | 'LANGUAGE_NOT_SUPPORTED'
+  | 'SUBSCRIPTION_LOCKED'
+  /*
+   * Public AI Assistant (`docs/v2/ai-assistant.md`): switched off, or the
+   * site-wide daily limit reached. `details.reason` says which.
+   */
+  | 'ASSISTANT_UNAVAILABLE'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -431,4 +452,86 @@ export const verificationFailed = make(
   HttpStatus.UNPROCESSABLE_ENTITY,
   'VERIFICATION_FAILED',
   'The security check did not pass. Please try again.',
+)
+
+/* ---------------------------------------------------------------- assistant */
+
+/**
+ * The public assistant cannot answer: the owner switched it off
+ * (`details.reason: 'disabled'`) or today's site-wide limit is reached
+ * (`'daily_limit'`). The widget shows the Contact and Booking links instead.
+ * A 4xx on purpose, like `sendFailed`: a 5xx would hide the reason.
+ */
+export const assistantUnavailable = make(
+  HttpStatus.CONFLICT,
+  'ASSISTANT_UNAVAILABLE',
+  'The assistant is not available right now.',
+)
+
+/* ----------------------------------------------------------------- invoices */
+
+/** Issued (or cancelled) documents never change; only a draft is editable. */
+export const invoiceLocked = make(
+  HttpStatus.CONFLICT,
+  'INVOICE_LOCKED',
+  'This invoice has been issued and cannot be changed. Cancel or correct it instead.',
+)
+
+/** A draft that is not complete enough to issue. `details.issues` list why. */
+export const invoiceNotReady = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'INVOICE_NOT_READY',
+  'This draft cannot be issued yet.',
+)
+
+/** Seller details are incomplete for a real invoice. `details.missing` names them. */
+export const sellerNotReady = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'SELLER_NOT_READY',
+  'Complete your seller details in Invoice settings before issuing a real invoice.',
+)
+
+/** Live issuing and live charges are off unless INVOICES_LIVE_ENABLED=true. */
+export const liveInvoicingDisabled = make(
+  HttpStatus.CONFLICT,
+  'LIVE_INVOICING_DISABLED',
+  'Real invoicing is switched off here. Use test mode.',
+)
+
+export const paymentTooLarge = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'PAYMENT_TOO_LARGE',
+  'That payment is more than the amount still due.',
+)
+
+export const refundTooLarge = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'REFUND_TOO_LARGE',
+  'That refund is more than was paid.',
+)
+
+export const stripeUnavailable = make(
+  HttpStatus.SERVICE_UNAVAILABLE,
+  'STRIPE_UNAVAILABLE',
+  'Card payments are not available right now.',
+)
+
+/** No exchange rate could be fetched. The owner can type one instead. */
+export const fxUnavailable = make(
+  HttpStatus.SERVICE_UNAVAILABLE,
+  'FX_UNAVAILABLE',
+  'No exchange rate is available right now. Enter the rate yourself.',
+)
+
+export const languageNotSupported = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'LANGUAGE_NOT_SUPPORTED',
+  'That language is not available for invoice documents yet.',
+)
+
+/** An ended subscription, or a change that would reach back into billed periods. */
+export const subscriptionLocked = make(
+  HttpStatus.CONFLICT,
+  'SUBSCRIPTION_LOCKED',
+  'That change is not possible for this subscription.',
 )

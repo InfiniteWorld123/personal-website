@@ -49,7 +49,7 @@ export const verifyHuman = async (token: string, ip: string, environment: Env = 
   }
 
   if (!environment.TURNSTILE_SECRET_KEY?.trim()) {
-    if (isProductionEnvironment(environment)) throw internalError('Booking protection is not configured')
+    if (isProductionEnvironment(environment)) throw internalError('Human verification is not configured')
 
     return
   }

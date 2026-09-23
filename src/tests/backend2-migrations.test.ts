@@ -33,6 +33,8 @@ describe('building a database from nothing', () => {
       '0009_inbox.sql',
       '0010_booking.sql',
       '0011_leads.sql',
+      '0012_invoices.sql',
+      '0013_assistant.sql',
     ])
 
     // The runner sorts by filename, so the names have to sort into the order
@@ -103,6 +105,19 @@ describe('building a database from nothing', () => {
       expect(tables).toContain('v2_clients')
       expect(tables).toContain('v2_client_lead_links')
       expect(tables).toContain('v2_niches')
+      // Invoices and subscriptions, from 0012.
+      expect(tables).toContain('v2_invoices')
+      expect(tables).toContain('v2_invoice_settings')
+      expect(tables).toContain('v2_invoice_number_counters')
+      expect(tables).toContain('v2_invoice_payments')
+      expect(tables).toContain('v2_subscriptions')
+      expect(tables).toContain('v2_subscription_periods')
+      expect(tables).toContain('v2_stripe_events')
+      // The public assistant, from 0013.
+      expect(tables).toContain('v2_assistant_settings')
+      expect(tables).toContain('v2_assistant_conversations')
+      expect(tables).toContain('v2_assistant_messages')
+      expect(tables).toContain('v2_assistant_usage_days')
 
       /*
        * A migration builds structure. Anything that arrived with rows would be

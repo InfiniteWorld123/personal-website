@@ -14,7 +14,11 @@ import { ownerClientRoutes } from './modules/clients/client.owner.route'
 import { ownerNicheRoutes } from './modules/niches/niche.owner.route'
 import { ownerLeadRoutes } from './modules/leads/lead.owner.route'
 import { ownerContentRoutes } from './modules/content/content.owner.route'
+import { ownerInvoiceRoutes } from './modules/invoices/invoice.owner.route'
+import { stripeWebhookRoutes } from './modules/invoices/stripe.webhook.route'
+import { ownerAnalyticsRoutes } from './modules/analytics/analytics.owner.route'
 import { inboundEmailRoutes } from './modules/inbox/inbox.ingress.route'
+import { publicContactRoutes } from './modules/inbox/contact.public.route'
 import { ownerInboxRoutes } from './modules/inbox/inbox.owner.route'
 import { publicContentRoutes } from './modules/content/content.public.route'
 import { publicBlogRoutes } from './modules/blog/blog.public.route'
@@ -24,6 +28,8 @@ import { ownerProjectRoutes } from './modules/projects/project.owner.route'
 import { publicProjectRoutes } from './modules/projects/project.public.route'
 import { ownerServiceRoutes } from './modules/services/service.owner.route'
 import { publicServiceRoutes } from './modules/services/service.public.route'
+import { ownerAssistantRoutes } from './modules/assistant/assistant.owner.route'
+import { publicAssistantRoutes } from './modules/assistant/assistant.public.route'
 
 /**
  * Backend2.
@@ -117,7 +123,10 @@ const buildApp = () => {
         .use(ownerBlogRoutes)
         .use(ownerInboxRoutes)
         .use(ownerCalendarRoutes)
-        .use(ownerContentRoutes),
+        .use(ownerContentRoutes)
+        .use(ownerInvoiceRoutes)
+        .use(ownerAnalyticsRoutes)
+        .use(ownerAssistantRoutes),
     )
   }
 
@@ -168,11 +177,29 @@ const buildApp = () => {
        */
       .use(inboundEmailRoutes)
       /*
+       * The Stripe webhook (`docs/v2/invoices.md`). Not a visitor route: it
+       * takes nothing without Stripe's signature, and without
+       * `STRIPE_WEBHOOK_SECRET` it takes nothing at all.
+       */
+      .use(stripeWebhookRoutes)
+      /*
        * The visitor's booking API (`docs/v2/booking.md`). Where no V2
        * database exists it does not answer, so the live booking pages keep the
        * legacy backend until an approved cutover.
        */
       .use(publicBookingRoutes)
+      /*
+       * The website's Contact form, V2 (`docs/v2/inbox.md`). Where no V2
+       * database exists it does not answer, so the live form keeps posting to
+       * the legacy `/api/contact` until an approved cutover.
+       */
+      .use(publicContactRoutes)
+      /*
+       * The public AI assistant (`docs/v2/ai-assistant.md`). Where no V2
+       * database exists it does not answer; where one does, it still answers
+       * nothing until the owner switches it on.
+       */
+      .use(publicAssistantRoutes)
   }
 
   return app.get('/', () =>

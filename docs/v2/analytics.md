@@ -74,3 +74,57 @@ For the four Overview headline figures, prefer these concrete meanings: received
 - PostHog pricing: <https://posthog.com/pricing>
 
 These links are research inputs, not approval of a particular tracking configuration or a guarantee of future prices.
+
+## Backend implementation record — 23 Sep 2026
+
+Backend2 Analytics is built and verified locally. Nothing public changed: no capture script, no public route, no privacy text, no provider account, no migration. The Dashboard pages (`/dashboard` Overview and `/dashboard/analytics`) are **not** built yet; they wait for the frontend questions and the Design Lab below.
+
+### Routes
+
+Owner-only, read-only, behind `ownerGuard` (404 from any non-local host; 401 without a session once `BACKEND2_OWNER_AUTH=required`), `no-store` on every reply:
+
+| Route | Answers |
+| --- | --- |
+| `GET /api/v2/owner/analytics/overview?period=` | `headline` (money received, overdue invoices, website visitors, unread Inbox) and `glimpse` (Lead follow-ups due now, appointments in the next 7 days) |
+| `GET /api/v2/owner/analytics/sections/:section?period=` | `website`, `sales` (also `origin=all|manual|imported`), `operations`, `money`, `assistant`; each is a list of `groups` with `metrics`, `breakdowns` and plain-English `notes` |
+| `GET /api/v2/owner/analytics/rankings/:ranking?period=&page=&pageSize=` | `lead-sources` and `lead-lost-reasons` (also `origin`), `blog-posts` (`by=reads|likes|comments`), `website-pages`; bounded pages (max 100), order = value desc, label, id |
+
+**Period** (every route): `period=7d|30d|90d|365d` (default `30d`: the last 30 Berlin days including today) or `from`/`to` as Berlin dates, both included, at most 731 days, not after today, not before 2020-01-01. Optional `bucket=day|week|month`; the default is day up to 92 days, week up to 366, month beyond. The response echoes the period with its Berlin dates, UTC instants (`start` included, `end` excluded) and the previous period of equal length. Buckets are computed in SQL with `AT TIME ZONE 'Europe/Berlin'`, so clock-change days are 23 or 25 hours long. An unknown query key is refused by name (422) rather than ignored.
+
+### Response shape
+
+`src/backend2/contracts/analytics.contract.ts`. A **metric** carries `key`, `label`, `description` (its definition in plain English), `unit` (`count|bytes|ratio|money`), `scope` (`period|current|next-7-days|all-time`), `state`, `value`, `source`, `timezone`, `asOf`, and where relevant `message` (why unavailable), `notes`, `link` (the Dashboard page behind it), `rate` (numerator, denominator and their labels), `previous` (same measure, previous period), `series` (`bucket` + every bucket's `{date, value}`, zeros filled), `amounts` (money: one entry per currency in minor units). A **breakdown** carries the same identity plus `items`, `total`, `truncated` and the `ranking` that lists the rest.
+
+States: `ready` (checked; `0` is a real zero), `empty` (checked, nothing to measure: a rate with no denominator, a breakdown with nothing in it — value `null`), `not-connected` (PostHog off), `not-built` (module does not exist), `error` (the source failed just now — value `null`, never 0). Each figure is read by its own small part; a failing part marks only its own figures `error` and logs the source name and database code, never the message.
+
+### Metric catalogue (as built)
+
+- **Website & content** — `website.visitors`, `website.pageviews`, breakdown `website.topPages`: PostHog → `not-connected`. `website.onlineBookings` (V2 bookings with `source = public` made in the period): ready. `website.contactSubmissions`: `not-built` (no V2 contact form writes to Backend2 yet). `website.projectsLive`, `website.servicesLive`, `blog.live`: ready.
+- **Sales** — Leads: `leads.new` (+series, previous), `leads.active`, `leads.won`, `leads.lost`, `leads.wonRate` = Won/(Won+Lost) in the period with numerator and denominator exposed, `leads.followUpsDue`, `leads.followUpsNextWeek`; breakdowns `leads.stages` (current, board order), `leads.sources` (new Leads by the owner's source label), `leads.lostReasons`. Clients: `clients.new` (+series), `clients.fromLeads` (a `created` link in `v2_client_lead_links`), `clients.direct`, `clients.active`, `clients.inactive`; breakdown `clients.origin`.
+- **Operations** — Calendar: `booking.made` (by booking date, +series), `booking.completed`, `booking.cancelled`, `booking.noShow` (by appointment date, current status), `booking.noShowRate` = No-show/(Completed+No-show), `booking.upcoming`; breakdowns `booking.status`, `booking.methods` (cancelled excluded). Inbox: `inbox.unread` (the Inbox badge's own rule), `inbox.new` (conversations someone else started, +series), breakdown `inbox.origins`. Media: `media.files`, `media.bytes`, `media.added`, `media.public` (files a published snapshot uses); breakdowns by kind in files and bytes. Blog: `blog.live`, `blog.firstPublished`, `blog.comments` (visitor comments, +series), `blog.unseenComments`, and `blog.reads` / `blog.likes` as separate **all-time** running totals.
+- **Money** — `money.received`, `money.refunds`, `invoices.overdue`, `invoices.outstanding`, breakdown `invoices.status`: all `not-built`.
+- **Assistant** — `assistant.conversations`, `assistant.unanswered`, `assistant.referrals`, `assistant.cost`: all `not-built`.
+
+### Decisions made during the build (reversible)
+
+- **Won / Lost in a period** count Leads whose *current* stage is Won/Lost and whose `won_at`/`lost_at` falls in the period. Leads keep no stage history, so a Won-then-reopened Lead counts nowhere and no historical stage trend is drawn; the response says so.
+- **CSV provenance** is offered as a filter, with a caveat: a Lead remembers its import only while the import report is kept (deleting the report sets `import_id` to NULL, so those Leads count as hand-entered).
+- **Trash** is excluded everywhere (Leads, Clients). Booking has no test mode, so nothing is excluded there.
+- **Appointments** are counted by when they take place, with their current status; bookings made are counted by when they were made. A booking is never called a meeting.
+- **No response-time or "answered" figure** for Inbox: no reliable reply-to-message link is stored.
+- **No `0014` index migration.** Query plans on the in-process PostgreSQL use the existing indexes (`v2_leads_stage_idx`/`list_idx`, `v2_blog_comments_recent_idx`, the booking time indexes); the remaining scans are single aggregate passes over one owner's small tables. Revisit only with measured slowness.
+- PostHog defaults to the EU host (`https://eu.posthog.com`); answers are cached in memory for 10 minutes, and `asOf` then shows the provider's time.
+
+### Plug-in points for the coordinator
+
+- **Money** — `src/backend2/modules/analytics/sources/money.ts`: replace `export const moneySource = null` with the Invoices module's `invoiceAnalyticsSource` from `src/backend2/modules/invoices/invoice.analytics.ts`. It must implement `MoneyAnalyticsSource { source: string; read(period, now): Promise<MoneySnapshot> }`, where `MoneySnapshot` = `receivedNet` and `previousReceivedNet` (payments received minus refunds recorded, per currency, minor units), `refunds`, `overdue {count, balance[]}` and `outstanding {count, balance[]}` (issued invoices only, right now), `statusMix [{status, label, count}]` (drafts and test documents excluded). It throws on failure; Analytics shows `error`.
+- **Assistant** — `src/backend2/modules/analytics/sources/assistant.ts`: replace `export const assistantSource = null` with `assistantAnalyticsSource` from `src/backend2/modules/assistant/assistant.analytics.ts`, implementing `AssistantAnalyticsSource { source; read(period, now): Promise<AssistantSnapshot> }` with `conversations`, `previousConversations`, and `unanswered` / `referralClicks` / `cost` — each `null` when the module does not record it (shown as not recorded, never 0). No chat text.
+- **PostHog** — `sources/website.ts` `WebsiteAnalyticsSource`; used only when `POSTHOG_PERSONAL_API_KEY` and `POSTHOG_PROJECT_ID` (digits) are set, optional `POSTHOG_HOST` (https). It reads PostHog's HogQL query API and **has never run against a real account**; switching it on is a separate owner decision after the privacy and cost gates above.
+
+### Verification
+
+`src/tests/backend2-analytics.test.ts` (37 tests, in-process PostgreSQL with fixed records): default and preset periods, custom-period refusals, Berlin midnights and day buckets on both 2025 clock-change days, week/month buckets, empty periods (real zeros, `empty` rate), the Won-rate denominator with a reopened and a trashed Lead, import filter, Clients from Leads vs direct, cancelled/no-show appointments and the method mix, Inbox unread/new, Media sizes and public files, Blog reads/likes vs comments, ranking pages and determinism, a renamed table taking down only Booking's figures, PostHog disabled / faked / failing / paged, Money and assistant not built / plugged / failing, no private text in any response, `no-store`, 404 off-local on all 10 routes, 401 without a session. `tsc` clean for these files. A runtime check over the real `pg` driver against a throwaway in-memory PostgreSQL returned the overview, sections and a ranking with `no-store` and 404 off-local. Neon was not touched.
+
+### What the Analytics / Overview Design Lab needs
+
+Frontend questions to settle first (after this backend): the Overview's four headline cards and the glimpse layout; how Analytics sections are navigated (tabs vs one long page); chart types per figure (series → line/bar, breakdowns → bars or a donut, rates with their denominator); the period picker (presets + custom range) and the bucket control; how `not-connected`, `not-built`, `empty` and `error` look so none can be mistaken for zero; comparison display (previous period) that does not colour an outcome as good or bad on its own; the `origin` filter in Sales; ranking tables with pagination; the PostHog "explore further" link; and the Analytics navigation item (added only with the working page). The lab must use clearly labelled demo values shaped exactly like these responses.
