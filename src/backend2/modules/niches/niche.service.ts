@@ -19,6 +19,7 @@ const toNiche = (row: repo.NicheRow): OwnerNiche => ({
   name: row.name,
   hidden: row.hidden,
   clientCount: Number(row.client_count),
+  leadCount: Number(row.lead_count),
   createdAt: new Date(row.created_at).toISOString(),
 })
 
@@ -93,12 +94,20 @@ export const deleteNiche = async (id: string): Promise<{ id: string; deleted: tr
     if (!row) throw missing()
 
     const clients = Number(row.client_count)
+    const leads = Number(row.lead_count)
 
-    if (clients > 0) {
-      throw nicheInUse(
-        `${clients === 1 ? 'One client uses' : `${clients} clients use`} this niche. Hide it instead.`,
-        { clientCount: clients },
-      )
+    if (clients + leads > 0) {
+      const uses = [
+        clients > 0 ? `${clients} ${clients === 1 ? 'client' : 'clients'}` : null,
+        leads > 0 ? `${leads} ${leads === 1 ? 'lead' : 'leads'}` : null,
+      ]
+        .filter(Boolean)
+        .join(' and ')
+
+      throw nicheInUse(`Used by ${uses}. Hide it instead.`, {
+        clientCount: clients,
+        leadCount: leads,
+      })
     }
 
     await repo.deleteNiche(row.id)

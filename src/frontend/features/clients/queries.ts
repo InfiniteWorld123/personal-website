@@ -113,10 +113,18 @@ export const useDeleteClient = () => {
   })
 }
 
+/** Leads carry niches too: a renamed or hidden niche must read the same there. */
 const useNicheMutation = <TInput, TOutput>(run: (input: TInput) => Promise<TOutput>) => {
+  const client = useQueryClient()
   const refresh = useRefresh()
 
-  return useMutation({ mutationFn: run, onSuccess: refresh })
+  return useMutation({
+    mutationFn: run,
+    onSuccess: async () => {
+      await refresh()
+      await client.invalidateQueries({ queryKey: ['backend2', 'leads'] })
+    },
+  })
 }
 
 export const useCreateNiche = () => useNicheMutation((name: string) => createNiche(name))

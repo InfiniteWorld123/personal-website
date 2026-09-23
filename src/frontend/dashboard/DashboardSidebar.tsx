@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNewCommentCount } from '#/frontend/features/blog-v2/queries'
 import { useInboxCounts } from '#/frontend/features/inbox-v2/queries'
+import { useDueFollowUpCount } from '#/frontend/features/leads-v2/queries'
 import { cn } from '#/frontend/lib/utils'
 import { DashboardMark } from './DashboardMark'
 import {
@@ -155,7 +156,7 @@ function NavRow({
 }
 
 /**
- * A count beside Blog (new comments) or Inbox (unread). Nothing when it is zero, or
+ * A count beside Blog (new comments), Inbox (unread) or Leads (follow-ups due). Nothing when it is zero, or
  * when Backend2 does not answer — a count is not worth an error on every
  * screen. Collapsed, it moves into the label that slides out of the rail.
  *
@@ -163,7 +164,15 @@ function NavRow({
  * the rail rule that hides the labels hides the count with them.
  */
 function NavCount({ kind, rail = false }: { kind: NonNullable<DashboardNavItem['count']>; rail?: boolean }) {
+  if (kind === 'leadsDue') return <LeadsDueCount rail={rail} />
+
   return kind === 'inboxUnread' ? <InboxCount rail={rail} /> : <CommentCount rail={rail} />
+}
+
+function LeadsDueCount({ rail }: { rail: boolean }) {
+  const count = useDueFollowUpCount().data?.due ?? 0
+
+  return <CountChip count={count} rail={rail} noun={count === 1 ? 'follow-up due' : 'follow-ups due'} railWord="due" />
 }
 
 function InboxCount({ rail }: { rail: boolean }) {

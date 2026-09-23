@@ -51,6 +51,7 @@ export const toOwnerClient = (row: ClientRow, links: LeadLinkRow[]): OwnerClient
     leadId: link.lead_id,
     how: link.how,
     linkedAt: iso(link.linked_at),
+    leadName: link.lead_name ?? null,
   })),
 })
 

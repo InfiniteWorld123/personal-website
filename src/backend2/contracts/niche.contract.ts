@@ -57,5 +57,7 @@ export type OwnerNiche = {
   hidden: boolean
   /** How many Clients (in or out of Trash) carry it. */
   clientCount: number
+  /** How many Leads (in or out of Trash) carry it. */
+  leadCount: number
   createdAt: string
 }

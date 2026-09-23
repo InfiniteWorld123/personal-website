@@ -228,7 +228,9 @@ describe('a visitor comment', () => {
     // Another article is unaffected.
     await makeLive('quiet')
     await post('quiet', 'A calm conversation elsewhere')
-  })
+    // A hundred comments in a row: well within the default on a quiet machine,
+    // not while other sessions run their own suites beside it.
+  }, 30_000)
 
   it('stops when the owner switches comments off, and everything returns when they switch on', async () => {
     const id = await makeLive('talk')

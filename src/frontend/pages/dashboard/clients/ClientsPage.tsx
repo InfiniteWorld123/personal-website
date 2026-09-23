@@ -73,10 +73,11 @@ export function ClientsPage({ openId }: { openId?: string }) {
   }
   const niches = useNiches({ pageSize: 100 })
 
-  // The server clamps a page past the end; follow it.
+  // The server clamps a page past the end; follow it — but only its answer
+  // for this page, not the previous page still shown while this one loads.
   useEffect(() => {
-    if (clients.data && clients.data.page !== page) setPage(clients.data.page)
-  }, [clients.data, page])
+    if (clients.data && !clients.isPlaceholderData && clients.data.page !== page) setPage(clients.data.page)
+  }, [clients.data, clients.isPlaceholderData, page])
 
   const open = (id: string | undefined) =>
     void navigate({ to: '/dashboard/clients', search: id ? { client: id } : {}, replace: false })

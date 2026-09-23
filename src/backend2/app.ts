@@ -12,6 +12,7 @@ import { ownerCalendarRoutes } from './modules/booking/booking.owner.route'
 import { publicBookingRoutes } from './modules/booking/booking.public.route'
 import { ownerClientRoutes } from './modules/clients/client.owner.route'
 import { ownerNicheRoutes } from './modules/niches/niche.owner.route'
+import { ownerLeadRoutes } from './modules/leads/lead.owner.route'
 import { ownerContentRoutes } from './modules/content/content.owner.route'
 import { inboundEmailRoutes } from './modules/inbox/inbox.ingress.route'
 import { ownerInboxRoutes } from './modules/inbox/inbox.owner.route'
@@ -112,6 +113,7 @@ const buildApp = () => {
         .use(ownerServiceRoutes)
         .use(ownerClientRoutes)
         .use(ownerNicheRoutes)
+        .use(ownerLeadRoutes)
         .use(ownerBlogRoutes)
         .use(ownerInboxRoutes)
         .use(ownerCalendarRoutes)

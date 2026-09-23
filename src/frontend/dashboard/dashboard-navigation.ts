@@ -27,9 +27,11 @@ export type DashboardNavItem = {
    * A live count beside the label. Blog's is the comments the owner has not
    * seen yet (approved choice 1A, 23 Sep 2026) — `docs/v2/blog.md` makes the
    * Dashboard the only place new comments are announced. Inbox's is the
-   * unread conversations (`docs/v2/inbox.md`, approved choice 6A).
+   * unread conversations (`docs/v2/inbox.md`, approved choice 6A). Leads'
+   * is the follow-ups due now — the whole follow-up notification
+   * (`docs/v2/leads.md`).
    */
-  count?: 'newBlogComments' | 'inboxUnread'
+  count?: 'newBlogComments' | 'inboxUnread' | 'leadsDue'
 }
 
 /**
@@ -63,7 +65,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Services', to: '/dashboard/services', icon: Tags },
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
   { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox, count: 'inboxUnread' },
-  { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
+  { label: 'Leads', to: '/dashboard/leads', icon: Handshake, count: 'leadsDue' },
   { label: 'Clients', to: '/dashboard/clients', icon: Users },
   { label: 'Content', to: '/dashboard/content', icon: FileText },
   { label: 'Blog', to: '/dashboard/blog', icon: Newspaper, count: 'newBlogComments' },

@@ -14,10 +14,12 @@ export type NicheRow = {
   created_at: Date
   updated_at: Date
   client_count: string | number
+  lead_count: string | number
 }
 
 const COLUMNS = `v2_niches.*,
-  (SELECT count(*) FROM v2_clients c WHERE c.niche_id = v2_niches.id) AS client_count`
+  (SELECT count(*) FROM v2_clients c WHERE c.niche_id = v2_niches.id) AS client_count,
+  (SELECT count(*) FROM v2_leads l WHERE l.niche_id = v2_niches.id) AS lead_count`
 
 export const findNiche = async (id: string): Promise<NicheRow | null> => {
   const { rows } = await getDb().query<NicheRow>(`SELECT ${COLUMNS} FROM v2_niches WHERE id = $1`, [
@@ -29,7 +31,7 @@ export const findNiche = async (id: string): Promise<NicheRow | null> => {
 
 export const lockNiche = async (id: string): Promise<NicheRow | null> => {
   const { rows } = await getDb().query<NicheRow>(
-    'SELECT *, 0 AS client_count FROM v2_niches WHERE id = $1 FOR UPDATE',
+    'SELECT *, 0 AS client_count, 0 AS lead_count FROM v2_niches WHERE id = $1 FOR UPDATE',
     [id],
   )
 

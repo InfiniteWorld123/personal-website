@@ -42,6 +42,8 @@ export type LeadLinkRow = {
   client_id: string
   how: 'created' | 'linked'
   linked_at: Date
+  /** Null once the Lead is deleted: the link row stays as the Client's history. */
+  lead_name: string | null
 }
 
 /** Every column, plus the niche's name for reading. */
@@ -250,7 +252,8 @@ export const insertLeadLink = async (input: {
 
 export const leadLinksFor = async (clientId: string): Promise<LeadLinkRow[]> => {
   const { rows } = await getDb().query<LeadLinkRow>(
-    `SELECT * FROM v2_client_lead_links WHERE client_id = $1 ORDER BY linked_at, lead_id`,
+    `SELECT k.*, (SELECT l.name FROM v2_leads l WHERE l.id = k.lead_id) AS lead_name
+       FROM v2_client_lead_links k WHERE k.client_id = $1 ORDER BY k.linked_at, k.lead_id`,
     [clientId],
   )
 

@@ -77,6 +77,15 @@ export type ApiErrorCode =
   | 'CLIENT_DELETE_BLOCKED'
   /* Niches, shared by Clients and Leads: a niche something still uses. */
   | 'NICHE_IN_USE'
+  /*
+   * Leads (`docs/v2/leads.md`): a likely duplicate, a Lead in Trash, a second
+   * open follow-up, a stage/source/reason still in use, and a locked choice.
+   */
+  | 'LEAD_DUPLICATE'
+  | 'LEAD_IN_TRASH'
+  | 'FOLLOW_UP_EXISTS'
+  | 'CHOICE_IN_USE'
+  | 'CHOICE_LOCKED'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -331,6 +340,30 @@ export const clientDeleteBlocked = make(
 
 /** A niche a Client or Lead still carries. It can be hidden instead. */
 export const nicheInUse = make(HttpStatus.CONFLICT, 'NICHE_IN_USE', 'That niche is still in use')
+
+/* -------------------------------------------------------------------- leads */
+
+/** Another Lead has this email or phone. The `details.candidates` name them. */
+export const leadDuplicate = make(
+  HttpStatus.CONFLICT,
+  'LEAD_DUPLICATE',
+  'A lead with this email or phone is already on file',
+)
+
+export const leadInTrash = make(HttpStatus.CONFLICT, 'LEAD_IN_TRASH', 'That lead is in Trash')
+
+/** One open follow-up per Lead. */
+export const followUpExists = make(
+  HttpStatus.CONFLICT,
+  'FOLLOW_UP_EXISTS',
+  'This lead already has a follow-up',
+)
+
+/** A stage, source or reason that Leads still use. It can be hidden instead. */
+export const choiceInUse = make(HttpStatus.CONFLICT, 'CHOICE_IN_USE', 'That is still in use')
+
+/** A permanent stage, `Unknown` or `Other`: fixed on purpose. */
+export const choiceLocked = make(HttpStatus.CONFLICT, 'CHOICE_LOCKED', 'That one cannot be changed')
 
 /* ------------------------------------------------------------------ booking */
 

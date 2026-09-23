@@ -59,9 +59,14 @@ function NotesForm({ client }: { client: OwnerClient }) {
   const [failure, setFailure] = useState<{ message: string; stale: boolean } | null>(null)
   const reload = useClient(client.id)
   const inTrash = client.trashedAt !== null
+  // The version these notes were loaded from. A save sends its revision, never
+  // the newest one a background refresh brought in, so a change made in
+  // another tab is refused as stale instead of silently overwritten.
+  const [base, setBase] = useState({ notes: client.notes, revision: client.revision })
+  const [initial] = useState(() => ({ notes: client.notes }))
 
   const form = useForm({
-    defaultValues: { notes: client.notes },
+    defaultValues: initial,
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' }),
     validators: {
       onDynamic: ({ value }) =>
@@ -74,8 +79,13 @@ function NotesForm({ client }: { client: OwnerClient }) {
       setFailure(null)
 
       try {
-        const saved = await patch.mutateAsync({ id: client.id, revision: client.revision, notes: value.notes })
-        formApi.reset({ notes: saved.notes })
+        const saved = await patch.mutateAsync({ id: client.id, revision: base.revision, notes: value.notes })
+        const typed = formApi.state.values.notes
+
+        setBase({ notes: saved.notes, revision: saved.revision })
+        formApi.reset({ notes: saved.notes }, { keepDefaultValues: true })
+        // What was typed while the save ran stays, still unsaved.
+        if (typed !== value.notes) formApi.setFieldValue('notes', typed)
       } catch (caught) {
         const stale = caught instanceof ApiRequestError && caught.code === 'CONFLICT'
         setFailure({
@@ -90,11 +100,19 @@ function NotesForm({ client }: { client: OwnerClient }) {
     },
   })
 
-  // A new version from the server replaces the notes only when nothing is being typed.
-  const dirty = useStore(form.store, (state) => state.values.notes !== client.notes)
+  const notes = useStore(form.store, (state) => state.values.notes)
+  const submitting = useStore(form.store, (state) => state.isSubmitting)
+  const dirty = notes !== base.notes
+
+  // A newer version from the server replaces the notes only when nothing is being typed.
   useEffect(() => {
-    if (!dirty) form.reset({ notes: client.notes })
-  }, [client.notes, client.revision])
+    if (submitting || client.revision <= base.revision) return
+    // Typing over notes changed elsewhere keeps the older base, so its save is refused as stale.
+    if (dirty && client.notes !== base.notes) return
+
+    setBase({ notes: client.notes, revision: client.revision })
+    if (!dirty) form.reset({ notes: client.notes }, { keepDefaultValues: true })
+  }, [client.notes, client.revision, submitting, dirty])
 
   return (
     <form
@@ -144,8 +162,12 @@ function NotesForm({ client }: { client: OwnerClient }) {
               className="dash-btn dash-btn-quiet h-8 text-[12px]"
               onClick={async () => {
                 const fresh = await reload.refetch()
-                if (fresh.data) form.reset({ notes: fresh.data.notes })
-                setFailure(null)
+
+                if (fresh.isSuccess) {
+                  setBase({ notes: fresh.data.notes, revision: fresh.data.revision })
+                  form.reset({ notes: fresh.data.notes }, { keepDefaultValues: true })
+                  setFailure(null)
+                }
               }}
             >
               Load the newer version

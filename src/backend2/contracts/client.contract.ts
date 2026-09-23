@@ -273,6 +273,8 @@ export type ClientLeadLink = {
   /** `created`: this Lead made the Client. `linked`: joined an existing one. */
   how: 'created' | 'linked'
   linkedAt: string
+  /** The Lead's name, or null once the Lead was deleted permanently. */
+  leadName: string | null
 }
 
 export type OwnerClient = {

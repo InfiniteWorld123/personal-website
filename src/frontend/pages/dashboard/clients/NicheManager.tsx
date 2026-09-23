@@ -141,6 +141,8 @@ function NicheRow({ niche }: { niche: OwnerNiche }) {
   const remove = useDeleteNiche()
   const [renaming, setRenaming] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
+  // Clients and Leads share the list: a niche either one uses is in use.
+  const used = niche.clientCount + niche.leadCount
 
   if (renaming) {
     return (
@@ -166,9 +168,16 @@ function NicheRow({ niche }: { niche: OwnerNiche }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px] font-semibold">{niche.name}</span>
           <span className="text-[11.5px] text-[var(--dash-quiet)]">
-            {niche.clientCount === 0
+            {used === 0
               ? 'Not used yet'
-              : `${niche.clientCount} ${niche.clientCount === 1 ? 'client' : 'clients'}`}
+              : [
+                  niche.clientCount > 0
+                    ? `${niche.clientCount} ${niche.clientCount === 1 ? 'client' : 'clients'}`
+                    : null,
+                  niche.leadCount > 0 ? `${niche.leadCount} ${niche.leadCount === 1 ? 'lead' : 'leads'}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
           </span>
         </span>
         {niche.hidden ? <StatusChip tone="outline">Hidden</StatusChip> : null}
@@ -200,14 +209,16 @@ function NicheRow({ niche }: { niche: OwnerNiche }) {
           type="button"
           className="dash-btn dash-btn-ghost h-8 px-2"
           aria-label={`Delete ${niche.name}`}
-          title={niche.clientCount > 0 ? 'In use — hide it instead' : 'Delete'}
-          disabled={remove.isPending || niche.clientCount > 0}
-          onClick={() =>
-            remove.mutate(niche.id, {
-              onSuccess: () => notify.success(`${niche.name} deleted`),
-              onError: (error) => setFailure(error.message),
-            })
-          }
+          title={used > 0 ? 'In use — hide it instead' : 'Delete'}
+          disabled={remove.isPending || used > 0}
+          onClick={async () => {
+            try {
+              await remove.mutateAsync(niche.id)
+              notify.success(`${niche.name} deleted`)
+            } catch (error) {
+              setFailure(error instanceof Error ? error.message : 'The niche could not be deleted.')
+            }
+          }}
         >
           <Trash2 className="size-3.5" aria-hidden="true" />
         </button>

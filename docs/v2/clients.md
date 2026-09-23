@@ -188,7 +188,8 @@ does not establish the full module is finished.
 Backend2 Clients is built and verified locally. The Dashboard screens are not
 built yet (they wait for the Design Lab and the owner's visual approval).
 
-- **Migration** `0008_clients.sql` (not applied to Neon): `v2_clients` holds
+- **Migration** `0008_clients.sql` (applied to Neon on 23 Sep 2026, with the
+  owner's approval, together with 0009–0011): `v2_clients` holds
   one Client file (Person/Company in the same columns, so a type change loses
   nothing); `v2_client_lead_links` is keyed by the Lead, which is what makes a
   repeated `Won` reuse the same Client and never append notes twice. Its key to
