@@ -38,6 +38,11 @@ export type ApiErrorCode =
   | 'DUPLICATE_COMMENT'
   | 'TAG_IN_USE'
   | 'ARTICLE_SCHEDULED'
+  /*
+   * Content (`docs/v2/content.md`): a Legal field written without the editor's
+   * deliberate unlock.
+   */
+  | 'LEGAL_LOCKED'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -208,4 +213,17 @@ export const articleScheduled = make(
   HttpStatus.CONFLICT,
   'ARTICLE_SCHEDULED',
   'This article is scheduled. Cancel the schedule before publishing it now.',
+)
+
+/* ------------------------------------------------------------------ content */
+
+/**
+ * Legal text is locked until the owner unlocks it in the editor on purpose.
+ * The server refuses a Legal write that does not say it was unlocked, so an
+ * accidental focus-and-blur can never change the Impressum.
+ */
+export const legalLocked = make(
+  HttpStatus.CONFLICT,
+  'LEGAL_LOCKED',
+  'Legal text is locked. Unlock it before changing it.',
 )

@@ -1,8 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { NotBuiltYet } from '#/frontend/pages/dashboard/NotBuiltYet'
+import { ContentPage, parseContentSearch } from '#/frontend/pages/dashboard/content/ContentPage'
 
-/** In the navigation, and honest about having no behaviour yet. */
+/**
+ * The website's static copy, in three languages. `docs/v2/content.md` owns
+ * what it does; the page, language and view travel in the address.
+ */
 export const Route = createFileRoute('/dashboard/content')({
-  head: () => ({ meta: [{ title: 'Content · Dashboard' }] }),
-  component: () => <NotBuiltYet module="content" />,
+  validateSearch: parseContentSearch,
+  head: () => ({
+    meta: [
+      { title: 'Content · Dashboard' },
+      { name: 'robots', content: 'noindex, nofollow' },
+    ],
+  }),
+  component: ContentPage,
 })

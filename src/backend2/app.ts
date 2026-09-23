@@ -8,6 +8,8 @@ import { ownerRoutesEnabled } from './security/local-only'
 import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
 import { ownerBlogRoutes } from './modules/blog/blog.owner.route'
+import { ownerContentRoutes } from './modules/content/content.owner.route'
+import { publicContentRoutes } from './modules/content/content.public.route'
 import { publicBlogRoutes } from './modules/blog/blog.public.route'
 import { ownerMediaRoutes } from './modules/media/media.owner.route'
 import { publicMediaRoutes } from './modules/media/media.public.route'
@@ -102,7 +104,8 @@ const buildApp = () => {
         .use(ownerMediaRoutes)
         .use(ownerProjectRoutes)
         .use(ownerServiceRoutes)
-        .use(ownerBlogRoutes),
+        .use(ownerBlogRoutes)
+        .use(ownerContentRoutes),
     )
   }
 
@@ -134,12 +137,18 @@ const buildApp = () => {
    * answers, so the live `/blog` keeps reading the legacy backend until an
    * approved cutover.
    */
+  /*
+   * And the public static copy (`docs/v2/content.md`). Where no V2 database
+   * exists it does not answer, so the live site keeps its current wording
+   * until an approved cutover.
+   */
   if (isDatabaseConfigured()) {
     app
       .use(publicMediaRoutes)
       .use(publicProjectRoutes)
       .use(publicServiceRoutes)
       .use(publicBlogRoutes)
+      .use(publicContentRoutes)
   }
 
   return app.get('/', () =>
