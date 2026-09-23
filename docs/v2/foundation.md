@@ -93,6 +93,7 @@ Where the list stands today:
 - Calendar
 - Inbox
 - Leads
+- Clients
 - Content
 - Blog
 - Media
@@ -105,6 +106,11 @@ Media was added on 22 Sep 2026, when the shared library was built: it is a
 place the owner visits to organise folders, delete old files and see which of
 their files a visitor can currently reach, and none of that belongs inside the
 picker other modules open. `docs/v2/media.md` records that decision.
+
+Clients was added on 23 Sep 2026, directly after Leads (`docs/v2/clients.md`).
+Analytics (`docs/v2/analytics.md`) and a private conversation page for the
+public assistant (`docs/v2/ai-assistant.md`) are planned; each gets its menu
+item only when its approved screen works.
 
 Video calls belong to the booking and calendar domain. Their exact navigation
 placement is undecided.
