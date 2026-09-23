@@ -191,6 +191,16 @@ const ChildrenSchema: v.GenericSchema<RichTextNode[]> = v.lazy(() =>
   v.pipe(v.array(NodeSchema), v.maxLength(2000)),
 ) as v.GenericSchema<RichTextNode[]>
 
+/**
+ * One node, with every rule above.
+ *
+ * Exported so another module's document can reuse the same nodes and add its
+ * own capabilities around them — the Blog allows a YouTube embed at the top of
+ * an article, which a case study does not. The case study's own schema below
+ * is unchanged by that.
+ */
+export const RichTextNodeSchema: v.GenericSchema<RichTextNode> = NodeSchema
+
 export const RichTextDocSchema: v.GenericSchema<RichTextDoc> = v.pipe(
   v.object({
     type: v.literal('doc'),

@@ -27,6 +27,17 @@ export type ApiErrorCode =
   | 'FOLDER_CYCLE'
   | 'FOLDER_DEPTH_EXCEEDED'
   | 'NAME_TAKEN'
+  /*
+   * Blog (`docs/v2/blog.md`). A visitor's comment can be refused for reasons
+   * the website has to say in German, English or Arabic, so each one is a code
+   * of its own rather than a sentence to parse; `details.reason` narrows the
+   * two broad ones further.
+   */
+  | 'COMMENTS_CLOSED'
+  | 'COMMENT_REJECTED'
+  | 'DUPLICATE_COMMENT'
+  | 'TAG_IN_USE'
+  | 'ARTICLE_SCHEDULED'
 
 /**
  * Every failure Backend2 reports on purpose. Anything that is not one of
@@ -162,4 +173,39 @@ export const nameTaken = make(
   HttpStatus.CONFLICT,
   'NAME_TAKEN',
   'Something with that name is already here',
+)
+
+/* --------------------------------------------------------------------- blog */
+
+/** The owner switched comments off for this article. */
+export const commentsClosed = make(
+  HttpStatus.CONFLICT,
+  'COMMENTS_CLOSED',
+  'Comments are closed for this article.',
+)
+
+/** A comment whose shape is refused: markup, too many links, the hidden field filled in. */
+export const commentRejected = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'COMMENT_REJECTED',
+  'Your comment could not be posted.',
+)
+
+export const duplicateComment = make(
+  HttpStatus.CONFLICT,
+  'DUPLICATE_COMMENT',
+  'This comment has already been posted.',
+)
+
+/** A tag an article still carries. The `details` name the articles. */
+export const tagInUse = make(HttpStatus.CONFLICT, 'TAG_IN_USE', 'That tag is still in use')
+
+/**
+ * Publishing an article that is waiting for its schedule. `docs/v2/blog.md`:
+ * the schedule is cancelled or replaced explicitly, never overtaken silently.
+ */
+export const articleScheduled = make(
+  HttpStatus.CONFLICT,
+  'ARTICLE_SCHEDULED',
+  'This article is scheduled. Cancel the schedule before publishing it now.',
 )

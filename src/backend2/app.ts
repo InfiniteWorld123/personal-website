@@ -7,6 +7,8 @@ import { HttpStatus } from './http/status'
 import { ownerRoutesEnabled } from './security/local-only'
 import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
+import { ownerBlogRoutes } from './modules/blog/blog.owner.route'
+import { publicBlogRoutes } from './modules/blog/blog.public.route'
 import { ownerMediaRoutes } from './modules/media/media.owner.route'
 import { publicMediaRoutes } from './modules/media/media.public.route'
 import { ownerProjectRoutes } from './modules/projects/project.owner.route'
@@ -99,7 +101,8 @@ const buildApp = () => {
         .use(ownerSecurityRoutes)
         .use(ownerMediaRoutes)
         .use(ownerProjectRoutes)
-        .use(ownerServiceRoutes),
+        .use(ownerServiceRoutes)
+        .use(ownerBlogRoutes),
     )
   }
 
@@ -125,8 +128,18 @@ const buildApp = () => {
    * reason: where no V2 database exists they do not answer, so the live
    * `/services` page keeps its current content until an approved cutover.
    */
+  /*
+   * And the public Blog (`docs/v2/blog.md`): the reads, and a visitor's
+   * comments, reads and likes. Where no V2 database exists none of it
+   * answers, so the live `/blog` keeps reading the legacy backend until an
+   * approved cutover.
+   */
   if (isDatabaseConfigured()) {
-    app.use(publicMediaRoutes).use(publicProjectRoutes).use(publicServiceRoutes)
+    app
+      .use(publicMediaRoutes)
+      .use(publicProjectRoutes)
+      .use(publicServiceRoutes)
+      .use(publicBlogRoutes)
   }
 
   return app.get('/', () =>

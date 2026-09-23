@@ -21,6 +21,7 @@
     "db2:migrate": "bun src/backend2/db/migrate.ts",
     "db2:owner:create": "bun src/backend2/db/bootstrap-owner.ts",
     "db2:media:sweep": "bun src/backend2/db/sweep-media.ts",
+    "db2:blog:publish-due": "bun src/backend2/db/publish-due-posts.ts",
     "db:seed:admin": "bun src/backend/db/seed/seed-admin.ts",
     "db:seed:projects": "bun src/backend/db/seed/seed-projects.ts",
     "db:seed:booking": "bun src/backend/db/seed/seed-booking.ts"
