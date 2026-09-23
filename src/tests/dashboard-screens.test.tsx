@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
 /**
@@ -27,6 +28,18 @@ const { OverviewPage } = await import('#/frontend/pages/dashboard/OverviewPage')
 const { NotBuiltYet } = await import('#/frontend/pages/dashboard/NotBuiltYet')
 
 afterEach(cleanup)
+
+/**
+ * The sidebar reads one live figure — the new-comment count beside Blog — so
+ * it lives inside a query client, as it does in the app. With no Backend2 to
+ * answer, the count is simply absent.
+ */
+const renderSidebar = () =>
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <DashboardSidebar />
+    </QueryClientProvider>,
+  )
 
 describe('the Overview', () => {
   it('shows what is built and what is not, and never a figure', () => {
@@ -90,10 +103,16 @@ describe('nothing in the sidebar overrides a rule that has two states', () => {
       prefixes: ['bg-', 'w-', 'h-'],
       why: 'this bar turns blue when its section is the page you are on',
     },
+    {
+      klass: 'dash-nav-text',
+      exact: ['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline-block', 'inline'],
+      prefixes: [],
+      why: 'the collapsed rail hides every label — and the Blog count with them',
+    },
   ]
 
   it.each(OWNED)('leaves $klass alone, because $why', ({ klass, exact, prefixes }) => {
-    render(<DashboardSidebar />)
+    renderSidebar()
 
     const nodes = document.querySelectorAll(`.${klass}`)
     expect(nodes.length).toBeGreaterThan(0)

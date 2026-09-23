@@ -723,6 +723,15 @@
 
   /* On a filled pill the count and the overdue dot have to leave the neutral
      palette, or they read as holes punched in the brand colour. */
+  .dash-nav-count {
+    background: var(--dash-brand);
+    color: #ffffff;
+  }
+
+  [data-dashboard][data-nav='pill'] .dash-nav[data-active='true'] .dash-nav-count {
+    background: #ffffff;
+    color: var(--dash-brand);
+  }
 
 
   /* Collapsed, the pill becomes a rounded square around the icon. The rail's

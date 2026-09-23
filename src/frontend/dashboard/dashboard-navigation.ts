@@ -22,6 +22,12 @@ export type DashboardNavItem = {
    * A row that one day carries a real count will say it here too.
    */
   railLabel?: string
+  /**
+   * A live count beside the label. Only Blog has one: the comments the owner
+   * has not seen yet (approved choice 1A, 23 Sep 2026) — `docs/v2/blog.md`
+   * makes the Dashboard the only place new comments are announced.
+   */
+  count?: 'newBlogComments'
 }
 
 /**
@@ -53,7 +59,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox },
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
   { label: 'Content', to: '/dashboard/content', icon: FileText },
-  { label: 'Blog', to: '/dashboard/blog', icon: Newspaper },
+  { label: 'Blog', to: '/dashboard/blog', icon: Newspaper, count: 'newBlogComments' },
   { label: 'Media', to: '/dashboard/media', icon: Images },
   { label: 'Invoices', to: '/dashboard/invoices', icon: ReceiptEuro },
 ]

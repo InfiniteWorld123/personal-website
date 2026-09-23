@@ -43,7 +43,7 @@ import { cn } from '#/frontend/lib/utils'
  * gains tables, which the blog does not have.
  */
 
-const ownerImageUrl = (mediaId: string): string =>
+export const ownerImageUrl = (mediaId: string): string =>
   `/api/v2/owner/media/files/${mediaId}/content`
 
 /**
@@ -53,8 +53,11 @@ const ownerImageUrl = (mediaId: string): string =>
  * the picture is visible while editing, and dropped on the way back out, so
  * the stored document never contains an address that could go stale or point
  * somewhere a visitor is not allowed to look.
+ *
+ * Exported for the article editor, which draws the same node with its
+ * alternative text beside it.
  */
-const MediaImage = Image.extend({
+export const MediaImage = Image.extend({
   addAttributes() {
     return {
       mediaId: {
@@ -77,7 +80,7 @@ const MediaImage = Image.extend({
 
 /* -------------------------------------------------------------------- toolbar */
 
-function ToolbarButton({
+export function ToolbarButton({
   label,
   icon,
   active,
@@ -113,7 +116,20 @@ function ToolbarButton({
   )
 }
 
-function Toolbar({ editor, onPickImage }: { editor: Editor; onPickImage: () => void }) {
+/**
+ * The formatting row. Shared with the article editor, which adds its own
+ * buttons after the table — a module-specific capability, in the words of
+ * `docs/v2/blog.md`, on one editor rather than a second one.
+ */
+export function Toolbar({
+  editor,
+  onPickImage,
+  extra,
+}: {
+  editor: Editor
+  onPickImage: () => void
+  extra?: React.ReactNode
+}) {
   const setLink = () => {
     const current = (editor.getAttributes('link').href as string | undefined) ?? ''
     const entered = window.prompt('Address for this link', current)
@@ -236,6 +252,7 @@ function Toolbar({ editor, onPickImage }: { editor: Editor; onPickImage: () => v
           editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
         }
       />
+      {extra}
 
       <span className="ms-auto flex gap-0.5">
         <ToolbarButton
@@ -328,29 +345,7 @@ export function CaseStudyEditor({
         editor={editor}
         dir={language === 'ar' ? 'rtl' : 'ltr'}
         aria-label={label}
-        className={cn(
-          'min-h-48 px-3.5 py-3 text-[13px] leading-relaxed',
-          '[&_.ProseMirror]:outline-none',
-          '[&_h2]:mt-4 [&_h2]:mb-1.5 [&_h2]:text-[16px] [&_h2]:font-semibold',
-          '[&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-[14px] [&_h3]:font-semibold',
-          '[&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:text-[13px] [&_h4]:font-semibold',
-          '[&_p]:my-1.5',
-          '[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:ps-5',
-          '[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:ps-5',
-          '[&_blockquote]:my-2 [&_blockquote]:border-s-2 [&_blockquote]:border-[var(--dash-brand)] [&_blockquote]:ps-3 [&_blockquote]:text-[var(--dash-quiet)]',
-          '[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-[var(--dash-slab)] [&_pre]:p-3 [&_pre]:text-[12px] [&_pre]:text-[var(--dash-slab-ink)]',
-          '[&_code]:rounded [&_code]:bg-[var(--dash-chip)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px]',
-          '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
-          '[&_hr]:my-4 [&_hr]:border-[var(--dash-line)]',
-          '[&_a]:text-[var(--dash-brand)] [&_a]:underline',
-          '[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_img]:border [&_img]:border-[var(--dash-line)]',
-          '[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse',
-          '[&_td]:border [&_td]:border-[var(--dash-line)] [&_td]:p-1.5',
-          '[&_th]:border [&_th]:border-[var(--dash-line)] [&_th]:bg-[var(--dash-chip)] [&_th]:p-1.5 [&_th]:font-semibold',
-          // The placeholder of an empty document, so the box is not a blank
-          // rectangle with no invitation in it.
-          '[&_.ProseMirror.is-editor-empty:first-child::before]:text-[var(--dash-quiet)]',
-        )}
+        className={RICH_TEXT_CONTENT_CLASS}
       />
 
       <p className="border-t border-[var(--dash-line)] px-3.5 py-2 text-[11.5px] text-[var(--dash-quiet)]">
@@ -370,3 +365,31 @@ export function CaseStudyEditor({
     </div>
   )
 }
+
+/**
+ * How a document looks while it is written. Shared with the article editor,
+ * so a heading is the same heading in a case study and in an article.
+ */
+export const RICH_TEXT_CONTENT_CLASS = cn(
+  'min-h-48 px-3.5 py-3 text-[13px] leading-relaxed',
+  '[&_.ProseMirror]:outline-none',
+  '[&_h2]:mt-4 [&_h2]:mb-1.5 [&_h2]:text-[16px] [&_h2]:font-semibold',
+  '[&_h3]:mt-3 [&_h3]:mb-1 [&_h3]:text-[14px] [&_h3]:font-semibold',
+  '[&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:text-[13px] [&_h4]:font-semibold',
+  '[&_p]:my-1.5',
+  '[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:ps-5',
+  '[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:ps-5',
+  '[&_blockquote]:my-2 [&_blockquote]:border-s-2 [&_blockquote]:border-[var(--dash-brand)] [&_blockquote]:ps-3 [&_blockquote]:text-[var(--dash-quiet)]',
+  '[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-[var(--dash-slab)] [&_pre]:p-3 [&_pre]:text-[12px] [&_pre]:text-[var(--dash-slab-ink)]',
+  '[&_code]:rounded [&_code]:bg-[var(--dash-chip)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px]',
+  '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
+  '[&_hr]:my-4 [&_hr]:border-[var(--dash-line)]',
+  '[&_a]:text-[var(--dash-brand)] [&_a]:underline',
+  '[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-[9px] [&_img]:border [&_img]:border-[var(--dash-line)]',
+  '[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse',
+  '[&_td]:border [&_td]:border-[var(--dash-line)] [&_td]:p-1.5',
+  '[&_th]:border [&_th]:border-[var(--dash-line)] [&_th]:bg-[var(--dash-chip)] [&_th]:p-1.5 [&_th]:font-semibold',
+  // The placeholder of an empty document, so the box is not a blank
+  // rectangle with no invitation in it.
+  '[&_.ProseMirror.is-editor-empty:first-child::before]:text-[var(--dash-quiet)]',
+)
