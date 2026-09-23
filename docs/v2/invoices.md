@@ -138,3 +138,14 @@ All take an optional `includeTest` (default `false` = live only; the answer repo
 **Not verified / blocked:** no production build or Worker deploy was run (the PDF renderer bundles for a browser target without Node built-ins; it adds ~2 MB unminified to the Worker bundle, mostly the embedded font); the migration has **not** been applied to the owner's Neon database (the owner runs `bun run db2:migrate`); no live key, live charge or real email; the webhook has not been registered in the Stripe dashboard; no scheduler calls the billing job yet; Arabic PDFs refused; every legal question above is open. Nothing here makes real invoicing ready.
 
 **Frontend (Design Lab next):** Invoice list (filters: mode, status, client, year, search; test badge), invoice editor (client picker + quick-create, recipient, lines with Service picker, discount, tax/reverse-charge, installments with sum checker, payment methods, EUR→USD helper, live issue checklist), preview + issue confirmation, invoice detail (document downloads DE/EN, send → Inbox, payment link, payments/void/receipt, refunds, cancel/correct with refundable amount, history), subscriptions list + editor + detail (periods, terms, discounts, free ranges, pause/resume/end, card-setup link and card status), notices/attention list, Invoice settings (seller, tax mode, bank, test recipient, readiness), yearly export button, payments ledger.
+
+
+## Design Lab approval — 24 Sep 2026
+
+The owner approved the Invoices Design Lab (https://claude.ai/artifact/9X6xRM8szgJAYspEUkRufa)
+with every recommendation: (1) keep the open/overdue totals above the list,
+per currency; (2) paying in parts is **one invoice with a payment plan**;
+(3) the site's “YW” mark appears top-right on invoice PDFs; (4) cash receipts
+stay an on-demand button; (5) manual subscriptions prepare their draft
+**7 days** before the period. The Arabic PDF copy stays unavailable until a
+working Arabic font exists. Production screens follow the lab.

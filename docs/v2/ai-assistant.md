@@ -106,3 +106,16 @@ Owner (inside the `/owner` fence: 404 off-local or without `BACKEND2_OWNER_API=l
 
 - **Public widget**: read `/assistant/status` first; hide or show a friendly "use the contact form" state when `enabled` is false; show the notice (and privacy link) before the first question; keep `conversationId` in the tab (session storage) and send it back; render `answer.text` as plain text with line breaks and `•` bullets, `sources` as links, `links` as Contact/Booking buttons; RTL for `language: 'ar'` per answer (the answer language can differ from the page); states for sending, `429` (wait and retry), `409 daily_limit`/`disabled` (contact fallback), `422` (too long; counter from `limits.messageMaxLength`), network error. It must not block the page. Existing public widget design is preserved unless the owner approves a change.
 - **Owner transcript viewer** (Dashboard, English, not a Dashboard assistant): paginated list with language/date/outcome filters and search, empty/loading/error states; detail with the visitor/assistant turns, outcome and source links; deliberate delete confirmation ("this deletes the whole conversation permanently"); a settings panel with the on/off switch and retention (`manual` or N days) plus the privacy/retention explanation above; a small usage panel (questions, unanswered, provider calls vs cap, cost 0).
+
+
+## Design Lab approval — 24 Sep 2026
+
+The owner approved the Assistant Design Lab
+(https://claude.ai/artifact/PJvFJ8hXmoZnwooMJxLzd5) with every recommendation:
+the public widget keeps today's look and **changes its notice** from “nobody
+reads along” to the new wording (answers come from the website; conversations
+are saved so Yaman can improve the site; privacy link) — an approved visible
+change, applied when the widget moves to V2 at the public cutover; the private
+conversation page gets **its own “Assistant” menu item**; retention defaults
+to **until the owner deletes**, with the automatic-deletion option and the
+privacy warning shown beside it.

@@ -128,3 +128,13 @@ States: `ready` (checked; `0` is a real zero), `empty` (checked, nothing to meas
 ### What the Analytics / Overview Design Lab needs
 
 Frontend questions to settle first (after this backend): the Overview's four headline cards and the glimpse layout; how Analytics sections are navigated (tabs vs one long page); chart types per figure (series → line/bar, breakdowns → bars or a donut, rates with their denominator); the period picker (presets + custom range) and the bucket control; how `not-connected`, `not-built`, `empty` and `error` look so none can be mistaken for zero; comparison display (previous period) that does not colour an outcome as good or bad on its own; the `origin` filter in Sales; ranking tables with pagination; the PostHog "explore further" link; and the Analytics navigation item (added only with the working page). The lab must use clearly labelled demo values shaped exactly like these responses.
+
+
+## Design Lab approval — 24 Sep 2026
+
+The owner approved the Overview & Analytics Design Lab
+(https://claude.ai/artifact/T2LvJTV2E81LKd5wPq6jtE) with every recommendation:
+Overview shows the four headline figures first, then “Needs you” and “This
+week”; the greeting line stays; Analytics sections are **tabs**; the default
+period is **30 days**. Every card has an ⓘ definition and a table view; states
+never show a fake zero. The Analytics menu item is added with the working page.
