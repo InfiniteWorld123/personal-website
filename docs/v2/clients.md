@@ -1,6 +1,7 @@
 # Clients V2 — product, backend, and frontend plan
 
-Status: planning specification for owner review. This records the owner's
+Status: **Backend2 and the Dashboard screens built and committed (23 Sep 2026);
+see the implementation records below.** This records the owner's
 answers for the Clients module and the approved `Won` handoff from Leads.
 The owner has resolved the reversal behavior below. This document does not
 authorize deployment, public cutover, a commit, or a push.

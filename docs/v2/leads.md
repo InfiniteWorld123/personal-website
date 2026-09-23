@@ -1,6 +1,8 @@
 # Leads V2 — product, backend, and frontend plan
 
-Status: planning specification for owner review. The owner has chosen the
+Status: **Backend2 and the Dashboard screens built and committed (23 Sep 2026);
+see the implementation records below. The Inbox/Booking “Create lead” buttons
+are still open.** The owner has chosen the
 business workflow below. Read `docs/v2/clients.md` for the planned Client
 file and the `Won` conversion and reversal contract. Do not claim Leads is
 complete before conversion works.
