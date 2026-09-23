@@ -12,6 +12,11 @@ import { cn } from '#/frontend/lib/utils'
  * light passes over the photo. The angle is smaller than on the cards: a face
  * tolerates far less perspective than a rectangle before it looks wrong.
  */
+const PORTRAIT_BASE = site.heroPortrait.replace(/\.png$/, '')
+
+/* The cutout is 97% of `.portrait-outer`, whose widths are in styles.css. */
+const PORTRAIT_SIZES = '(min-width: 1280px) 524px, (min-width: 1024px) 37vw, (min-width: 768px) 41vw, 86vw'
+
 export function PortraitBlob({ alt, className }: { alt: string; className?: string }) {
   const tilt = useTilt<HTMLDivElement>({ max: 9, spot: 0.34 })
 
@@ -22,7 +27,17 @@ export function PortraitBlob({ alt, className }: { alt: string; className?: stri
         <div className="portrait-blob-glow" />
       </div>
       <div className="portrait-photo-frame">
-        <img src={site.heroPortrait} alt={alt} className="portrait-cutout" width={1000} height={966} fetchPriority="high" />
+        {/*
+         * The PNG is the fallback and the image search engines see; browsers
+         * that read AVIF or WebP take a copy a fraction of its size. The frame
+         * is never wider than 540px, so 560w serves ordinary screens and
+         * 1000w (the PNG's own width) the sharp ones.
+         */}
+        <picture>
+          <source type="image/avif" srcSet={`${PORTRAIT_BASE}-560.avif 560w, ${PORTRAIT_BASE}-1000.avif 1000w`} sizes={PORTRAIT_SIZES} />
+          <source type="image/webp" srcSet={`${PORTRAIT_BASE}-560.webp 560w, ${PORTRAIT_BASE}-1000.webp 1000w`} sizes={PORTRAIT_SIZES} />
+          <img src={site.heroPortrait} alt={alt} className="portrait-cutout" width={1000} height={966} fetchPriority="high" />
+        </picture>
       </div>
       <span className="portrait-spot" aria-hidden="true" />
     </div>

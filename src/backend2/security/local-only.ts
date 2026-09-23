@@ -1,3 +1,5 @@
+import { isProductionEnvironment } from './runtime-mode'
+
 /**
  * The fence around every owner-only Backend2 route.
  *
@@ -52,7 +54,7 @@ export const decideLocalOnly = (input: {
 export const ownerRoutesEnabled = (
   environment: Record<string, string | undefined> = process.env,
 ): boolean =>
-  environment.BACKEND2_OWNER_API?.trim() === 'local' && environment.NODE_ENV !== 'production'
+  environment.BACKEND2_OWNER_API?.trim() === 'local' && !isProductionEnvironment(environment)
 
 /**
  * Whether the Projects and media owner routes demand a V2 session on top of
@@ -85,7 +87,7 @@ export const isLocalOwnerRequest = (
 
   return decideLocalOnly({
     flag: environment.BACKEND2_OWNER_API,
-    nodeEnv: environment.NODE_ENV,
+    nodeEnv: isProductionEnvironment(environment) ? 'production' : environment.NODE_ENV,
     hostname,
   })
 }

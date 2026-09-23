@@ -1,11 +1,19 @@
-import {
-  BOOKING_RANGE_FILTERS,
-  BOOKING_STATUS_FILTERS,
-  type BookingFilterInput,
-  type BookingRangeFilter,
+import type {
+  BOOKING_STATUS_FILTERS as BookingStatusFilters,
+  BookingFilterInput,
+  BookingRangeFilter,
 } from '#/shared/validation/booking.validation'
 
-type StatusFilter = (typeof BOOKING_STATUS_FILTERS)[number]
+type StatusFilter = (typeof BookingStatusFilters)[number]
+
+/*
+ * Spelled out rather than imported: this runs in a route's `validateSearch`,
+ * which every page of the site loads, and importing the validation module
+ * brought its schemas and the validation library into the public bundle.
+ * `route-search-constants.test.ts` keeps the two lists equal.
+ */
+export const BOOKING_STATUS_FILTERS = ['all', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW'] as const satisfies readonly StatusFilter[]
+export const BOOKING_RANGE_FILTERS = ['upcoming', 'past', 'all'] as const satisfies readonly BookingRangeFilter[]
 
 /**
  * The list's filters live in the URL, so a filtered view can be bookmarked and

@@ -1,3 +1,5 @@
+import { isProductionEnvironment } from '../../security/runtime-mode'
+
 /**
  * How an email leaves: Resend in a live deployment, a fake everywhere else.
  *
@@ -180,7 +182,7 @@ export const resolveInboxTransport = (environment: Env = process.env): InboxTran
 
   if (inboxSendMode(environment) === 'live' && apiKey) return resendTransport(apiKey)
 
-  if (environment.NODE_ENV === 'production') {
+  if (isProductionEnvironment(environment)) {
     return {
       mode: 'live',
       send: async () => ({

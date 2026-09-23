@@ -1,6 +1,7 @@
 import { storageUnavailable } from '../http/error'
 import { createLocalDiskStore } from './store.local-disk'
 import { createR2BindingStore, getMediaBinding } from './store.r2-binding'
+import { isProductionEnvironment } from '../security/runtime-mode'
 
 /**
  * Where the vault's bytes live.
@@ -67,7 +68,7 @@ export const resolveMediaStore = async (
 
   if (binding) return createR2BindingStore(binding)
 
-  if (environment.NODE_ENV === 'production') return undefined
+  if (isProductionEnvironment(environment)) return undefined
 
   return createLocalDiskStore()
 }

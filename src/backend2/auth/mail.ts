@@ -1,4 +1,5 @@
 import { internalError } from '../http/error'
+import { isProductionEnvironment } from '../security/runtime-mode'
 
 /**
  * The V2 mail adapter.
@@ -41,7 +42,7 @@ export const isMailConfigured = (environment: Env = process.env): boolean =>
  * configuration into an account-enumeration oracle.
  */
 export const assertMailAvailable = (environment: Env = process.env): void => {
-  if (environment.NODE_ENV !== 'production') return
+  if (!isProductionEnvironment(environment)) return
   if (isMailConfigured(environment)) return
 
   throw internalError('Email delivery is not configured. Password reset is unavailable')

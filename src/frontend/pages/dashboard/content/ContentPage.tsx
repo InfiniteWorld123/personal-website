@@ -39,26 +39,9 @@ import './content.css'
  * link lands on the same place.
  */
 
-export type ContentSearch = {
-  view?: 'history'
-  lang?: ContentLanguage
-  page?: string
-  hpage?: number
-  hlang?: ContentSlot
-}
+import type { ContentSearch } from '#/frontend/features/content-v2/content-search'
 
-export const parseContentSearch = (raw: Record<string, unknown>): ContentSearch => {
-  const out: ContentSearch = {}
-
-  if (raw.view === 'history') out.view = 'history'
-  if (typeof raw.lang === 'string' && (CONTENT_LANGUAGES as readonly string[]).includes(raw.lang)) out.lang = raw.lang as ContentLanguage
-  if (typeof raw.page === 'string' && raw.page in PAGE_NAME) out.page = raw.page
-  const hpage = Number(raw.hpage)
-  if (Number.isInteger(hpage) && hpage > 1 && hpage < 100_000) out.hpage = hpage
-  if (typeof raw.hlang === 'string' && ['de', 'en', 'ar', 'shared'].includes(raw.hlang)) out.hlang = raw.hlang as ContentSlot
-
-  return out
-}
+export { type ContentSearch, parseContentSearch } from '#/frontend/features/content-v2/content-search'
 
 type Pending = { run: () => void } | { blocker: true }
 

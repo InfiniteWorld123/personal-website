@@ -1,5 +1,6 @@
 import { enforceRateLimit } from '../../auth/rate-limit'
 import { internalError, verificationFailed } from '../../http/error'
+import { isProductionEnvironment } from '../../security/runtime-mode'
 
 /**
  * Anti-abuse for the public booking routes.
@@ -48,7 +49,7 @@ export const verifyHuman = async (token: string, ip: string, environment: Env = 
   }
 
   if (!environment.TURNSTILE_SECRET_KEY?.trim()) {
-    if (environment.NODE_ENV === 'production') throw internalError('Booking protection is not configured')
+    if (isProductionEnvironment(environment)) throw internalError('Booking protection is not configured')
 
     return
   }

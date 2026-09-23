@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ContentPage, parseContentSearch } from '#/frontend/pages/dashboard/content/ContentPage'
+import { parseContentSearch } from '#/frontend/features/content-v2/content-search'
+import { ContentPage } from '#/frontend/pages/dashboard/content/ContentPage'
 
 /**
  * The website's static copy, in three languages. `docs/v2/content.md` owns

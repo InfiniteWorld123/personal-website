@@ -341,21 +341,25 @@ export const listPublicProjects = async (input: {
 }> => {
   const { rows, total } = await repo.listPublished({ offset: input.offset, limit: input.limit })
 
-  const items: PublicProjectCard[] = []
+  /*
+   * The page's contents load side by side and every cover's size in one query:
+   * one project after another was ~72 sequential round trips for a full page.
+   * The pool still caps how many run at once.
+   */
+  const contents = await Promise.all(rows.map((version) => repo.loadVersionContent(version.id)))
+  const sizes = await repo.loadAssetSizes(
+    contents.flatMap((content) => (content.cover ? [content.cover.assetId] : [])),
+  )
 
-  for (const version of rows) {
-    const content = await repo.loadVersionContent(version.id)
-
-    items.push(
-      toPublicCard({
-        version,
-        content,
-        language: input.language,
-        publishedAt: version.published_at,
-        sizes: await repo.loadAssetSizes(content.cover ? [content.cover.assetId] : []),
-      }),
-    )
-  }
+  const items: PublicProjectCard[] = rows.map((version, index) =>
+    toPublicCard({
+      version,
+      content: contents[index]!,
+      language: input.language,
+      publishedAt: version.published_at,
+      sizes,
+    }),
+  )
 
   return {
     items,

@@ -55,7 +55,13 @@ export const Route = createRootRoute({
    * Reached before a language segment exists, so it speaks the default one.
    * Titled and noindexed for the same reasons as the per-language 404.
    */
-  notFoundComponent: () => <NotFoundPage />,
+  notFoundComponent: () => (
+    <>
+      {/* React hoists this into <head>; the root route's head cannot tell a 404 apart. */}
+      <meta name="robots" content="noindex, follow" />
+      <NotFoundPage />
+    </>
+  ),
 })
 
 function RootDocument({ children }: { children: ReactNode }) {

@@ -1,3 +1,5 @@
+import { isProductionEnvironment } from '../../security/runtime-mode'
+
 /**
  * The video room, behind an adapter.
  *
@@ -138,5 +140,5 @@ export const resolveVideoProvider = (environment: Env = process.env): VideoProvi
     return realtimeKitProvider({ accountId, appId, apiToken })
   }
 
-  return environment.NODE_ENV === 'production' ? unavailableProvider : fakeProvider
+  return isProductionEnvironment(environment) ? unavailableProvider : fakeProvider
 }

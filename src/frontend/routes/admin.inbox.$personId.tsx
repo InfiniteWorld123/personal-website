@@ -1,7 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { InboxPage } from '#/frontend/pages/admin/inbox/InboxPage'
 import type { LetterTarget } from '#/shared/types/invoice.types'
-import { LETTER_KINDS, type LetterKind } from '#/shared/validation/invoice.validation'
+import type { LetterKind } from '#/shared/validation/invoice.validation'
+
+/*
+ * Spelled out rather than imported: this runs in a route's `validateSearch`,
+ * which every page of the site loads, and importing the validation module
+ * brought its schemas and the validation library into the public bundle.
+ * `route-search-constants.test.ts` keeps it equal to the validation module's.
+ */
+const LETTER_KINDS = ['INVOICE', 'REMINDER'] as const satisfies readonly LetterKind[]
 
 /**
  * One conversation open. The same screen as the list, not a second one — on a

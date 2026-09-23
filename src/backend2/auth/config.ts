@@ -1,3 +1,5 @@
+import { isProductionEnvironment } from '../security/runtime-mode'
+
 /**
  * Everything Auth V2 reads from the environment, in one place, checked rather
  * than trusted — the same discipline `db/client.ts` applies to the connection
@@ -24,7 +26,7 @@ const read = (environment: Env, name: string): string | undefined => {
   return value === '' ? undefined : value
 }
 
-const isProduction = (environment: Env): boolean => environment.NODE_ENV === 'production'
+const isProduction = (environment: Env): boolean => isProductionEnvironment(environment)
 
 /**
  * The key everything else is derived from: the TOTP secret's encryption key,

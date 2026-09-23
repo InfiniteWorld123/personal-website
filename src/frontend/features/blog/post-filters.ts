@@ -1,8 +1,12 @@
-import {
-  POST_PUBLISHED_FILTERS,
-  type PostFilterInput,
-  type PostPublishedFilter,
-} from '#/shared/validation/post.validation'
+import type { PostFilterInput, PostPublishedFilter } from '#/shared/validation/post.validation'
+
+/*
+ * Spelled out rather than imported: this runs in a route's `validateSearch`,
+ * which every page of the site loads, and importing the validation module
+ * brought its schemas and the validation library into the public bundle.
+ * `route-search-constants.test.ts` keeps the two lists equal.
+ */
+export const POST_PUBLISHED_FILTERS = ['all', 'published', 'draft'] as const satisfies readonly PostPublishedFilter[]
 
 /**
  * The list's filters live in the URL, so a filtered view can be bookmarked,

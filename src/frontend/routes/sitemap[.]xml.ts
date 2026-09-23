@@ -50,7 +50,9 @@ export const Route = createFileRoute('/sitemap.xml')({
         ]
 
         return new Response(buildSitemap(paths), {
-          headers: { 'Content-Type': 'application/xml; charset=utf-8' },
+          // Crawlers fetch this often; a quarter of an hour spares the
+          // database without keeping a newly published page out for long.
+          headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=900' },
         })
       },
     },

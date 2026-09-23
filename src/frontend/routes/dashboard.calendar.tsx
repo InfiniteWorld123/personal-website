@@ -1,6 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { APPOINTMENT_STATUSES, BOOKING_METHODS } from '#/backend2/contracts/booking.contract'
+import type { AppointmentStatus, BookingMethod } from '#/backend2/contracts/booking.contract'
 import { CalendarPage } from '#/frontend/pages/dashboard/calendar/CalendarPage'
+
+/*
+ * Spelled out rather than imported: `validateSearch` stays in the route tree
+ * every page loads, and the contract module carries its schemas with it.
+ * `route-search-constants.test.ts` keeps these equal to the contract.
+ */
+const APPOINTMENT_STATUSES = ['confirmed', 'completed', 'cancelled', 'no_show'] as const satisfies readonly AppointmentStatus[]
+const BOOKING_METHODS = ['video', 'in_person', 'phone'] as const satisfies readonly BookingMethod[]
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const DATE = /^\d{4}-\d{2}-\d{2}$/u
