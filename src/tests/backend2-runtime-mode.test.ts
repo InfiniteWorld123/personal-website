@@ -25,3 +25,21 @@ describe('isProductionEnvironment', () => {
     expect(decideLocalOnly({ flag: 'local', nodeEnv: 'development', hostname: 'localhost' })).toEqual({ allowed: true })
   })
 })
+
+describe('requestIdentity', () => {
+  it('trusts Cloudflare’s address, and x-forwarded-for only outside production', async () => {
+    const { requestIdentity } = await import('#/backend2/auth/rate-limit')
+    const request = (headers: Record<string, string>) => new Request('http://localhost/', { headers })
+    const before = process.env.NODE_ENV
+
+    expect(requestIdentity(request({ 'cf-connecting-ip': '203.0.113.9', 'x-forwarded-for': '1.1.1.1' }))).toBe('203.0.113.9')
+    expect(requestIdentity(request({ 'x-forwarded-for': '198.51.100.7, 10.0.0.1' }))).toBe('198.51.100.7')
+
+    process.env.NODE_ENV = 'production'
+    try {
+      expect(requestIdentity(request({ 'x-forwarded-for': '198.51.100.7' }))).toBe('unknown-source')
+    } finally {
+      process.env.NODE_ENV = before
+    }
+  })
+})

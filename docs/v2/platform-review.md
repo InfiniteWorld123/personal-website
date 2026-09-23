@@ -62,3 +62,22 @@ plan, performance) do not have to rediscover them.
 `clients.md`/`leads.md` status lines say "planning"; `foundation.md` module
 list/meanings are stale; `dashboard.tsx:21` comment and `NotBuiltYet.tsx`
 copy are stale.
+
+## Fixed after the review (23 Sep 2026, overnight)
+
+- Public bundle: route search parsers no longer pull the Content editor,
+  validation schemas or contracts into every page (entry 221 → 185 KB gzip).
+- Hero portrait served as AVIF/WebP (654 KB PNG → 24 KB), same look.
+- Sitemap/RSS `Cache-Control`; root 404 `noindex`.
+- V2 public project list: parallel loads instead of ~72 sequential queries.
+- Security 1: a Vite production build now counts as production even when the
+  Worker has no `NODE_ENV` (`security/runtime-mode.ts`).
+- Security 3: password sign-in also limited per account (30 per hour, any
+  address); the passkey route is not counted, so the owner cannot be locked out.
+- Security 4 (part): `x-forwarded-for` is ignored in production.
+- Still open: legacy home loads all posts/projects (goes away at the public
+  cutover), one-language-per-visitor bundles (same), V2 blog like toggles and
+  comment Turnstile (decide at the Blog public cutover), sitemap `<lastmod>`,
+  ~32 MB unused images in `public/images` (deleting needs the owner's OK).
+
+The page-by-page public plan is `public-cutover.md`.

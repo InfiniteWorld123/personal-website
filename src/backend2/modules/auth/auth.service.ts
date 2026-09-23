@@ -84,6 +84,7 @@ export type SignInResult = {
 
 const SIGN_IN_SCOPE = {
   password: 'auth-password',
+  passwordAccount: 'auth-password-account',
   webauthn: 'auth-webauthn',
   recovery: 'auth-recovery',
 } as const
@@ -244,6 +245,11 @@ export const startPasswordSignIn = async (options: {
     scope: SIGN_IN_SCOPE.password,
     identity: options.ipAddress,
     rule: AUTH_RATE_LIMITS.password,
+  })
+  await enforceRateLimit({
+    scope: SIGN_IN_SCOPE.passwordAccount,
+    identity: options.email.trim().toLowerCase(),
+    rule: AUTH_RATE_LIMITS.passwordPerAccount,
   })
 
   await sweep()

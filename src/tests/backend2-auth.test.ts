@@ -319,6 +319,21 @@ describe('the fallback sign-in', () => {
     expect(wrong.body).toEqual(unknown.body)
   })
 
+  it('limits guesses at one account even from ever-changing addresses', async () => {
+    await seedOwner()
+
+    const guess = (n: number, email = OWNER_EMAIL) =>
+      call('POST', '/auth/password/start', { email, password: `guess ${n}` }, { headers: { 'cf-connecting-ip': `203.0.113.${n % 250}` } })
+
+    for (let n = 0; n < 30; n++) expect((await guess(n)).status).toBe(401)
+
+    expect((await guess(30)).status).toBe(429)
+    // Letter case does not open a second allowance.
+    expect((await guess(31, OWNER_EMAIL.toUpperCase())).status).toBe(429)
+    // Another account is unaffected.
+    expect((await guess(32, 'nobody@example.de')).status).toBe(401)
+  }, 60_000)
+
   it('never sets a cookie for a wrong password', async () => {
     await seedOwner()
 

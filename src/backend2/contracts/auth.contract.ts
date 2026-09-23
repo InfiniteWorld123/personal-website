@@ -49,6 +49,12 @@ export const AUTH_TTL = {
 export const AUTH_RATE_LIMITS = {
   /** Password attempts, per source address. */
   password: { limit: 10, windowSeconds: 15 * 60 },
+  /**
+   * Password attempts against one account, from anywhere. Stops a guesser that
+   * rotates addresses; the passkey route is not counted, so the owner can
+   * always still sign in with a passkey while this is exhausted.
+   */
+  passwordPerAccount: { limit: 30, windowSeconds: 60 * 60 },
   /** Second-factor attempts, per pending challenge. */
   secondFactor: { limit: 5, windowSeconds: 15 * 60 },
   /** WebAuthn ceremonies started, per source address. */
