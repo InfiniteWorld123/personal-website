@@ -13,6 +13,7 @@ import { publicBookingRoutes } from './modules/booking/booking.public.route'
 import { ownerClientRoutes } from './modules/clients/client.owner.route'
 import { ownerNicheRoutes } from './modules/niches/niche.owner.route'
 import { ownerLeadRoutes } from './modules/leads/lead.owner.route'
+import { ownerSearchRoutes } from './modules/search/search.owner.route'
 import { ownerContentRoutes } from './modules/content/content.owner.route'
 import { ownerInvoiceRoutes } from './modules/invoices/invoice.owner.route'
 import { stripeWebhookRoutes } from './modules/invoices/stripe.webhook.route'
@@ -126,7 +127,8 @@ const buildApp = () => {
         .use(ownerContentRoutes)
         .use(ownerInvoiceRoutes)
         .use(ownerAnalyticsRoutes)
-        .use(ownerAssistantRoutes),
+        .use(ownerAssistantRoutes)
+        .use(ownerSearchRoutes),
     )
   }
 
