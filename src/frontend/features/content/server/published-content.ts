@@ -1,6 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import { withRequestScope } from '#/backend/db/client'
 import { listPublishedContent } from '#/backend/modules/content/content.service'
+import { withRequestScope as withV2RequestScope } from '#/backend2/db/client'
+import { readPublishedOverrides } from '#/backend2/modules/content/content.published'
+import { readsFromV2 } from '#/backend2/public-source'
 import type { PublishedContent } from '#/shared/types/content.types'
 
 /**
@@ -16,15 +19,24 @@ import type { PublishedContent } from '#/shared/types/content.types'
  */
 const CACHE_MS = 30_000
 
-let cached: { at: number; value: PublishedContent } | undefined
+let cached: { at: number; source: 'legacy' | 'v2'; value: PublishedContent } | undefined
 
 const readPublishedContent = async (): Promise<PublishedContent> => {
   const now = Date.now()
+  // `docs/v2/public-cutover.md` step 1, switched by PUBLIC_V2_MODULES.
+  const source = readsFromV2('content') ? 'v2' : 'legacy'
 
-  if (cached && now - cached.at < CACHE_MS) return cached.value
+  /*
+   * Backend2 is not cached here: its Dashboard reports a save as "live", and a
+   * Worker cannot tell another isolate to drop a copy. One small indexed read
+   * of the owner's saved rows per render keeps that promise.
+   */
+  if (source === 'v2') return withV2RequestScope(readPublishedOverrides)
+
+  if (cached && cached.source === source && now - cached.at < CACHE_MS) return cached.value
 
   const value = await withRequestScope(() => listPublishedContent())
-  cached = { at: now, value }
+  cached = { at: now, source, value }
 
   return value
 }
