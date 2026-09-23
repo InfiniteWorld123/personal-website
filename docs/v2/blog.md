@@ -1,6 +1,171 @@
 # Blog V2 — product and implementation plan
 
-Status: planning specification recording the owner's decisions. The owner's read-to-build instruction supplies implementation approval under `AGENTS.md`; material gaps must still be asked about rather than invented. Shared Media is **built and running** as of 22 Sep 2026, so Blog's image flows have nothing to wait for: select through the shared picker, never build storage of its own. This document does not authorize unrelated changes to Projects or Auth.
+Status: **Backend2 and the Dashboard screens built and verified on 23 Sep 2026. The public blog pages and the public comment UI wait for the separate public cutover step (answer 2A).** The owner asked for this document to be executed that day. "What is built" below is the current state, including every decision taken while building; the frontend questions, the approved Design Lab and the Dashboard delivery follow at its end. Everything after it is the planning record the backend was built from. Where a dated note corrects it, the note wins. Shared Media is **built and running** as of 22 Sep 2026, so Blog's image flows have nothing to wait for: select through the shared picker, never build storage of its own. This document does not authorize unrelated changes to Projects or Auth.
+
+## What is built — 23 Sep 2026
+
+### Backend2
+
+- `src/backend2/modules/blog/` — articles (`post.*`), tags (`tag.*`), comments (`comment.*`) and the two routes files. The rules shared with the future editor live in `src/backend2/contracts/blog.contract.ts`; its publication checklist is the function the server runs.
+- `0006_blog.sql` adds seven tables: `v2_blog_posts` (identity, the fixed public address, pointers to at most three versions, the comment switch, the two counters), `v2_blog_post_versions` (the draft, a frozen schedule and the live snapshot), `v2_blog_post_texts` (one row per version per language), `v2_blog_post_tags`, `v2_blog_tags`, `v2_blog_tag_names` and `v2_blog_comments`. It starts empty; nothing is imported. **It is not applied to the owner's Neon database** — applying it is a change to a cloud database and waits for the owner's go-ahead. Everything below ran against throwaway databases.
+- Saving cannot change what visitors see: public queries join only the live snapshot. A schedule is a frozen copy of the draft, validated in full when it is made; saves after it change only the draft.
+- The rich-text body reuses the case-study nodes from `rich-text.contract.ts` (headings 2–4, emphasis, lists, links, quotes, inline images, tables, code blocks) and adds one Blog capability: a YouTube video, **stored as its eleven-character id only** and allowed only at the top level of an article, never inside a list, quote or table. No URL, no `<iframe>`, no embed code is ever accepted. The case study itself is unchanged; the only edit to the shared file exports its node schema.
+- Images come only from shared Media. An article declares its files with `replaceReferences` at scope `draft`, `scheduled` and `published`, so a file an article uses cannot be deleted from Media, and only files of the live snapshot are served to visitors. A cover must be an image; a PDF is refused. Deleting an article forgets its uses and keeps the files.
+- Nothing refers to Leads, Invoices, Booking, Inbox or Services. The optional project link reads the V2 Projects tables and shows a project to visitors only while that project is live itself.
+
+### Routes, reconciled with the Backend2 conventions
+
+Owner routes sit behind `ownerGuard`, like Projects and Services: absent outside local development (404, never 401), a V2 session required with `BACKEND2_OWNER_AUTH=required`, the CSRF header on every write, `no-store` on every reply.
+
+| Method | Route | What it does |
+| --- | --- | --- |
+| GET | `/api/v2/owner/blog/posts` | List: `page`, `pageSize` (20, max 50), `search` (address, titles and summaries in every language), `state` (`draft`, `scheduled`, `published`, `pending`, `unpublished`), `tag` (a tag id), `sort` (`updated`, `created`, `published`), `language` |
+| POST | `/api/v2/owner/blog/posts` | New private draft: optional `title` and the `language` it is written in |
+| GET | `/api/v2/owner/blog/posts/slug-available` | Is an address free? For the editor while typing |
+| GET | `/api/v2/owner/blog/posts/:id` | The draft, a schedule and the live snapshot beside it, the checklist with a field for each blocker, the counts |
+| PATCH | `/api/v2/owner/blog/posts/:id` | **Save**. Only the fields sent change, down to one field in one language |
+| DELETE | `/api/v2/owner/blog/posts/:id` | Permanent, with `{ confirm: "<the article id>" }` |
+| GET | `/api/v2/owner/blog/posts/:id/preview?language=&version=` | `draft` (default), `scheduled` or `published`, through the public projection, images through the owner's route |
+| POST | `/api/v2/owner/blog/posts/:id/publish` | **Publish** and **Publish update**, with `{ draftRevision }` |
+| POST | `/api/v2/owner/blog/posts/:id/schedule` | `{ draftRevision, date: "YYYY-MM-DD", time: "HH:MM", snapshot: "draft" \| "keep" }` on the Berlin clock |
+| POST | `/api/v2/owner/blog/posts/:id/cancel-schedule` | Discard the frozen snapshot |
+| POST | `/api/v2/owner/blog/posts/:id/unpublish` | Off every public surface; kept privately, whole |
+| POST | `/api/v2/owner/blog/posts/:id/discard-pending` | Throw pending edits away: the draft becomes the live version again |
+| POST | `/api/v2/owner/blog/posts/:id/comment-setting` | `{ enabled }` — comments on or off, at once |
+| GET / POST | `/api/v2/owner/blog/tags` | Paginated tags (50, max 100) with how many articles carry each; create with all three names |
+| PATCH / DELETE | `/api/v2/owner/blog/tags/:id` | Rename or re-address; delete only when no version of any article carries it |
+| GET | `/api/v2/owner/blog/comments` | Every comment newest first, or one article's threads (`parentId=root`), or one comment's replies (`parentId=<id>`, oldest first); `status=new`, `search`; the answer carries `newTotal` |
+| POST | `/api/v2/owner/blog/comments/seen` | `{ ids }`, `{ postId }` or `{ all: true }` — "new comment activity" is this |
+| GET | `/api/v2/owner/blog/comments/:id` | The comment, the conversation above it, and how many replies hang below it |
+| POST | `/api/v2/owner/blog/comments/:id/replies` | The owner's reply, marked as Yaman Warda |
+| DELETE | `/api/v2/owner/blog/comments/:id` | The comment and its whole subtree; answers how many went |
+| GET | `/api/v2/blog/posts` | Live articles, newest first by original date: `language`, `offset`, `limit` (9, max 36), `tag` (a tag's address) |
+| GET | `/api/v2/blog/posts/:slug` | One live article in one language |
+| GET | `/api/v2/blog/tags` | The filter chips: tags at least one live article carries |
+| GET / POST | `/api/v2/blog/posts/:slug/comments` | One page of threads, newest first (`cursor`, `limit` 10, max 30); post a comment or reply |
+| GET | `/api/v2/blog/posts/:slug/comments/:id/replies` | One page of direct replies, oldest first (`cursor`, `limit` 10, max 50) |
+| POST | `/api/v2/blog/posts/:slug/read` | One more read |
+| POST | `/api/v2/blog/posts/:slug/like` | `{ liked: true }` or `{ liked: false }` |
+
+Public article answers are cached for one minute, like Projects and Services; comment answers and every public write are `no-store`. The public routes are mounted only where a V2 database is configured, so the live site is unaffected. RSS and the sitemap page through `GET /api/v2/blog/posts`; the website keeps building `/rss/{de,en,ar}.xml`, `/sitemap.xml`, canonical, `hreflang` and `BlogPosting` from the answers at cutover.
+
+The planning table did not have `slug-available`, `discard-pending`, `comment-setting`, `comments/seen` or `GET comments/:id`; they were added because the sibling modules have the first two and the specification's comment and "new activity" requirements need the others. Unlike the planning table, `like` takes `{ liked }` rather than two methods.
+
+### Decisions taken while building
+
+The specification left these open or to engineering. Each can be changed.
+
+| Question | Decision | Why |
+| --- | --- | --- |
+| When is the address fixed? | When the article is first **scheduled or published**. A cancelled schedule of a never-published article gives it back. An address is unique among articles for as long as the article exists; permanent delete frees it. | "After first publication, keep it stable"; a schedule must not lose its address while it waits. |
+| What can be scheduled? | Only a **first** publication. A live article changes through **Publish update**; a taken-down one is published again directly. **Publish** is refused (`ARTICLE_SCHEDULED`) while a schedule waits, so a schedule is never overtaken silently. | The specification's wording; updates are manual in the first version. |
+| Moving a schedule | `snapshot: "keep"` moves the time and keeps the frozen content; `"draft"` freezes the current draft instead. | "Change or cancel the time"; "explicitly cancel/replace the schedule to change that snapshot". |
+| Berlin time | The owner sends a date and a time on the Berlin clock. 02:30 on the last Sunday of March does not exist and is refused; 02:30 on the last Sunday of October happens twice and means the first, summer-time one. The time must be in the future and within 366 days. | One reading of a chosen time, whatever the owner's laptop is set to. |
+| Who publishes a due schedule? | `publishDuePosts`, which runs before every public Blog read and every Dashboard list, and as `bun run db2:blog:publish-due`. Each due article is locked and published in its own transaction, so it happens exactly once. | Works on a machine with no scheduler. **In deployment a Cloudflare Cron Trigger calling it every minute is still needed** — see prerequisites. |
+| The publication time of a schedule | The moment it actually went live. If that is more than **5 minutes** after the scheduled time, the Dashboard receives `publicationDelay` with both times. | "Surface the delay". Without the cron, "late" also means nobody asked in the meantime. |
+| When does "last updated" appear? | Only after a publication that changed what the article **says** — a title, summary, body or cover in any language — compared with what was last live, including after a take down. A new tag, an SEO text or a corrected alt text does not date the article. The original date never moves. | "A real published update… do not bump the original date merely to appear fresh." |
+| A save that changes nothing | Writes nothing and keeps the revision. A save that makes the draft equal to what is live again makes the article "Live" again; the same for a schedule. | As Services. |
+| Two tabs | A stale `draftRevision` is a 409, never an overwrite. | As Projects and Services. |
+| Tags | All three names at creation, each at most 40 characters and unique in its language; the address is suggested from the English name. Renaming takes effect everywhere at once. At most 10 tags per article. | A tag missing a language would be a missing filter chip; the legacy blog had the same rule. |
+| Limits | Title 160, summary 400, SEO title 80, SEO description 200, alt text 500; per language at most 30 images, 10 videos and 100,000 characters; at most 60 distinct files per article. | Generous ceilings; the editor can guide more softly. |
+| A body that counts as written | Any words, image or video. Empty paragraphs do not. | An article that is one video and its summary is still an article. |
+| Comments on or off | Immediate, not waiting for **Publish update**, and on by default. The owner may still reply while comments are off; the reply waits with the thread. | Switching comments off is the thing that must happen now. |
+| Owner replies | Held to the length rule only (links allowed); replying marks the comment as seen. No top-level owner comment. | "The owner may reply." |
+| Thread depth | 20 levels; a deeper reply is refused with a reason. | A real tree without letting a script build a chain ten thousand deep. |
+| Reads and likes | Per article, across languages. The browser remembers what it counted, as the legacy blog does; the server keeps two integers. | "Do not claim counts represent unique people." |
+
+### Comment abuse controls — the thresholds the specification asked for
+
+| Control | Threshold | Answer |
+| --- | --- | --- |
+| Size | 3,000 characters after normalising (one kind of line break, no invisible control or bidirectional-override characters, never more than one blank line); requests over 16 KB are refused unread | 422 `too_long`, 413 |
+| Links | More than 2 | 422 `COMMENT_REJECTED`, `too_many_links` |
+| Markup | Only markup that would *do* something: `<a href=`, a `<script>…</script>` or `<script src=`, `<iframe src=`, an HTML event handler, `[url=` / `[link=`. Text that merely mentions `<script>` or `<img>` is kept exactly as written and always shown escaped. | 422 `markup` |
+| Hidden field | A `website` field the page hides from people; a script that fills it is refused | 422 `rejected` |
+| Frequency | Per sender 3 a minute and 15 an hour; per article 100 an hour from everyone together | 429 `too_fast` |
+| Copies | The same text of 20+ characters on the same article within a day, from anyone; the same text of any length twice from the same sender within a day | 409 `DUPLICATE_COMMENT` |
+| Reads / likes | 120 reads and 60 like changes an hour per sender | 429 `too_fast` |
+
+"Sender" is a keyed hash (HMAC with `AUTH_V2_SECRET`) of the address in the shared `v2_auth_rate_limits` table, which forgets it within two days. No comment row stores an address, a name, a fingerprint or a cookie id. Nothing judges sentiment. Every refusal carries a stable `details.reason` for the website to translate.
+
+### Verified on 23 Sep 2026
+
+- `bun run typecheck`, the whole test suite (888 tests, 1 skipped), and `bun run build`.
+- `src/tests/backend2-blog.test.ts` (46) and `src/tests/backend2-blog-comments.test.ts` (20) against a real PostgreSQL inside the test process: one-language drafts; all-language publication and scheduling rules; cover and inline alt text; YouTube stored by id only and refused anywhere but the top; the Berlin clock across both clock changes; frozen schedules, moving, replacing and cancelling them, publishing once, and the late notice; pending edits beside the untouched live version; a refused update writing nothing; take down and republish with date, counters and comments intact; the fixed address; files undeletable while used and served only while live; permanent delete; tags; the Dashboard list; 404 from a non-local host on all 22 owner routes and 401 without a session; nothing private or from another language in a public answer; comments, replies, both paginations, every refusal, the owner's reply, subtree delete, the comment switch, and the counters.
+- The running app over real HTTP, against a throwaway database, signed in with a real V2 session: 50 checks from creating a draft to deleting everything again, including the CSRF and foreign-origin refusals, a real image upload, the cover private before publication and public after it, comments and replies, and a schedule two minutes ahead that went live on the next request. The test machine paused the script for 16 minutes, so that schedule was published 16 minutes late — and the Dashboard reported it as late, which is the designed behaviour.
+- The production build, started locally with `BACKEND2_OWNER_API=local` deliberately set: every owner route answered 404, while the public reads answered.
+
+### Not verified, and prerequisites before a public release
+
+- **Neon.** `0006_blog.sql` is not applied to the owner's database; the Dashboard screens will need it.
+- **A Cloudflare Cron Trigger** calling `publishDuePosts` every minute, so a schedule goes live on time and gets its correct date with no visitor traffic. Without it, a schedule publishes on the first request after its time.
+- **`AUTH_V2_SECRET`** must be set wherever the public comment and counter routes run: it keys the sender hash.
+- **YouTube on the public site.** The production Content-Security-Policy allows no YouTube frame today; the embed also sends visitor data to Google. How it loads is a frontend question below.
+- **The privacy review** the specification requires before anonymous comments go public: the notice, retention, the two-day rate-limit hashes, and handling unlawful content.
+- **The public website** still reads the legacy blog. Connecting `/blog`, the article pages, RSS and the sitemap to Backend2 changes what visitors see, so it waits for the owner's decision.
+
+### Frontend questions put to the owner, 23 Sep 2026 — answered the same day
+
+Asked after backend verification, as the handoff orders.
+
+| Question | Answer |
+| --- | --- |
+| How does a YouTube video load on the public page? | **Only after the visitor clicks it (1A).** Until then the page shows a placeholder and nothing is requested from Google. The production Content-Security-Policy gains the one YouTube frame origin at cutover, not before. |
+| Are the public blog pages and the new comment section connected to Backend2 in this module? | **No — later, as a separate step, like Projects and Services (2A).** This module's production frontend is the Dashboard. The public comment section and the new rich-content rendering are designed and approved in the Design Lab now, and built and connected at the public cutover step, together with RSS and the sitemap. |
+
+Everything else — where comment management and tags sit inside Blog, the visitor label, and how deep branches fold — is shown with a recommendation in the Design Lab rather than asked.
+
+### Design Lab — presented and approved 23 Sep 2026
+
+**The owner approved the lab with every recommendation (`1A 2A 3A 4A 5A 6A 7A`) and its new public words, the same day.** Per 2A, the production frontend of this module is the Dashboard; the public comment section, the click-to-load video and the table styling are built at the public cutover step from this approved design.
+
+`https://claude.ai/artifact/Da78kfw5xVgPvtHAAiecNU` — private to the owner. Nothing in the repository.
+
+One page with the English Dashboard and the DE/EN/AR public blog side by side, sharing one sample blog: eight invented articles, one in every state (draft with blockers, scheduled with a later-edited draft, live, live with pending edits, taken down, live after a late schedule, comments switched off), their comments — including a branch seven levels deep — and eight tags. The public side reads only published snapshots, so a save visibly changes nothing and **Publish update** visibly does. It covers the articles list (search, state, tag, sort, pages), the one-page editor (the three-versions strip — draft, frozen schedule, live — address, tags, project, cover and inline pictures from the shared Media picker with its upload, three language tabs with the rich-text editor and its new YouTube button, search appearance, the checklist beside it, readers and the immediate comment switch, take down, discard, delete), the schedule dialog on the Berlin clock, the private preview of any version, the comments activity list with the conversation view and subtree delete, the tag manager and its refusal, the public list and article with tables, the click-to-load video, the comment form with every refusal in three languages, replies and folding, loading/empty/error states, a stale second tab, a failing save, light and dark, desktop and phone width, and Arabic RTL. The rules in it are the contract's.
+
+Seven decisions, each with a recommendation (`A` everywhere):
+
+| # | Question | Recommended |
+| --- | --- | --- |
+| 1 | Where comments and tags live in the Dashboard | Tabs inside Blog, the new-comment count beside **Blog** in the sidebar |
+| 2 | The label beside a visitor's comment | Gast / Guest / زائر |
+| 3 | Deep reply branches | Indented up to 5 levels (3 on a phone), then "Continue this conversation" |
+| 4 | Where the comment form sits | Above the comments |
+| 5 | Unsaved changes when pressing Publish / Schedule / Preview | Saved first, in the same click, as in Projects and Services |
+| 6 | Confirming a permanent delete | Type the article's title |
+| 7 | One conversation per article, or one per language | One per article, as the backend is built |
+
+The lab also lists the new public words — the comment section, the refusals, the video notice and "Updated on" — for approval with the design.
+
+### Dashboard — built and verified 23 Sep 2026
+
+Built from the approved lab, connected to the verified Backend2 routes. English, like the rest of Dashboard V2.
+
+- **Where it lives.** `/dashboard/blog` (articles), `/dashboard/blog/comments` (`?post=` narrows to one article, `?status=new` to the unseen), `/dashboard/blog/tags`, and `/dashboard/blog/$postId` for one article (`?language=` opens that tab). The placeholder route is gone. The three tabs are links, so each has an address and Back works (1A). The sidebar shows the unseen-comment count beside **Blog**, read every minute and silent when Backend2 does not answer.
+- **Code.** `src/frontend/features/blog-v2/` — the API client and query hooks, the editor values and their save/publish checks (`blog-form.ts`), the editor's body normaliser (`blog-document.ts`), Berlin-clock wording, the dialog shell, the rich-text editor and the preview body. `src/frontend/pages/dashboard/blog/` — the list, the editor, comments, tags, schedule and preview. `features/blog/` is still the legacy blog and is untouched.
+- **The editor is the Projects editor, extended** (`docs/v2/blog.md`: one reusable editor with module-specific capabilities). `CaseStudyEditor.tsx` now exports its toolbar, image node and content styles, with one optional slot after the table button; Projects behaves exactly as before. The Blog adds a picture's alternative text directly under the picture, in the language being written, and the **YouTube** button: a dialog takes a link, keeps only the eleven-character id, and places the video after the block the cursor is in — the document itself refuses a video anywhere but the top level.
+- **Forms.** TanStack Form with `revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' })` for the editor, new article, schedule, YouTube, tag and owner-reply forms: quiet until the first attempt, then checking as the owner types; errors beside their fields with `aria-invalid` and a description; focus on the first invalid field — switching to its language tab first, and for a picture, to that picture's description. Save checks shape and limits only; Publish and Schedule check the publication rules, and their sentences appear beside the fields and in the checklist, in page order.
+- **Saving.** Manual only. A save sends only what changed, with the revision it was based on. Publish, Schedule and Preview save first in the same click (5A); a refused Publish still keeps the saved work and publishes nothing. If another tab saved in between, nothing is overwritten: a banner offers **Reload**, and the owner's typing stays on screen until they choose it. Leaving with unsaved work asks first, in the app and when closing the tab.
+- **Delete** asks for the article's title to be typed (6A); the request still sends the article's id. Comments show **Guest** for a visitor (2A). Tags in use cannot be deleted: the refusal lists the articles that carry them.
+
+Taken while building, beyond the lab:
+
+| Decision | Why |
+| --- | --- |
+| The section shortcuts (Address & tags · Cover · Article) are buttons that scroll, and the unsaved-work guard ignores moves within the article's own address | As `#` links they changed the address, and the guard read that as leaving: "Leave without saving?" appeared on a click that went nowhere. Found in the browser. |
+| Blog dialogs are drawn at the Dashboard's root | One opened from inside the editor was a form inside a form, and one opened from the Arabic tab would inherit its direction. |
+| An image of unknown size is stored with `null`, never `0` | The case study's normaliser reads a missing size as 0, which the server refuses; the Blog's normaliser corrects it. |
+| The editor's writing area fills its box | Clicking below the first line now starts writing. |
+
+Verified the same day:
+
+- `bun run typecheck`, the whole suite (928 tests, 1 skipped) and `bun run build`. `src/tests/blog-ui.test.tsx` (39) covers the editor values, the patch, the save and publish checks and their order, the body normaliser against the server's own schema (a save leaves nothing "unsaved"), the Berlin clock, and the screens against a faked API: list states, filters on the server, new article, save, refused and successful publish with focus, the second-tab conflict, the comment switch, the fixed address, typed-title delete, not-found, schedule refusal and keep-the-frozen-version, tag validation and refusal, conversation reply and branch delete, the sidebar count.
+- In the browser, against a throwaway in-memory database with a real V2 session — never Neon: tags created with validation; a new article; cover and inline picture from Media with descriptions in three languages; the rich-text toolbar; the YouTube dialog refusing a non-YouTube link and inserting a video; saving (the server stored the video as its id and the picture as its library id); a Publish refused for an empty Arabic article, which saved first, opened the Arabic tab and put the cursor there; publishing; edits after publishing ("Live · edited", visitors unchanged); preview of draft and live in three languages with Arabic right to left; discard; comments posted through the public API, the count beside Blog, the conversation, an owner reply, a branch delete and "Mark all as seen"; schedule refusing the spring clock change, scheduling, moving the time while keeping the frozen version, cancelling; the tag refusal; take down and publish again; typed-title delete; the leave warning; the second-tab conflict; the comment switch hiding comments from visitors at once; phone width and light and dark. The test image, the throwaway database, the temporary launch entry and the test cookies were removed afterwards.
+
+Still open before real use or release:
+
+- **Neon.** The Dashboard needs `0006_blog.sql` in the owner's database. Applying it is a cloud change and waits for the owner's go-ahead.
+- Everything under "Not verified, and prerequisites before a public release" above still applies: the Cron Trigger, `AUTH_V2_SECRET`, the YouTube frame origin at cutover, the privacy review, and the public cutover itself — the public pages, the comment section and folding (3A, 4A), RSS and the sitemap.
 
 ## Owner communication — mandatory
 
