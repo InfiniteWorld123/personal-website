@@ -50,7 +50,7 @@ The lab itself was deleted after approval.
 ### Not built yet
 
 - ~~**Preview.**~~ **Built 22 Sep 2026** — see the Dashboard list above. Building it exposed a real bug in the backend preview, fixed with it: the draft's images pointed at the public media route, which serves a file only while a *published* version uses it, so every image in a preview answered 404. The preview now points at the owner's route, and a test fails without that fix. The preview is a faithful copy of the *content*, not of the public page's look — that page still reads the legacy backend.
-- **Public wording for the project type.** "Demo", "Personal" and "Client" have no approved German or Arabic wording on the public site yet, so the preview shows them in English. That has to be decided when the website is connected, because visitors will see it.
+- ~~**Public wording for the project type.**~~ **Decided 24 Sep 2026** by the owner: DE `Demo` / `Eigenes Projekt` / `Kundenprojekt`, AR `مشروع تجريبي` / `مشروع شخصي` / `مشروع لعميل` (`PUBLIC_TYPE_WORDS` in the contract). The preview uses them, and the work status uses the public site's own approved words (`work.status`).
 - **A live check of the web address.** A taken address is refused when publishing, with a message. It is not flagged while typing, although `GET .../slug-available` exists for exactly that.
 - **The public website.** `/work`, the homepage selection and the project pages still read the legacy backend. Moving them onto Backend2 needs its own approval and must keep their accepted design.
 

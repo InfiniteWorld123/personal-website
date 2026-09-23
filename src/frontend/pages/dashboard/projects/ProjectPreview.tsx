@@ -6,8 +6,7 @@ import {
   LANGUAGE_WORDS,
   type ProjectState,
   type PublicImage,
-  TYPE_WORDS,
-  WORK_WORDS,
+  PUBLIC_TYPE_WORDS,
 } from '#/backend2/contracts/project.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import { getContent } from '#/frontend/content'
@@ -232,7 +231,7 @@ export function ProjectPreview({
             ) : (
               <>
                 <p className="dash-eyebrow">
-                  {(page.categoryLabel ?? TYPE_WORDS[page.type]).toUpperCase()}
+                  {(page.categoryLabel ?? PUBLIC_TYPE_WORDS[language][page.type]).toUpperCase()}
                 </p>
 
                 <h1 className="dash-title mt-2 text-[30px] sm:text-[38px]">
@@ -240,9 +239,10 @@ export function ProjectPreview({
                 </h1>
 
                 <p className="mt-3 flex flex-wrap gap-x-2 text-[12.5px] text-[var(--dash-quiet)]">
-                  <span>{TYPE_WORDS[page.type]}</span>
+                  <span>{PUBLIC_TYPE_WORDS[language][page.type]}</span>
                   <span aria-hidden="true">·</span>
-                  <span>{WORK_WORDS[page.workStatus]}</span>
+                  {/* The public site's own approved words for a finished or unfinished project. */}
+                  <span>{getContent(language).work.status[page.workStatus === 'completed' ? 'live' : 'building']}</span>
                   {page.client ? (
                     <>
                       <span aria-hidden="true">·</span>

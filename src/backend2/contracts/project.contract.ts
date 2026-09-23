@@ -656,6 +656,16 @@ export const TYPE_WORDS: Record<ProjectType, string> = {
   client: 'Client',
 }
 
+/**
+ * The project type as visitors read it, per language. Approved by the owner on
+ * 24 Sep 2026; `TYPE_WORDS` above stays the English Dashboard wording.
+ */
+export const PUBLIC_TYPE_WORDS: Record<Language, Record<ProjectType, string>> = {
+  de: { demo: 'Demo', personal: 'Eigenes Projekt', client: 'Kundenprojekt' },
+  en: { demo: 'Demo', personal: 'Personal', client: 'Client' },
+  ar: { demo: 'مشروع تجريبي', personal: 'مشروع شخصي', client: 'مشروع لعميل' },
+}
+
 export const WORK_WORDS: Record<WorkStatus, string> = {
   in_progress: 'In progress',
   completed: 'Completed',
