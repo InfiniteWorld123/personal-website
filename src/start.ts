@@ -11,6 +11,8 @@ const requestBodyLimits: Array<{ path: string; bytes: number }> = [
   // route's own ceiling. At the old megabyte every client attachment was
   // refused here with a 413 before the route ever saw it.
   { path: '/api/inbound-email', bytes: 30 * 1024 * 1024 },
+  // The V2 mail ingress, same ceiling and same reason (`docs/v2/inbox.md`).
+  { path: '/api/v2/inbound-email', bytes: 30 * 1024 * 1024 },
   // A new letter from the admin with its files. Each file is refused above
   // ten on its own; this stops a handful of large ones being buffered together.
   { path: '/api/admin/inbox/compose', bytes: 25 * 1024 * 1024 },
@@ -31,7 +33,13 @@ const requestBodyLimits: Array<{ path: string; bytes: number }> = [
  * with `STRIPE_WEBHOOK_SECRET` — neither of which a web page can produce. The
  * body limit above still applies.
  */
-const signedWebhookPaths = new Set(['/api/inbound-email', '/api/stripe-webhook'])
+// `/api/v2/inbound-email` believes nothing not signed with `INBOX_INGRESS_SECRET`
+// plus a timestamp, and exists only where a V2 database is configured.
+const signedWebhookPaths = new Set([
+  '/api/inbound-email',
+  '/api/stripe-webhook',
+  '/api/v2/inbound-email',
+])
 
 const noStorePath = (pathname: string): boolean =>
   pathname.startsWith('/admin') ||

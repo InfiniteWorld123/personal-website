@@ -8,9 +8,13 @@ import { ownerRoutesEnabled } from './security/local-only'
 import { publicAuthRoutes } from './modules/auth/auth.route'
 import { ownerSecurityRoutes } from './modules/auth/security.route'
 import { ownerBlogRoutes } from './modules/blog/blog.owner.route'
+import { ownerCalendarRoutes } from './modules/booking/booking.owner.route'
+import { publicBookingRoutes } from './modules/booking/booking.public.route'
 import { ownerClientRoutes } from './modules/clients/client.owner.route'
 import { ownerNicheRoutes } from './modules/niches/niche.owner.route'
 import { ownerContentRoutes } from './modules/content/content.owner.route'
+import { inboundEmailRoutes } from './modules/inbox/inbox.ingress.route'
+import { ownerInboxRoutes } from './modules/inbox/inbox.owner.route'
 import { publicContentRoutes } from './modules/content/content.public.route'
 import { publicBlogRoutes } from './modules/blog/blog.public.route'
 import { ownerMediaRoutes } from './modules/media/media.owner.route'
@@ -109,6 +113,8 @@ const buildApp = () => {
         .use(ownerClientRoutes)
         .use(ownerNicheRoutes)
         .use(ownerBlogRoutes)
+        .use(ownerInboxRoutes)
+        .use(ownerCalendarRoutes)
         .use(ownerContentRoutes),
     )
   }
@@ -153,6 +159,18 @@ const buildApp = () => {
       .use(publicServiceRoutes)
       .use(publicBlogRoutes)
       .use(publicContentRoutes)
+      /*
+       * The inbound mail ingress (`docs/v2/inbox.md`). Not a visitor route:
+       * it takes nothing without an HMAC from the Cloudflare inbound Worker,
+       * and without `INBOX_INGRESS_SECRET` it takes nothing at all.
+       */
+      .use(inboundEmailRoutes)
+      /*
+       * The visitor's booking API (`docs/v2/booking.md`). Where no V2
+       * database exists it does not answer, so the live booking pages keep the
+       * legacy backend until an approved cutover.
+       */
+      .use(publicBookingRoutes)
   }
 
   return app.get('/', () =>

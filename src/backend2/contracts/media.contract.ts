@@ -177,7 +177,7 @@ export type MediaErrorCode = (typeof MEDIA_ERROR_CODES)[number]
 /** Where a file is used, as the refusal dialog and the detail panel show it. */
 export type MediaReference = {
   id: string
-  module: 'projects' | 'blog' | 'services' | 'invoices' | 'content'
+  module: 'projects' | 'blog' | 'services' | 'invoices' | 'content' | 'inbox'
   /** `published` is the only scope a visitor can reach. */
   scope: 'draft' | 'scheduled' | 'published' | 'record'
   ownerType: string

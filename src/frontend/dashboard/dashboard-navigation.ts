@@ -24,11 +24,12 @@ export type DashboardNavItem = {
    */
   railLabel?: string
   /**
-   * A live count beside the label. Only Blog has one: the comments the owner
-   * has not seen yet (approved choice 1A, 23 Sep 2026) — `docs/v2/blog.md`
-   * makes the Dashboard the only place new comments are announced.
+   * A live count beside the label. Blog's is the comments the owner has not
+   * seen yet (approved choice 1A, 23 Sep 2026) — `docs/v2/blog.md` makes the
+   * Dashboard the only place new comments are announced. Inbox's is the
+   * unread conversations (`docs/v2/inbox.md`, approved choice 6A).
    */
-  count?: 'newBlogComments'
+  count?: 'newBlogComments' | 'inboxUnread'
 }
 
 /**
@@ -61,7 +62,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
   { label: 'Projects', to: '/dashboard/projects', icon: FolderKanban },
   { label: 'Services', to: '/dashboard/services', icon: Tags },
   { label: 'Calendar', to: '/dashboard/calendar', icon: CalendarRange },
-  { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox },
+  { label: 'Inbox', to: '/dashboard/inbox', icon: Inbox, count: 'inboxUnread' },
   { label: 'Leads', to: '/dashboard/leads', icon: Handshake },
   { label: 'Clients', to: '/dashboard/clients', icon: Users },
   { label: 'Content', to: '/dashboard/content', icon: FileText },

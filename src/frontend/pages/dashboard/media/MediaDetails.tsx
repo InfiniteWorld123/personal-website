@@ -33,6 +33,7 @@ const MODULE_WORDS: Record<MediaReference['module'], string> = {
   services: 'Services',
   invoices: 'Invoices',
   content: 'Content',
+  inbox: 'Inbox',
 }
 
 const USAGE_WORDS: Record<MediaReference['usage'], string> = {

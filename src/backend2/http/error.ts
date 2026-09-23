@@ -44,6 +44,31 @@ export type ApiErrorCode =
    */
   | 'LEGAL_LOCKED'
   /*
+   * Inbox (`docs/v2/inbox.md`): "safe, stable error codes for ... provider
+   * failure, ... stale draft update, and duplicate/replayed ingress."
+   */
+  | 'STALE_DRAFT'
+  | 'SEND_FAILED'
+  | 'CONFIRMATION_REQUIRED'
+  | 'INVALID_SIGNATURE'
+  | 'INGRESS_DISABLED'
+  /*
+   * Booking (`docs/v2/booking.md`): "safe stable errors for ... unavailable/
+   * overlapping slot, too-early/far request, cancellation deadline, invalid
+   * private credential, non-video request, provider unavailable".
+   */
+  | 'SLOT_UNAVAILABLE'
+  | 'BOOKING_TOO_SOON'
+  | 'BOOKING_TOO_FAR'
+  | 'CHANGE_DEADLINE_PASSED'
+  | 'BOOKING_LINK_INVALID'
+  | 'NOT_VIDEO'
+  | 'VIDEO_NOT_OPEN'
+  | 'VIDEO_CLOSED'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'TYPE_IN_USE'
+  | 'VERIFICATION_FAILED'
+  /*
    * Clients (`docs/v2/clients.md`): a likely duplicate, a file in Trash, and
    * a permanent deletion an invoice blocks.
    */
@@ -237,6 +262,51 @@ export const legalLocked = make(
   'Legal text is locked. Unlock it before changing it.',
 )
 
+/* -------------------------------------------------------------------- inbox */
+
+/**
+ * An autosave from a tab that has not seen the latest save. Refused rather
+ * than merged, so newer text is never silently overwritten; `details` carry
+ * the current draft.
+ */
+export const staleDraft = make(
+  HttpStatus.CONFLICT,
+  'STALE_DRAFT',
+  'This draft changed somewhere else. Reload it before saving again.',
+)
+
+/**
+ * The provider did not accept the email. Not a server fault: the message is
+ * kept, marked failed, and can be retried. A 4xx on purpose — a 5xx would
+ * hide the reason and the message id the Dashboard needs to offer Retry.
+ */
+export const sendFailed = make(
+  HttpStatus.CONFLICT,
+  'SEND_FAILED',
+  'The email could not be sent. It was kept so you can retry.',
+)
+
+/** An action that needs the owner's explicit yes first, such as a blank subject. */
+export const confirmationRequired = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'CONFIRMATION_REQUIRED',
+  'Please confirm before continuing.',
+)
+
+/** A delivery to the mail ingress whose signature or timestamp does not hold. */
+export const invalidSignature = make(
+  HttpStatus.UNAUTHORIZED,
+  'INVALID_SIGNATURE',
+  'That delivery could not be verified.',
+)
+
+/** The mail ingress has no secret configured, so it takes nothing. */
+export const ingressDisabled = make(
+  HttpStatus.SERVICE_UNAVAILABLE,
+  'INGRESS_DISABLED',
+  'Incoming email is not configured here.',
+)
+
 /* ------------------------------------------------------------------ clients */
 
 /**
@@ -261,3 +331,71 @@ export const clientDeleteBlocked = make(
 
 /** A niche a Client or Lead still carries. It can be hidden instead. */
 export const nicheInUse = make(HttpStatus.CONFLICT, 'NICHE_IN_USE', 'That niche is still in use')
+
+/* ------------------------------------------------------------------ booking */
+
+/** Someone else took that time, or it was never free. Choose another. */
+export const slotUnavailable = make(
+  HttpStatus.CONFLICT,
+  'SLOT_UNAVAILABLE',
+  'That time is no longer available. Please choose another.',
+)
+
+export const bookingTooSoon = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'BOOKING_TOO_SOON',
+  'That time is too soon to book.',
+)
+
+export const bookingTooFar = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'BOOKING_TOO_FAR',
+  'That time is too far ahead to book.',
+)
+
+/** A visitor's change after the deadline. The owner can still change it. */
+export const changeDeadlinePassed = make(
+  HttpStatus.CONFLICT,
+  'CHANGE_DEADLINE_PASSED',
+  'This appointment can no longer be changed online. Please reply to your confirmation email.',
+)
+
+/**
+ * A private link that does not open anything. The same answer for a wrong
+ * credential and an unknown reference, so neither can be probed.
+ */
+export const bookingLinkInvalid = make(
+  HttpStatus.NOT_FOUND,
+  'BOOKING_LINK_INVALID',
+  'This link is not valid.',
+)
+
+export const notVideo = make(HttpStatus.CONFLICT, 'NOT_VIDEO', 'This appointment is not a video call.')
+
+export const videoNotOpen = make(
+  HttpStatus.CONFLICT,
+  'VIDEO_NOT_OPEN',
+  'The call has not started yet.',
+)
+
+export const videoClosed = make(HttpStatus.CONFLICT, 'VIDEO_CLOSED', 'This call is over.')
+
+export const providerUnavailable = make(
+  HttpStatus.SERVICE_UNAVAILABLE,
+  'PROVIDER_UNAVAILABLE',
+  'The video service is not available right now.',
+)
+
+/** A type with upcoming appointments. `details` count them. */
+export const typeInUse = make(
+  HttpStatus.CONFLICT,
+  'TYPE_IN_USE',
+  'This appointment type still has upcoming appointments.',
+)
+
+/** The public form's human check (Turnstile) did not pass. */
+export const verificationFailed = make(
+  HttpStatus.UNPROCESSABLE_ENTITY,
+  'VERIFICATION_FAILED',
+  'The security check did not pass. Please try again.',
+)

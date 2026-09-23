@@ -2,6 +2,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNewCommentCount } from '#/frontend/features/blog-v2/queries'
+import { useInboxCounts } from '#/frontend/features/inbox-v2/queries'
 import { cn } from '#/frontend/lib/utils'
 import { DashboardMark } from './DashboardMark'
 import {
@@ -142,37 +143,51 @@ function NavRow({
       <span className="dash-nav-row flex-1 text-sm">
         <Icon aria-hidden="true" className="dash-nav-icon size-[18px] shrink-0" />
         <span className="dash-nav-text">{item.label}</span>
-        {item.count ? <NavCount /> : null}
+        {item.count ? <NavCount kind={item.count} /> : null}
       </span>
 
       <RailLabel>
         {item.railLabel ?? item.label}
-        {item.count ? <NavCount rail /> : null}
+        {item.count ? <NavCount kind={item.count} rail /> : null}
       </RailLabel>
     </Link>
   )
 }
 
 /**
- * The new-comment count beside Blog. Nothing when there is nothing new, or
+ * A count beside Blog (new comments) or Inbox (unread). Nothing when it is zero, or
  * when Backend2 does not answer — a count is not worth an error on every
  * screen. Collapsed, it moves into the label that slides out of the rail.
  *
  * The wrapper carries `dash-nav-text` and no display utility of its own, so
  * the rail rule that hides the labels hides the count with them.
  */
-function NavCount({ rail = false }: { rail?: boolean }) {
+function NavCount({ kind, rail = false }: { kind: NonNullable<DashboardNavItem['count']>; rail?: boolean }) {
+  return kind === 'inboxUnread' ? <InboxCount rail={rail} /> : <CommentCount rail={rail} />
+}
+
+function InboxCount({ rail }: { rail: boolean }) {
+  const count = useInboxCounts().data?.inboxUnread ?? 0
+
+  return <CountChip count={count} rail={rail} noun={count === 1 ? 'unread conversation' : 'unread conversations'} railWord="unread" />
+}
+
+function CommentCount({ rail }: { rail: boolean }) {
   const count = useNewCommentCount().data ?? 0
 
+  return <CountChip count={count} rail={rail} noun={count === 1 ? 'comment' : 'comments'} railWord="new" prefix="new " />
+}
+
+function CountChip({ count, rail, noun, railWord, prefix = '' }: { count: number; rail: boolean; noun: string; railWord: string; prefix?: string }) {
   if (count === 0) return null
 
-  if (rail) return <> · {count} new</>
+  if (rail) return <> · {count} {railWord}</>
 
   return (
     <span className="dash-nav-text ms-auto">
       <span className="dash-nav-count dash-num grid h-[18px] min-w-5 place-items-center rounded-md px-1.5 text-[10.5px] font-bold">
         {count}
-        <span className="sr-only"> new {count === 1 ? 'comment' : 'comments'}</span>
+        <span className="sr-only"> {prefix}{noun}</span>
       </span>
     </span>
   )

@@ -22,6 +22,7 @@
     "db2:owner:create": "bun src/backend2/db/bootstrap-owner.ts",
     "db2:media:sweep": "bun src/backend2/db/sweep-media.ts",
     "db2:blog:publish-due": "bun src/backend2/db/publish-due-posts.ts",
+    "db2:booking:send-reminders": "bun src/backend2/db/send-booking-reminders.ts",
     "db2:content:export-legacy": "bun src/backend2/db/content-export-legacy.ts",
     "db2:content:import": "bun src/backend2/db/content-import.ts",
     "db:seed:admin": "bun src/backend/db/seed/seed-admin.ts",

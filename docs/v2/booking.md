@@ -1,10 +1,48 @@
 # Booking and video calls V2 — product, backend, and frontend specification
 
-Status: ready for the owner's plain-language review. This records the agreed V2
-scope and implementation handoff. It does not authorise deployment, live
-email/video setup, legacy removal, a commit, or a push. Read `foundation.md`
-and `inbox.md` for V2 boundaries and Inbox correspondence. Legacy booking/call
-code is evidence, not an automatic V2 requirement.
+Status: **Backend2 and the Dashboard Calendar built and verified locally on 23 Sep 2026; the Design Lab was approved the same day (`1A`–`7A`), including the five visitor cancellation reasons. Still to come: the public booking, manage and video pages — built at the approved public cutover, from the approved lab — and the real video call screen, which needs RealtimeKit switched on.** The delivery record below is the current state; everything after it is the planning record the backend was built from. It does not authorise deployment, live email/video setup, legacy removal, a commit, or a push. Read `foundation.md` and `inbox.md` for V2 boundaries and Inbox correspondence. Legacy booking/call code is evidence, not an automatic V2 requirement.
+
+## What is built — Backend2, 23 Sep 2026
+
+Verified with `src/tests/backend2-booking.test.ts` (32 tests against a real in-process PostgreSQL) and a runtime check over a real `pg` socket to a throwaway database. No email was sent, no video meeting was created, nothing touched Neon, and the live `/booking` pages still use the legacy backend.
+
+- **Migration `0010_booking.sql`.** Settings (one row, written on first save; the defaults below are read in code until then), types, weekly hours, date exceptions, appointments, history. **Not applied to Neon** — a cloud change that waits for the owner's yes.
+- **Double booking is impossible in the database itself**: a `gist` exclusion constraint on each confirmed appointment's kept time (the appointment plus its buffer). The service also checks first, under a calendar lock, so the visitor gets `SLOT_UNAVAILABLE` rather than an error.
+- **Time.** Hours are Europe/Berlin wall-clock minutes; every conversion goes through the zone's real offset. On the spring change the missing hour offers no start; in autumn the repeated hour is offered once. Visitors ask for slots in their own zone and the answer names it.
+- **Routes** as the table below, plus `GET/PATCH/DELETE /owner/calendar/types/:id`. Owner routes behind `ownerGuard`; public routes mounted only where a V2 database exists, all `no-store`.
+- **Public booking** needs a `submissionId` from the form, so a double-click or retry returns the same appointment and sends one email. Honeypot, rate limits (10 bookings per hour per network, 5 per day per email; 60 manage calls per 10 minutes), and Turnstile verification wherever `TURNSTILE_SECRET_KEY` is set — required in production.
+- **The private link** is `…/{lang}/booking/manage/{reference}#{credential}`. The credential sits in the part of the address browsers never send to a server, and the API takes it in a header. It is derived from a stored random value with the server secret, so a later email can repeat it but a copy of the database alone opens nothing. A wrong credential and an unknown reference answer the same `BOOKING_LINK_INVALID`.
+- **Inbox.** Every email for an appointment — confirmation, invitation, reschedule, cancellation, reminder — goes through the Inbox into **one** conversation per appointment (origin `booking`, facts: appointment, method, reference, and the optional subject, budget, company, and phone for a phone call). The appointment row is locked while that conversation is found or made. A failed email never undoes the appointment: it is kept in the Inbox with Retry and written into the appointment's history.
+- **Manual appointments**: any future time for the owner, marked `outsideHours` when outside the week's hours, never overlapping. **Save only** sends nothing and opens no conversation; **Send invitation** sends once however often it is pressed. A manual appointment the visitor was never told about gets no reminder and no change emails.
+- **Reminders**: one per appointment, `bun run db2:booking:send-reminders`, each claimed before it is sent so parallel runs send it once. A booking made after its reminder moment skips it. Changing the reminder timing moves every future reminder not yet sent.
+- **Video** sits behind an adapter. The fake one runs locally; the RealtimeKit one is written against Cloudflare's published API but **has never run** against a real account, and it is used only with `BOOKING_VIDEO_MODE=live`; in production without that, joining answers `PROVIDER_UNAVAILABLE`. One meeting per appointment, two identities only (a second tab gets the same seat back). The visitor's link shows a waiting screen any time and a token only from the start; nobody new joins an hour after the end or after the owner ends the room; the owner may enter 15 minutes early.
+
+### Defaults chosen where the plan left a number open
+
+These are Dashboard settings or code constants, not assumptions about the business; each can be changed.
+
+| What | Chosen |
+| --- | --- |
+| Settings bounds | notice 0–30 days, window 1–365 days, visitor change limit 0–168 hours, reminder 1 hour–14 days before |
+| Start times | every 30 minutes from the start of each block of hours, per type (5–240) |
+| Existing appointments when settings change | keep their time; only unsent reminders follow a new reminder timing |
+| Visitor cancellation reasons | "The time no longer works for me", "I no longer need the appointment", "I found another solution", "I booked by mistake", "Other" (typed) — wording to approve in the Design Lab |
+| Owner entry to the video room | from 15 minutes before the start |
+| Deleting a type with upcoming appointments | refused; switch it off instead |
+
+### Design Lab — approved 23 Sep 2026 (`1A 2A 3A 4A 5A 6A 7A`)
+
+`https://claude.ai/artifact/SYC1Ftdzzqa6YfX24X7Hct` — private to the owner. Sample data only. The visitor side (DE/EN/AR, right-to-left for Arabic) shows booking with the new "how to meet" choice and the phone field only for a phone call, a time just taken, the success page for video / phone / a failed email, change and cancel with reasons, the too-late state and a cancelled booking; the video waiting room, a blocked camera, the call, over time and ended; and the Dashboard Calendar with the week, the paged list, an appointment's detail with emails and history, manual creation with outside-hours and overlap warnings, types, and hours and limits. Seven choices, recommendation `A` for each: method before time with video preselected; the five cancellation reasons listed above; the week view with the list under it; manual creation in a side panel; a camera/microphone waiting room with a countdown; types and hours as tabs inside Calendar; a slim over-time banner.
+
+### Dashboard Calendar — built 23 Sep 2026
+
+`/dashboard/calendar`, as approved: the week in Berlin time (closed hours shaded, appointments placed by time, outside-hours ones marked) with the upcoming list under it — search, status / type / way filters, "Include past", pages of 25 — and **Types** and **Hours & limits** as tabs. An appointment shows Berlin time and, where different, the visitor's own; how; contact details; subject and budget; the reminder state; a link to its Inbox conversation; its history. Actions: Join video call (issues room access; the call screen itself waits for RealtimeKit), End call, Move (overlap refused and explained), Cancel (a reason is required and sent), Send invitation for a manual appointment not yet sent, Completed / No show once it has started. **New appointment** opens a side panel with Save only / Save & send invitation and the outside-hours warning. Types need all three names before they can be offered; a type with upcoming appointments cannot be deleted. Hours are edited per day with exceptions; limits are chosen from bounded lists. All forms use TanStack Form, check-on-submit then on change.
+
+Verified in a browser against a throwaway database: the week, the detail, a move refused for overlap then accepted with history and email, a new appointment's validation and outside-hours warning, hours with an overlap refused then saved, and the refused type delete. `src/tests/inbox-calendar-ui.test.tsx` covers the appointment screen.
+
+### Before live use (not now)
+
+Apply `0010` to Neon; set `INBOX_SEND_MODE=live` with the Inbox checks; a Cloudflare Cron Trigger for the reminder command; RealtimeKit account, the `booking_host` / `booking_guest` presets with recording, transcription, export and chat persistence off, `BOOKING_VIDEO_MODE=live` and its three server-only settings; a real safe test booking and call; privacy copy review.
 
 ## Owner communication — mandatory
 

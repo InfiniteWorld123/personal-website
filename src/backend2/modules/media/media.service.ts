@@ -344,7 +344,7 @@ export const openPublicAsset = async (id: string, store?: MediaStore): Promise<O
 
 /* ------------------------------------------- the contract other modules use */
 
-export type ModuleName = 'projects' | 'blog' | 'services' | 'invoices' | 'content'
+export type ModuleName = 'projects' | 'blog' | 'services' | 'invoices' | 'content' | 'inbox'
 export type ReferenceScope = 'draft' | 'scheduled' | 'published' | 'record'
 
 /**
