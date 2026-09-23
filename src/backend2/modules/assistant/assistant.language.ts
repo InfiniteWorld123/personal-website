@@ -98,27 +98,27 @@ export const COPY = {
     ar: 'بحسب المعلومات المنشورة على الموقع:',
   },
   fallback: {
-    de: 'Dazu habe ich auf der Website leider nichts gefunden, und ich möchte nichts erfinden. Am besten fragen Sie direkt über das Kontaktformular oder buchen ein kurzes Gespräch.',
+    de: 'Dazu habe ich auf der Website leider nichts gefunden, und ich möchte nichts erfinden. Am besten fragst du direkt über das Kontaktformular oder buchst ein kurzes Gespräch.',
     en: "I couldn't find that on the website, and I don't want to guess. The best way is to ask directly through the contact form or to book a short call.",
     ar: 'لم أجد إجابة عن هذا على الموقع، ولا أريد أن أخمّن. الأفضل أن تسأل مباشرة عبر نموذج التواصل أو أن تحجز مكالمة قصيرة.',
   },
   handoff: {
-    de: 'Gern! Am einfachsten geht es direkt über das Kontaktformular, oder Sie buchen ein Gespräch zu einem passenden Termin.',
+    de: 'Gern! Am einfachsten geht es direkt über das Kontaktformular, oder du buchst ein Gespräch zu einem passenden Termin.',
     en: 'Of course. You can get in touch directly through the contact form, or book a call at a time that suits you.',
     ar: 'بكل سرور. يمكنك التواصل مباشرة عبر نموذج التواصل، أو حجز مكالمة في الوقت الذي يناسبك.',
   },
   smalltalk: {
-    de: 'Hallo! Ich beantworte Fragen zu den Leistungen, Preisen, Projekten und Artikeln auf dieser Website. Was möchten Sie wissen?',
+    de: 'Hallo! Ich beantworte Fragen zu den Leistungen, Preisen, Projekten und Artikeln auf dieser Website. Was möchtest du wissen?',
     en: 'Hello! I answer questions about the services, prices, projects and articles on this website. What would you like to know?',
     ar: 'مرحباً! أجيب عن الأسئلة المتعلقة بالخدمات والأسعار والمشاريع والمقالات على هذا الموقع. ماذا تود أن تعرف؟',
   },
   customQuote: {
-    de: 'Für ein individuelles Angebot fragen Sie bitte direkt über das Kontaktformular an – ich nenne hier nur die veröffentlichten Preise.',
+    de: 'Für ein individuelles Angebot frag bitte direkt über das Kontaktformular an – ich nenne hier nur die veröffentlichten Preise.',
     en: 'For a custom quote, please ask directly through the contact form – I can only repeat the published prices.',
     ar: 'للحصول على عرض سعر مخصص، يرجى التواصل مباشرة عبر نموذج التواصل – أنا أذكر فقط الأسعار المنشورة.',
   },
   notice: {
-    de: 'Hier antwortet ein automatischer Assistent, nur auf Grundlage der veröffentlichten Inhalte dieser Website. Unterhaltungen können gespeichert und vom Website-Inhaber gelesen werden. Bitte geben Sie keine persönlichen Daten ein.',
+    de: 'Hier antwortet ein automatischer Assistent, nur auf Grundlage der veröffentlichten Inhalte dieser Website. Unterhaltungen können gespeichert und vom Website-Inhaber gelesen werden. Bitte gib keine persönlichen Daten ein.',
     en: 'An automated assistant answers here, using only the content published on this website. Conversations may be saved and read by the site owner. Please do not enter personal information.',
     ar: 'يجيب هنا مساعد آلي يعتمد فقط على المحتوى المنشور على هذا الموقع. قد يتم حفظ المحادثات وقراءتها من قبل صاحب الموقع. يرجى عدم إدخال معلومات شخصية.',
   },
