@@ -81,3 +81,11 @@ copy are stale.
   ~32 MB unused images in `public/images` (deleting needs the owner's OK).
 
 The page-by-page public plan is `public-cutover.md`.
+
+## Requested next: global search (owner, 24 Sep 2026)
+
+The owner wants a global search. It follows the current Dashboard screens.
+Open questions put to the owner: where (Dashboard only — recommended —,
+public site, or both) and how it opens (⌘K palette plus the top-bar field —
+recommended — or a separate page). A module specification is written from
+the answers before building.
