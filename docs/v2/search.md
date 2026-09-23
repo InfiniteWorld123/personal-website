@@ -1,0 +1,37 @@
+# Global search V2 — Dashboard
+
+Status: **owner decisions taken on 24 Sep 2026; not built yet.** Build after
+the current Dashboard screens (Invoices, Analytics/Overview, Assistant) land.
+Follows the `AGENTS.md` order: backend → tests → frontend questions →
+Design Lab → owner approval → production UI.
+
+## Owner decisions
+
+1. **Dashboard only.** Owner-private search across the owner's own records:
+   Clients, Invoices (and subscriptions), Inbox conversations, Blog articles,
+   Projects, Services, Calendar appointments, Leads, and Media files. No
+   public-site search in this scope.
+2. **Opens with ⌘K (Ctrl K on Windows) and from the existing top-bar search
+   field.** A palette over any Dashboard page; results grouped by section;
+   arrow keys move, Enter opens the record in its own module.
+
+## Boundaries
+
+- Read-only. Search never changes a record and never becomes a second place
+  to edit one.
+- Owner routes only (same fence and session as every owner route); nothing
+  is exposed publicly. Private text (message bodies, notes) may be matched but
+  results show a short, safe excerpt only.
+- Each module owns what is searchable in it, behind a narrow read interface,
+  so a module change does not rewrite search. Trash and deleted items are
+  excluded unless a later decision adds them.
+- Bounded: a small number of results per section, a "see all in <module>"
+  link into that module's own filtered list; no unbounded scans.
+- Test data (test-mode invoices) is labelled as such in results.
+
+## To decide while building (engineering, reversible)
+
+PostgreSQL full-text (`to_tsvector` with `simple` config across DE/EN/AR) or
+trigram matching; indexes per searched column; debounce and request
+cancellation in the palette; keyboard and screen-reader behaviour; recent
+searches (kept in the browser only).
