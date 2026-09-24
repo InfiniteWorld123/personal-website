@@ -16,8 +16,10 @@ export const minorToText = (minor: number | null | undefined): string => {
 }
 
 /**
- * `1890`, `1890.5`, `1890,50` or `1,890.00` into cents; `null` for anything
- * that is not plainly an amount, including an empty field.
+ * `1890`, `1890.5`, `1890,50`, `1,890.00` or `1.890,00` into cents; `null`
+ * for anything that is not plainly an amount, including an empty field.
+ * German grouping counts only with its cents after a comma: `12.345` alone
+ * could be either reading, so it is refused rather than guessed.
  */
 export const parseMoney = (text: string): number | null => {
   const value = text.replace(/[\s€$]|US/gu, '')
@@ -26,11 +28,12 @@ export const parseMoney = (text: string): number | null => {
 
   const plain = /^(\d{1,9})(?:[.,](\d{1,2}))?$/u.exec(value)
   const grouped = /^(\d{1,3}(?:,\d{3})+)(?:\.(\d{1,2}))?$/u.exec(value)
-  const match = plain ?? grouped
+  const groupedGerman = /^(\d{1,3}(?:\.\d{3})+),(\d{1,2})$/u.exec(value)
+  const match = plain ?? grouped ?? groupedGerman
 
   if (!match) return null
 
-  const whole = Number(match[1]!.replace(/,/gu, ''))
+  const whole = Number(match[1]!.replace(/[.,]/gu, ''))
   const cents = Number((match[2] ?? '').padEnd(2, '0'))
 
   return whole * 100 + cents

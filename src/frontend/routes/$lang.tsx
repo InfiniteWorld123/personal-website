@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute, notFound, useRouter, useRouterState } from '@tanstack/react-router'
-import { PublicShell } from '#/frontend/components/layout/public/PublicShell'
+import { PublicShell, useInsidePublicShell } from '#/frontend/components/layout/public/PublicShell'
 import { fetchPublishedContent } from '#/frontend/features/content/server/published-content'
 import { useContentOverrides } from '#/frontend/features/content/use-published-content'
 import {
@@ -68,12 +68,15 @@ function LanguageLayout() {
   )
 }
 
+/*
+ * Two ways to land here. An unknown page below a known language renders inside
+ * the layout's `<Outlet />`, already in the shell — a second one would repeat
+ * the header and footer. An unknown language, or a page whose loader found
+ * nothing, renders instead of the layout and has to bring the shell itself.
+ */
 function LanguageNotFound() {
   const { lang } = Route.useParams()
+  const page = <NotFoundPage language={lang} />
 
-  return (
-    <PublicShell>
-      <NotFoundPage language={lang} />
-    </PublicShell>
-  )
+  return useInsidePublicShell() ? page : <PublicShell>{page}</PublicShell>
 }

@@ -508,6 +508,10 @@ function CommentForm({
   const [serverReason, setServerReason] = useState<CommentRefusalWord | null>(null)
   const [posted, setPosted] = useState(false)
   const textarea = useRef<HTMLTextAreaElement>(null)
+  // A second press before React disables the button would post the same text
+  // again; the server refuses it as a duplicate, and that refusal would sit
+  // beside the "posted" notice of the first. One post at a time.
+  const inFlight = useRef(false)
 
   const form = useForm({
     defaultValues: { body: '', website: '' },
@@ -550,7 +554,11 @@ function CommentForm({
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        if (inFlight.current) return
+        inFlight.current = true
+        void form.handleSubmit().finally(() => {
+          inFlight.current = false
+        })
       }}
     >
       <form.Field name="body">

@@ -268,7 +268,7 @@ export const draftErrors = (values: InvoiceFormValues): InvoiceFormErrors => {
     }
     if (quantity === null) errors[`lines[${index}].quantity`] = 'Write a number like 1 or 1.5'
     else if (quantity > INVOICE_LIMITS.quantityMilli) errors[`lines[${index}].quantity`] = 'That quantity is too large'
-    if (price === null) errors[`lines[${index}].unitPrice`] = 'Write the price like 1890 or 49.90'
+    if (price === null) errors[`lines[${index}].unitPrice`] = 'Write the price like 1890 or 49,90'
     else if (price > INVOICE_LIMITS.amountMinor) errors[`lines[${index}].unitPrice`] = 'That price is too large'
   })
 
@@ -278,7 +278,7 @@ export const draftErrors = (values: InvoiceFormValues): InvoiceFormErrors => {
     if (bp === null) errors.discountValue = 'Write the discount like 10 or 12.5'
     else if (bp > 10_000) errors.discountValue = 'A discount cannot be more than 100 %'
   } else if (values.discountType === 'fixed') {
-    if (parseMoney(values.discountValue) === null) errors.discountValue = 'Write the discount like 100 or 49.90'
+    if (parseMoney(values.discountValue) === null) errors.discountValue = 'Write the discount like 100 or 49,90'
   }
 
   if (values.plan) {
@@ -287,7 +287,7 @@ export const draftErrors = (values: InvoiceFormValues): InvoiceFormErrors => {
     }
 
     values.installments.forEach((part, index) => {
-      if (parseMoney(part.amount) === null) errors[`installments[${index}].amount`] = 'Write an amount like 945 or 567.50'
+      if (parseMoney(part.amount) === null) errors[`installments[${index}].amount`] = 'Write an amount like 945 or 567,50'
       if (!/^\d{4}-\d{2}-\d{2}$/u.test(part.dueDate)) errors[`installments[${index}].dueDate`] = 'Choose a date'
     })
   } else {

@@ -1,6 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { signOut } from '#/frontend/features/auth-v2/api'
 import { useNewCommentCount } from '#/frontend/features/blog-v2/queries'
 import { useInboxCounts } from '#/frontend/features/inbox-v2/queries'
 import { useDueFollowUpCount } from '#/frontend/features/leads-v2/queries'
@@ -75,18 +76,19 @@ export function DashboardSidebar({
         ))}
 
         {/*
-          Not a `Link`: signing out is an action, and V2 has no session of its
-          own yet. Until Backend2 owns authentication this row says so rather
-          than pretending to do it.
+          Not a `Link`: signing out is an action. The same one as the account
+          menu in the top bar — end the V2 session, then go to the sign-in.
         */}
         <button
           type="button"
-          disabled
+          onClick={async () => {
+            await signOut().catch(() => {})
+            window.location.assign('/dashboard/login')
+          }}
           className="dash-nav group relative flex w-full items-center text-left"
-          title="Sign-out belongs to Backend2, which does not exist yet"
         >
           <span aria-hidden="true" className="dash-nav-edge" />
-          <span className="dash-nav-row flex-1 text-sm opacity-50">
+          <span className="dash-nav-row flex-1 text-sm">
             <LogOut aria-hidden="true" className="dash-nav-icon size-[18px] shrink-0" />
             <span className="dash-nav-text">Log out</span>
           </span>
@@ -205,9 +207,13 @@ function CountChip({ count, rail, noun, railWord, prefix = '' }: { count: number
 /** The chip that slides out of a collapsed rail. Hidden entirely when the
     sidebar is open, so it can never sit on top of the label it duplicates. */
 function RailLabel({ children }: { children: ReactNode }) {
+  /*
+   * Not `aria-hidden`: collapsed, the row's own text is `display: none`, and
+   * this chip is the only name the icon has. Open, the chip is `display: none`
+   * itself, so a screen reader never hears the label twice.
+   */
   return (
     <span
-      aria-hidden="true"
       className="dash-nav-float pointer-events-none absolute top-1/2 left-[62px] z-40 h-8 items-center rounded-lg px-3 text-xs font-semibold whitespace-nowrap"
       style={{
         background: 'var(--dash-slab)',

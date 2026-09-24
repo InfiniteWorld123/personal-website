@@ -72,7 +72,7 @@ export const subscriptionErrors = (values: SubscriptionFormValues, today: string
 
   const amount = parseMoney(values.amount)
 
-  if (amount === null || amount <= 0) errors.amount = 'Enter the agreed price, like 49 or 49.90'
+  if (amount === null || amount <= 0) errors.amount = 'Enter the agreed price, like 49 or 49,90'
   else if (amount > INVOICE_LIMITS.amountMinor) errors.amount = 'That price is too large'
 
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(values.startDate)) errors.startDate = 'Choose the first collection date'

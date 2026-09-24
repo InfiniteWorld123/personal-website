@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useBlocker, useNavigate, useParams } from '@tanstack/react-router'
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
 import * as v from 'valibot'
 import {
@@ -332,6 +332,20 @@ export function ProjectEditorPage() {
   const [previewing, setPreviewing] = useState(false)
   const announce = useRef<HTMLParagraphElement>(null)
 
+  /*
+   * The unsaved-change warning, as in the Blog, Services and Content editors:
+   * leaving with work that is not saved asks first, inside the app and on
+   * closing the tab. The hook sits above the loading returns; `unsaved` is
+   * only known further down, so it reaches the hook through this ref.
+   */
+  const unsavedRef = useRef(false)
+  const leaving = useRef(false)
+  const blocker = useBlocker({
+    shouldBlockFn: () => unsavedRef.current && !leaving.current,
+    enableBeforeUnload: () => unsavedRef.current && !leaving.current,
+    withResolver: true,
+  })
+
   const data = project.data
 
   const form = useForm({
@@ -512,6 +526,7 @@ export function ProjectEditorPage() {
    * previewing the ones from before.
    */
   const unsaved = fingerprint(toDraft(values, caseStudies)) !== savedFingerprint
+  unsavedRef.current = unsaved
 
   /**
    * Preview saves first — but only when there is something to save.
@@ -1318,6 +1333,7 @@ export function ProjectEditorPage() {
                       onClick={() =>
                         void run(async () => {
                           await remove.mutateAsync({ id: projectId, confirm: deleteText })
+                          leaving.current = true
                           await navigate({ to: '/dashboard/projects' })
                         }, 'That project could not be deleted.')
                       }
@@ -1382,6 +1398,26 @@ export function ProjectEditorPage() {
         }}
       />
 
+      {blocker.status === 'blocked' ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(8,12,24,.55)] p-4">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-text" className="dash-panel flex w-full max-w-[26rem] flex-col gap-2 p-5 shadow-[var(--dash-shadow)]">
+            <h2 id="leave-title" className="text-[15px] font-semibold">
+              Leave without saving?
+            </h2>
+            <p id="leave-text" className="text-[13px] text-[var(--dash-quiet)]">
+              Your changes on this page are not saved yet. If you leave now, they are lost. Nothing on the website changes either way.
+            </p>
+            <div className="mt-2 flex flex-wrap justify-end gap-2">
+              <button type="button" className="dash-btn dash-btn-quiet" onClick={() => blocker.proceed()}>
+                Leave without saving
+              </button>
+              <button type="button" className="dash-btn dash-btn-primary" autoFocus onClick={() => blocker.reset()}>
+                Keep editing
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </DashboardPage>
   )
 }

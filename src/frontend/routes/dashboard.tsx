@@ -1,6 +1,7 @@
-import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import dashboardCss from '#/frontend/dashboard/dashboard.css?url'
 import { DashboardShell } from '#/frontend/dashboard/DashboardShell'
+import { DashboardPage, PageHead } from '#/frontend/dashboard/primitives'
 import { getOwnerRouteSession } from '#/frontend/features/auth-v2/server/getOwnerSession'
 
 /**
@@ -41,7 +42,25 @@ export const Route = createFileRoute('/dashboard')({
     }
   },
   component: DashboardLayoutRoute,
+  // Renders inside the layout's `<Outlet />`, so the sidebar stays and the
+  // wording is the Dashboard's own English rather than the public 404.
+  notFoundComponent: DashboardNotFound,
 })
+
+function DashboardNotFound() {
+  return (
+    <DashboardPage>
+      <PageHead
+        eyebrow="Not found"
+        title="This page does not exist"
+        description="The link is old or mistyped. Nothing was changed."
+      />
+      <Link to="/dashboard" className="dash-btn dash-btn-primary mt-5 w-fit">
+        Back to the overview
+      </Link>
+    </DashboardPage>
+  )
+}
 
 function DashboardLayoutRoute() {
   const { authSession } = Route.useRouteContext()

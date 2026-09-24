@@ -40,7 +40,8 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
       typeId: '',
       method: 'video' as BookingMethod,
       // Tomorrow by default: 10:00 today has usually passed by the time the panel opens.
-      date: initialDate ?? addDays(berlinToday(), 1),
+      // The week on screen may be a past one; its Monday is then no default at all.
+      date: initialDate && initialDate > addDays(berlinToday(), 1) ? initialDate : addDays(berlinToday(), 1),
       time: '10:00',
       name: '',
       email: '',
@@ -109,6 +110,23 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
 
   const values = useStore(form.store, (state) => state.values)
   const submitting = useStore(form.store, (state) => state.isSubmitting)
+  const [confirmingClose, setConfirmingClose] = useState(false)
+
+  /*
+   * Closing throws the panel away, so a panel holding someone's details asks
+   * first. Only what the owner typed counts: the type and the method are
+   * filled in for them and are not work to lose.
+   */
+  const typed = [values.name, values.email, values.phone, values.company, values.note, values.subject, values.budget].some(
+    (text) => text.trim() !== '',
+  )
+  const typedRef = useRef(typed)
+  typedRef.current = typed
+  const requestClose = useRef(() => {})
+  requestClose.current = () => {
+    if (typedRef.current && !confirmingClose) setConfirmingClose(true)
+    else if (!typedRef.current) onClose()
+  }
   const typeList = types.data?.items ?? []
   const type = typeList.find((item) => item.id === values.typeId)
 
@@ -123,7 +141,7 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') requestClose.current()
     }
 
     window.addEventListener('keydown', onKey)
@@ -147,11 +165,11 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
   const label = 'flex flex-col gap-1 text-[12px] text-[var(--dash-quiet)]'
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[rgba(10,14,26,0.35)]" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-[rgba(10,14,26,0.35)]" onMouseDown={(event) => event.target === event.currentTarget && requestClose.current()}>
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby="manual-title" className="flex h-full w-full max-w-[460px] flex-col bg-[var(--dash-surface)] shadow-[var(--dash-shadow)]">
         <header className="flex items-center gap-2 border-b border-[var(--dash-line)] px-4 py-3">
           <h2 id="manual-title" className="dash-title text-[19px]">New appointment</h2>
-          <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2" onClick={onClose} aria-label="Close">
+          <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2" onClick={() => requestClose.current()} aria-label="Close">
             <X className="size-4" aria-hidden="true" />
           </button>
         </header>
@@ -165,6 +183,21 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
           }}
         >
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
+            {confirmingClose ? (
+              <div role="alertdialog" aria-labelledby="manual-discard" className="dash-panel flex flex-col gap-2 p-3">
+                <p id="manual-discard" className="text-[13px] font-semibold">
+                  Close without saving? What you typed here is lost.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className="dash-btn dash-btn-quiet h-8" onClick={onClose}>
+                    Close without saving
+                  </button>
+                  <button type="button" className="dash-btn dash-btn-primary h-8" autoFocus onClick={() => setConfirmingClose(false)}>
+                    Keep editing
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {types.isSuccess && typeList.length === 0 ? (
               <DialogAlert>Create an appointment type first, under Types.</DialogAlert>
             ) : null}

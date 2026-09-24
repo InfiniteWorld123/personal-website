@@ -257,7 +257,7 @@ describe('the editor’s two sets of rules', () => {
     const errors = form.draftErrors(filled({ lines: [form.emptyLine({ quantity: 'two', unitPrice: '12,345.678' })] }))
 
     expect(errors['lines[0].quantity']).toContain('1.5')
-    expect(errors['lines[0].unitPrice']).toContain('49.90')
+    expect(errors['lines[0].unitPrice']).toContain('49,90')
   })
 
   it('checks everything the server checks before issuing, per field', () => {
@@ -333,6 +333,7 @@ describe('amounts as the owner types them', () => {
     expect(money.parseMoney('49,9')).toBe(4990)
     expect(money.parseMoney('1,890.00')).toBe(189_000)
     expect(money.parseMoney('€ 12.5')).toBe(1250)
+    expect(money.parseMoney('1.234,56')).toBe(123_456)
     expect(money.parseMoney('12.345')).toBeNull()
     expect(money.parseMoney('')).toBeNull()
     expect(money.parseQuantity('1,25')).toBe(1250)
