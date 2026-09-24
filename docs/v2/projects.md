@@ -248,3 +248,9 @@ After the open product decisions are resolved: exact content fields, editor and 
 Read `AGENTS.md`, `docs/v2/foundation.md`, this whole document, `docs/v2/projects-backend.md`, and `docs/v2/media.md`, then inspect the current implementation and working tree. Treat historical statements about what has or has not been built as evidence to verify, not current fact. Ask the owner only about material missing backend decisions; otherwise complete and verify the agreed Backend2 Projects work without overwriting concurrent changes. The older project-only image upload and automatic deletion design is superseded for final integration by shared Media; use a reviewed migration, not a silent rewrite.
 
 After backend verification, ask only about material frontend/UX decisions still unanswered, then present an isolated interactive Design Lab with desktop/mobile and DE/EN/AR/RTL states. Wait for explicit visual approval before production frontend work. Build and test the approved Dashboard/public flows, preserve the accepted public appearance, and review the exact diff. Commit/push agreed files to `main-v2` only when the owner requests that Git action; do not deploy or cut over the live site without separate approval.
+
+## Public card eyebrow — decided 24 Sep 2026
+
+The owner chose one line, type first: `Eigenes Projekt · Onlineshop` (the
+approved type word, then the owner's category label when there is one), so a
+demo is never read as client work.

@@ -53,3 +53,11 @@ searches (kept in the browser only).
 - No new migration: at a single owner's scale these bounded queries are fast;
   revisit with trigram indexes if a table grows large.
 - Verified: `src/tests/backend2-search.test.ts`.
+
+## Design Lab approval — 24 Sep 2026
+
+The owner approved the Search Design Lab (https://claude.ai/artifact/QLijC5SbZMXETD7j5ipdvM)
+as shown: ⌘K / Ctrl K and the top-bar field, grouped results with "See all in
+…", arrow keys and Enter, recent searches kept in the browser, a full-screen
+palette on phones, and the empty, nothing-found, searching and one-section-
+failed states.

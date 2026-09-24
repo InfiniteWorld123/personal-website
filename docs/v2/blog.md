@@ -293,3 +293,10 @@ The public `/rss/{de,en,ar}.xml` and `/sitemap.xml` routes remain at their curre
 What Blog does when it is built: import `MediaPicker` from `src/frontend/features/media/MediaPicker`, and declare which files an article uses by calling `replaceReferences` from `src/backend2/modules/media/media.service` — in-process, never over HTTP, because a reference is what makes a file undeletable and, at `published` scope, publicly reachable. Use the scope that matches the snapshot: `draft` while editing, `published` once live, `scheduled` for a frozen future publication. Alt text belongs to Blog's own tables, not to Media: the same photograph needs different alt text in each language.
 
 None of this reopens the Blog product questions answered above.
+
+## Public comments — decided 24 Sep 2026
+
+- No Turnstile on comments (owner's choice): the per-article and per-visitor
+  rate limits, the honeypot and the markup refusals stay the protection.
+- Approved the two added sentences: "Loading comments…" and "The comments
+  could not be loaded just now." (with their German and Arabic).
