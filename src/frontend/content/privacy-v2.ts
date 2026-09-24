@@ -24,6 +24,11 @@ type V2Words = {
   cookies: Section
   /** Shown only while Cloudflare Web Analytics is switched on (`CF_WEB_ANALYTICS_TOKEN`). */
   webAnalytics: Section
+  /**
+   * While the statistics run, the page's opening and "what does not happen"
+   * may no longer say there are none (owner decision, 24 Sep 2026).
+   */
+  withStatistics: { intro: string; notHappening: string }
   updated: string
 }
 
@@ -52,6 +57,12 @@ const WORDS: Record<Language, V2Words> = {
     cookies: {
       title: 'Cookies und Speicher im Browser',
       body: 'Die öffentliche Website setzt nur technisch notwendige Einstellungen, etwa für Sprache und Farbschema. Zusätzlich speichert dein Browser lokal, für diesen Tab, die Kennung deines Gesprächs mit dem Assistenten und, dauerhaft, welche Artikel du mit „Gefällt mir" markiert hast. Im nicht öffentlichen Verwaltungsbereich werden notwendige Sitzungs-Cookies für die Anmeldung verwendet. Nichts davon dient Werbung oder seitenübergreifendem Tracking. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG sowie Art. 6 Abs. 1 lit. f DSGVO.',
+    },
+    withStatistics: {
+      intro:
+        'Diese Website erhebt so wenig wie möglich. Es gibt eine cookielose Besuchsstatistik (Cloudflare Web Analytics, unten beschrieben), aber keine Werbenetzwerke und kein Tracking über Seiten hinweg. Was tatsächlich verarbeitet wird, steht hier vollständig. Diese Fassung ist ein technischer Entwurf und keine Rechtsberatung oder rechtliche Garantie.',
+      notHappening:
+        'Außer der oben beschriebenen cookielosen Besuchsstatistik gibt es keine Webanalyse, keine Werbe- oder Retargeting-Pixel, keine eingebetteten Schriften von fremden Servern und keine Social-Media-Plugins. Es werden keine Profile gebildet und es findet keine automatisierte Entscheidungsfindung statt.',
     },
     webAnalytics: {
       title: 'Website-Statistik (Cloudflare Web Analytics)',
@@ -84,6 +95,12 @@ const WORDS: Record<Language, V2Words> = {
       title: 'Cookies and browser storage',
       body: 'The public website stores only technically necessary settings such as language and colour scheme. Your browser also keeps, for this tab, the handle of your conversation with the assistant, and permanently which articles you liked. The non-public admin area uses necessary session cookies for signing in. None of this is used for advertising or cross-site tracking. Legal basis: § 25(2) no. 2 TDDDG and Art. 6(1)(f) GDPR.',
     },
+    withStatistics: {
+      intro:
+        'This site collects as little as it can. There is a cookieless visit count (Cloudflare Web Analytics, described below), but no advertising networks and no cross-site tracking. What is actually processed is listed here in full. The German version is the binding one. This version is a technical draft, not legal advice or a legal guarantee.',
+      notHappening:
+        'Apart from the cookieless visit count described above, there is no web analytics, no advertising or retargeting pixels, no fonts embedded from third-party servers, and no social media plugins. No profiles are built and no automated decision-making takes place.',
+    },
     webAnalytics: {
       title: 'Website statistics (Cloudflare Web Analytics)',
       body: 'To understand how the public pages are used, I use Cloudflare Web Analytics. It sets no cookies and stores nothing in your browser. It counts page views and visits, which page you open, which website you came from, your approximate country, browser, device type and page load times. Cloudflare receives your IP address because that is how the connection works, but does not use it to recognise you or follow you across websites. It never runs in the non-public admin area. Legal basis: Art. 6(1)(f) GDPR, my legitimate interest in improving the website.',
@@ -115,6 +132,12 @@ const WORDS: Record<Language, V2Words> = {
       title: 'ملفات الارتباط والتخزين في المتصفح',
       body: 'يحفظ الموقع العام الإعدادات الضرورية تقنياً فقط، مثل اللغة ونمط الألوان. ويحفظ متصفحك أيضاً، لهذا التبويب فقط، رمز محادثتك مع المساعد، وبشكل دائم المقالات التي أعجبتك. وتُستخدم في منطقة الإدارة غير العامة ملفات ارتباط ضرورية لتسجيل الدخول. لا يُستخدم شيء من ذلك للإعلانات أو للتتبع بين المواقع. الأساس القانوني: الفقرة 25 (2) رقم 2 من قانون TDDDG والمادة 6 (1) (و).',
     },
+    withStatistics: {
+      intro:
+        'يجمع هذا الموقع أقل ما يمكن. توجد إحصاءات زيارات بلا ملفات ارتباط (Cloudflare Web Analytics، موصوفة أدناه)، لكن لا شبكات إعلانية ولا تتبّع عبر المواقع. وما يُعالَج فعلاً مذكور هنا كاملاً. والنسخة الألمانية هي الملزِمة. هذه الصياغة مسودة تقنية وليست استشارة قانونية أو ضماناً قانونياً.',
+      notHappening:
+        'باستثناء إحصاءات الزيارات بلا ملفات ارتباط الموصوفة أعلاه، لا تحليلات ويب أخرى، ولا بكسلات إعلانية أو إعادة استهداف، ولا خطوط مضمّنة من خوادم خارجية، ولا إضافات تواصل اجتماعي. ولا تُبنى أي ملفات تعريف، ولا يجري أي اتخاذ قرار آلي.',
+    },
     webAnalytics: {
       title: 'إحصاءات الموقع (Cloudflare Web Analytics)',
       body: 'لأفهم كيف تُستخدم الصفحات العامة، أستخدم خدمة Cloudflare Web Analytics. لا تضع أي ملفات ارتباط (Cookies) ولا تحفظ شيئاً في متصفحك. تَعُدّ مرات فتح الصفحات والزيارات، وأي صفحة تفتحها، ومن أي موقع جئت، وبلدك التقريبي، ونوع المتصفح والجهاز، وسرعة تحميل الصفحة. تصل عنوانَ IP الخاص بك إلى Cloudflare لأن الاتصال يتطلب ذلك، لكنها لا تستخدمه للتعرّف عليك أو لتتبعك بين المواقع. ولا تعمل أبداً في منطقة الإدارة غير العامة. الأساس القانوني: المادة 6 (1) (و)، أي مصلحتي المشروعة في تحسين الموقع.',
@@ -140,8 +163,13 @@ export const applyPrivacyV2 = (
 
   if (sections.length < 9) return copy
 
+  const stats = options.webAnalytics ? words.withStatistics : null
+  // Today's "what does not happen", reworded while the statistics run.
+  const notHappening = stats ? { ...sections[AFTER_COOKIES]!, body: stats.notHappening } : sections[AFTER_COOKIES]!
+
   return {
     ...copy,
+    ...(stats ? { intro: stats.intro } : {}),
     sections: [
       sections[0]!,
       words.storage,
@@ -154,7 +182,8 @@ export const applyPrivacyV2 = (
       words.cookies,
       // Only while the public site really carries the beacon.
       ...(options.webAnalytics ? [words.webAnalytics] : []),
-      ...sections.slice(AFTER_COOKIES),
+      notHappening,
+      ...sections.slice(AFTER_COOKIES + 1),
     ],
     updated: words.updated,
   }

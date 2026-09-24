@@ -34,15 +34,48 @@ export type R2BucketBinding = {
   delete(key: string): Promise<void>
 }
 
+/** Workers' `FixedLengthStream`: a stream R2 accepts because its length is stated. */
+type FixedLengthStreamConstructor = new (length: number) => TransformStream<Uint8Array, Uint8Array>
+
+/**
+ * R2 refuses a stream whose length it cannot know ("Provided readable stream
+ * must have a known length"), and an upload arrives as exactly that: bytes
+ * counted while they pass. With a declared size the stream is passed through a
+ * `FixedLengthStream`, which also fails the write if the bytes do not match.
+ * Without one it is read into memory first — safe, because `upload.ts` has
+ * already capped it at the kind's ceiling.
+ */
+const knownLength = async (
+  body: ReadableStream<Uint8Array>,
+  size: number | undefined,
+  write: (value: ReadableStream<Uint8Array> | Uint8Array) => Promise<unknown>,
+): Promise<void> => {
+  const Fixed = (globalThis as { FixedLengthStream?: FixedLengthStreamConstructor }).FixedLengthStream
+
+  if (Fixed && typeof size === 'number' && Number.isInteger(size) && size >= 0) {
+    const fixed = new Fixed(size)
+
+    await Promise.all([write(fixed.readable), body.pipeTo(fixed.writable)])
+
+    return
+  }
+
+  await write(new Uint8Array(await new Response(body).arrayBuffer()))
+}
+
 export const createR2BindingStore = (bucket: R2BucketBinding): MediaStore => ({
-  async put({ key, body, contentType }) {
+  async put({ key, body, contentType, size }) {
+    const options = { httpMetadata: { contentType } }
+
+    // The view itself, not `.buffer`: a view over part of a larger buffer would
+    // otherwise store the whole buffer.
     if (body instanceof Uint8Array) {
-      await bucket.put(key, body.buffer as ArrayBuffer, { httpMetadata: { contentType } })
+      await bucket.put(key, body, options)
 
       return
     }
 
-    await bucket.put(key, body, { httpMetadata: { contentType } })
+    await knownLength(body, size, (value) => bucket.put(key, value, options))
   },
 
   async get(key) {

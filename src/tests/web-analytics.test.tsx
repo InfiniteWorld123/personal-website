@@ -90,5 +90,12 @@ describe('the privacy page', () => {
     expect(added.body).toMatch(/cookie|ملفات ارتباط/iu)
     // Right after the cookie section, before what does not happen.
     expect(on.sections.indexOf(added)).toBe(9)
+
+    // With statistics on, nothing may still claim there are none.
+    const denial = /keine Webanalyse, keine Statistik|no analytics tools|There is no web analytics|لا أدوات تحليل|لا تحليلات ويب، ولا برامج إحصاء/u
+    expect(JSON.stringify(off)).toMatch(denial)
+    expect(JSON.stringify(on)).not.toMatch(denial)
+    expect(on.sections[10]!.title).toBe(off.sections[9]!.title)
+    expect(on.intro).not.toBe(off.intro)
   })
 })
