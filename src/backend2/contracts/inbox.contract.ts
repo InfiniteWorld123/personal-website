@@ -372,6 +372,17 @@ export type InboundPayload = {
   inReplyTo?: string
   references?: string
   files?: Array<{ filename: string; contentType: string; content: string }>
+  /**
+   * Files the letter had but the Worker could not carry (over 10 MB, or more
+   * than one delivery may hold). No bytes — only enough to show each one as
+   * missing. The full letter is in the copy forwarded to the owner's mailbox.
+   */
+  omittedFiles?: Array<{
+    filename: string
+    contentType: string
+    byteSize: number
+    reason: 'too-large' | 'letter-too-large'
+  }>
 }
 
 /** The request headers of a signed delivery. */

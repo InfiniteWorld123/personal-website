@@ -60,6 +60,24 @@ export type ParsedAttachment = {
   content: ArrayBuffer | ArrayBufferView | string
 }
 
+/** One file as it travels inside the signed JSON. */
+export type CarriedFile = { filename: string; contentType: string; content: string }
+
+/**
+ * A file the letter had but this Worker could not carry — named, so the
+ * Inbox can show it as missing instead of never mentioning it. The bytes are
+ * still in the copy forwarded to the owner's own mailbox.
+ */
+export type OmittedFile = {
+  filename: string
+  contentType: string
+  byteSize: number
+  reason: 'too-large' | 'letter-too-large'
+}
+
+/** The four characters base64 spends on every three bytes. */
+const base64Length = (bytes: number): number => 4 * Math.ceil(bytes / 3)
+
 /**
  * The files, as JSON the site can verify along with the rest of the letter.
  *
@@ -68,16 +86,23 @@ export type ParsedAttachment = {
  * arrive unauthenticated, and the site would have to hold a half-recorded
  * letter open while it waited.
  *
- * What is dropped here is dropped for a reason that cannot be recovered
- * further down — no bytes, or a letter so large that carrying the rest of it
- * matters more. Everything else is the site's decision, and it says so in the
- * conversation when it refuses.
+ * `maxEncodedBytes` is what the files may add to the JSON, base64 and field
+ * names included. A file that does not fit is skipped — and the next, smaller
+ * one may still fit — and named in `omitted`, as is any single file over the
+ * ten-megabyte ceiling the site would refuse anyway. Empty parts and small
+ * embedded logos are dropped without a word: there is nothing to miss.
  */
-export const filesFrom = (
+export const packFiles = (
   attachments: ParsedAttachment[],
-): Array<{ filename: string; contentType: string; content: string }> => {
-  const files = []
+  options: { maxEncodedBytes?: number; maxTotalBytes?: number; maxFiles?: number } = {},
+): { files: CarriedFile[]; omitted: OmittedFile[] } => {
+  const maxEncoded = options.maxEncodedBytes ?? Number.POSITIVE_INFINITY
+  const maxTotal = options.maxTotalBytes ?? MAX_TOTAL_BYTES
+  const maxFiles = options.maxFiles ?? Number.POSITIVE_INFINITY
+  const files: CarriedFile[] = []
+  const omitted: OmittedFile[] = []
   let total = 0
+  let encoded = 0
 
   for (const attachment of attachments) {
     if (typeof attachment.content === 'string' || !attachment.content) continue
@@ -90,18 +115,36 @@ export const filesFrom = (
       : attachment.content
     const bytes = buffer.byteLength
     const embedded = attachment.disposition === 'inline' && Boolean(attachment.contentId)
+    // Clamped: a receiving schema that refuses a 2,000-character name would
+    // refuse the whole letter with it.
+    const filename = (attachment.filename?.trim() || 'attachment').slice(0, 255)
+    const contentType = (attachment.mimeType ?? 'application/octet-stream').slice(0, 255)
 
-    if (bytes === 0 || bytes > MAX_FILE_BYTES) continue
+    if (bytes === 0) continue
     if (embedded && bytes <= EMBEDDED_IMAGE_BYTES) continue
-    if (total + bytes > MAX_TOTAL_BYTES) break
+
+    if (bytes > MAX_FILE_BYTES) {
+      omitted.push({ filename, contentType, byteSize: bytes, reason: 'too-large' })
+      continue
+    }
+
+    // The field names, quotes and an escaped name, generously.
+    const cost = base64Length(bytes) + 2 * (filename.length + contentType.length) + 96
+
+    if (files.length >= maxFiles || total + bytes > maxTotal || encoded + cost > maxEncoded) {
+      omitted.push({ filename, contentType, byteSize: bytes, reason: 'letter-too-large' })
+      continue
+    }
 
     total += bytes
-    files.push({
-      filename: attachment.filename?.trim() || 'attachment',
-      contentType: attachment.mimeType ?? 'application/octet-stream',
-      content: toBase64(buffer as ArrayBuffer),
-    })
+    encoded += cost
+    files.push({ filename, contentType, content: toBase64(buffer as ArrayBuffer) })
   }
 
-  return files
+  return { files, omitted }
 }
+
+/**
+ * The files the legacy site takes: the carried ones only, as it always had.
+ */
+export const filesFrom = (attachments: ParsedAttachment[]): CarriedFile[] => packFiles(attachments).files

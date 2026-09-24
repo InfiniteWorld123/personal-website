@@ -1,6 +1,6 @@
 # Inbox V2 — product, backend, and frontend plan
 
-Status: **Built on 23 Sep 2026 — Backend2 and the Dashboard screens, verified locally. Not live:** see "Before live use" below. The delivery record below is the current state. Everything after it is the planning record the backend was built from; where a dated note corrects it, the note wins. The documented public-form change is for the approved V2 integration; this document alone does not authorize changing the live site, email routing, deployment, or unrelated modules ahead of that cutover.
+Status: **Built on 23 Sep 2026 — Backend2 and the Dashboard screens, verified locally. Going live with the public cutover (24 Sep 2026):** the inbound Worker is changed in the repository and not yet deployed — see "Going live" below. The delivery record below is the current state. Everything after it is the planning record the backend was built from; where a dated note corrects it, the note wins. The documented public-form change is for the approved V2 integration; this document alone does not authorize changing the live site, email routing, deployment, or unrelated modules ahead of that cutover.
 
 ## What is built — Backend2, 23 Sep 2026
 
@@ -19,7 +19,20 @@ Verified with `src/tests/backend2-inbox.test.ts` (44 tests against a real in-pro
 ### Open decisions
 
 - **Malware scanning for Save to Media — decided 23 Sep 2026: no scanning.** Save to Media stays an explicit owner action on one file at a time; the server proves the type from the bytes, blocks anything that can run, and the owner decides the rest.
-- **Before live use (not now):** apply `0009` to Neon; set `INBOX_INGRESS_SECRET`; change the inbound Worker to post to `/api/v2/inbound-email` with the new signature and timestamp headers and to include `References`; confirm Email Routing subaddressing for `reply+…@`; set `INBOX_SEND_MODE=live`; a real send-and-reply round trip with the Gmail forward kept as the fallback.
+- **Before live use:** superseded by "Going live" below (owner decision, 24 Sep 2026: the Inbox goes live with the public cutover).
+
+### Going live — 24 Sep 2026
+
+Owner decision: every email to `info@yamanwarda.de` arrives in the Dashboard Inbox with its attachments, replies from the Dashboard go out through Resend (`yamanwarda.de` verified, eu-west-1), and the owner keeps receiving a copy in Gmail exactly as today. Invoices stay in test mode.
+
+**Done in the repository (not deployed):**
+
+- **The inbound Worker** (`workers/inbound-email`) now does, per letter, in this order: reads the bytes; **forwards the copy to `FORWARD_COPY_TO` first** (unchanged address, before any parsing, so a crash or CPU limit on a huge letter cannot cost the Gmail copy); parses; posts to `INBOX_V2_ENDPOINT` signed with `INBOX_INGRESS_SECRET` (`x-inbox-timestamp`, `x-inbox-signature` = HMAC over `<seconds>.<body>`), with `inReplyTo` **and `references`**, the header sender (not the envelope bounce address), and the files as base64. A 5xx, 408, 429 or network error is retried twice (after 1 s and 4 s, fresh timestamp each time; the Inbox deduplicates by Message-ID); a 4xx is not. The legacy post to `/api/inbound-email` still runs while `INBOUND_ENDPOINT` + `INBOUND_MAIL_SECRET` are set — delete the var to stop it. **A letter is refused only when nobody took it** (no forward and neither inbox accepted); a forwarded letter is never refused. Logs carry statuses and counts only. The logic is in `deliver.ts` so it is testable without Cloudflare.
+- **Limits.** Every field is clamped to the ingress schema (text and HTML 1,000,000 characters, subject 2,000, References cut to the newest ids within 20,000, at most 30 files) so a strange letter is never refused whole. Files are packed into what the rest of the letter leaves of the 30 MB body; one over 10 MB, or one that does not fit, is sent as an **`omittedFiles`** note (name, type, size) and shown in the conversation as a failed file that "the copy forwarded to your mailbox has". Email Routing's own ceiling is 25 MiB per message.
+- **Backend2:** the ingress accepts `omittedFiles` and records each as a failed attachment. Nothing else changed.
+- **Tests:** `src/tests/inbound-worker.test.ts` (order, signature, retries, never-refuse-after-forward, legacy switch, clamps, packing) and one end-to-end case in `backend2-inbox.test.ts` that runs the Worker's `deliver` against the real ingress route (threading by `References` alone, a stored PDF, a named 11 MB file).
+
+**Still to do, by the owner/operator, in this order:** migrations on Neon (including `0009`) → `INBOX_INGRESS_SECRET` (new random, 32+ characters) as a secret on the `yamanwarda` Worker, `RESEND_API_KEY` present there, `INBOX_SEND_MODE=live` in its vars → deploy the site and check that an unsigned `POST /api/v2/inbound-email` answers **401** (503 = secret missing, 404 = V2 database not configured, 403 = old code) → the same `INBOX_INGRESS_SECRET` on `yamanwarda-inbound-email` → deploy that Worker (`npx wrangler deploy -c workers/inbound-email/wrangler.jsonc`) → Email Routing: `info@` and `reply@` routed to that Worker (not straight to Gmail), Subaddressing on, `FORWARD_COPY_TO` a verified destination → a real round trip: a letter with a PDF from an outside address, a Dashboard reply, the answer to `reply+…@`, and an answer sent to `info@` (threads only if Resend keeps our `Message-ID`). Deploying the Worker before the site is safe: the old site answers 403, the Worker does not retry a 4xx, and the letter is still forwarded and posted to the legacy inbox — only the V2 copy of those letters is missing.
 
 ### Dashboard screens — built 23 Sep 2026
 

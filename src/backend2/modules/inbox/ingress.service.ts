@@ -15,7 +15,7 @@ import { badRequest, ingressDisabled, invalidSignature } from '../../http/error'
 import { resolveMediaStore } from '../../media/store'
 import * as mediaRepo from '../media/media.repo'
 import { previewOf } from './email-render'
-import { classifyIncomingFile, storeIncomingBytes } from './inbox.files'
+import { classifyIncomingFile, sanitizeIncomingName, storeIncomingBytes } from './inbox.files'
 import * as repo from './inbox.repo'
 import { inboxFromAddress, inboxReplyAddress } from './inbox.transport'
 import { newReplyToken, parseMessageIds } from './send.service'
@@ -100,6 +100,20 @@ const PayloadSchema = v.object({
     ),
     [],
   ),
+  omittedFiles: v.optional(
+    v.pipe(
+      v.array(
+        v.object({
+          filename: v.pipe(v.string(), v.maxLength(1000)),
+          contentType: v.optional(v.pipe(v.string(), v.maxLength(300)), 'application/octet-stream'),
+          byteSize: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(Number.MAX_SAFE_INTEGER)),
+          reason: v.picklist(['too-large', 'letter-too-large']),
+        }),
+      ),
+      v.maxLength(100),
+    ),
+    [],
+  ),
 })
 
 /** Reads, verifies and parses one delivery. Throws before believing anything. */
@@ -176,6 +190,20 @@ const normaliseMessageId = (value: string): string | null => {
   return trimmed ? `<${trimmed.replace(/^<|>$/gu, '')}>` : null
 }
 
+const OMITTED_REASONS = {
+  'too-large': 'The file is larger than 10 MB and was not kept. The copy of this email forwarded to your mailbox has it.',
+  'letter-too-large':
+    'This email was too large to bring every file into the Inbox. The copy forwarded to your mailbox has it.',
+} as const
+
+const omittedFile = (file: NonNullable<InboundPayload['omittedFiles']>[number]) => ({
+  status: 'failed' as const,
+  fileName: sanitizeIncomingName(file.filename),
+  declaredType: file.contentType.slice(0, 120),
+  byteSize: file.byteSize,
+  reason: OMITTED_REASONS[file.reason],
+})
+
 export type IngressOutcome =
   | { outcome: 'recorded'; conversationId: string; messageId: string; newConversation: boolean }
   | { outcome: 'duplicate' }
@@ -214,7 +242,12 @@ export const recordInbound = async (payload: InboundPayload): Promise<IngressOut
    * ledger before its bytes, so if anything after this fails, the sweep can
    * collect what was stored.
    */
-  const classified = (payload.files ?? []).map(classifyIncomingFile)
+  const classified = [
+    ...(payload.files ?? []).map(classifyIncomingFile),
+    // Named by the Worker, never carried: shown as failed so the owner knows
+    // to look in the forwarded copy, rather than never learning they existed.
+    ...(payload.omittedFiles ?? []).map(omittedFile),
+  ]
   const store = classified.some((file) => file.status === 'accept') ? await resolveMediaStore() : undefined
   const prepared: Array<Omit<Parameters<typeof repo.insertAttachment>[0], 'messageId'>> = []
   const storedKeys: string[] = []

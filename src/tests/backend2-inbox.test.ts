@@ -560,6 +560,70 @@ describe('replies arriving', () => {
     expect(page.items[0].id).not.toBe(conversationId)
   })
 
+  it('takes a letter from the real inbound Worker code: threaded by References, files it could not carry named', async () => {
+    const { deliver: workerDeliver } = await import('../../workers/inbound-email/src/deliver')
+    const { conversationId, email } = await sendNew()
+    const forwarded: string[] = []
+
+    const result = await workerDeliver(
+      {
+        from: 'bounce@mailer.example',
+        to: 'info@yamanwarda.de',
+        // No In-Reply-To and no reply token: only References can thread it.
+        headers: new Headers({
+          'message-id': '<worker-1@example.com>',
+          references: `<unrelated@example.com> ${email.headers['Message-ID']}`,
+        }),
+        raw: new Blob(['ignored by the parser below']).stream(),
+        forward: async (to) => {
+          forwarded.push(to)
+        },
+        setReject: () => {
+          throw new Error('must not refuse')
+        },
+      },
+      {
+        FORWARD_COPY_TO: 'owner@example.com',
+        INBOX_V2_ENDPOINT: 'http://localhost:3000/api/v2/inbound-email',
+        INBOX_INGRESS_SECRET: SECRET,
+      },
+      {
+        parse: async () => ({
+          from: { name: 'Bob', address: 'bob@example.com' },
+          subject: 'Re: Offer',
+          text: 'Signed and attached.',
+          attachments: [
+            { filename: 'signed.pdf', mimeType: 'application/pdf', disposition: 'attachment', content: pdfBytes() },
+            {
+              filename: 'scan.tiff',
+              mimeType: 'image/tiff',
+              disposition: 'attachment',
+              content: new ArrayBuffer(11 * 1024 * 1024),
+            },
+          ],
+        }),
+        fetch: async (url, init) =>
+          runWithDb(database.db, async () => app.fetch(new Request(url, { ...init, signal: undefined }))),
+      },
+    )
+
+    expect(forwarded).toEqual(['owner@example.com'])
+    expect(result.v2).toEqual({ status: 200, taken: true, attempts: 1 })
+
+    const detail = await open(conversationId)
+
+    expect(detail.messages.total).toBe(2)
+
+    const arrived = detail.messages.items.find((message: Json) => message.direction === 'incoming')
+
+    expect(arrived.bodyText).toBe('Signed and attached.')
+    expect(arrived.incomingAttachments.map((file: Json) => [file.fileName, file.status])).toEqual([
+      ['signed.pdf', 'stored'],
+      ['scan.tiff', 'failed'],
+    ])
+    expect(arrived.incomingAttachments[1].failureReason).toMatch(/larger than 10 MB.*forwarded to your mailbox/u)
+  })
+
   it('does not file our own sent mail coming back as a new letter', async () => {
     const { email } = await sendNew()
 
