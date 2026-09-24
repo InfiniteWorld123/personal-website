@@ -1,6 +1,6 @@
 # Public website cutover to Backend2 — page-by-page plan
 
-Status: **plan, 23 Sep 2026. Nothing here is switched yet.** This document
+Status: **all seven steps are built behind switches (24 Sep 2026); none is switched on the live site.** This document
 orders the move of the public website from the legacy backend to Backend2.
 Each step is its own owner-approved change; this plan does not authorize a
 deploy, a live cutover, deleting legacy code, or changing `main`.
@@ -80,3 +80,23 @@ Every step also:
 Only after every step runs on V2, both public and private paths are tested,
 and a recoverable copy of the old branch exists, is the final cutover of
 `main`, `/admin` and the legacy backend discussed — separately.
+
+## Build record — 24 Sep 2026
+
+Every step is implemented and verified locally behind `PUBLIC_V2_MODULES`
+(`content`, `services`, `projects`, `blog`, `booking`, `contact`,
+`assistant`). With the variable unset the public site is unchanged — checked
+by screenshots of the legacy pages and by loading them with every write
+blocked. With a module listed, its pages read Backend2 and show only the
+approved visible changes. Tests: `public-source`, `public-services*`,
+`public-projects`, `public-blog*`, `public-booking`, `public-contact`,
+`chat-widget-ui`.
+
+Still needed before any switch goes live: the owner's real content in V2
+(services, projects, articles, booking types/hours), the production V2
+database connection on Cloudflare, the remote Dashboard access decision
+(`auth.md`), the privacy page wording for saved assistant conversations and
+comments, scheduled jobs (blog publishing, booking reminders, invoice billing,
+assistant purge) as Cloudflare Cron Triggers, and RealtimeKit for real video
+calls. Open owner questions: how the project type is shown on cards, Turnstile
+on blog comments, two new comment-loading sentences.
