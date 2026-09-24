@@ -389,74 +389,7 @@ export const en: SiteContent = {
     shown: "{visible} of {total} projects",
     back: 'All projects',
     detail: {
-      problem: 'Starting point',
-      approach: 'What I built',
-      shows: 'What the project shows',
-      features: 'Features',
       stack: 'Technology',
-    },
-    items: {
-      'tech-store': {
-        name: 'Tech Store',
-        kind: 'Online store',
-        summary:
-          'A complete online store with accounts, product management, cart, Stripe payment, orders, reviews, and an admin area.',
-        problem:
-          'A store is the hardest test for a web system: accounts, money, stock, and order status have to agree, or the operator loses money or trust.',
-        approach:
-          'I built the whole purchase path: a catalogue of 500 products across ten categories, narrowed by search and by filters for category, colour, storage, memory, and screen size, then the cart, the Stripe checkout, and the order view for customer and operator alike. It also carries the pages a German store owes its customers — right of withdrawal, returns, shipping — because a store you cannot legally sell from is not finished.',
-        shows:
-          'That I can carry a purchase from a filtered catalogue through payment to an order both sides can follow, and that I know what a German store has to answer for beyond the checkout button.',
-        features: [
-          'Registration, login, and customer account',
-          'Product management with variants',
-          'Search, filters, and sorting across the catalogue',
-          'Cart and Stripe checkout',
-          'Orders with status',
-          'Withdrawal, returns, and shipping pages',
-          'Reviews',
-          'Admin dashboard',
-        ],
-      },
-      inknest: {
-        name: 'InkNest',
-        kind: 'Blogging platform',
-        summary:
-          'A platform for writing and publishing with an editor, image uploads, comments, reactions, and notifications.',
-        problem:
-          'Publishing content sounds simple until the editor, images, comments, and notifications have to work together.',
-        approach:
-          'I built a rich-text editor with image uploads, comment threads, reactions, and notifications, all behind accounts. The discover page searches everything published and narrows it by category, by any of 25 tags, by sort order, and by page size, so a growing archive stays findable.',
-        shows:
-          'That I can build the half of a product that is content rather than transactions — writing, publishing, discussion, and finding things again — which is what portals, blogs, and internal knowledge bases actually run on.',
-        features: [
-          'Accounts and profiles',
-          'Rich-text editor',
-          'Image uploads',
-          'Search, tags, and filtered discovery',
-          'Comments and reactions',
-          'Notifications',
-        ],
-      },
-      'prime-estate': {
-        name: 'Prime Estate',
-        kind: 'Real-estate management system',
-        summary:
-          'A system for property providers: listings, enquiries, bookings, and a blog in one admin.',
-        problem:
-          'Property providers work with listings, prospects, viewing appointments, and content, often spread across several tools.',
-        approach:
-          'The system brings listing management, enquiry handling, bookings, and a blog into one application with one admin. It is in progress and the foundation for the architecture of this website.',
-        shows:
-          'How I structure a business system with several areas so that one operator can run it alone.',
-        features: [
-          'Listing management',
-          'Enquiries and prospects',
-          'Bookings',
-          'Blog',
-          'Admin area',
-        ],
-      },
     },
   },
 

@@ -7,12 +7,11 @@ import { closePool, getDb, readDatabaseUrl } from './client'
 const migrationsDirectory = new URL('./migrations/', import.meta.url)
 
 /**
- * The V2 migration history. Its own ledger table, its own directory, and its
- * own connection — the legacy `schema_migrations` table is never read or
- * written.
+ * The V2 migration history: its own ledger table (`v2_schema_migrations`)
+ * and its own directory.
  */
 export const runV2Migrations = async (): Promise<string[]> => {
-  // Throws when DATABASE_URL_V2 is missing, or is the legacy database.
+  // Throws when DATABASE_URL_V2 is missing.
   readDatabaseUrl()
 
   const db = getDb()

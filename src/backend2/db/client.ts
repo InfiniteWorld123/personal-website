@@ -2,14 +2,6 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { Pool, type PoolClient, type QueryResultRow } from 'pg'
 
 /**
- * The V2 database, and nothing else.
- *
- * A separate module from `src/backend/db/client.ts` on purpose. Backend2 must
- * be able to outlive the legacy backend, and — far more importantly — it must
- * be incapable of reaching the legacy database at all.
- */
-
-/**
  * The database as a service sees it: it may run a query and read the rows back,
  * and nothing else. It may not take a connection out of the pool, open its own
  * transaction, or close anything.
@@ -25,14 +17,7 @@ export type Db = {
   ) => Promise<{ rows: R[] }>
 }
 
-/**
- * The V2 connection string, checked rather than trusted.
- *
- * A typo that points `DATABASE_URL_V2` at the legacy database would let V2
- * write into tables the foundation says it may never touch. So it is refused
- * here, at the only place a connection is ever opened, instead of being
- * written down as a rule somebody has to remember.
- */
+/** The V2 connection string; missing is an error, not an empty database. */
 export const readDatabaseUrl = (
   environment: Record<string, string | undefined> = process.env,
 ): string => {
@@ -42,13 +27,6 @@ export const readDatabaseUrl = (
     throw new Error(
       'DATABASE_URL_V2 is missing. Backend2 uses its own database; set it in .env ' +
         '(see docs/v2/projects-backend.md §13).',
-    )
-  }
-
-  if (url === environment.DATABASE_URL?.trim()) {
-    throw new Error(
-      'DATABASE_URL_V2 is the same as DATABASE_URL. V2 must never share the legacy ' +
-        'database. Create a separate database and point DATABASE_URL_V2 at it.',
     )
   }
 
@@ -84,7 +62,7 @@ const requestPool = new AsyncLocalStorage<{ pool?: Pool }>()
  * configured (`HYPERDRIVE_V2`): Hyperdrive keeps warm connections to the
  * database, so a request does not pay for a fresh TLS handshake to Neon.
  * Without the binding the Worker connects to `DATABASE_URL_V2` directly, which
- * works, only slower. Resolved on first use, like the legacy client, because
+ * works, only slower. Resolved on first use, because
  * a top-level await would break the Worker's module graph.
  */
 let hyperdriveV2Url: string | undefined

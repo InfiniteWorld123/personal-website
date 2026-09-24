@@ -1,15 +1,13 @@
 import type { Language } from '#/frontend/i18n/language'
 
 /**
- * The public words the Blog V2 cutover adds, exactly as the owner approved
- * them with the Blog Design Lab on 23 Sep 2026 (`docs/v2/blog.md`, decisions
- * 1A–7A and "the new public words"): the comment section, its refusals, the
- * click-to-load video notice and "Updated on".
+ * The public words Blog V2 added, exactly as the owner approved them with the
+ * Blog Design Lab on 23 Sep 2026 (`docs/v2/blog.md`, decisions 1A–7A and "the
+ * new public words"): the comment section, its refusals, the click-to-load
+ * video notice and "Updated on".
  *
- * Kept beside the feature rather than in the site copy (`content/*.ts`)
- * because they only exist while the Blog reads Backend2: with the switch off
- * none of them can appear, and the Content module's editable fields are not
- * silently widened by a cutover step.
+ * Kept beside the feature rather than in the site copy (`content/*.ts`), so
+ * the Content module's editable fields are not silently widened by them.
  *
  * `commentsError` is the one sentence the lab did not show for visitors (it
  * showed the articles' own "could not be loaded"); it follows that wording.

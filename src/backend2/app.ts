@@ -37,8 +37,7 @@ import { publicAssistantRoutes } from './modules/assistant/assistant.public.rout
 /**
  * Backend2.
  *
- * The site's only backend since the legacy one was removed (24 Sep 2026),
- * an Elysia application mounted under `/api/v2`.
+ * The site's only backend: an Elysia application mounted under `/api/v2`.
  *
  * Authentication is the first module here. Every later one registers itself in
  * `buildApp` beside it — public reads outside the fence, owner routes inside
@@ -60,14 +59,6 @@ const supportsCodeGeneration = (() => {
   }
 })()
 
-/**
- * The owner half exists only where it is allowed to.
- *
- * This is the first of the two layers: with the opt-in flag absent — which is
- * every deployment — these routes are never registered, so there is nothing to
- * reach. The per-request guard is the second, and either alone refuses a
- * stranger.
- */
 /**
  * Every route reads its own body, under its own ceiling (`http/body.ts`).
  *
@@ -114,14 +105,11 @@ const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
   )
 
   /*
-   * Auth V2 rides the same fence, for now.
-   *
-   * `docs/v2/auth.md`: "Introduce V2 auth behind the current local-only
-   * fence... Only then switch to V2 session authorization and enable remote
-   * owner routes in a separately reviewed environment." So the sign-in routes
-   * are public *by contract* but not yet reachable from a deployment; making
-   * them so is one deliberate change to `security/local-only.ts`, reviewed on
-   * its own, rather than a side effect of this module landing.
+   * The owner half, and the sign-in routes with it, exist only where they are
+   * allowed to: in `local` mode on a development machine, or in a fully
+   * configured `remote` mode (`security/local-only.ts`). Anywhere else they
+   * are never registered, so there is nothing to reach. The per-request
+   * guards are the second layer, and either alone refuses a stranger.
    */
   if (ownerRoutesEnabled()) {
     app.use(publicAuthRoutes)

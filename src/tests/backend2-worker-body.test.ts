@@ -7,7 +7,6 @@ import { createTestDatabase } from './helpers/backend2-db'
  * sign-in and every save answered 500 on the preview. These run the app the
  * way a Worker does and send real bodies through.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.NODE_ENV = 'development'
 

@@ -11,8 +11,7 @@ import type {
 import { ApiRequestError } from '#/frontend/api/response'
 
 /**
- * The visitor's side of Backend2 Booking (`/api/v2/public/booking/*`), used
- * only when the booking switch is on.
+ * The visitor's side of Backend2 Booking (`/api/v2/public/booking/*`).
  *
  * Plain `fetch`, like every V2 client. Refusals keep their `code` —
  * `SLOT_UNAVAILABLE`, `CHANGE_DEADLINE_PASSED`, `BOOKING_LINK_INVALID`,
@@ -131,14 +130,9 @@ export const videoJoin = (reference: string, token: string) =>
 export const errorCode = (error: unknown): string | null =>
   error instanceof ApiRequestError ? error.code : null
 
-/**
- * The private credential from the address fragment. Backend2's links carry it
- * bare (`#<credential>`); the legacy links carried `#token=…`, so both read.
- */
+/** The private credential from the address fragment, where Backend2's links carry it bare (`#<credential>`). */
 export const readFragmentToken = (hash: string): string => {
   const raw = hash.replace(/^#/u, '')
-
-  if (raw.includes('token=')) return new URLSearchParams(raw).get('token') ?? ''
 
   try {
     return decodeURIComponent(raw)

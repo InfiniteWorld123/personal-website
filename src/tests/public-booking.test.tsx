@@ -190,13 +190,13 @@ describe('copies that must equal the contract', () => {
     expect(slotChunks('2026-10-30', '2026-10-31')).toEqual([{ from: '2026-10-30', days: 2 }])
   })
 
-  it('reads the credential from both link shapes', () => {
+  it('reads the credential from the address fragment', () => {
     expect(api.readFragmentToken('#abc123')).toBe('abc123')
-    expect(api.readFragmentToken('#token=legacy%2Btoken')).toBe('legacy+token')
+    expect(api.readFragmentToken('#abc%2B123')).toBe('abc+123')
     expect(api.readFragmentToken('')).toBe('')
   })
 
-  it('downloads a V2 page only when asked, then renders it without waiting', async () => {
+  it('downloads a lazy page only when asked, then renders it without waiting', async () => {
     const { lazyPage } = await import('#/frontend/features/booking/v2/lazy-page')
     const load = vi.fn(async () => ({ word }: { word: string }) => <p>{word}</p>)
     const page = lazyPage(load)

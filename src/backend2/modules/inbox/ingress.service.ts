@@ -66,7 +66,7 @@ const sameHex = (a: string, b: string): boolean => {
   return difference === 0
 }
 
-/** What the Worker does, for tests and for the Worker's own adoption at cutover. */
+/** The signature the Worker sends, computed the same way, for the tests. */
 export const signIngress = async (input: {
   secret: string
   body: string

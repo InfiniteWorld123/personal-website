@@ -6,12 +6,10 @@ import { parseInput } from '../../http/validate'
 import { readPublicContent } from './content.service'
 
 /**
- * What the public website will read: one language's static copy and the
- * shared facts.
+ * One language's static copy and the shared facts, as the owner saved them.
  *
  * Mounted only where the V2 database is configured, like every other public
- * V2 read. Production has no `DATABASE_URL_V2` yet, so this does not answer
- * there, and the live site keeps its current copy until an approved cutover.
+ * V2 read.
  *
  * Caching is chosen for the owner's rule that a saved field is live. Any cache
  * may keep a copy, but must ask again every time (`max-age=0,

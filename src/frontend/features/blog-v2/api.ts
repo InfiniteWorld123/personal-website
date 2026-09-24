@@ -18,9 +18,8 @@ import { csrfToken } from '#/frontend/features/auth-v2/api'
 /**
  * The Dashboard's side of Backend2 Blog.
  *
- * Plain `fetch`, like the Projects, Services and Media clients: V2 shares no
- * code with the legacy Eden client, and `features/blog/` is the legacy blog.
- * A refusal arrives as one `ApiRequestError` with its `code` and `details`
+ * Plain `fetch`, like the Projects, Services and Media clients; the public
+ * blog lives in `features/blog/`. A refusal arrives as one `ApiRequestError` with its `code` and `details`
  * intact — a failed publication is `VALIDATION_ERROR` whose `details.issues`
  * name the fields, and a tag still in use is `TAG_IN_USE` with the articles
  * that carry it.

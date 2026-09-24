@@ -19,7 +19,6 @@ export function WorkPage({ entries, total }: { entries: ProjectEntry[]; total: n
   const header = useReveal<HTMLElement>()
   const grid = useReveal<HTMLElement>()
   // Backend2 sends only the batches shown; "Load more" fetches the next one.
-  // A legacy list arrives whole, so nothing is fetched and nothing changes.
   const more = useMoreBatches({
     items: entries,
     total,

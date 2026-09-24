@@ -62,7 +62,7 @@ export function BookingFormV2({
   onBack: () => void
 }) {
   const { language } = useLanguage()
-  const legacy = getBookingCopy(language).form
+  const base = getBookingCopy(language).form
   const copy = getBookingV2Copy(language).form
   const { form: contactForm } = getContent(language).contact
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -195,7 +195,7 @@ export function BookingFormV2({
         const id = `booking-${name}`
 
         return (
-          <FormField id={id} label={label} hint={input.optional ? legacy.optional : undefined} help={input.hint} error={error}>
+          <FormField id={id} label={label} hint={input.optional ? base.optional : undefined} help={input.hint} error={error}>
             <Input
               id={id}
               name={name}
@@ -224,7 +224,7 @@ export function BookingFormV2({
         const error = errorFor(name, field.state.meta.errors)
 
         return (
-          <FormField id={id} label={label} hint={legacy.optional} error={error}>
+          <FormField id={id} label={label} hint={base.optional} error={error}>
             <select
               id={id}
               name={name}
@@ -263,15 +263,15 @@ export function BookingFormV2({
         void form.handleSubmit()
       }}
     >
-      <p className="text-foreground text-base font-semibold">{legacy.heading}</p>
+      <p className="text-foreground text-base font-semibold">{base.heading}</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {text('name', legacy.name, { autoComplete: 'name' })}
-        {text('email', legacy.email, { type: 'email', autoComplete: 'email', dir: 'ltr' })}
-        {method === 'phone' ? text('phone', legacy.phone, { type: 'tel', autoComplete: 'tel', dir: 'ltr', hint: copy.phoneHint }) : null}
-        {text('company', legacy.company, { autoComplete: 'organization', optional: true })}
-        {select('subject', legacy.projectType, contactForm.projectTypes)}
-        {select('budget', legacy.budget, contactForm.budgets)}
+        {text('name', base.name, { autoComplete: 'name' })}
+        {text('email', base.email, { type: 'email', autoComplete: 'email', dir: 'ltr' })}
+        {method === 'phone' ? text('phone', base.phone, { type: 'tel', autoComplete: 'tel', dir: 'ltr', hint: copy.phoneHint }) : null}
+        {text('company', base.company, { autoComplete: 'organization', optional: true })}
+        {select('subject', base.projectType, contactForm.projectTypes)}
+        {select('budget', base.budget, contactForm.budgets)}
       </div>
 
       <form.Field name="note">
@@ -279,7 +279,7 @@ export function BookingFormV2({
           const error = errorFor('note', field.state.meta.errors)
 
           return (
-            <FormField id="booking-note" label={legacy.note} hint={legacy.optional} help={legacy.noteHint} error={error}>
+            <FormField id="booking-note" label={base.note} hint={base.optional} help={base.noteHint} error={error}>
               <Textarea
                 id="booking-note"
                 name="note"
@@ -323,12 +323,12 @@ export function BookingFormV2({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" size="lg" className="rounded-full" disabled={submitting || !turnstileToken} aria-busy={submitting}>
-          {submitting ? legacy.submitting : legacy.submit}
+          {submitting ? base.submitting : base.submit}
           <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
         </Button>
 
         <Button type="button" variant="outline" className="rounded-full" disabled={submitting} onClick={onBack}>
-          {legacy.back}
+          {base.back}
         </Button>
       </div>
     </form>

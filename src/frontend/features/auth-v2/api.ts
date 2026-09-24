@@ -10,10 +10,8 @@ export type { SessionPage }
 /**
  * The Dashboard's side of Auth V2.
  *
- * Plain `fetch`, like `dashboard-projects/api.ts` and for the same reason: the
- * Eden client is typed against the legacy Elysia app, and V2 shares no code
- * with it. The envelope is identical, so one `ApiRequestError` carries a
- * refusal to whichever form has to show it — including the `code`, which is
+ * Plain `fetch`, like every V2 client. One `ApiRequestError` carries a refusal
+ * to whichever form has to show it — including the `code`, which is
  * how the screen tells "wrong password" from "prove it is you again".
  */
 

@@ -137,8 +137,8 @@ export const verifyTotp = (
 /**
  * The `otpauth://` URI an authenticator app scans.
  *
- * The label carries the account's email so the owner can tell this entry from
- * the legacy `/admin` one, which may use the same address.
+ * The label carries the issuer and the account's email, so the owner can tell
+ * this entry apart from others in the same authenticator app.
  */
 export const totpUri = (options: { secret: string; email: string; issuer: string }): string => {
   const label = encodeURIComponent(`${options.issuer}:${options.email}`)

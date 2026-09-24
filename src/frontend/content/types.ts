@@ -1,12 +1,11 @@
 /**
  * Shape of the public site's copy. One object per language in `de.ts`,
- * `en.ts`, `ar.ts`. Structure and section order live in code; the text here
- * is the set of keys that becomes editable from the admin in B6.
+ * `en.ts`, `ar.ts`. Structure and section order live in code; the owner can
+ * rewrite the keys the Content release registry names
+ * (`src/backend2/modules/content/content.registry.ts`) from the Dashboard.
  */
 
 export type ServiceSlug = 'websites' | 'shopify' | 'software'
-
-export type ProjectSlug = keyof typeof import('./site').projects
 
 export type Link = { label: string; to: string }
 
@@ -159,16 +158,6 @@ export type AboutCopy = {
   cta: { title: string; body: string; button: string; alt: string }
 }
 
-export type ProjectCopy = {
-  name: string
-  kind: string
-  summary: string
-  problem: string
-  approach: string
-  shows: string
-  features: string[]
-}
-
 export type WorkCopy = {
   meta: PageMeta
   eyebrow: string
@@ -185,13 +174,8 @@ export type WorkCopy = {
   shown: string
   back: string
   detail: {
-    problem: string
-    approach: string
-    shows: string
-    features: string
     stack: string
   }
-  items: Record<ProjectSlug, ProjectCopy>
 }
 
 /**

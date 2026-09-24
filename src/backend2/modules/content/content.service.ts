@@ -47,7 +47,7 @@ const requireField = (key: string): ContentFieldDefinition => {
   const field = findContentField(key)
 
   // 404, as for any record that does not exist: a key outside the release
-  // registry is not an editable field, whatever the legacy editor allowed.
+  // registry is not an editable field.
   if (!field) throw notFound('That field is not editable')
 
   return field

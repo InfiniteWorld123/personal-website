@@ -2,15 +2,14 @@ import { Suspense, lazy } from 'react'
 import type { ComponentType } from 'react'
 
 /**
- * A Backend2 page that only the switched-on mode downloads.
+ * A page in its own chunk, downloaded only where it is used.
  *
- * The legacy and V2 variants share one route, so a static import would make
- * every legacy visitor fetch the V2 form library too (and the other way
- * round). The route's loader calls `preload()` when the server says V2, so on
- * a navigation the code is already here and nothing flashes; on the first,
- * server-rendered load the Suspense boundary keeps the server's HTML on screen
- * until the chunk arrives. The boundary is rendered either way, so server and
- * browser always agree on the markup.
+ * The booking pages and the Contact form carry the form library, and loading
+ * them this way keeps it out of every other page's download. The route's
+ * loader calls `preload()`, so on a navigation the code is already here and
+ * nothing flashes; on the first, server-rendered load the Suspense boundary
+ * keeps the server's HTML on screen until the chunk arrives. The boundary is
+ * rendered either way, so server and browser always agree on the markup.
  */
 export function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>>) {
   let loaded: ComponentType<Props> | undefined

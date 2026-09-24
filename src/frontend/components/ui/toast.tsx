@@ -25,7 +25,7 @@ function ToastViewport({
       data-slot="toast-viewport"
       className={cn(
         "fixed bottom-0 z-100 m-0 flex w-[min(24rem,calc(100vw-2rem))] list-none flex-col gap-2 p-4 outline-none",
-        // Bottom-end: out of the way of the admin's top bar, and on the side
+        // Bottom-end: out of the way of the Dashboard's top bar, and on the side
         // the language is read towards, so it never covers the first column.
         "end-0",
         className,

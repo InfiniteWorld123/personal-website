@@ -32,15 +32,12 @@ import { cn } from '#/frontend/lib/utils'
 /**
  * The case-study editor.
  *
- * A second editor rather than the blog's, and not by accident: V2 changed the
- * one thing that matters most here. An inline image carries a **`mediaId`**,
- * never a URL — the server resolves it when it builds a response, and that is
- * what makes the image accounting provable, because every file a project uses
- * is discoverable from the database alone. The legacy editor writes `src`, and
- * legacy articles must keep parsing with the legacy schema.
+ * An inline image carries a **`mediaId`**, never a URL — the server resolves
+ * it when it builds a response, and that is what makes the image accounting
+ * provable, because every file a project uses is discoverable from the
+ * database alone.
  *
- * It also has to look like the dashboard rather than the public site, and it
- * gains tables, which the blog does not have.
+ * It looks like the dashboard rather than the public site, and it has tables.
  */
 
 export const ownerImageUrl = (mediaId: string): string =>

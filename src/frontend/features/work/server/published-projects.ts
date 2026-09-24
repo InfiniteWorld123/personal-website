@@ -33,7 +33,7 @@ const SlugInput = v.object({
   slug: v.pipe(v.string(), v.maxLength(80)),
 })
 
-/** The homepage selection (and the admin's content preview). */
+/** The homepage selection. */
 export const fetchPublishedProjects = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(LanguageInput, input))
   .handler(({ data }): Promise<ProjectEntry[]> => loadProjects(data))

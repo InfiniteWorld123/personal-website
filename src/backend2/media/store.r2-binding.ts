@@ -5,13 +5,7 @@ import type { MediaStore } from './store'
  *
  * A Worker that declares `r2_buckets` in its Wrangler config is handed the
  * bucket directly: no access key to create, none to store, none to leak. The
- * binding is `MEDIA_V2` and the bucket is `yamanwarda-v2-media` — separate from
- * the legacy `MEDIA` / `yamanwarda-media`, because the two systems must be able
- * to be deleted independently.
- *
- * A near-copy of `src/backend/shared/image-storage/r2-binding.ts`, and not an
- * import of it: `src/backend2/` imports nothing from `src/backend/`, so the
- * legacy backend stays deletable at cutover.
+ * binding is `MEDIA_V2` and the bucket is `yamanwarda-v2-media`.
  */
 
 /**

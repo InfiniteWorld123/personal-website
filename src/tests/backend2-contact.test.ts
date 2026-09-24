@@ -20,7 +20,6 @@ import {
  * removed selects never reach the database; and a visitor learns nothing but
  * "received". No email is sent — the fake transport proves it.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

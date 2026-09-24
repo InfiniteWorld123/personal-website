@@ -4,7 +4,7 @@ import type { Language } from '#/frontend/i18n/language'
  * The widget's own chrome, in three languages (D34).
  *
  * Separate from `frontend/content` on purpose. That file is the site's copy —
- * the words the owner edits in `/admin/content`, which are about what he
+ * the words the owner edits in the Dashboard's Content editor, which are about what he
  * sells. These are interface labels: a close button, a placeholder, the
  * sentence shown when the network fails. Putting them in the editable content
  * would hand him three hundred more strings to maintain and one more way to

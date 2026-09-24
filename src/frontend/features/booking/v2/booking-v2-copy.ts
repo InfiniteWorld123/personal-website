@@ -6,8 +6,8 @@ import type { Language } from '#/frontend/i18n/language'
  * to meet, the phone number only for a phone call, a success page per way of
  * meeting, the private page with its deadline and cancellation reasons, and
  * the video waiting room. The wording is the approved Booking Design Lab's
- * (`docs/v2/booking.md`, choices 1A–7A); everything the legacy pages already
- * say is still read from `booking-copy.ts`, so the two modes cannot drift.
+ * (`docs/v2/booking.md`, choices 1A–7A); every other word is read from
+ * `booking-copy.ts`.
  */
 
 /** Mirrors `CANCEL_REASONS` in the contract, in its order; a test keeps them equal. */

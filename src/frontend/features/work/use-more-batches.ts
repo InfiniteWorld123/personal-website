@@ -11,9 +11,6 @@ const MAX_BATCH = 36
  * more" only changes `?page=`, and the route's loader does not run again for a
  * search change; so this asks the server for the missing batch alone and
  * appends it, keeping what is already on screen.
- *
- * A legacy list arrives whole (`items.length === total`), so for it this never
- * asks for anything and the page behaves exactly as before.
  */
 export function useMoreBatches<T>({
   items,

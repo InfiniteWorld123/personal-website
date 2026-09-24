@@ -23,8 +23,8 @@ export const localeFor = (language: Language) =>
   ({ de: 'de-DE', en: 'en-GB', ar: 'ar' })[language]
 
 /**
- * Public pages live under `/de`, `/en`, `/ar`. Anything else (admin, api,
- * the bare root) has no language segment.
+ * Public pages live under `/de`, `/en`, `/ar`. Anything else (the Dashboard,
+ * the API, the bare root) has no language segment.
  */
 export const languageFromPathname = (pathname: string): Language | null => {
   const [first] = pathname.split('/').filter(Boolean)

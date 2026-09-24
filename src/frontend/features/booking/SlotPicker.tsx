@@ -1,6 +1,6 @@
+import type { Slot } from '#/backend2/contracts/booking.contract'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { cn } from '#/frontend/lib/utils'
-import type { BookingSlot } from '#/shared/types/booking.types'
 import { getBookingCopy } from './booking-copy'
 import { formatDay, formatTime } from './booking-time'
 
@@ -23,7 +23,7 @@ export function SlotPicker({
   onSelect,
 }: {
   day: string
-  slots: BookingSlot[]
+  slots: Array<Pick<Slot, 'startsAt' | 'endsAt'>>
   timezone: string
   selected: string | null
   onSelect: (startsAt: string) => void

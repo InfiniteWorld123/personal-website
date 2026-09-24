@@ -1,10 +1,4 @@
-/**
- * The HTTP codes Backend2 answers with.
- *
- * A copy rather than an import from `src/backend/shared/http.ts`: V2 owns its
- * own transport layer so that deleting the legacy backend at cutover cannot
- * break it (`docs/v2/projects-backend.md` §11).
- */
+/** The HTTP codes Backend2 answers with. */
 export const HttpStatus = {
   OK: 200,
   CREATED: 201,

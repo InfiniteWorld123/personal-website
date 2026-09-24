@@ -1,16 +1,14 @@
 /**
  * The one place a failure becomes visible.
  *
- * Before this existed, every write in the admin was silent when it failed:
- * the six query modules held twenty-nine mutations between them and not one
- * `onError`. Clicking "Lost" in the inbox answered 500 and the screen did not
- * move — which reads as a dead button, not as an error, and is why the owner
- * stopped trusting the panel.
+ * Without it, a write that fails would be silent unless its own screen
+ * remembered to say so — and a click that answers 500 while the screen does
+ * not move reads as a dead button, not as an error.
  *
  * Deliberately not a React module. `router.tsx` builds the `QueryClient` —
  * on the server as well as in the browser — and needs to hand it a default
  * `onError` for every mutation. A store it can import without pulling React
- * into that path is what makes one line there cover the whole admin.
+ * into that path is what makes one line there cover the whole Dashboard.
  */
 
 export type NoticeTone = 'error' | 'success'

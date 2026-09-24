@@ -3,10 +3,6 @@ import type { AssistantLanguage } from '../../contracts/assistant.contract'
 /**
  * Text handling for retrieval and for the money guard. Pure: no database, no
  * network, no clock, so every rule here is tested directly.
- *
- * The normalisation and stopword ideas come from the legacy chat
- * (`src/backend/modules/chat/chat.retrieval.ts`), rewritten here so Backend2
- * imports nothing from the legacy backend.
  */
 
 /**
@@ -81,7 +77,7 @@ export const tokenise = (value: string, language: AssistantLanguage | 'any'): st
 
 /**
  * Two words count as the same word when they share a five-character opening
- * (or are equal, for short words). Five, not four, as the legacy chat found:
+ * (or are equal, for short words). Five, not four:
  * at four "website" matched "webshop"; at five "kostet" still meets "kosten".
  */
 export const sameStem = (left: string, right: string): boolean => {

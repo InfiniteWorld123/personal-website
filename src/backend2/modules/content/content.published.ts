@@ -7,9 +7,8 @@ import { listPublicValues } from './content.repo'
  * per language plus the shared facts.
  *
  * A field that was never edited has no row, so the page falls through to the
- * release wording in the code — the same contract the legacy overrides had,
- * which is why switching the source changes nothing a visitor can see until
- * something is edited.
+ * release wording in the code: nothing a visitor sees changes until something
+ * is edited.
  */
 export type PublishedOverrides = {
   de: Record<string, ContentValue>

@@ -4,20 +4,14 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-15",
 
-  // The endpoints are public information; the shared secrets are not, and are
-  // set once each (never written here):
+  // The endpoint is public information; the shared secret is not, and is set
+  // once (never written here):
   //   npx wrangler secret put INBOX_INGRESS_SECRET -c workers/inbound-email/wrangler.jsonc
   //     — the same value as INBOX_INGRESS_SECRET on the `yamanwarda` Worker
-  //   npx wrangler secret put INBOUND_MAIL_SECRET -c workers/inbound-email/wrangler.jsonc
-  //     — the legacy one, already set; the same value as on `yamanwarda`
   "vars": {
     // The V2 Dashboard Inbox (`docs/v2/inbox.md`). Retried on a server error;
     // a letter it cannot take is still forwarded below and never refused.
     "INBOX_V2_ENDPOINT": "https://yamanwarda.de/api/v2/inbound-email",
-
-    // The legacy admin inbox (`/admin/inbox`). Kept while the legacy backend
-    // runs. Delete this line — and redeploy — to stop posting there; nothing
-    // else changes.
 
     // Every letter is also delivered here, first, exactly as it was before
     // this Worker existed. It is the fallback if the site is down: a bug here

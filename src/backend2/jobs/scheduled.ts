@@ -24,8 +24,7 @@ import { sweepPendingObjects } from '../modules/media/media.service'
  * hour, on the tick whose scheduled minute is `:00`; they have no deadline
  * finer than that, and running them less often keeps each tick cheap.
  *
- * Nothing runs unless the V2 database is configured, and nothing here can
- * reach the legacy database: `db/client.ts` refuses a V2 URL equal to it.
+ * Nothing runs unless the V2 database is configured.
  */
 
 export type JobOutcome = {

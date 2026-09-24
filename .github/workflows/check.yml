@@ -1,11 +1,12 @@
-# Push to `main-v2` -> the same checks and build as a deploy, without deploying.
-# So V2 is proven on GitHub's machines before it ever reaches `main`.
+# A pull request into `main`, or a manual run -> the same checks and build as a
+# deploy, without deploying. `main` is the only branch since 24 Sep 2026, so
+# this runs only when a change is proposed from elsewhere (e.g. Dependabot).
 # It needs no Cloudflare secrets: nothing here talks to Cloudflare.
 name: Check
 
 on:
-  push:
-    branches: [main-v2]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:

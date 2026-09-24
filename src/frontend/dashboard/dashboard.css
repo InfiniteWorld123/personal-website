@@ -1,7 +1,7 @@
 /* ── Dashboard V2 tokens ─────────────────────────────────────
    Every rule in this file is scoped to `[data-dashboard]`, which only the
-   `/dashboard` shell sets. Nothing here can reach the public site or the
-   legacy `/admin`, and nothing there reaches in: the dashboard deliberately
+   `/dashboard` shell sets. Nothing here can reach the public site, and
+   nothing there reaches in: the dashboard deliberately
    does not inherit `--background`, `--card` or `--radius` from `styles.css`,
    because V2 is a different surface with a different rhythm — flat work area,
    hairlines instead of shadows, a smaller radius.
@@ -136,9 +136,8 @@
   /* ── Floating ─────────────────────────────────────────────────
      The other way to build the same screen: a soft tinted ground with the
      panels lifted above it, rather than one flat surface divided by hairlines.
-     It is the shape the legacy `/admin` already had, and the owner asked for
-     it back as a choice rather than a replacement — so both live here and
-     Settings decides which is on.
+     The owner asked for it as a choice rather than a replacement — so both
+     live here and Settings decides which is on.
 
      Only the ground, the fill, the radius and the shadow change. Every colour
      that carries meaning — the brand blue, the red on late money, the text —

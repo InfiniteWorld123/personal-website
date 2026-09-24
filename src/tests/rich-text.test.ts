@@ -5,10 +5,8 @@ import {
   type RichTextDoc,
   isRichTextEmpty,
   isSafeHref,
-  isSafeImageSrc,
-  readingMinutes,
   richTextToPlainText,
-} from '#/shared/validation/rich-text'
+} from '#/backend2/contracts/rich-text.contract'
 
 const parse = (doc: unknown) => v.safeParse(RichTextDocSchema, doc)
 
@@ -31,7 +29,6 @@ describe('link safety', () => {
     // Browsers normalise `/\` to `//`, so this leaves the site the same way a
     // protocol-relative link does.
     expect(isSafeHref('/\\evil.example')).toBe(false)
-    expect(isSafeImageSrc('/\\evil.example/logo.png')).toBe(false)
   })
 
   it('still allows the site root', () => {
@@ -45,16 +42,9 @@ describe('link safety', () => {
     expect(isSafeHref('vbscript:msgbox(1)')).toBe(false)
     expect(isSafeHref('   ')).toBe(false)
   })
-
-  it('holds images to https or a path here', () => {
-    expect(isSafeImageSrc('https://cdn.example.com/a.webp')).toBe(true)
-    expect(isSafeImageSrc('/images/posts/a.webp')).toBe(true)
-    expect(isSafeImageSrc('http://example.com/a.png')).toBe(false)
-    expect(isSafeImageSrc('data:image/svg+xml,<svg onload=alert(1)>')).toBe(false)
-  })
 })
 
-describe('the article schema', () => {
+describe('the rich-text schema', () => {
   it('accepts a document the editor produces', () => {
     const doc = {
       type: 'doc',
@@ -138,7 +128,7 @@ describe('the article schema', () => {
   })
 })
 
-describe('reading an article back', () => {
+describe('reading a document back', () => {
   const doc: RichTextDoc = {
     type: 'doc',
     content: [
@@ -155,16 +145,5 @@ describe('reading an article back', () => {
     expect(isRichTextEmpty({ type: 'doc', content: [] })).toBe(true)
     expect(isRichTextEmpty({ type: 'doc', content: [{ type: 'paragraph' }] })).toBe(true)
     expect(isRichTextEmpty(doc)).toBe(false)
-  })
-
-  it('never reports less than one minute', () => {
-    expect(readingMinutes({ type: 'doc', content: [] })).toBe(1)
-    expect(readingMinutes(doc)).toBe(1)
-  })
-
-  it('rounds a long article up', () => {
-    const words = Array.from({ length: 450 }, () => 'word').join(' ')
-
-    expect(readingMinutes({ type: 'doc', content: [paragraph(words)] as RichTextDoc['content'] })).toBe(3)
   })
 })

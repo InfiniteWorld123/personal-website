@@ -22,9 +22,6 @@ import { type ParsedAttachment, packFiles } from './files'
  *    forwarded and the Inbox did not accept it. A letter that reached the
  *    owner's mailbox is never refused — refusing tells the sender it failed,
  *    and it did not.
- *
- * The legacy admin inbox (`INBOUND_ENDPOINT`, `INBOUND_MAIL_SECRET`) was
- * removed with the legacy backend on 24 Sep 2026; those settings are ignored.
  */
 
 export type DeliveryEnv = {

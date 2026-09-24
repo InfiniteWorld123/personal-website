@@ -145,6 +145,6 @@ export const packFiles = (
 }
 
 /**
- * The files the legacy site takes: the carried ones only, as it always had.
+ * The carried files only, without the list of omitted ones.
  */
 export const filesFrom = (attachments: ParsedAttachment[]): CarriedFile[] => packFiles(attachments).files

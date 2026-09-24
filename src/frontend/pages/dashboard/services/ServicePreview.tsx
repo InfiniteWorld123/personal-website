@@ -14,10 +14,9 @@ import { BodyView, LoadFailure, PriceText } from './service-parts'
  *
  * The content comes from the server, built by the same projection the public
  * route uses, so the price terms and the fallbacks cannot differ from the
- * real page. It is not a pixel copy of the public service page: that page is
- * not connected to Backend2 yet, and connecting it is a separate, approved
- * step. The words around the content are the public site's, in the language
- * being previewed.
+ * real page. It is not a pixel copy of the public service page, which draws
+ * the same content in its own design. The words around the content are the
+ * public site's, in the language being previewed.
  */
 
 const liveness = (state: ServiceState): { text: string; live: boolean } => {
@@ -138,8 +137,8 @@ export function ServicePreview({
         </header>
 
         <p className="border-b border-[var(--dash-line)] bg-[var(--dash-furniture)] px-4 py-2 text-[11.5px] text-[var(--dash-quiet)]">
-          Your saved draft, with exactly the words and the price visitors get after you publish. The look follows the
-          public site once the website is connected to the new system.
+          Your saved draft, with exactly the words and the price visitors get after you publish. The website shows the
+          same content in its own design.
         </p>
 
         <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--dash-canvas)]">

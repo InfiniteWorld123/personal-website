@@ -3,13 +3,12 @@ import type { PublicRichTextDoc, PublicRichTextNode } from '#/backend2/contracts
 import type { RichTextMark } from '#/backend2/contracts/rich-text.contract'
 
 /**
- * A Backend2 case study on the public project page.
+ * A case study on the public project page.
  *
  * The owner approved extending the accepted project page to carry the
  * rich-text story (`docs/v2/projects.md`, "Frontend direction"), in the page's
- * own typography: headings as the page's section titles, body text at the size
- * and colour of the legacy "Starting point / What I built" blocks, and the
- * same reveal motion on every top-level block.
+ * own typography: headings as the page's section titles, body text large and
+ * slightly softened, and the same reveal motion on every top-level block.
  *
  * It walks the tree and emits React elements for the node types the contract
  * names, and nothing else — no HTML string, so nothing to sanitise. Links are
@@ -102,8 +101,8 @@ const renderNode = (node: PublicRichTextNode, key: number): ReactNode => {
     case 'heading': {
       const content = renderNodes(node.content)
 
-      // The page's own h1 is the project name, so the story starts at h2 —
-      // drawn as the legacy blocks draw their titles.
+      // The page's own h1 is the project name, so the story starts at h2,
+      // drawn as a section title.
       if (node.attrs.level === 2) {
         return (
           <h2 key={key} className="section-title text-display-sm text-foreground">
@@ -207,10 +206,10 @@ const renderNode = (node: PublicRichTextNode, key: number): ReactNode => {
 export function CaseStudy({ doc }: { doc: PublicRichTextDoc }) {
   return (
     // 12px from a heading to its text and 40px from text to the next
-    // heading — the spacing of the legacy "Starting point" blocks.
+    // heading.
     <div className="flex flex-col gap-3">
       {doc.content.map((node, index) => (
-        // Each top-level block reveals on its own, as the legacy blocks do.
+        // Each top-level block reveals on its own.
         <div key={index} data-reveal className={node.type === 'heading' && index > 0 ? 'pt-7' : undefined}>
           {renderNode(node, index)}
         </div>

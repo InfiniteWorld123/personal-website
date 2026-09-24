@@ -4,10 +4,9 @@ import { isProductionEnvironment } from '../../security/runtime-mode'
  * How an email leaves: Resend in a live deployment, a fake everywhere else.
  *
  * The fake is the default, and live sending is an explicit opt-in
- * (`INBOX_SEND_MODE=live`). That is deliberate: the development `.env`
- * already holds a working Resend key for the legacy site, so "send if a key
- * exists" would have made the first local test of this module a real email
- * to a real address. `docs/v2/inbox.md`: "Use fake provider calls and safe
+ * (`INBOX_SEND_MODE=live`). That is deliberate: a development `.env` may hold
+ * a working Resend key, so "send if a key exists" would make a local test a
+ * real email to a real address. `docs/v2/inbox.md`: "Use fake provider calls and safe
  * fixtures locally; do not send real mail."
  *
  * The fake says it is a fake. A message it takes is recorded with provider
@@ -62,7 +61,7 @@ export const inboxFromName = (environment: Env = process.env): string =>
 /**
  * The base of the controlled reply address. `reply@yamanwarda.de` becomes
  * `reply+<token>@yamanwarda.de`. Email Routing needs subaddressing enabled
- * for that to arrive — a check for cutover, not for this module.
+ * for that to arrive.
  */
 export const inboxReplyAddress = (environment: Env = process.env): string =>
   environment.INBOX_REPLY_ADDRESS?.trim() || 'reply@yamanwarda.de'

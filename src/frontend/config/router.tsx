@@ -10,8 +10,8 @@ export function getRouter() {
   const globalContext = getGlobalStartContext() as { nonce?: string } | undefined
   /**
    * One client per router, so a server render never shares a cache between
-   * two visitors. Admin data is refetched on focus by default; the retry is
-   * dropped because the admin would rather see the error than wait for three
+   * two visitors. Dashboard data is refetched on focus by default; the retry is
+   * dropped because the owner would rather see the error than wait for three
    * attempts at a request that is failing for a reason.
    */
   const queryClient = new QueryClient({
@@ -44,7 +44,7 @@ export function getRouter() {
      * the same link. Moving the pointer across the public nav bar cost one
      * loader per link and reused none of them. Thirty seconds is shorter than
      * anything on this site changes in, and it is what makes `preload: 'intent'`
-     * do the thing it exists to do. Admin freshness is React Query's business,
+     * do the thing it exists to do. Dashboard freshness is React Query's business,
      * not the router's, and it keeps its own `staleTime`.
      */
     defaultPreloadStaleTime: 30_000,

@@ -52,7 +52,6 @@ export function HomePage({
         body={home.cta.body}
         button={home.cta.button}
         alt={home.cta.alt}
-        keyBase="home.cta"
       />
     </>
   )

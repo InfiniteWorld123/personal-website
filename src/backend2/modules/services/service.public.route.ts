@@ -12,9 +12,7 @@ import { listPublicServices, readPublicService } from './service.service'
  * What the public website reads.
  *
  * Read-only. Mounted only where the V2 database is configured, like the
- * Projects reads: production has no `DATABASE_URL_V2` yet, so these simply do
- * not answer there, and the live `/services` page keeps its current content
- * until a separately approved cutover.
+ * Projects reads.
  *
  * Every response is built by the projections in `service.mapper.ts` from the
  * published version alone. A saved-but-unpublished price is not filtered out

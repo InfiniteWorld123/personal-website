@@ -16,9 +16,6 @@ export function WorkSection({ copy, work, language, entries }: { copy: HomeCopy[
           eyebrow={copy.eyebrow}
           title={copy.title}
           sub={copy.sub}
-          eyebrowKey="home.work.eyebrow"
-          titleKey="home.work.title"
-          subKey="home.work.sub"
         />
         <Button asChild variant="outline" className="rounded-full px-5"><Link to="/$lang/work" params={{ lang: language }}>{copy.all}<ArrowRight className="btn-arrow rtl:-scale-x-100" /></Link></Button>
       </div>

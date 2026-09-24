@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { content, projectOrder, projects, serviceOrder, servicePrices } from '#/frontend/content'
+import { content, serviceOrder, servicePrices } from '#/frontend/content'
 import {
   languages,
   languageFromAcceptLanguage,
@@ -10,7 +10,7 @@ import {
 import { formatEuro } from '#/frontend/lib/format'
 
 describe('site content', () => {
-  it('ships every language with the same navigation, services, and projects', () => {
+  it('ships every language with the same navigation and services', () => {
     for (const language of languages) {
       const copy = content[language]
 
@@ -22,7 +22,6 @@ describe('site content', () => {
         '/$lang/contact',
       ])
       expect(Object.keys(copy.services.items).sort()).toEqual([...serviceOrder].sort())
-      expect(Object.keys(copy.work.items).sort()).toEqual([...projectOrder].sort())
       expect(copy.home.process.steps).toHaveLength(4)
     }
   })
@@ -84,18 +83,12 @@ describe('site content', () => {
     expect(content.en.services.items.shopify.price).toBe('from €2,490')
     expect(content.ar.services.items.software.price).toBe('من 2.990 €')
   })
-
-  it('keeps live projects pointing at their public URLs', () => {
-    expect(projects['tech-store'].website).toBe('https://tech-store.yamanwarda.dev')
-    expect(projects.inknest.website).toBe('https://ink-nest.yamanwarda.dev')
-    expect(projects['prime-estate'].status).toBe('building')
-  })
 })
 
 describe('language helpers', () => {
   it('reads and swaps the language segment of public paths', () => {
     expect(languageFromPathname('/ar/services')).toBe('ar')
-    expect(languageFromPathname('/admin')).toBeNull()
+    expect(languageFromPathname('/dashboard')).toBeNull()
     expect(withLanguage('/de/work/inknest', 'en')).toBe('/en/work/inknest')
     expect(withLanguage('/', 'ar')).toBe('/ar')
   })

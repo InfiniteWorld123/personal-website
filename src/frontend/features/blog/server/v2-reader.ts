@@ -74,7 +74,7 @@ export const readV2Posts = (input: {
 
 /**
  * The archive at `?page=N`: the first N batches, and how many there are in
- * all. A page past the end shows what exists, as the legacy archive did.
+ * all. A page past the end shows what exists.
  */
 export const readV2PostPage = (input: {
   language: Language

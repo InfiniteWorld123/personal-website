@@ -12,10 +12,8 @@ import { csrfToken } from '#/frontend/features/auth-v2/api'
 /**
  * The Dashboard's side of the shared Media vault.
  *
- * Plain `fetch`, like `auth-v2/api.ts` and for the same reason: the Eden
- * client is typed against the legacy Elysia app, and V2 shares no code with
- * it. The envelope is identical, so one `ApiRequestError` carries a refusal to
- * whichever screen has to show it — including the `code`, which is how the
+ * Plain `fetch`, like every V2 client. One `ApiRequestError` carries a refusal
+ * to whichever screen has to show it — including the `code`, which is how the
  * library tells "that file type is not accepted" from "something still uses
  * this file".
  */

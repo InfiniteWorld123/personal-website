@@ -33,9 +33,9 @@ describe('the sidebar knows which section you are in', () => {
     expect(isSectionActive(section('/dashboard/invoices'), '/dashboard/inbox')).toBe(false)
   })
 
-  it('never lights a section from the legacy admin, which is a separate system', () => {
+  it('never lights a section from a page outside the Dashboard', () => {
     for (const item of dashboardNavigation) {
-      expect(isSectionActive(item, '/admin/invoices')).toBe(false)
+      expect(isSectionActive(item, '/en/invoices')).toBe(false)
     }
   })
 

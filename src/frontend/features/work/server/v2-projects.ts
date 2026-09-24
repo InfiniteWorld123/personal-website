@@ -19,9 +19,8 @@ import { PROJECT_BATCH_SIZE, type ProjectEntry, type ProjectEntryImage } from '.
  * already draw (`docs/v2/public-cutover.md` step 3).
  *
  * Server only: imported by the server functions in `published-projects.ts`,
- * whose handlers the client bundle never contains. The pages themselves do not
- * learn where a project came from — a Backend2 project arrives as the same
- * `ProjectEntry` a legacy one does, plus its case study on the detail page.
+ * whose handlers the client bundle never contains. Every project arrives as a
+ * `ProjectEntry`, plus its case study on the detail page.
  */
 
 const toImage = (image: PublicImage): ProjectEntryImage => ({
@@ -67,11 +66,6 @@ export const toV2ProjectEntry = (
     name: project.name,
     kind: projectKind(project.type, project.categoryLabel, language),
     summary: project.summary,
-    // A Backend2 project tells its story in the case study instead.
-    problem: '',
-    approach: '',
-    shows: '',
-    features: [],
   },
   ...(options.withCaseStudy ? { caseStudy: project.caseStudy } : {}),
 })

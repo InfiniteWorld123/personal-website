@@ -31,7 +31,6 @@ import {
  * The environment is set before Backend2 is imported: the application decides
  * at start-up whether the owner routes exist at all.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

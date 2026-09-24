@@ -17,7 +17,6 @@ import { createMemoryStore, createTestDatabase } from './helpers/backend2-db'
  *
  * Every person, company, address and bank account here is fictional.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

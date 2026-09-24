@@ -34,9 +34,6 @@ export function BlogSection({
             eyebrow={blog.home.eyebrow}
             title={blog.home.title}
             sub={blog.home.sub}
-            eyebrowKey="blog.home.eyebrow"
-            titleKey="blog.home.title"
-            subKey="blog.home.sub"
           />
           <Button asChild variant="outline" className="rounded-full px-5">
             <Link to="/$lang/blog" params={{ lang: language }} search={{}}>

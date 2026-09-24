@@ -32,8 +32,8 @@ const isProduction = (environment: Env): boolean => isProductionEnvironment(envi
  * The key everything else is derived from: the TOTP secret's encryption key,
  * the rate-limit key HMAC, the address hash in the session list.
  *
- * Deliberately separate from `BETTER_AUTH_SECRET`. The legacy backend must be
- * deletable at cutover without taking V2's stored secrets with it.
+ * Its own variable, read from nowhere else, so no other secret can change
+ * what it decrypts.
  */
 export const readAuthSecret = (environment: Env = process.env): string => {
   const secret = read(environment, 'AUTH_V2_SECRET')

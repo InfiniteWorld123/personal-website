@@ -250,17 +250,6 @@ describe('when the V2 Inbox cannot take the letter', () => {
   })
 })
 
-describe('the removed legacy admin inbox', () => {
-  it('is never posted to, even while its old settings are still on the Worker', async () => {
-    const { result, calls } = await run({
-      env: { ...env(), INBOUND_ENDPOINT: 'https://site.example/api/inbound-email', INBOUND_MAIL_SECRET: 'old' } as DeliveryEnv,
-    })
-
-    expect(calls.map((call) => call.url)).toEqual(['https://site.example/api/v2/inbound-email'])
-    expect(result).not.toHaveProperty('legacy')
-  })
-})
-
 describe('what the V2 schema accepts', () => {
   const message = (headers: Record<string, string> = {}) => fakeMessage([], { headers }).message
 

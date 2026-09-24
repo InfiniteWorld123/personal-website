@@ -238,24 +238,23 @@ site rendered.
   `0014` and their tables stay: applied migrations are never edited.
 - **Mail Worker:** `workers/inbound-email` no longer posts to the legacy
   inbox; `INBOUND_ENDPOINT` / `INBOUND_MAIL_SECRET` are ignored.
-- **Kept on purpose:** the legacy database (dropped a week later, by the
-  owner), the guard that refuses a `DATABASE_URL_V2` equal to `DATABASE_URL`,
-  `workers/call-room/` (legacy-only, not used by V2's RealtimeKit video; delete
-  the directory together with its Worker), the static `/images` files.
+- **Kept on purpose:** the static `/images` files.
 - **Worker size:** 3030 → 2345 KiB gzip (`wrangler deploy --dry-run`).
 
-Cloudflare clean-up that is now safe (owner action; `wrangler.jsonc` and
-`workers/inbound-email/wrangler.jsonc` are unchanged until then):
+## Legacy leftovers deleted (24 Sep 2026, owner-approved)
 
-- `yamanwarda`: remove the `HYPERDRIVE` binding, the `MEDIA` bucket binding and
-  the `PUBLIC_V2_MODULES` var; delete the secrets `BETTER_AUTH_SECRET`,
-  `BETTER_AUTH_URL`, `DATABASE_URL`, `RATE_LIMIT_SECRET`, `R2_*`,
-  `PREVIEW_TOKEN_SECRET`, `CALL_ROOM_SECRET`, `CALL_ROOM_URL`, `TURN_KEY_*`,
-  `CHAT_*`, `INBOUND_MAIL_SECRET`, `INBOUND_MAIL_ADDRESS`, `CONTACT_TO_EMAIL`
-  (whichever exist). Keep `HYPERDRIVE_V2`, `MEDIA_V2`, the cron and every V2
-  var and secret.
-- `yamanwarda-inbound-email`: remove the `INBOUND_ENDPOINT` var and the
-  `INBOUND_MAIL_SECRET` secret, then redeploy it with the new code.
-- Later: the legacy Hyperdrive config `ff94beb8…`, the `yamanwarda-media`
-  bucket (its images were copied into V2 Media; the JSON backup holds rows, not
-  files), the `yamanwarda-call-room` Worker, and the preview Worker.
+- **Cloudflare:** every legacy secret on `yamanwarda` and on
+  `yamanwarda-inbound-email`, the Hyperdrive configs `yamanwarda-db` and
+  `yamanwarda-staging-db`, the buckets `yamanwarda-media` and
+  `yamanwarda-staging-media`, and the R2 token `yamanwarda-media-production`.
+  The `yamanwarda-call-room` and preview Workers were already gone. The R2
+  token `github-actions-yamanwarda` stays because it deploys the site.
+- **Neon:** the legacy project `personal-website` was deleted. The V2 database
+  is `personal-webseite-v2`.
+- **Backups (owner's Mac only):** the legacy rows as JSON and the 24 PDFs of
+  the old bucket (inbox attachments and invoices), in
+  `~/Documents/yamanwarda-legacy-backup-2026-09-24`.
+- **Code:** `workers/call-room/`, `scripts/v2-preview.mjs`,
+  `scripts/v2-live-secrets.mjs`, `docs/v2/preview-deploy.md`, the
+  `DATABASE_URL` guard in `db/client.ts` and the mail Worker's legacy-inbox
+  notes.

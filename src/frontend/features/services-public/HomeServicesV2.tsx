@@ -51,9 +51,6 @@ export function HomeServicesV2({
             eyebrow={copy.eyebrow}
             title={copy.title}
             sub={copy.sub}
-            eyebrowKey="home.services.eyebrow"
-            titleKey="home.services.title"
-            subKey="home.services.sub"
           />
           <Link
             data-reveal

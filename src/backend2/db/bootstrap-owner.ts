@@ -76,7 +76,7 @@ const fail = (message: string): never => {
 }
 
 export const bootstrapOwner = async (): Promise<void> => {
-  // Throws when DATABASE_URL_V2 is missing, or is the legacy database.
+  // Throws when DATABASE_URL_V2 is missing.
   readDatabaseUrl()
 
   // The owner tables have to exist before a row can go in one.

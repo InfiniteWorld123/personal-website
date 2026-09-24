@@ -2,9 +2,8 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestDatabase } from './helpers/backend2-db'
 
 /**
- * The Dashboard's door after the legacy admin was removed (24 Sep 2026): the
- * V2 owner session is the only way in, whatever `BACKEND2_OWNER_AUTH` says.
- * There is no second, legacy session that could open it any more.
+ * The Dashboard's door: the V2 owner session is the only way in, whatever
+ * `BACKEND2_OWNER_AUTH` says.
  *
  * `createServerFn` is replaced by a stand-in that runs the handler, and the
  * request is whatever the test hands `getRequest`; Backend2 reads a real

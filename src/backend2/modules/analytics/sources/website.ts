@@ -116,7 +116,8 @@ const POSTHOG_CACHE_ENTRIES = 50
 
 /**
  * Pages that must never be counted even if a future capture were misconfigured
- * to send them: the private application and the API.
+ * to send them: the private application, the old `/admin` address (older
+ * events still carry it) and the API.
  */
 const PRIVATE_PATH_FILTER =
   "AND NOT (properties.$pathname LIKE '/dashboard%' OR properties.$pathname LIKE '/admin%' OR properties.$pathname LIKE '/api/%')"

@@ -22,7 +22,7 @@ import type { PublicPost, PublicPostSummary } from '#/shared/types/post.types'
 /** An article body. */
 export type ArticleDoc = PublicBlogDoc
 
-export type PublicArticle = Omit<PublicPost, 'body' | 'cover'> & {
+export type PublicArticle = Omit<PublicPost, 'cover'> & {
   body: ArticleDoc
   /** Size is unknown for an image the library could not measure. */
   cover: { src: string; width?: number; height?: number; alt: string } | null

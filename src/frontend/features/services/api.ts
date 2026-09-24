@@ -12,8 +12,7 @@ import { csrfToken } from '#/frontend/features/auth-v2/api'
 /**
  * The Dashboard's side of Backend2 Services.
  *
- * Plain `fetch`, like the Projects and Media clients: V2 shares no code with
- * the legacy Eden client. A refusal arrives as one `ApiRequestError` with its
+ * Plain `fetch`, like the Projects and Media clients. A refusal arrives as one `ApiRequestError` with its
  * `code` and `details` intact, which is how the editor tells a stale revision
  * (`CONFLICT`) from a failed publication (`VALIDATION_ERROR`, whose
  * `details.missing` is the checklist).

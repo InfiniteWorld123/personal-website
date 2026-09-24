@@ -16,9 +16,9 @@ import {
  *
  * Written out by hand, key by key, on purpose. `docs/v2/content.md`: "A newly
  * added public field is not automatically editable until the release registry
- * intentionally includes it." The legacy editor derived its list from the
- * content tree, so a new string became editable the moment it existed; here a
- * new string stays code-only until somebody adds a line below.
+ * intentionally includes it." A list derived from the content tree would make
+ * a new string editable the moment it existed; here a new string stays
+ * code-only until somebody adds a line below.
  *
  * The defaults — what **Original** restores — are the wording the release
  * ships in `src/frontend/content/{de,en,ar}.ts` and `site.ts`.
@@ -26,11 +26,10 @@ import {
  * What is deliberately absent, and why:
  *
  * - `services.items.*`, `home.services.cards.*` and `price.*` belong to
- *   Services V2, `work.items.*` to Projects V2, articles to Blog V2. The same
+ *   Services V2, projects to Projects V2, articles to Blog V2. The same
  *   service text or price must never be editable in two modules.
  * - Route destinations, navigation labels bound to routes, form microcopy and
- *   small interface words ("load more", "back") — the legacy editor's own
- *   exclusions, kept.
+ *   small interface words ("load more", "back").
  */
 
 type Entry = readonly [key: string, kind: ContentKind]
@@ -351,7 +350,7 @@ const readDefault = (language: ContentLanguage, key: string): ContentValue | und
 
 /**
  * The length the design was built for: the longest translation plus a
- * quarter. The same rule the legacy editor used, so its counters mean the same.
+ * quarter.
  */
 const guidanceFor = (key: string, kind: ContentKind): number => {
   const leaf = key.split('.').at(-1) ?? ''

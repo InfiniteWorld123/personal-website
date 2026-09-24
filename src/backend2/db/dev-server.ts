@@ -7,8 +7,8 @@ import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
  *
  * PGlite is PostgreSQL compiled to WebAssembly, and this puts it behind a
  * socket speaking the real wire protocol — so `pg`, the pool and every query
- * in Backend2 talk to it exactly as they would to Neon, with no account, no
- * connection string to obtain and no risk of touching the legacy database.
+ * in Backend2 talk to it exactly as they would to Neon, with no account and no
+ * connection string to obtain.
  *
  * It is a convenience, not a decision: `DATABASE_URL_V2` may point at a real
  * PostgreSQL whenever the owner prefers. The data lives in `.backend2-media/`'s

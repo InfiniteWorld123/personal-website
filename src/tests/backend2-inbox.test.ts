@@ -12,7 +12,6 @@ import { createMemoryStore, createTestDatabase, pdfBytes, pngBytes } from './hel
  *
  * Every send goes to a fake transport. Nothing here can reach Resend.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

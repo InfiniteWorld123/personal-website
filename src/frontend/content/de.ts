@@ -390,74 +390,7 @@ export const de: SiteContent = {
     shown: "{visible} von {total} Projekten",
     back: 'Alle Projekte',
     detail: {
-      problem: 'Ausgangslage',
-      approach: 'Was ich gebaut habe',
-      shows: 'Was das Projekt zeigt',
-      features: 'Funktionen',
       stack: 'Technik',
-    },
-    items: {
-      'tech-store': {
-        name: 'Tech Store',
-        kind: 'Onlineshop',
-        summary:
-          'Ein vollständiger Onlineshop mit Konto, Produktverwaltung, Warenkorb, Stripe-Bezahlung, Bestellungen, Bewertungen und Admin-Bereich.',
-        problem:
-          'Ein Shop ist der härteste Test für ein Web-System: Konten, Geld, Lagerbestand und Bestellstatus müssen zusammen stimmen, sonst verliert der Betreiber Geld oder Vertrauen.',
-        approach:
-          'Ich habe den gesamten Kaufweg gebaut: einen Katalog mit 500 Produkten in zehn Kategorien, eingegrenzt über Suche und Filter für Kategorie, Farbe, Speicher, Arbeitsspeicher und Bildschirmgröße, dann Warenkorb, Stripe-Checkout und die Bestellübersicht für Kunde und Betreiber. Dazu die Seiten, die ein deutscher Shop seinen Kunden schuldet — Widerruf, Rücksendung, Versand — denn ein Shop, aus dem man rechtlich nicht verkaufen darf, ist nicht fertig.',
-        shows:
-          'Dass ich einen Kauf vom gefilterten Katalog über die Zahlung bis zur Bestellung tragen kann, die beide Seiten verfolgen können — und dass ich weiß, wofür ein deutscher Shop jenseits des Kaufen-Buttons geradestehen muss.',
-        features: [
-          'Registrierung, Login und Kundenkonto',
-          'Produktverwaltung mit Varianten',
-          'Suche, Filter und Sortierung im Katalog',
-          'Warenkorb und Stripe Checkout',
-          'Bestellungen mit Status',
-          'Widerruf-, Rücksende- und Versandseiten',
-          'Bewertungen',
-          'Admin-Dashboard',
-        ],
-      },
-      inknest: {
-        name: 'InkNest',
-        kind: 'Blogging-Plattform',
-        summary:
-          'Eine Plattform zum Schreiben und Veröffentlichen mit Editor, Bild-Uploads, Kommentaren, Reaktionen und Benachrichtigungen.',
-        problem:
-          'Inhalte zu veröffentlichen klingt einfach, bis Editor, Bilder, Kommentare und Benachrichtigungen zusammenspielen müssen.',
-        approach:
-          'Ich habe einen Rich-Text-Editor mit Bild-Uploads, Kommentar-Threads, Reaktionen und Benachrichtigungen gebaut, alles hinter einem Konto-System. Die Entdecken-Seite durchsucht alles Veröffentlichte und grenzt es nach Kategorie, nach einem von 25 Schlagwörtern, nach Sortierung und nach Seitengröße ein, damit ein wachsendes Archiv auffindbar bleibt.',
-        shows:
-          'Dass ich die Hälfte eines Produkts bauen kann, die aus Inhalten statt aus Transaktionen besteht — schreiben, veröffentlichen, diskutieren und Dinge wiederfinden — also genau das, worauf Portale, Blogs und interne Wissensdatenbanken laufen.',
-        features: [
-          'Konto und Profile',
-          'Rich-Text-Editor',
-          'Bild-Uploads',
-          'Suche, Schlagwörter und gefiltertes Entdecken',
-          'Kommentare und Reaktionen',
-          'Benachrichtigungen',
-        ],
-      },
-      'prime-estate': {
-        name: 'Prime Estate',
-        kind: 'Verwaltungssystem für Immobilien',
-        summary:
-          'Ein System für Immobilienanbieter: Objekte, Anfragen, Buchungen und ein Blog in einer Verwaltung.',
-        problem:
-          'Immobilienanbieter arbeiten mit Objekten, Interessenten, Besichtigungsterminen und Inhalten, oft verteilt auf mehrere Werkzeuge.',
-        approach:
-          'Das System bringt Objektverwaltung, Anfragen-Management, Buchungen und ein Blog in eine Anwendung mit einer Verwaltung. Es ist im Bau und die Grundlage für die Architektur dieser Website.',
-        shows:
-          'Wie ich ein Geschäftssystem mit mehreren Bereichen strukturiere, damit es ein Betreiber allein bedienen kann.',
-        features: [
-          'Objektverwaltung',
-          'Anfragen und Interessenten',
-          'Buchungen',
-          'Blog',
-          'Admin-Verwaltung',
-        ],
-      },
     },
   },
 

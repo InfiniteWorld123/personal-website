@@ -16,8 +16,6 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
   const { work, home } = getContent(language)
   const { facts, copy } = entry
   const header = useReveal<HTMLElement>()
-  // A legacy project has no `caseStudy` key at all and keeps today's page exactly.
-  const legacy = entry.caseStudy === undefined
 
   return (
     <>
@@ -82,37 +80,17 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
         </Container>
       </section>
 
-      {/* A Backend2 project may have no case study and no technology list;
-          then there is nothing for this band to hold, and it is left out
-          rather than shown empty. A legacy project always has both. */}
-      {legacy || entry.caseStudy || facts.stack.length ? <Section tone="tint">
+      {/* A project may have no case study and no technology list; then there
+          is nothing for this band to hold, and it is left out rather than
+          shown empty. */}
+      {entry.caseStudy || facts.stack.length ? <Section tone="tint">
         <Container className="grid gap-12 lg:grid-cols-[2fr_1fr] lg:gap-16">
           <div className="flex max-w-2xl flex-col gap-10">
-            {legacy ? (
-              <>
-                <Block title={work.detail.problem} body={copy.problem} />
-                <Block title={work.detail.approach} body={copy.approach} />
-                <Block title={work.detail.shows} body={copy.shows} />
-              </>
-            ) : entry.caseStudy ? (
-              <CaseStudy doc={entry.caseStudy} />
-            ) : null}
+            {entry.caseStudy ? <CaseStudy doc={entry.caseStudy} /> : null}
           </div>
 
           <aside className="flex flex-col gap-10 lg:sticky lg:top-24 lg:self-start">
-            {legacy || copy.features.length ? <div data-reveal className="flex flex-col gap-3">
-              <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
-                {work.detail.features}
-              </h2>
-              <ul className="hairline-y flex flex-col">
-                {copy.features.map((feature) => (
-                  <li key={feature} className="text-foreground/85 py-2 text-sm">
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div> : null}
-            {legacy || facts.stack.length ? <div data-reveal className="flex flex-col gap-3">
+            {facts.stack.length ? <div data-reveal className="flex flex-col gap-3">
               <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
                 {work.detail.stack}
               </h2>
@@ -135,12 +113,3 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
 
 const isPortrait = (shot: ProjectEntryImage) =>
   shot.width !== null && shot.height !== null && shot.width < shot.height
-
-function Block({ title, body }: { title: string; body: string }) {
-  return (
-    <div data-reveal className="flex flex-col gap-3">
-      <h2 className="section-title text-display-sm text-foreground">{title}</h2>
-      <p className="text-foreground/85 text-lg leading-relaxed">{body}</p>
-    </div>
-  )
-}

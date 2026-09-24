@@ -30,7 +30,7 @@ V2 is a clean rewrite, not an in-place refactor of the legacy backend.
 - The new backend code lives under `src/backend2/`.
 - V2 uses a new, clean PostgreSQL database with new migrations.
 - The existing `/admin`, legacy backend, and legacy database remain operational
-  during the transition.
+  during the transition. (Done: all three were removed on 24 Sep 2026.)
 - The public website is not being visually rebuilt.
 - The public website will eventually use Backend2 for all server-owned data and
   operations.
@@ -232,6 +232,9 @@ V2 work is pushed to a separate `main-v2` branch while `main` remains in place.
 Completing V2 does not itself delete or rename `main`: the final Git branch
 change is a separate cutover action after the platform has been completed and
 verified with the owner.
+
+Done on 24 Sep 2026 (owner-approved): `main-v2` became `main`, and every other
+branch was deleted. `main` is the only branch, and a push to it deploys.
 
 ## Decisions still required
 

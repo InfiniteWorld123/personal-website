@@ -8,10 +8,9 @@ import { createScheduledHandoff, discardScheduledHandoff } from './handoff'
  * on every other runtime (Node, `vite dev`) the hook simply never fires.
  *
  * Nitro's own `scheduledTasks` was not used: it writes `triggers.crons` into
- * the generated `wrangler.json`, which the live Worker is deployed from, and
- * adding a cron to the live site is an owner decision for the cutover. Here
- * the build output stays unchanged; only a Worker whose config declares a cron
- * (today: the V2 preview) ever receives the event.
+ * the generated `wrangler.json`. Here the schedule is declared once, in the
+ * site's `wrangler.jsonc`, and only a Worker whose config declares a cron ever
+ * receives the event.
  *
  * Deliberately imports nothing from Backend2 except the tiny hand-off: the
  * jobs run inside the server bundle that already contains them (see

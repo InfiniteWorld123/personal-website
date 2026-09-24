@@ -1,18 +1,12 @@
 import type { AssistantLanguage } from '#/backend2/contracts/assistant.contract'
 
 /**
- * The public widget's notice for V2, in the wording the owner approved in the
- * Assistant Design Lab (24 Sep 2026, `docs/v2/ai-assistant.md`).
+ * The public widget's privacy notice (`features/chat/ChatWidget.tsx`), in the
+ * wording the owner approved in the Assistant Design Lab (24 Sep 2026,
+ * `docs/v2/ai-assistant.md`).
  *
- * **Not shown on the live site yet.** Today's widget (`features/chat/`) still
- * says "nobody reads along", which is true of the legacy chat and becomes
- * false once V2 saves conversations for the owner. The switch happens with the
- * public cutover, which needs its own approval — until then nothing imports
- * this file outside the Dashboard and the tests.
- *
- * The widget keeps today's look; only this sentence and the privacy link
- * beside it change. It says plainly that Yaman reads the conversations (he
- * does), and matches the notice the server sends with the assistant status.
+ * It says plainly that Yaman reads the conversations (he does), and matches
+ * the notice the server sends with the assistant status.
  */
 
 export const ASSISTANT_V2_NOTICE_KEY = 'assistant.notice.v2'

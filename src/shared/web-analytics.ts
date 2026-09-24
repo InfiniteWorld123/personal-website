@@ -29,8 +29,9 @@ export const webAnalyticsToken = (
 
 /**
  * Whether a path may carry the beacon: public pages only. Never the private
- * Dashboard, the legacy admin, the API, a booking's private manage link or
- * its video room — the last two carry a private reference in the address.
+ * Dashboard, the retired `/admin` address (a 404 now, kept out of the
+ * figures), the API, a booking's private manage link or its video room — the
+ * last two carry a private reference in the address.
  */
 export const beaconAllowedOn = (pathname: string): boolean => {
   const path = pathname.toLowerCase()

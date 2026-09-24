@@ -34,47 +34,27 @@ const rememberLanguage = (language: Language) => {
  * `/ar/...`. That makes every page shareable and indexable in each language
  * and lets the server render the right `lang` and `dir` on the first byte.
  *
- * Routes without a language segment (admin, api) fall back to German.
+ * The English-only Dashboard aside, a route without a language segment falls
+ * back to German (`documentLanguageFor`).
  */
-export function LanguageProvider({
-  children,
-  language: forced,
-  onLanguageChange,
-}: {
-  children: ReactNode
-  /**
-   * Set only where a piece of the public site is rendered somewhere the URL
-   * does not carry a language — the content editor previews all three from
-   * `/admin/content`. A forced language deliberately leaves `<html lang>` and
-   * `dir` alone: the admin around the preview stays as it is.
-   */
-  language?: Language
-  onLanguageChange?: (language: Language) => void
-}) {
+export function LanguageProvider({ children }: { children: ReactNode }) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const navigate = useNavigate()
 
-  const language = forced ?? documentLanguageFor(pathname)
+  const language = documentLanguageFor(pathname)
   const direction = directionFor(language)
 
   useEffect(() => {
-    if (forced) return
-
     document.documentElement.lang = language
     document.documentElement.dir = direction
-  }, [forced, language, direction])
+  }, [language, direction])
 
   const setLanguage = useCallback(
     (next: Language) => {
-      if (onLanguageChange) {
-        onLanguageChange(next)
-        return
-      }
-
       rememberLanguage(next)
       void navigate({ to: withLanguage(pathname, next), replace: true })
     },
-    [navigate, onLanguageChange, pathname],
+    [navigate, pathname],
   )
 
   const value = useMemo(

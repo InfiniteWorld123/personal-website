@@ -12,7 +12,6 @@ import { type Json, blogHarness } from './helpers/backend2-blog'
  * its opinion. The owner answers, deletes whole branches and switches comments
  * off per article; nothing about a visitor is stored with what they wrote.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

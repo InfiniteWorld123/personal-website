@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react'
 import type { PublicBlogNode } from '#/backend2/contracts/blog.contract'
-import type { RichTextDoc, RichTextMark, RichTextNode } from '#/shared/validation/rich-text'
+import type { RichTextMark } from '#/backend2/contracts/rich-text.contract'
 import type { ArticleDoc } from './public-article'
 import { YoutubeEmbed } from './YoutubeEmbed'
 
@@ -43,11 +43,8 @@ const applyMarks = (content: ReactNode, marks: RichTextMark[] | undefined): Reac
   }, content)
 }
 
-/**
- * A node of either backend's document. The legacy article is a subset of the
- * Backend2 one; Backend2 adds tables and, at the top level, a YouTube video.
- */
-type BodyNode = RichTextNode | PublicBlogNode
+/** A node of an article: the rich-text nodes plus, at the top level, a YouTube video. */
+type BodyNode = PublicBlogNode
 
 const renderNodes = (nodes: BodyNode[] | undefined): ReactNode =>
   (nodes ?? []).map((node, index) => <Fragment key={index}>{renderNode(node)}</Fragment>)
@@ -155,13 +152,4 @@ const renderNode = (node: BodyNode): ReactNode => {
 
 export function PostBody({ doc }: { doc: ArticleDoc }) {
   return <div className="post-body">{renderNodes(doc.content as BodyNode[])}</div>
-}
-
-/**
- * The same renderer without the article's typography, for a document that is
- * not an article — a reply in the inbox thread. Same guarantee: nothing the
- * schema does not name reaches the screen.
- */
-export function RichTextView({ doc, className }: { doc: RichTextDoc; className?: string }) {
-  return <div className={className}>{renderNodes(doc.content)}</div>
 }

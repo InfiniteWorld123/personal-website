@@ -12,8 +12,7 @@ import { cn } from '#/frontend/lib/utils'
  *
  * It reads live values from Backend2 and the owner's unsaved wording from the
  * editor, and it can publish nothing. It is a faithful picture of the *words*
- * and their order, not the public components themselves: those still read the
- * legacy content until the approved public cutover connects them to Backend2.
+ * and their order, not the public components themselves.
  */
 
 type Read = { value: ContentValue; unsaved: boolean }

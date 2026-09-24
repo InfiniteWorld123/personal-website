@@ -155,10 +155,6 @@ describe('/work and the homepage from Backend2', () => {
         name: 'prime-estate de',
         kind: 'Kundenprojekt · Immobilien',
         summary: 'Summary prime-estate de',
-        problem: '',
-        approach: '',
-        shows: '',
-        features: [],
       },
     })
   })
@@ -295,12 +291,12 @@ describe('a project page from Backend2', () => {
 })
 
 describe('the /work batch arithmetic', () => {
-  it('slices a whole list when no server total is given', () => {
+  it('slices a list that holds every project', () => {
     const items = Array.from({ length: 10 }, (_, index) => index)
 
-    expect(getProjectBatch(items, 1)).toMatchObject({ page: 1, total: 10, hasMore: true })
-    expect(getProjectBatch(items, 1).visible).toHaveLength(6)
-    expect(getProjectBatch(items, 9)).toMatchObject({ page: 2, hasMore: false })
+    expect(getProjectBatch(items, 1, 10)).toMatchObject({ page: 1, total: 10, hasMore: true })
+    expect(getProjectBatch(items, 1, 10).visible).toHaveLength(6)
+    expect(getProjectBatch(items, 9, 10)).toMatchObject({ page: 2, hasMore: false })
   })
 
   it('trusts the server total when only the shown batches arrive', () => {

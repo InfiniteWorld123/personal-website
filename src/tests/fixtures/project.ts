@@ -1,12 +1,24 @@
-import type { ProjectEntry } from '#/frontend/features/work/project-list'
-import type { PublicProject } from '#/shared/types/project.types'
+import type { ProjectEntry, ProjectEntryImage } from '#/frontend/features/work/project-list'
+import type { ProjectStatus } from '#/shared/validation/project.validation'
+
+/** A published project, one language already chosen, as a test describes it. */
+export type ProjectFixture = {
+  slug: string
+  status: ProjectStatus
+  website: string | null
+  source: string | null
+  tech: string[]
+  images: ProjectEntryImage[]
+  name: string
+  kind: string
+  summary: string
+}
 
 /**
- * A project exactly as the public API projects one. Tests build their cases
- * from this instead of the shipped content, so a real project changing its
- * copy can never turn a test red.
+ * A published project. Tests build their cases from this instead of real
+ * projects, so a real project changing its copy can never turn a test red.
  */
-export const publicProjectFixture = (overrides: Partial<PublicProject> = {}): PublicProject => ({
+export const publicProjectFixture = (overrides: Partial<ProjectFixture> = {}): ProjectFixture => ({
   slug: 'fixture-project',
   status: 'live',
   website: 'https://example.com',
@@ -16,15 +28,11 @@ export const publicProjectFixture = (overrides: Partial<PublicProject> = {}): Pu
   name: 'Fixture Project',
   kind: 'Online store',
   summary: 'A fixture used by the tests.',
-  problem: 'The starting point.',
-  approach: 'What was built.',
-  shows: 'What it proves.',
-  features: ['One', 'Two'],
   ...overrides,
 })
 
 /** The fixture in the shape the public pages draw. */
-export const toProjectEntry = (project: PublicProject): ProjectEntry => ({
+export const toProjectEntry = (project: ProjectFixture): ProjectEntry => ({
   facts: {
     slug: project.slug,
     status: project.status,
@@ -37,9 +45,5 @@ export const toProjectEntry = (project: PublicProject): ProjectEntry => ({
     name: project.name,
     kind: project.kind,
     summary: project.summary,
-    problem: project.problem,
-    approach: project.approach,
-    shows: project.shows,
-    features: project.features,
   },
 })

@@ -2,13 +2,12 @@ import type { Language } from '#/frontend/i18n/language'
 import type { LegalCopy } from './types'
 
 /**
- * The privacy page once V2 serves the public site (`docs/v2/privacy-v2.md`,
- * approved by the owner on 24 Sep 2026).
+ * The privacy page's V2 wording (`docs/v2/privacy-v2.md`, approved by the
+ * owner on 24 Sep 2026).
  *
- * Applied on top of the current copy — after any owner edits — on every
- * render since the cutover (24 Sep 2026), so the page describes what the site
- * actually does. The existing sections keep
- * their place; the contact and cookie sections are replaced, and the new ones
+ * Applied on top of the base copy — after any owner edits — on every render,
+ * so the page describes what the site actually does. The existing sections
+ * keep their place; the contact and cookie sections are replaced, and the new ones
  * (where data is stored, booking, the assistant, comments) are inserted where
  * a reader looks for them.
  */

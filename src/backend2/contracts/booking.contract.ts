@@ -1,8 +1,8 @@
 import * as v from 'valibot'
 
 /**
- * The Booking contract, shared by Backend2, the Dashboard and — at the public
- * cutover — the public booking pages. See `docs/v2/booking.md`.
+ * The Booking contract, shared by Backend2, the Dashboard and the public
+ * booking pages. See `docs/v2/booking.md`.
  *
  * Pure: valibot and plain TypeScript. Times cross the wire as ISO 8601
  * instants; the owner's schedule is Europe/Berlin local minutes.
@@ -20,8 +20,7 @@ export const APPOINTMENT_STATUSES = ['confirmed', 'completed', 'cancelled', 'no_
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number]
 
 /**
- * The optional "What is it about?" and "Budget range" answers. The same values
- * the public form offers today, so the cutover changes no visitor's choices.
+ * The optional "What is it about?" and "Budget range" answers.
  * Removed from Contact by owner decision — never from Booking.
  */
 export const SUBJECT_CHOICES = ['unsure', 'website', 'shop', 'software'] as const

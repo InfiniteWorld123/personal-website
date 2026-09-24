@@ -14,12 +14,10 @@ import { csrfToken } from '#/frontend/features/auth-v2/api'
 /**
  * The Dashboard's side of Backend2 Projects.
  *
- * Plain `fetch`, like `media/api.ts` and `auth-v2/api.ts`: the Eden client is
- * typed against the legacy Elysia app, and V2 shares no code with it. The
- * envelope is the same, so one `ApiRequestError` carries a refusal to whatever
- * screen has to show it — with `code` and `details` intact, which is how the
- * editor tells a stale revision (`CONFLICT`) from a failed publication
- * (`VALIDATION_ERROR`, whose `details.missing` is the checklist).
+ * Plain `fetch`, like every V2 client. One `ApiRequestError` carries a refusal
+ * to whatever screen has to show it — with `code` and `details` intact, which
+ * is how the editor tells a stale revision (`CONFLICT`) from a failed
+ * publication (`VALIDATION_ERROR`, whose `details.missing` is the checklist).
  */
 
 const OWNER = '/api/v2/owner/projects'

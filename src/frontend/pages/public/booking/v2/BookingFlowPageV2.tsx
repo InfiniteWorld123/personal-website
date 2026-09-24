@@ -23,7 +23,7 @@ import { type Step, StepRail, TimezoneSelect } from './flow-parts'
 
 /**
  * One appointment type, booked against Backend2 (`docs/v2/public-cutover.md`,
- * step 5). The legacy page's shape and look, with what the approved lab adds:
+ * step 5). The site's booking page, with what the approved lab adds:
  * the way to meet before the time (video preselected when allowed), the phone
  * number only for a phone call, a time just taken said plainly, and a success
  * page per way of meeting with the private link.

@@ -4,10 +4,9 @@ import { isProductionEnvironment } from '../security/runtime-mode'
 /**
  * The V2 mail adapter.
  *
- * `docs/v2/auth.md`: "Use a V2-owned mail adapter with the existing configured
- * Resend provider, separate templates and no import from the legacy backend."
- * So this file talks to Resend over `fetch` — which works unchanged on a
- * Worker — and imports nothing from `src/backend/`.
+ * `docs/v2/auth.md`: a V2-owned mail adapter with the configured Resend
+ * provider and its own templates. This file talks to Resend over `fetch`,
+ * which works unchanged on a Worker.
  *
  * Off production, delivery is faked. The fake writes a line to the server
  * console and nothing else: a reset link must never appear in an HTTP

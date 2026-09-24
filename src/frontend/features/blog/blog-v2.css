@@ -3,8 +3,8 @@
  * (`docs/v2/blog.md`, 23 Sep 2026): "Updated on", tables, the click-to-load
  * video and the comment section.
  *
- * Loaded only by a Backend2 article (`$lang.blog.$slug.tsx` adds it to the
- * head), so with the switch off the legacy page loads exactly what it did.
+ * Loaded only by an article page (`$lang.blog.$slug.tsx` adds it to the
+ * head), so no other page downloads it.
  * Tokens are the site's own (`config/styles.css`): light and dark follow
  * `.dark`, and every direction is a logical property so Arabic mirrors.
  */

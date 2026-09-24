@@ -12,8 +12,8 @@ import { isProductionEnvironment } from '../../security/runtime-mode'
  *    works.
  *  - **realtimekit**, used only when `BOOKING_VIDEO_MODE=live` and its three
  *    server-only settings exist. It is written against Cloudflare's published
- *    REST API and has **never been run** against a real account: verifying it
- *    is a cutover step.
+ *    REST API and has **never been run** against a real account: verify it
+ *    before video is switched on.
  *  - **unavailable**, in production without that opt-in: every join answers
  *    `PROVIDER_UNAVAILABLE` instead of pretending.
  *
@@ -69,7 +69,8 @@ const unavailableProvider: VideoProvider = {
 /**
  * RealtimeKit over REST. Presets `booking_host` and `booking_guest` must exist
  * in the RealtimeKit app with recording, transcription, streaming and chat
- * persistence switched off — configured in Cloudflare, verified at cutover.
+ * persistence switched off — configured in Cloudflare, checked before video
+ * is switched on.
  */
 const realtimeKitProvider = (config: { accountId: string; appId: string; apiToken: string }): VideoProvider => {
   const base = `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/realtime/kit/${config.appId}`

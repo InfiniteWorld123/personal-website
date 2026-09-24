@@ -7,7 +7,6 @@ import { createTestDatabase } from './helpers/backend2-db'
  * taken literally, one broken section not emptying the rest, and the owner
  * fence. Every name here is fictional.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

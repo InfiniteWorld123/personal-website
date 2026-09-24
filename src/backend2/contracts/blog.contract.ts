@@ -294,8 +294,7 @@ export const isBlogBodyEmpty = (doc: BlogDoc | null): boolean =>
   (blogPlainText(doc) === '' && blogImageNodes(doc).length === 0 && blogVideos(doc).length === 0)
 
 /**
- * Minutes to read, rounded up and never below one — the same arithmetic the
- * public cards already print, so the figure does not change at cutover.
+ * Minutes to read, rounded up and never below one.
  */
 export const readingMinutesOf = (doc: BlogDoc): number => {
   const words = blogPlainText(doc).split(/\s+/).filter(Boolean).length

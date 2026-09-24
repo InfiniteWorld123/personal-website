@@ -23,17 +23,15 @@ import { LoadFailure } from './project-parts'
  * here for the same reason it will be absent on the website, not because
  * this screen remembered to hide it. Only the one language asked for arrives.
  *
- * What it is not, and says so: a pixel copy of the public project page. That
- * page still reads the legacy backend, and changing it is a separate, approved
- * step. So the content, the order and what is hidden are exact; the final look
- * follows the public design once the website is connected.
+ * What it is not, and says so: a pixel copy of the public project page. The
+ * content, the order and what is hidden are exact; the website draws the same
+ * content in its own design.
  *
  * The small words around the content — the two link buttons and the
  * technology heading — are the public site's own, read from its content in
  * the language being previewed, so an Arabic preview does not show English
- * buttons a visitor will never see. The project type ("Client", "Demo") has no
- * approved public wording yet, so it stays in the dashboard's English rather
- * than inventing copy for the website.
+ * buttons a visitor will never see. The project type uses the owner's
+ * approved public words (`PUBLIC_TYPE_WORDS`).
  */
 
 /** Which of three honest sentences the header should carry. */
@@ -205,8 +203,8 @@ export function ProjectPreview({
 
         <p className="border-b border-[var(--dash-line)] bg-[var(--dash-furniture)] px-4 py-2 text-[11.5px] text-[var(--dash-quiet)]">
           Your saved draft, with exactly the words, images, links and order visitors will get
-          after you publish — and without anything that stays private. The look follows the
-          public site once the website is connected to the new system.
+          after you publish — and without anything that stays private. The website shows the
+          same content in its own design.
         </p>
 
         <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--dash-canvas)]">

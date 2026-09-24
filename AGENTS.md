@@ -22,11 +22,12 @@ from Git history and silently treat it as a V2 decision.
 - The new private application lives at `/dashboard`.
 - V2 uses a new database and a new migration history.
 - Done on 24 Sep 2026 (owner-approved cutover): `/admin` and `src/backend/`
-  were removed, and every public page reads Backend2. Keep the legacy database
-  and the current public behavior until an approved step removes or changes
-  them.
-- Do not make V2 write to the legacy and V2 databases simultaneously without an
-  approved migration design.
+  were removed, and every public page reads Backend2. Keep the current public
+  behavior until an approved step changes it.
+- Done on 24 Sep 2026 (owner-approved): the legacy database, its Cloudflare
+  connection, the legacy media bucket, the legacy secrets and the call-room
+  Worker were deleted. A read-only export of the legacy rows and files is on
+  the owner's Mac, never in the repository. V2 is the only database.
 - Do not delete legacy code, routes, configuration, or data merely because a V2
   replacement has started.
 
@@ -146,20 +147,19 @@ the owner explicitly approves a visible change.
 
 ## Git and delivery
 
-- `main` is the existing production branch. `main-v2` is the separate branch
-  for ongoing V2 work. Make V2 changes and commits on `main-v2`; never push,
-  merge, or deploy them to `main` as part of an ordinary V2 task.
-- A commit saves a reviewed snapshot in the local branch. A push uploads that
-  branch to GitHub; neither action changes `main` when performed on `main-v2`.
+- Since 24 Sep 2026 `main` is the only branch, locally and on GitHub (the
+  owner deleted `main-v2` and every other branch after V2 went live). Work and
+  commit on `main`; do not create long-lived branches without the owner's
+  request.
+- **A push to `main` deploys the live site** (GitHub Actions: typecheck, tests,
+  build, then `wrangler deploy`). A commit is local and safe; a push is a
+  publication. Push only when the owner asks, after proportionate checks, and
+  say in simple Arabic what will go live.
 - Before committing, check the current branch, working tree, staged file list,
   and staged diff. Commit only the agreed scope. Preserve unrelated or
   in-progress owner changes; if ownership of a change is unclear, ask before
   including it. Never stage secrets, `.env` files, real client data, private
   attachments, backups, or generated build output.
-- When the owner requests a commit or push, run proportionate checks, use a
-  descriptive commit message, and push only `main-v2`. Report the commit,
-  checks, and exact remote branch. Do not force-push or rewrite published
-  history without explicit approval.
-- Finishing V2 does not authorize deleting or renaming branches. Treat the
-  eventual replacement of `main` as a separate owner-approved cutover, with
-  full verification and a recoverable copy of the old branch first.
+- Use a descriptive commit message and report the commit, the checks and what
+  was deployed. Do not force-push or rewrite published history without
+  explicit approval.

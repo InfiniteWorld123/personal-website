@@ -8,8 +8,7 @@ import { getOwnerRouteSession } from '#/frontend/features/auth-v2/server/getOwne
  *
  * **Guarded by the V2 owner session** (`docs/v2/auth.md`): passkey, or
  * password with an authenticator code. Without one the browser is sent to
- * `/dashboard/login`. The legacy `/admin` and its session were removed on
- * 24 Sep 2026.
+ * `/dashboard/login`.
  *
  * The stylesheet is linked here rather than imported by a component so the
  * server renders with it already in the document. Every rule inside is scoped

@@ -16,10 +16,11 @@ import {
 } from '#/frontend/lib/notify'
 
 /**
- * Mounted once in the admin shell. It renders whatever `lib/notify.ts` holds,
- * which is written to from one place — the `QueryClient`'s default mutation
- * `onError` in `config/router.tsx` — so a write that fails anywhere in the
- * admin says so here without its own page having to remember to ask.
+ * Mounted once in the Dashboard shell. It renders whatever `lib/notify.ts`
+ * holds, which is written to from one place — the `QueryClient`'s default
+ * mutation `onError` in `config/router.tsx` — so a write that fails anywhere
+ * in the Dashboard says so here without its own page having to remember to
+ * ask.
  */
 
 const TITLE: Record<Notice['tone'], string> = {

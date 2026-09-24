@@ -27,7 +27,7 @@ export function BookingSuccess({
   phone: string
 }) {
   const { language } = useLanguage()
-  const legacy = getBookingCopy(language)
+  const base = getBookingCopy(language)
   const copy = getBookingV2Copy(language).success
   const words = getBookingV2Copy(language)
   const { appointment } = receipt
@@ -60,7 +60,7 @@ export function BookingSuccess({
       <div className="surface-card flex flex-col gap-6 rounded-[1.75rem] p-6 sm:p-8">
         <dl className="grid gap-4 sm:grid-cols-2">
           <Detail label={copy.when} value={formatWhen(appointment.startsAt, timeZone, language)} />
-          <Detail label={copy.duration} value={`${durationMinutes} ${legacy.minutes} · ${appointment.typeName}`} />
+          <Detail label={copy.duration} value={`${durationMinutes} ${base.minutes} · ${appointment.typeName}`} />
           <Detail label={copy.way} value={words.methods[appointment.method]} />
           <Detail label={copy.reference} value={appointment.reference} ltr />
         </dl>

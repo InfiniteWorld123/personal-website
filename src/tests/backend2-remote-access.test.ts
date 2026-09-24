@@ -7,7 +7,6 @@ import { createTestDatabase } from './helpers/backend2-db'
  * behind the V2 session. Every missing piece keeps the door shut; strangers
  * still get 404.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.NODE_ENV = 'development'
 

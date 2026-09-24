@@ -173,7 +173,7 @@ Money board figures come from the Invoices module's optional `readBoard` (`invoi
 | `CF_WEB_ANALYTICS_SITE_TAG` | Worker variable or secret | The Web Analytics **site tag** (32 hex) — not the beacon token. |
 | `CF_ANALYTICS_API_TOKEN` | Worker **secret** | An API token with *Account → Account Analytics → Read*. |
 
-Any of the last three missing → website figures `not-connected`; malformed → `not-connected` with a log line naming no value. `scripts/v2-preview.mjs` copies the last three from `.env` into the preview's secrets, never the beacon token (preview visits must not count as the live site's).
+Any of the last three missing → website figures `not-connected`; malformed → `not-connected` with a log line naming no value.
 
 **Owner steps** (done on 24 Sep for the first two): Cloudflare dashboard → *Web Analytics* → *Add a site* → `yamanwarda.de` → *Enable with JS Snippet installation* → copy the token from the snippet (`CF_WEB_ANALYTICS_TOKEN`) and the site tag from the site's settings. Then *My Profile → API Tokens → Create Token → Custom* → permission *Account · Account Analytics · Read*, limited to this account → set it as the Worker secret `CF_ANALYTICS_API_TOKEN`, with `CF_ACCOUNT_ID` and `CF_WEB_ANALYTICS_SITE_TAG` beside it.
 

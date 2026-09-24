@@ -6,10 +6,10 @@ import { readSessionFromRequest } from '#/backend2/auth/session'
 /**
  * Who is at the Dashboard's door: the V2 owner session, or nobody.
  *
- * Since the legacy admin was removed (24 Sep 2026) the V2 session is the only
- * boundary, whatever `BACKEND2_OWNER_AUTH` says; a missing one sends the
- * browser to `/dashboard/login`. Without a configured database there is no
- * session at all, which shuts the Dashboard — the safe direction.
+ * The V2 session is the only boundary, whatever `BACKEND2_OWNER_AUTH` says;
+ * a missing one sends the browser to `/dashboard/login`. Without a configured
+ * database there is no session at all, which shuts the Dashboard — the safe
+ * direction.
  *
  * `withRequestScope` because on a Worker a query outside the scope lands on a
  * module-level pool holding sockets Cloudflare already tore down.

@@ -14,8 +14,7 @@ import { SearchPaletteProvider } from './SearchPaletteOpener'
  * them rather than the components re-rendering around them:
  *
  *  - `data-dashboard` is the scope every token in `dashboard.css` hangs off, so
- *    nothing in here can reach the public site or `/admin`, and nothing there
- *    reaches in.
+ *    nothing in here can reach the public site, and nothing there reaches in.
  *  - `data-surface` chooses how the surface is built: one flat plane divided
  *    by hairlines, panels lifted off a ground, the whole thing as a rounded
  *    object, or the three parts held apart. Settings switches it.

@@ -15,7 +15,7 @@ import { useEffect } from 'react'
  * can do nothing about.
  */
 const CHUNK_LOAD_MESSAGES = [
-  // Chrome, and the wording the admin was shown.
+  // Chrome.
   'failed to fetch dynamically imported module',
   // Firefox.
   'error loading dynamically imported module',

@@ -9,7 +9,7 @@ import type { ProjectStatus } from '#/shared/validation/project.validation'
  */
 export type ProjectEntryImage = {
   src: string
-  /** Null only for a Backend2 image whose size was never measured. */
+  /** Null only for an image whose size was never measured. */
   width: number | null
   height: number | null
   alt: string
@@ -29,19 +29,12 @@ export type ProjectEntryCopy = {
   name: string
   kind: string
   summary: string
-  problem: string
-  approach: string
-  shows: string
-  features: string[]
 }
 
 export type ProjectEntry = {
   facts: ProjectEntryFacts
   copy: ProjectEntryCopy
-  /**
-   * The Backend2 case study, on the detail page only. A legacy project has
-   * none and tells its story through `problem`, `approach` and `shows`.
-   */
+  /** The case study, on the detail page only; null when none was written. */
   caseStudy?: PublicRichTextDoc | null
 }
 
@@ -66,10 +59,9 @@ export function parseProjectPage(value: unknown): number {
 
 /**
  * The cumulative batch a `?page=` asks for. `total` is how many exist: the
- * legacy list arrives whole, so it is `items.length`; Backend2 sends only the
- * batches asked for and says how many there are.
+ * server sends only the batches asked for and says how many there are.
  */
-export function getProjectBatch<T>(items: T[], requestedPage?: number, total = items.length) {
+export function getProjectBatch<T>(items: T[], requestedPage: number | undefined, total: number) {
   const page = Math.min(parseProjectPage(requestedPage), Math.max(1, Math.ceil(total / PROJECT_BATCH_SIZE)))
   const visible = items.slice(0, page * PROJECT_BATCH_SIZE)
   return { page, visible, total, hasMore: visible.length < total }

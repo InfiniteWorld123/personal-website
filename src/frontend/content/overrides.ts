@@ -8,10 +8,10 @@ import type { ServiceSlug, SiteContent } from './types'
  * What the owner has published on top of the code, held for the process.
  *
  * Module state is the right shape here because the answer is the same for
- * every visitor: this is the site's copy, not one person's session. Drafts
- * never reach this store — the admin previews its own unpublished wording
- * through React state, so an unfinished sentence cannot leak onto the public
- * site through a variable that outlives a request.
+ * every visitor: this is the site's copy, not one person's session. Only
+ * saved wording reaches this store — the Dashboard previews unsaved wording
+ * from its own editor state, so an unfinished sentence cannot leak onto the
+ * public site through a variable that outlives a request.
  */
 
 export type OverrideMap = Record<string, ContentValue>
@@ -38,8 +38,6 @@ export const applyContentOverrides = (overrides: ContentOverrides): void => {
   version += 1
   merged.clear()
 }
-
-export const currentContentOverrides = (): ContentOverrides => current
 
 /**
  * The code's copy with the published overrides written over it.

@@ -3,13 +3,6 @@ import * as v from 'valibot'
 /**
  * The case-study document. See `docs/v2/projects-backend.md` §5.4.
  *
- * A separate file from `src/shared/validation/rich-text.ts` rather than an
- * import, for two reasons that both matter. V2 adds tables and changes how an
- * image is referenced, and legacy articles have to keep parsing with the
- * legacy schema — one shared file would force both to move at once. And
- * `src/backend2/` imports nothing from the rest of the tree, so the legacy
- * backend can be deleted at cutover without taking V2 with it.
- *
  * Pure: valibot and plain TypeScript. The Dashboard imports exactly this, so
  * the editor refuses what the server would refuse.
  *

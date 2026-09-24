@@ -11,7 +11,6 @@ import { blogHarness } from './helpers/backend2-blog'
  * nothing, a second tick redoes nothing — and the in-process hand-off from
  * the Nitro plugin cannot be triggered from outside the isolate.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'
@@ -225,13 +224,8 @@ describe('runScheduledJobs', () => {
     const job = { name: 'never', cadence: 'every-tick' as const, run: vi.fn(async () => ({ counts: {} })) }
 
     const noUrl = await run(hourlyTick(), { jobs: [job], environment: {} })
-    const sameAsLegacy = await run(hourlyTick(), {
-      jobs: [job],
-      environment: { DATABASE_URL: 'postgres://same/db', DATABASE_URL_V2: 'postgres://same/db' },
-    })
 
     expect(noUrl).toMatchObject({ skipped: 'v2-database-not-configured', results: [] })
-    expect(sameAsLegacy).toMatchObject({ skipped: 'v2-database-not-configured', results: [] })
     expect(job.run).not.toHaveBeenCalled()
   })
 

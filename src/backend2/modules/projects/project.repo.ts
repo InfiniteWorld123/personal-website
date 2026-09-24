@@ -83,8 +83,7 @@ export const findProject = async (id: string): Promise<ProjectRow | null> => {
  * version. Without the lock two overlapping publishes both pass validation and
  * both insert, and the unique index on `(project_id, kind)` decides the winner
  * at COMMIT — after the losing one has already deleted the previous published
- * version. `booking.service.ts` in the legacy backend takes the same lock for
- * the same reason.
+ * version.
  */
 export const lockProject = async (id: string): Promise<ProjectRow | null> => {
   const { rows } = await getDb().query<ProjectRow>(

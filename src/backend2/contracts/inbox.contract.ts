@@ -357,9 +357,7 @@ export const SnippetListQuerySchema = v.object({
 /* ------------------------------------------------------------------ ingress */
 
 /**
- * What the Cloudflare inbound Worker posts. The same shape the current Worker
- * already builds, plus `references`, so connecting it at cutover changes its
- * endpoint and signature — not its parsing.
+ * What the Cloudflare inbound Worker (`workers/inbound-email`) posts.
  */
 export type InboundPayload = {
   to: string[]

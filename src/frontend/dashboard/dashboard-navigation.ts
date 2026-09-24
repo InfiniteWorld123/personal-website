@@ -37,9 +37,7 @@ export type DashboardNavItem = {
 }
 
 /**
- * The order the owner approved. It was the same eight sections the legacy
- * `/admin` carries, which was evidence that the list was right — not that the
- * screens behind it are.
+ * The order the owner approved.
  *
  * Media is the ninth, added on the owner's decision of 22 Sep 2026. It is a
  * place rather than a setting: the shared vault is where folders get tidied,

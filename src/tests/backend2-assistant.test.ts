@@ -13,7 +13,6 @@ import { type Json, blogHarness, doc, paragraph } from './helpers/backend2-blog'
  * conversation stores no address. No real AI service is ever reached: the
  * provider is a fake adapter.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'

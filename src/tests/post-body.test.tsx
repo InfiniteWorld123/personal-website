@@ -2,11 +2,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { PostBody } from '#/frontend/features/blog/PostBody'
-import type { RichTextDoc } from '#/shared/validation/rich-text'
+import type { ArticleDoc } from '#/frontend/features/blog/public-article'
 
 afterEach(cleanup)
 
-const doc = (content: RichTextDoc['content']): RichTextDoc => ({ type: 'doc', content })
+const doc = (content: ArticleDoc['content']): ArticleDoc => ({ type: 'doc', content })
 
 describe('rendering a stored article', () => {
   it('draws each block as the tag the stylesheet expects', () => {
