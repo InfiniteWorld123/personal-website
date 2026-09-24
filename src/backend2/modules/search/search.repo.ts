@@ -80,7 +80,7 @@ export const subscriptions = (q: string, limit: number) =>
 export const inbox = (q: string, limit: number) =>
   run(
     `SELECT c.id, COALESCE(NULLIF(c.subject, ''), '(no subject)') AS title,
-            concat_ws(' · ', COALESCE(NULLIF(c.counterpart_name, ''), c.counterpart_email), c.last_preview) AS subtitle,
+            concat_ws(' · ', COALESCE(NULLIF(c.counterpart_name, ''), c.counterpart_email), NULLIF(c.last_preview, '')) AS subtitle,
             CASE WHEN c.folder = 'archived' THEN 'Archived' WHEN NOT c.is_read THEN 'Unread' END AS badge
        FROM v2_inbox_conversations c
       WHERE c.folder <> 'trash' AND (c.subject ILIKE $1 ESCAPE '\\' OR c.counterpart_email ILIKE $1 ESCAPE '\\' OR c.counterpart_name ILIKE $1 ESCAPE '\\'

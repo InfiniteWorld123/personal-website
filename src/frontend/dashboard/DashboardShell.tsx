@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTitle } from '#/frontend/components/ui/sheet'
 import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardPreferencesProvider, useDashboardPreferences } from './preferences'
+import { SearchPaletteProvider } from './SearchPaletteOpener'
 
 /**
  * The workbench.
@@ -36,9 +37,13 @@ export function DashboardShell({
 }) {
   return (
     <DashboardPreferencesProvider>
-      <Workbench userName={userName} userEmail={userEmail} sessionKind={sessionKind}>
-        {children}
-      </Workbench>
+      {/* ⌘K / Ctrl K and the top-bar field open global search on every
+          Dashboard page, and only here. */}
+      <SearchPaletteProvider>
+        <Workbench userName={userName} userEmail={userEmail} sessionKind={sessionKind}>
+          {children}
+        </Workbench>
+      </SearchPaletteProvider>
     </DashboardPreferencesProvider>
   )
 }

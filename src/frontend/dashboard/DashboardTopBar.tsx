@@ -18,6 +18,7 @@ import {
 import type { ThemePreference } from '#/frontend/components/theme/theme'
 import { signOut } from '#/frontend/features/auth-v2/api'
 import { useDashboardPreferences } from './preferences'
+import { SearchField, SearchIconButton } from './SearchPaletteOpener'
 
 /**
  * The bar above the work, and everything it opens.
@@ -71,7 +72,13 @@ export function DashboardTopBar({
         <PanelLeft className="size-[18px]" />
       </button>
 
+      {/* Global search (`docs/v2/search.md`): the field from `md` up, a
+          magnifier below it. Both open the same lazily loaded palette. */}
+      <SearchField />
+
       <div className="flex-1" />
+
+      <SearchIconButton />
 
       <AccountMenu userName={userName} userEmail={userEmail} sessionKind={sessionKind} />
     </header>
