@@ -7,6 +7,8 @@ import { getContent, getServicePrices } from '#/frontend/content'
 import type { ServiceCopy, ServiceSlug } from '#/frontend/content/types'
 import type { Language } from '#/frontend/i18n/language'
 import { useLanguage } from '#/frontend/i18n/language-provider'
+import type { ServicesPageData } from '#/frontend/features/services-public/server/services-source'
+import { ServicesListV2 } from '#/frontend/features/services-public/ServicesListV2'
 import { formatEuro } from '#/frontend/lib/format'
 import { SplitWords, useReveal } from '#/frontend/motion'
 
@@ -16,7 +18,13 @@ import { SplitWords, useReveal } from '#/frontend/motion'
  */
 const servicesPageOrder: ServiceSlug[] = ['websites', 'shopify', 'software']
 
-export function ServicesPage() {
+/**
+ * `data` is what the route loaded. Without it — the admin's content preview —
+ * or from the legacy source, the page is exactly today's static services.
+ * From Backend2 (`docs/v2/public-cutover.md` step 2), the approved list takes
+ * the middle of the page; the header, shared rules and call to action stay.
+ */
+export function ServicesPage({ data, page = 1 }: { data?: ServicesPageData; page?: number } = {}) {
   const { language } = useLanguage()
   const { services } = getContent(language)
   const header = useReveal<HTMLElement>()
@@ -35,16 +43,20 @@ export function ServicesPage() {
         </Container>
       </section>
 
-      {servicesPageOrder.map((slug, index) => (
-        <ServiceDetail
-          key={slug}
-          slug={slug}
-          copy={services.items[slug]}
-          language={language}
-          fromLabel={services.from}
-          tone={index % 2 === 0 ? 'tint' : 'page'}
-        />
-      ))}
+      {data?.source === 'v2' ? (
+        <ServicesListV2 data={data} page={page} language={language} />
+      ) : (
+        servicesPageOrder.map((slug, index) => (
+          <ServiceDetail
+            key={slug}
+            slug={slug}
+            copy={services.items[slug]}
+            language={language}
+            fromLabel={services.from}
+            tone={index % 2 === 0 ? 'tint' : 'page'}
+          />
+        ))
+      )}
 
       <SharedRules copy={services.shared} language={language} />
 
@@ -117,7 +129,7 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-function SharedRules({
+export function SharedRules({
   copy,
   language,
 }: {

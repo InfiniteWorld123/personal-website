@@ -10,14 +10,26 @@ import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 import type { PublicPostSummary, PublicTag } from '#/shared/types/post.types'
 
-export function BlogPage({ posts, tags }: { posts: PublicPostSummary[]; tags: PublicTag[] }) {
+/**
+ * `total` is set when the server paged the list (Backend2): `posts` is then
+ * exactly what to show. Null keeps the legacy archive, which slices here.
+ */
+export function BlogPage({
+  posts,
+  total = null,
+  tags,
+}: {
+  posts: PublicPostSummary[]
+  total?: number | null
+  tags: PublicTag[]
+}) {
   const { language } = useLanguage()
   const { blog, home } = getContent(language)
   const { page, tag } = useSearch({ from: '/$lang/blog/' })
   const navigate = useNavigate()
   const header = useReveal<HTMLElement>()
   const grid = useReveal<HTMLElement>()
-  const batch = getPostBatch(posts, page)
+  const batch = getPostBatch(posts, page, total)
 
   return (
     <>
@@ -75,7 +87,7 @@ export function BlogPage({ posts, tags }: { posts: PublicPostSummary[]; tags: Pu
             <p role="status" aria-live="polite">
               {blog.shown
                 .replace('{visible}', String(batch.visible.length))
-                .replace('{total}', String(posts.length))}
+                .replace('{total}', String(batch.total))}
             </p>
             {batch.hasMore ? (
               <Button

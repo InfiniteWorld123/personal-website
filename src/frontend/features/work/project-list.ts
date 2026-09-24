@@ -1,3 +1,4 @@
+import type { PublicRichTextDoc } from '#/backend2/contracts/project.contract'
 import type { StructuredProject } from '#/frontend/lib/structured-data'
 import type { PublicProject } from '#/shared/types/project.types'
 import type { ProjectStatus } from '#/shared/validation/project.validation'
@@ -9,8 +10,9 @@ import type { ProjectStatus } from '#/shared/validation/project.validation'
  */
 export type ProjectEntryImage = {
   src: string
-  width: number
-  height: number
+  /** Null only for a Backend2 image whose size was never measured. */
+  width: number | null
+  height: number | null
   alt: string
 }
 
@@ -34,7 +36,15 @@ export type ProjectEntryCopy = {
   features: string[]
 }
 
-export type ProjectEntry = { facts: ProjectEntryFacts; copy: ProjectEntryCopy }
+export type ProjectEntry = {
+  facts: ProjectEntryFacts
+  copy: ProjectEntryCopy
+  /**
+   * The Backend2 case study, on the detail page only. A legacy project has
+   * none and tells its story through `problem`, `approach` and `shows`.
+   */
+  caseStudy?: PublicRichTextDoc | null
+}
 
 export const toProjectEntry = (project: PublicProject): ProjectEntry => ({
   facts: {
@@ -75,8 +85,13 @@ export function parseProjectPage(value: unknown): number {
   return Number.isSafeInteger(page) && page > 0 ? page : 1
 }
 
-export function getProjectBatch<T>(items: T[], requestedPage?: number) {
-  const page = Math.min(parseProjectPage(requestedPage), Math.max(1, Math.ceil(items.length / PROJECT_BATCH_SIZE)))
+/**
+ * The cumulative batch a `?page=` asks for. `total` is how many exist: the
+ * legacy list arrives whole, so it is `items.length`; Backend2 sends only the
+ * batches asked for and says how many there are.
+ */
+export function getProjectBatch<T>(items: T[], requestedPage?: number, total = items.length) {
+  const page = Math.min(parseProjectPage(requestedPage), Math.max(1, Math.ceil(total / PROJECT_BATCH_SIZE)))
   const visible = items.slice(0, page * PROJECT_BATCH_SIZE)
-  return { page, visible, hasMore: visible.length < items.length }
+  return { page, visible, total, hasMore: visible.length < total }
 }

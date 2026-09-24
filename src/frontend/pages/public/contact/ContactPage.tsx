@@ -4,10 +4,12 @@ import { Eyebrow } from '#/frontend/components/layout/public/Section'
 import { getContent, getSite } from '#/frontend/content'
 import { BookingAside } from '#/frontend/features/booking/BookingAside'
 import { ContactForm } from '#/frontend/features/contact/ContactForm'
+import { contactFormV2 } from '#/frontend/features/contact/contact-v2-lazy'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal, useTilt } from '#/frontend/motion'
 
-export function ContactPage() {
+/** `v2` sends the form to Backend2; the page around it is the same either way. */
+export function ContactPage({ v2 = false }: { v2?: boolean }) {
   const { language } = useLanguage()
   const { contact } = getContent(language)
   const facts = getSite()
@@ -102,7 +104,11 @@ export function ContactPage() {
         </div>
 
         <div className="contact-form-card rounded-[1.75rem] p-6 sm:p-9">
-          <ContactForm copy={contact.form} language={language} />
+          {v2 ? (
+            <contactFormV2.Page copy={contact.form} language={language} />
+          ) : (
+            <ContactForm copy={contact.form} language={language} />
+          )}
         </div>
       </Container>
     </section>

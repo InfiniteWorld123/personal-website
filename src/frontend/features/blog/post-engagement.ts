@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { countPostRead, likePost, unlikePost } from '#/frontend/api/post.api'
+import { countRead, setLike } from './blog-v2-api'
 
 /**
  * What this browser has already done, kept in this browser.
@@ -16,6 +17,39 @@ import { countPostRead, likePost, unlikePost } from '#/frontend/api/post.api'
  */
 const READ_KEY = 'blog:read'
 const LIKED_KEY = 'blog:liked'
+
+/**
+ * Backend2 keeps its own counters, starting from zero (`docs/v2/public-cutover.md`
+ * step 4: legacy counts are not imported). So it gets its own memory too: a
+ * like remembered from the legacy article would show "Liked" beside a count
+ * that never included it, and a read counted there was never counted here.
+ */
+const KEYS = {
+  legacy: { read: READ_KEY, liked: LIKED_KEY },
+  v2: { read: 'blog:v2:read', liked: 'blog:v2:liked' },
+} as const
+
+type Counts = { viewCount: number; likeCount: number }
+
+/** Where a read and a like go, per backend, answered in the page's own shape. */
+const SERVER = {
+  legacy: {
+    read: (slug: string): Promise<Counts> => countPostRead(slug),
+    like: (slug: string, liked: boolean): Promise<Counts> => (liked ? likePost(slug) : unlikePost(slug)),
+  },
+  v2: {
+    read: async (slug: string): Promise<Counts> => {
+      const counts = await countRead(slug)
+
+      return { viewCount: counts.readCount, likeCount: counts.likeCount }
+    },
+    like: async (slug: string, liked: boolean): Promise<Counts> => {
+      const counts = await setLike(slug, liked)
+
+      return { viewCount: counts.readCount, likeCount: counts.likeCount }
+    },
+  },
+} as const
 
 /**
  * Every read and write is guarded.
@@ -58,7 +92,10 @@ export type Engagement = { viewCount: number; likeCount: number; liked: boolean 
 export const usePostEngagement = (
   slug: string,
   initial: { viewCount: number; likeCount: number },
+  source: 'legacy' | 'v2' = 'legacy',
 ): Engagement & { toggleLike: () => void; pending: boolean } => {
+  const keys = KEYS[source]
+  const server = SERVER[source]
   const [counts, setCounts] = useState(initial)
   const [liked, setLiked] = useState(false)
   const [pending, setPending] = useState(false)
@@ -68,7 +105,7 @@ export const usePostEngagement = (
 
   useEffect(() => {
     setCounts(initial)
-    setLiked(readSet(LIKED_KEY).has(slug))
+    setLiked(readSet(keys.liked).has(slug))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
@@ -76,14 +113,15 @@ export const usePostEngagement = (
     if (counted.current === slug) return
     counted.current = slug
 
-    const already = readSet(READ_KEY)
+    const already = readSet(keys.read)
 
     if (already.has(slug)) return
 
-    void countPostRead(slug)
+    void server
+      .read(slug)
       .then((next) => {
         already.add(slug)
-        writeSet(READ_KEY, already)
+        writeSet(keys.read, already)
         setCounts(next)
       })
       // A read that could not be counted is not worth telling anyone about.
@@ -102,16 +140,17 @@ export const usePostEngagement = (
       likeCount: Math.max(current.likeCount + (next ? 1 : -1), 0),
     }))
 
-    void (next ? likePost(slug) : unlikePost(slug))
-      .then((server) => {
-        setCounts(server)
+    void server
+      .like(slug, next)
+      .then((answer) => {
+        setCounts(answer)
 
-        const remembered = readSet(LIKED_KEY)
+        const remembered = readSet(keys.liked)
 
         if (next) remembered.add(slug)
         else remembered.delete(slug)
 
-        writeSet(LIKED_KEY, remembered)
+        writeSet(keys.liked, remembered)
       })
       .catch(() => {
         // Put the button and the figure back where they were. Saying nothing

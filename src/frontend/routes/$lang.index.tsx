@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getContent } from '#/frontend/content'
 import { fetchPublishedPosts } from '#/frontend/features/blog/server/published-posts'
+import { fetchHomeServices } from '#/frontend/features/services-public/server/published-services'
 import { fetchPublishedProjects } from '#/frontend/features/work/server/published-projects'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { buildHead } from '#/frontend/lib/seo'
@@ -10,12 +11,13 @@ export const Route = createFileRoute('/$lang/')({
   loader: async ({ params }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
 
-    const [entries, posts] = await Promise.all([
+    const [entries, posts, services] = await Promise.all([
       fetchPublishedProjects({ data: { language } }),
       fetchPublishedPosts({ data: { language } }),
+      fetchHomeServices({ data: { language } }),
     ])
 
-    return { entries, posts }
+    return { entries, posts, services }
   },
   head: ({ params }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
@@ -26,7 +28,7 @@ export const Route = createFileRoute('/$lang/')({
 })
 
 function HomeRoute() {
-  const { entries, posts } = Route.useLoaderData()
+  const { entries, posts, services } = Route.useLoaderData()
 
-  return <HomePage entries={entries} posts={posts} />
+  return <HomePage entries={entries} posts={posts} services={services} />
 }

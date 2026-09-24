@@ -1,20 +1,36 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent } from '#/frontend/content'
 import { PostBody } from '#/frontend/features/blog/PostBody'
 import { PostEngagement } from '#/frontend/features/blog/PostEngagement'
+import { blogV2Words, fillWord } from '#/frontend/features/blog/blog-v2-words'
+import type { PublicArticle } from '#/frontend/features/blog/public-article'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { formatPostDate } from '#/frontend/lib/format'
 import { useReveal } from '#/frontend/motion'
-import type { PublicPost } from '#/shared/types/post.types'
 
-export function PostPage({ post }: { post: PublicPost }) {
+/*
+ * The comment section is its own chunk, fetched after the article is on
+ * screen: the form library and the thread code are not worth delaying the
+ * text a reader came for, and a legacy article never loads them at all.
+ */
+const PostComments = lazy(() =>
+  import('#/frontend/features/blog/PostComments').then((module) => ({ default: module.PostComments })),
+)
+
+export function PostPage({ post }: { post: PublicArticle }) {
   const { language } = useLanguage()
   const { blog, home } = getContent(language)
   const article = useReveal<HTMLElement>()
+  // Comments are read in the browser, never rendered on the server: they are
+  // not cached, and a page must not be held back by them.
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   return (
     <>
@@ -33,6 +49,16 @@ export function PostPage({ post }: { post: PublicPost }) {
             <time dateTime={post.publishedOn}>{formatPostDate(post.publishedOn, language)}</time>
             <span aria-hidden="true"> · </span>
             {blog.readingTime.replace('{minutes}', String(post.readingMinutes))}
+            {post.updatedOn ? (
+              <>
+                <span aria-hidden="true"> · </span>
+                <span className="post-updated">
+                  {fillWord(blogV2Words(language).updated, {
+                    date: formatPostDate(post.updatedOn, language),
+                  })}
+                </span>
+              </>
+            ) : null}
           </p>
 
           {post.tags.length > 0 ? (
@@ -68,6 +94,7 @@ export function PostPage({ post }: { post: PublicPost }) {
           {/* After the article, not before it: the number is worth something
               once it has been read, and worth nothing as a claim on arrival. */}
           <PostEngagement
+            source={post.source}
             slug={post.slug}
             viewCount={post.viewCount}
             likeCount={post.likeCount}
@@ -83,6 +110,12 @@ export function PostPage({ post }: { post: PublicPost }) {
                 </Link>
               </Button>
             </aside>
+          ) : null}
+
+          {post.source === 'v2' && post.commentsEnabled && mounted ? (
+            <Suspense fallback={null}>
+              <PostComments slug={post.slug} initialCount={post.commentCount} />
+            </Suspense>
           ) : null}
         </Container>
       </article>

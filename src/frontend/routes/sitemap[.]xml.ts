@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { site } from '#/frontend/content/site'
 import { fetchPublishedPostSlugs } from '#/frontend/features/blog/server/published-posts'
+import { fetchPublishedServiceSlugs } from '#/frontend/features/services-public/server/published-services'
 import { fetchPublishedProjectSlugs } from '#/frontend/features/work/server/published-projects'
 import { languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
@@ -38,13 +39,16 @@ export const Route = createFileRoute('/sitemap.xml')({
         // Only published work is listed: an unpublished project or post
         // answers 404, and a sitemap that points at 404s is worse than a
         // shorter sitemap.
-        const [projectSlugs, postSlugs] = await Promise.all([
+        const [projectSlugs, postSlugs, serviceSlugs] = await Promise.all([
           fetchPublishedProjectSlugs(),
           fetchPublishedPostSlugs(),
+          // Empty until Services reads Backend2 (`PUBLIC_V2_MODULES`).
+          fetchPublishedServiceSlugs(),
         ])
 
         const paths = [
           ...staticPaths,
+          ...serviceSlugs.map((slug) => `/services/${slug}`),
           ...projectSlugs.map((slug) => `/work/${slug}`),
           ...postSlugs.map((slug) => `/blog/${slug}`),
         ]

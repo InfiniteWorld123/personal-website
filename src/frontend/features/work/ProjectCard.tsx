@@ -30,7 +30,7 @@ export function ProjectCard({ facts, copy, language, statusLabels, labels, showT
         <p className="work-card-kind">{copy.kind}</p>
         <ProjectStatusPill status={facts.status} labels={statusLabels} />
       </div>
-      {lead ? <img className="work-card-image" src={lead.src} width={lead.width} height={lead.height} alt={lead.alt} loading="lazy" /> : null}
+      {lead ? <img className="work-card-image" src={lead.src} width={lead.width ?? undefined} height={lead.height ?? undefined} alt={lead.alt} loading="lazy" /> : null}
       <p className="work-card-summary">{copy.summary}</p>
       {showTech ? <p className="work-card-tech" dir="ltr">{facts.stack.slice(0, 3).join(' · ')}</p> : null}
       <div className="work-card-actions">

@@ -81,8 +81,28 @@ const r2Origin = (): string | undefined => {
   }
 }
 
-export const buildContentSecurityPolicy = (nonce: string): string => {
+/**
+ * The Blog's click-to-load YouTube player (`docs/v2/blog.md`, answer 1A): the
+ * one frame origin it needs, allowed only while the public blog reads Backend2
+ * (`PUBLIC_V2_MODULES` lists `blog`) — no legacy article can embed a video.
+ * Read from the setting directly so this file does not load the V2 database
+ * client.
+ */
+const youtubeFrameOrigin = (environment: Record<string, string | undefined>): string | undefined =>
+  (environment.PUBLIC_V2_MODULES ?? '')
+    .split(',')
+    .some((name) => name.trim().toLowerCase() === 'blog')
+    ? 'https://www.youtube-nocookie.com'
+    : undefined
+
+export const buildContentSecurityPolicy = (
+  nonce: string,
+  environment: Record<string, string | undefined> = process.env,
+): string => {
   const images = ["'self'", 'data:', 'blob:', r2Origin()].filter(Boolean).join(' ')
+  const frames = ['https://challenges.cloudflare.com', youtubeFrameOrigin(environment)]
+    .filter(Boolean)
+    .join(' ')
 
   return [
     "default-src 'self'",
@@ -91,7 +111,7 @@ export const buildContentSecurityPolicy = (nonce: string): string => {
     `img-src ${images}`,
     "font-src 'self'",
     "connect-src 'self' https://challenges.cloudflare.com",
-    'frame-src https://challenges.cloudflare.com',
+    `frame-src ${frames}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

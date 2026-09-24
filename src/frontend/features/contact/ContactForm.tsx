@@ -245,7 +245,7 @@ export function ContactForm({ copy, language }: { copy: ContactCopy['form']; lan
   )
 }
 
-function Field({
+export function Field({
   label,
   htmlFor,
   hint,
@@ -282,7 +282,7 @@ function Field({
  * visitor picks in the calendar. Asking here and then answering by email
  * anyway was the contradiction this replaces.
  */
-function CallInstead({ language }: { language: Language }) {
+export function CallInstead({ language }: { language: Language }) {
   const entry = getBookingEntryCopy(language)
 
   return (

@@ -1,5 +1,8 @@
 import { Fragment, type ReactNode } from 'react'
+import type { PublicBlogNode } from '#/backend2/contracts/blog.contract'
 import type { RichTextDoc, RichTextMark, RichTextNode } from '#/shared/validation/rich-text'
+import type { ArticleDoc } from './public-article'
+import { YoutubeEmbed } from './YoutubeEmbed'
 
 /**
  * Renders a stored article. This function is the whole reason the body is a
@@ -40,10 +43,64 @@ const applyMarks = (content: ReactNode, marks: RichTextMark[] | undefined): Reac
   }, content)
 }
 
-const renderNodes = (nodes: RichTextNode[] | undefined): ReactNode =>
+/**
+ * A node of either backend's document. The legacy article is a subset of the
+ * Backend2 one; Backend2 adds tables and, at the top level, a YouTube video.
+ */
+type BodyNode = RichTextNode | PublicBlogNode
+
+const renderNodes = (nodes: BodyNode[] | undefined): ReactNode =>
   (nodes ?? []).map((node, index) => <Fragment key={index}>{renderNode(node)}</Fragment>)
 
-const renderNode = (node: RichTextNode): ReactNode => {
+type CellNode = Extract<BodyNode, { type: 'tableCell' | 'tableHeader' }>
+
+const span = (value: number | undefined) => (value && value > 1 ? value : undefined)
+
+const renderCell = (cell: CellNode, inHead: boolean, index: number): ReactNode =>
+  cell.type === 'tableHeader' ? (
+    <th key={index} scope={inHead ? 'col' : 'row'} colSpan={span(cell.attrs?.colspan)} rowSpan={span(cell.attrs?.rowspan)}>
+      {renderNodes(cell.content)}
+    </th>
+  ) : (
+    <td key={index} colSpan={span(cell.attrs?.colspan)} rowSpan={span(cell.attrs?.rowspan)}>
+      {renderNodes(cell.content)}
+    </td>
+  )
+
+const cellsOf = (row: BodyNode): CellNode[] =>
+  row.type === 'tableRow'
+    ? ((row.content ?? []) as BodyNode[]).filter(
+        (cell): cell is CellNode => cell.type === 'tableCell' || cell.type === 'tableHeader',
+      )
+    : []
+
+const renderRow = (row: BodyNode, inHead: boolean, index: number): ReactNode => (
+  <tr key={index}>{cellsOf(row).map((cell, cellIndex) => renderCell(cell, inHead, cellIndex))}</tr>
+)
+
+/**
+ * A table keeps its own horizontal scroll, so a wide one never makes the page
+ * scroll sideways on a phone. A first row made only of header cells becomes
+ * the table's head, which is what a screen reader announces per column.
+ */
+const renderTable = (rows: BodyNode[]): ReactNode => {
+  const onlyRows = rows.filter((row) => row.type === 'tableRow')
+  const [first, ...rest] = onlyRows
+  const firstCells = first ? cellsOf(first) : []
+  const headed = firstCells.length > 0 && firstCells.every((cell) => cell.type === 'tableHeader')
+  const body = headed ? rest : onlyRows
+
+  return (
+    <div className="post-table">
+      <table>
+        {headed && first ? <thead>{renderRow(first, true, 0)}</thead> : null}
+        <tbody>{body.map((row, index) => renderRow(row, false, index))}</tbody>
+      </table>
+    </div>
+  )
+}
+
+const renderNode = (node: BodyNode): ReactNode => {
   switch (node.type) {
     case 'text':
       return applyMarks(node.text, node.marks)
@@ -87,13 +144,17 @@ const renderNode = (node: RichTextNode): ReactNode => {
           loading="lazy"
         />
       )
+    case 'table':
+      return renderTable((node.content ?? []) as BodyNode[])
+    case 'youtube':
+      return <YoutubeEmbed videoId={node.attrs.videoId} start={node.attrs.start} title={node.attrs.title} />
     default:
       return null
   }
 }
 
-export function PostBody({ doc }: { doc: RichTextDoc }) {
-  return <div className="post-body">{renderNodes(doc.content)}</div>
+export function PostBody({ doc }: { doc: ArticleDoc }) {
+  return <div className="post-body">{renderNodes(doc.content as BodyNode[])}</div>
 }
 
 /**

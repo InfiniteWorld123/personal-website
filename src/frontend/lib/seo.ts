@@ -117,6 +117,9 @@ export function buildHead({
       ...(article
         ? [
             { property: 'article:published_time', content: `${article.publishedOn}T00:00:00.000Z` },
+            ...(article.updatedOn
+              ? [{ property: 'article:modified_time', content: `${article.updatedOn}T00:00:00.000Z` }]
+              : []),
             { property: 'article:author', content: site.name },
           ]
         : []),

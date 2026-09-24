@@ -2,8 +2,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { site } from '#/frontend/content/site'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
+import { fetchBookingSource } from '#/frontend/features/booking/server/booking-source'
+import { readFragmentToken } from '#/frontend/features/booking/v2/api'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { BookingRoomPage } from '#/frontend/pages/public/booking/BookingRoomPage'
+import { roomPageV2 } from '#/frontend/pages/public/booking/v2/lazy'
 
 /**
  * The room the emailed link opens, and never indexed for the reason the manage
@@ -25,20 +28,34 @@ export const Route = createFileRoute('/$lang/booking/room/$reference')({
       ],
     }
   },
+  loader: async () => {
+    const source = await fetchBookingSource()
+
+    if (source.v2) await roomPageV2.preload()
+
+    return source
+  },
   component: BookingRoomRoute,
 })
 
 function BookingRoomRoute() {
   const { reference } = Route.useParams()
+  const { v2 } = Route.useLoaderData()
   const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
+    if (v2) {
+      setToken(readFragmentToken(window.location.hash))
+
+      return
+    }
+
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
 
     setToken(hash.get('token') ?? '')
-  }, [])
+  }, [v2])
 
   if (token === null) return null
 
-  return <BookingRoomPage reference={reference} token={token} />
+  return v2 ? <roomPageV2.Page reference={reference} token={token} /> : <BookingRoomPage reference={reference} token={token} />
 }

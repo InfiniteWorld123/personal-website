@@ -25,6 +25,8 @@ export type StructuredArticle = {
   title: string
   /** A plain day, `2026-09-12`; the graph states it as a date, not an instant. */
   publishedOn: string
+  /** The day of the last real published update, when there was one (Blog V2). */
+  updatedOn?: string
   readingMinutes: number
   tags: string[]
 }
@@ -156,6 +158,7 @@ const articleNode = (language: Language, path: string, article: StructuredArticl
   '@id': `${pageUrl(language, path)}#article`,
   headline: article.title,
   datePublished: article.publishedOn,
+  ...(article.updatedOn ? { dateModified: article.updatedOn } : {}),
   inLanguage: localeFor(language),
   image,
   ...(article.tags.length > 0 ? { keywords: article.tags.join(', ') } : {}),

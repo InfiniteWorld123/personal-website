@@ -32,7 +32,7 @@ export function BookingAside() {
           <p className="text-base font-semibold text-foreground">{entry.aside.title}</p>
           <p className="text-sm text-muted-foreground">
             {type.name} · <span className="tabular">{type.durationMinutes}</span> {copy.minutes}
-            {type.priceCents === 0 ? ` · ${copy.free}` : null}
+            {type.free ? ` · ${copy.free}` : null}
           </p>
         </div>
       </div>

@@ -6,7 +6,8 @@ import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent } from '#/frontend/content'
 import { ProjectStatusPill } from '#/frontend/features/work/ProjectCard'
-import type { ProjectEntry } from '#/frontend/features/work/project-list'
+import { CaseStudy } from '#/frontend/features/work/CaseStudy'
+import type { ProjectEntry, ProjectEntryImage } from '#/frontend/features/work/project-list'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 
@@ -15,6 +16,8 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
   const { work, home } = getContent(language)
   const { facts, copy } = entry
   const header = useReveal<HTMLElement>()
+  // A legacy project has no `caseStudy` key at all and keeps today's page exactly.
+  const legacy = entry.caseStudy === undefined
 
   return (
     <>
@@ -66,10 +69,10 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
               {facts.images.map((shot, index) => (
                 <img
                   key={shot.src}
-                  className={shot.width < shot.height ? 'project-page-image is-portrait' : 'project-page-image'}
+                  className={isPortrait(shot) ? 'project-page-image is-portrait' : 'project-page-image'}
                   src={shot.src}
-                  width={shot.width}
-                  height={shot.height}
+                  width={shot.width ?? undefined}
+                  height={shot.height ?? undefined}
                   alt={shot.alt}
                   loading={index === 0 ? 'eager' : 'lazy'}
                 />
@@ -79,16 +82,25 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
         </Container>
       </section>
 
-      <Section tone="tint">
+      {/* A Backend2 project may have no case study and no technology list;
+          then there is nothing for this band to hold, and it is left out
+          rather than shown empty. A legacy project always has both. */}
+      {legacy || entry.caseStudy || facts.stack.length ? <Section tone="tint">
         <Container className="grid gap-12 lg:grid-cols-[2fr_1fr] lg:gap-16">
           <div className="flex max-w-2xl flex-col gap-10">
-            <Block title={work.detail.problem} body={copy.problem} />
-            <Block title={work.detail.approach} body={copy.approach} />
-            <Block title={work.detail.shows} body={copy.shows} />
+            {legacy ? (
+              <>
+                <Block title={work.detail.problem} body={copy.problem} />
+                <Block title={work.detail.approach} body={copy.approach} />
+                <Block title={work.detail.shows} body={copy.shows} />
+              </>
+            ) : entry.caseStudy ? (
+              <CaseStudy doc={entry.caseStudy} />
+            ) : null}
           </div>
 
           <aside className="flex flex-col gap-10 lg:sticky lg:top-24 lg:self-start">
-            <div data-reveal className="flex flex-col gap-3">
+            {legacy || copy.features.length ? <div data-reveal className="flex flex-col gap-3">
               <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
                 {work.detail.features}
               </h2>
@@ -99,8 +111,8 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
                   </li>
                 ))}
               </ul>
-            </div>
-            <div data-reveal className="flex flex-col gap-3">
+            </div> : null}
+            {legacy || facts.stack.length ? <div data-reveal className="flex flex-col gap-3">
               <h2 className="text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase rtl:tracking-normal">
                 {work.detail.stack}
               </h2>
@@ -111,15 +123,18 @@ export function ProjectPage({ entry }: { entry: ProjectEntry }) {
                   </li>
                 ))}
               </ul>
-            </div>
+            </div> : null}
           </aside>
         </Container>
-      </Section>
+      </Section> : null}
 
       <CtaBand title={home.cta.title} body={home.cta.body} button={home.cta.button} alt={home.cta.alt} />
     </>
   )
 }
+
+const isPortrait = (shot: ProjectEntryImage) =>
+  shot.width !== null && shot.height !== null && shot.width < shot.height
 
 function Block({ title, body }: { title: string; body: string }) {
   return (

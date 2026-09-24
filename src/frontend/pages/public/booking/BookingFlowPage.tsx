@@ -22,7 +22,7 @@ import { cn } from '#/frontend/lib/utils'
 import { SplitWords, useReveal } from '#/frontend/motion'
 import type { PublicBooking } from '#/shared/types/booking.types'
 
-type Step = 'time' | 'details' | 'done'
+export type Step = 'time' | 'details' | 'done'
 
 export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string }) {
   const { language } = useLanguage()
@@ -182,7 +182,7 @@ export function BookingFlowPage({ slug, slot }: { slug: string; slot?: string })
   )
 }
 
-function StepRail({ step }: { step: Step }) {
+export function StepRail({ step }: { step: Step }) {
   const { language } = useLanguage()
   const copy = getBookingCopy(language).steps
   const order: Step[] = ['time', 'details', 'done']
@@ -222,7 +222,7 @@ function StepRail({ step }: { step: Step }) {
  * the detected zone is still shown — it is right far more often than not, and
  * a visitor who needs to change it can still read what it currently says.
  */
-function TimezoneSelect({ value, onChange }: { value: string; onChange: (zone: string) => void }) {
+export function TimezoneSelect({ value, onChange }: { value: string; onChange: (zone: string) => void }) {
   const { language } = useLanguage()
   const copy = getBookingCopy(language).timezone
 

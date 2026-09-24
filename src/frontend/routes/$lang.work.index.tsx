@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getContent } from '#/frontend/content'
 import { parseProjectPage, toStructuredProject } from '#/frontend/features/work/project-list'
-import { fetchPublishedProjects } from '#/frontend/features/work/server/published-projects'
+import { fetchProjectsPage } from '#/frontend/features/work/server/published-projects'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { buildHead } from '#/frontend/lib/seo'
 import { WorkPage } from '#/frontend/pages/public/work/WorkPage'
@@ -14,10 +14,14 @@ export const Route = createFileRoute('/$lang/work/')({
 
     return { page: page > 1 ? page : undefined }
   },
-  loader: async ({ params }) => {
+  /* The page is read from the location rather than declared as a loader
+     dependency: a dependency would make every "Load more" a new match that
+     waits for its data, where today the list stays on screen and grows. */
+  loader: async ({ params, location }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
+    const page = parseProjectPage((location.search as { page?: unknown }).page)
 
-    return { entries: await fetchPublishedProjects({ data: { language } }) }
+    return fetchProjectsPage({ data: { language, page } })
   },
   head: ({ params, loaderData }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
@@ -36,5 +40,7 @@ export const Route = createFileRoute('/$lang/work/')({
 })
 
 function WorkRoute() {
-  return <WorkPage entries={Route.useLoaderData().entries} />
+  const { entries, total } = Route.useLoaderData()
+
+  return <WorkPage entries={entries} total={total} />
 }

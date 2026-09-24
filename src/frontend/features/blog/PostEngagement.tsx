@@ -13,17 +13,20 @@ import { usePostEngagement } from './post-engagement'
  * German and a different one to everybody else.
  */
 export function PostEngagement({
+  source = 'legacy',
   slug,
   viewCount,
   likeCount,
 }: {
+  /** Which backend counts this article's reads and likes. */
+  source?: 'legacy' | 'v2'
   slug: string
   viewCount: number
   likeCount: number
 }) {
   const { language } = useLanguage()
   const { blog } = getContent(language)
-  const engagement = usePostEngagement(slug, { viewCount, likeCount })
+  const engagement = usePostEngagement(slug, { viewCount, likeCount }, source)
 
   const count = (value: number) => new Intl.NumberFormat(language).format(value)
 

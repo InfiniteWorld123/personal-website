@@ -1,0 +1,573 @@
+/*
+ * The Blog V2 article additions, from the approved Blog Design Lab
+ * (`docs/v2/blog.md`, 23 Sep 2026): "Updated on", tables, the click-to-load
+ * video and the comment section.
+ *
+ * Loaded only by a Backend2 article (`$lang.blog.$slug.tsx` adds it to the
+ * head), so with the switch off the legacy page loads exactly what it did.
+ * Tokens are the site's own (`config/styles.css`): light and dark follow
+ * `.dark`, and every direction is a logical property so Arabic mirrors.
+ */
+
+/* ── Updated on ─────────────────────────────────────────────── */
+.post-updated {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Tables keep their own scroll, so the page never does ──── */
+.post-table {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.post-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.post-table th,
+.post-table td {
+  padding: 0.7rem 0.95rem;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.post-table tr:last-child td,
+.post-table tr:last-child th[scope="row"] {
+  border-bottom: 0;
+}
+
+.post-table th {
+  color: var(--foreground);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.post-table p + p {
+  margin-top: 0.5rem;
+}
+
+/* ── A YouTube video that loads only when the reader asks ──── */
+.yt {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  overflow: hidden;
+  color: #f4f7ff;
+  background:
+    radial-gradient(90% 80% at 18% 12%, rgba(89, 167, 255, 0.4), transparent 60%),
+    radial-gradient(70% 70% at 90% 100%, rgba(53, 92, 255, 0.45), transparent 65%),
+    linear-gradient(160deg, #18203d, #0b1020);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 1.1rem 1.25rem;
+  text-align: start;
+  width: 100%;
+  cursor: pointer;
+}
+
+.yt:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.yt-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: #10172f;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .yt-play {
+    transition: transform 160ms ease;
+  }
+
+  .yt:hover .yt-play {
+    transform: scale(1.06);
+  }
+}
+
+/* On a phone the box is short, so the centred button would sit on the title:
+   it moves up to the top of the picture instead. */
+@media (max-width: 640px) {
+  .yt-play {
+    width: 52px;
+    height: 52px;
+    inset: 0 0 auto;
+    margin: 1.4rem auto 0;
+  }
+}
+
+.yt-title {
+  position: relative;
+  font-weight: 700;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.yt-note {
+  position: relative;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  opacity: 0.82;
+  max-width: 46ch;
+}
+
+.yt-player {
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #000;
+}
+
+.yt-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ── The comments ────────────────────────────────────────────── */
+.cmts {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.cmts-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.cmts-title {
+  font-family: var(--font-heading);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+html[lang="ar"] .cmts-title {
+  font-family: var(--font-arabic);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.cmts-count {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.cmt-form {
+  position: relative;
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.1rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.cmt-form.is-reply {
+  margin-top: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.cmt-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.cmt-textarea {
+  width: 100%;
+  min-height: 6rem;
+  resize: vertical;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 0.75rem 0.95rem;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  unicode-bidi: plaintext;
+}
+
+.cmt-form.is-reply .cmt-textarea {
+  min-height: 4.5rem;
+}
+
+.cmt-textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.cmt-textarea[aria-invalid="true"] {
+  border-color: #d6455d;
+}
+
+.cmt-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.cmt-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c2334b;
+  line-height: 1.55;
+}
+
+.dark .cmt-error {
+  color: #ff8d9b;
+}
+
+.cmt-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.cmt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+}
+
+.cmt-foot-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cmt-chars {
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.cmt-chars.is-over {
+  color: #c2334b;
+  font-weight: 700;
+}
+
+.dark .cmt-chars.is-over {
+  color: #ff8d9b;
+}
+
+/* A field only a script fills in. Clipped to nothing rather than
+   `display: none`, which some bots skip; out of the tab order and hidden from
+   assistive tech. Not pushed off-screen with a large negative offset: in Arabic the
+   page scrolls towards the left, so that made the whole page ten thousand
+   pixels wide. */
+.hp {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cmt-list {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.cmt {
+  min-width: 0;
+}
+
+.cmt-row {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.cmt-avatar {
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  color: var(--muted-foreground);
+}
+
+.cmt-avatar.is-owner {
+  color: #fff;
+  background-image: linear-gradient(118deg, #2b4ffa 0%, #4d7bff 52%, #59a7ff 100%);
+}
+
+/* The brand mark at rest inside the avatar: no entrance, a light caret. */
+.cmt-avatar .brand-glyph-arms,
+.cmt-avatar .brand-glyph-stem,
+.cmt-avatar .brand-glyph-caret {
+  animation: none !important;
+  stroke-dashoffset: 0 !important;
+  opacity: 1 !important;
+}
+
+.cmt-avatar .brand-glyph-caret {
+  stroke: #9cc2ff;
+}
+
+.cmt-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.55rem;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  min-height: 2rem;
+}
+
+.cmt-who {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--foreground);
+}
+
+.cmt-badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.cmt-body {
+  margin-top: 0.1rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--hero-copy);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.cmt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+  margin-inline-start: -0.55rem;
+}
+
+.cmt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.cmt-link:hover {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+.cmt-link:focus-visible,
+.cmt-continue:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.cmt-replies {
+  margin-top: 1rem;
+  margin-inline-start: 0.95rem;
+  padding-inline-start: 1.05rem;
+  border-inline-start: 2px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cmt-continue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cmt-continue.is-solid {
+  border-style: solid;
+}
+
+.cmt-continue:hover {
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+.cmt-continue:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.cmt-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  font-size: 0.82rem;
+}
+
+.cmt-focus .cmt-link {
+  width: fit-content;
+  margin-inline-start: -0.55rem;
+}
+
+.cmt-trail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--muted-foreground);
+}
+
+.cmt-trail p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: plaintext;
+}
+
+.cmt-trail b {
+  color: var(--foreground);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cmt-is-new {
+    border-radius: 1rem;
+    animation: cmt-arrive 1.8s ease-out 1;
+  }
+}
+
+@keyframes cmt-arrive {
+  0% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 30%, transparent);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+    background: transparent;
+  }
+}
+
+.cmt-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  background: color-mix(in srgb, #d6455d 9%, transparent);
+  color: #b3263f;
+}
+
+.dark .cmt-notice {
+  color: #ff9aa7;
+}
+
+.cmt-notice.is-ok {
+  background: color-mix(in srgb, #21a179 10%, transparent);
+  color: #137556;
+}
+
+.dark .cmt-notice.is-ok {
+  color: #5ce1a6;
+}
+
+.cmt-notice svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.cmt-empty {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+}
+
+.cmt-status {
+  margin-top: 1.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.cmt-load-error {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.cmt-more-roots {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.75rem;
+}

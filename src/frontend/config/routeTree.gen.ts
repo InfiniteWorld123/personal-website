@@ -20,7 +20,6 @@ import { Route as LangContactRouteImport } from './../routes/$lang.contact'
 import { Route as LangDatenschutzRouteImport } from './../routes/$lang.datenschutz'
 import { Route as LangFaqRouteImport } from './../routes/$lang.faq'
 import { Route as LangImpressumRouteImport } from './../routes/$lang.impressum'
-import { Route as LangServicesRouteImport } from './../routes/$lang.services'
 import { Route as LangStackRouteImport } from './../routes/$lang.stack'
 import { Route as AdminIndexRouteImport } from './../routes/admin.index'
 import { Route as AdminContentRouteImport } from './../routes/admin.content'
@@ -44,6 +43,8 @@ import { Route as LangBlogIndexRouteImport } from './../routes/$lang.blog.index'
 import { Route as LangBlogSlugRouteImport } from './../routes/$lang.blog.$slug'
 import { Route as LangBookingIndexRouteImport } from './../routes/$lang.booking.index'
 import { Route as LangBookingSlugRouteImport } from './../routes/$lang.booking.$slug'
+import { Route as LangServicesIndexRouteImport } from './../routes/$lang.services.index'
+import { Route as LangServicesSlugRouteImport } from './../routes/$lang.services.$slug'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
 import { Route as AdminBlogIndexRouteImport } from './../routes/admin.blog.index'
@@ -166,11 +167,6 @@ const LangImpressumRoute = LangImpressumRouteImport.update({
   path: '/impressum',
   getParentRoute: () => LangRoute,
 } as any)
-const LangServicesRoute = LangServicesRouteImport.update({
-  id: '/services',
-  path: '/services',
-  getParentRoute: () => LangRoute,
-} as any)
 const LangStackRoute = LangStackRouteImport.update({
   id: '/stack',
   path: '/stack',
@@ -284,6 +280,16 @@ const LangBookingIndexRoute = LangBookingIndexRouteImport.update({
 const LangBookingSlugRoute = LangBookingSlugRouteImport.update({
   id: '/booking/$slug',
   path: '/booking/$slug',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangServicesIndexRoute = LangServicesIndexRouteImport.update({
+  id: '/services/',
+  path: '/services/',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangServicesSlugRoute = LangServicesSlugRouteImport.update({
+  id: '/services/$slug',
+  path: '/services/$slug',
   getParentRoute: () => LangRoute,
 } as any)
 const LangWorkIndexRoute = LangWorkIndexRouteImport.update({
@@ -645,7 +651,6 @@ export interface FileRoutesByFullPath {
   '/$lang/datenschutz': typeof LangDatenschutzRoute
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
-  '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
@@ -668,6 +673,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
+  '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
@@ -709,6 +715,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/booking/': typeof LangBookingIndexRoute
+  '/$lang/services/': typeof LangServicesIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
@@ -745,7 +752,6 @@ export interface FileRoutesByTo {
   '/$lang/datenschutz': typeof LangDatenschutzRoute
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
-  '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
@@ -767,6 +773,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
+  '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
@@ -808,6 +815,7 @@ export interface FileRoutesByTo {
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
   '/$lang/blog': typeof LangBlogIndexRoute
   '/$lang/booking': typeof LangBookingIndexRoute
+  '/$lang/services': typeof LangServicesIndexRoute
   '/$lang/work': typeof LangWorkIndexRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
@@ -848,7 +856,6 @@ export interface FileRoutesById {
   '/$lang/datenschutz': typeof LangDatenschutzRoute
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
-  '/$lang/services': typeof LangServicesRoute
   '/$lang/stack': typeof LangStackRoute
   '/admin/content': typeof AdminContentRoute
   '/admin_/login': typeof AdminLoginRoute
@@ -871,6 +878,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
+  '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
@@ -912,6 +920,7 @@ export interface FileRoutesById {
   '/dashboard_/login_/reset': typeof DashboardLoginResetRoute
   '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/booking/': typeof LangBookingIndexRoute
+  '/$lang/services/': typeof LangServicesIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
@@ -953,7 +962,6 @@ export interface FileRouteTypes {
     | '/$lang/datenschutz'
     | '/$lang/faq'
     | '/$lang/impressum'
-    | '/$lang/services'
     | '/$lang/stack'
     | '/admin/content'
     | '/admin/login'
@@ -976,6 +984,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
+    | '/$lang/services/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
@@ -1017,6 +1026,7 @@ export interface FileRouteTypes {
     | '/dashboard/login/reset'
     | '/$lang/blog/'
     | '/$lang/booking/'
+    | '/$lang/services/'
     | '/$lang/work/'
     | '/admin/blog/'
     | '/admin/bookings/'
@@ -1053,7 +1063,6 @@ export interface FileRouteTypes {
     | '/$lang/datenschutz'
     | '/$lang/faq'
     | '/$lang/impressum'
-    | '/$lang/services'
     | '/$lang/stack'
     | '/admin/content'
     | '/admin/login'
@@ -1075,6 +1084,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
+    | '/$lang/services/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
@@ -1116,6 +1126,7 @@ export interface FileRouteTypes {
     | '/dashboard/login/reset'
     | '/$lang/blog'
     | '/$lang/booking'
+    | '/$lang/services'
     | '/$lang/work'
     | '/admin/blog'
     | '/admin/bookings'
@@ -1155,7 +1166,6 @@ export interface FileRouteTypes {
     | '/$lang/datenschutz'
     | '/$lang/faq'
     | '/$lang/impressum'
-    | '/$lang/services'
     | '/$lang/stack'
     | '/admin/content'
     | '/admin_/login'
@@ -1178,6 +1188,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
+    | '/$lang/services/$slug'
     | '/$lang/work/$slug'
     | '/admin/blog/$id'
     | '/admin/blog/new'
@@ -1219,6 +1230,7 @@ export interface FileRouteTypes {
     | '/dashboard_/login_/reset'
     | '/$lang/blog/'
     | '/$lang/booking/'
+    | '/$lang/services/'
     | '/$lang/work/'
     | '/admin/blog/'
     | '/admin/bookings/'
@@ -1345,13 +1357,6 @@ declare module '@tanstack/react-router' {
       path: '/impressum'
       fullPath: '/$lang/impressum'
       preLoaderRoute: typeof LangImpressumRouteImport
-      parentRoute: typeof LangRoute
-    }
-    '/$lang/services': {
-      id: '/$lang/services'
-      path: '/services'
-      fullPath: '/$lang/services'
-      preLoaderRoute: typeof LangServicesRouteImport
       parentRoute: typeof LangRoute
     }
     '/$lang/stack': {
@@ -1513,6 +1518,20 @@ declare module '@tanstack/react-router' {
       path: '/booking/$slug'
       fullPath: '/$lang/booking/$slug'
       preLoaderRoute: typeof LangBookingSlugRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/services/': {
+      id: '/$lang/services/'
+      path: '/services'
+      fullPath: '/$lang/services/'
+      preLoaderRoute: typeof LangServicesIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/services/$slug': {
+      id: '/$lang/services/$slug'
+      path: '/services/$slug'
+      fullPath: '/$lang/services/$slug'
+      preLoaderRoute: typeof LangServicesSlugRouteImport
       parentRoute: typeof LangRoute
     }
     '/$lang/work/': {
@@ -1986,14 +2005,15 @@ interface LangRouteChildren {
   LangDatenschutzRoute: typeof LangDatenschutzRoute
   LangFaqRoute: typeof LangFaqRoute
   LangImpressumRoute: typeof LangImpressumRoute
-  LangServicesRoute: typeof LangServicesRoute
   LangStackRoute: typeof LangStackRoute
   LangIndexRoute: typeof LangIndexRoute
   LangBlogSlugRoute: typeof LangBlogSlugRoute
   LangBookingSlugRoute: typeof LangBookingSlugRoute
+  LangServicesSlugRoute: typeof LangServicesSlugRoute
   LangWorkSlugRoute: typeof LangWorkSlugRoute
   LangBlogIndexRoute: typeof LangBlogIndexRoute
   LangBookingIndexRoute: typeof LangBookingIndexRoute
+  LangServicesIndexRoute: typeof LangServicesIndexRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
   LangBookingManageReferenceRoute: typeof LangBookingManageReferenceRoute
   LangBookingRoomReferenceRoute: typeof LangBookingRoomReferenceRoute
@@ -2005,14 +2025,15 @@ const LangRouteChildren: LangRouteChildren = {
   LangDatenschutzRoute: LangDatenschutzRoute,
   LangFaqRoute: LangFaqRoute,
   LangImpressumRoute: LangImpressumRoute,
-  LangServicesRoute: LangServicesRoute,
   LangStackRoute: LangStackRoute,
   LangIndexRoute: LangIndexRoute,
   LangBlogSlugRoute: LangBlogSlugRoute,
   LangBookingSlugRoute: LangBookingSlugRoute,
+  LangServicesSlugRoute: LangServicesSlugRoute,
   LangWorkSlugRoute: LangWorkSlugRoute,
   LangBlogIndexRoute: LangBlogIndexRoute,
   LangBookingIndexRoute: LangBookingIndexRoute,
+  LangServicesIndexRoute: LangServicesIndexRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,
   LangBookingManageReferenceRoute: LangBookingManageReferenceRoute,
   LangBookingRoomReferenceRoute: LangBookingRoomReferenceRoute,

@@ -2,6 +2,8 @@ import { CtaBand } from '#/frontend/components/layout/public/CtaBand'
 import { BookingBand } from '#/frontend/features/booking/BookingBand'
 import { getContent } from '#/frontend/content'
 import type { ProjectEntry } from '#/frontend/features/work/project-list'
+import { HomeServicesV2, homeServicesView } from '#/frontend/features/services-public/HomeServicesV2'
+import type { HomeServicesData } from '#/frontend/features/services-public/server/services-source'
 import type { PublicPostSummary } from '#/shared/types/post.types'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { BlogSection } from './BlogSection'
@@ -26,17 +28,25 @@ import { WorkSection } from './WorkSection'
 export function HomePage({
   entries,
   posts,
+  services: servicesData,
 }: {
   entries: ProjectEntry[]
   posts: PublicPostSummary[]
+  /** Absent in the admin's preview, and `legacy` with the switch off: today's three cards. */
+  services?: HomeServicesData
 }) {
   const { language } = useLanguage()
   const { home, services, work, faq, blog } = getContent(language)
+  const servicesView = homeServicesView(servicesData)
 
   return (
     <>
       <HeroSection copy={home.hero} />
-      <ServicesSection copy={home.services} services={services.items} language={language} />
+      {servicesView === 'legacy' ? (
+        <ServicesSection copy={home.services} services={services.items} language={language} />
+      ) : servicesView === 'v2' && servicesData?.source === 'v2' ? (
+        <HomeServicesV2 copy={home.services} items={servicesData.items} language={language} />
+      ) : null}
       <WorkSection copy={home.work} work={work} language={language} entries={entries} />
       <ProcessSection copy={home.process} />
       <BookingBand />

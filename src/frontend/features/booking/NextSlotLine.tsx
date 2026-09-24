@@ -28,7 +28,7 @@ export function NextSlotLine() {
       <span className="next-slot-dot" aria-hidden="true" />
       <span>
         <span className="tabular">{type.durationMinutes}</span> {copy.minutes}
-        {type.priceCents === 0 ? ` · ${copy.free}` : null} · {entry.next.label}{' '}
+        {type.free ? ` · ${copy.free}` : null} · {entry.next.label}{' '}
         <b className="font-semibold text-foreground">{formatShortSlot(next, timezone, language)}</b>
       </span>
       <Link
