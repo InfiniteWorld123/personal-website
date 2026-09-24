@@ -22,6 +22,8 @@ type V2Words = {
   assistant: Section
   comments: Section
   cookies: Section
+  /** Shown only while Cloudflare Web Analytics is switched on (`CF_WEB_ANALYTICS_TOKEN`). */
+  webAnalytics: Section
   updated: string
 }
 
@@ -51,6 +53,10 @@ const WORDS: Record<Language, V2Words> = {
       title: 'Cookies und Speicher im Browser',
       body: 'Die öffentliche Website setzt nur technisch notwendige Einstellungen, etwa für Sprache und Farbschema. Zusätzlich speichert dein Browser lokal, für diesen Tab, die Kennung deines Gesprächs mit dem Assistenten und, dauerhaft, welche Artikel du mit „Gefällt mir" markiert hast. Im nicht öffentlichen Verwaltungsbereich werden notwendige Sitzungs-Cookies für die Anmeldung verwendet. Nichts davon dient Werbung oder seitenübergreifendem Tracking. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG sowie Art. 6 Abs. 1 lit. f DSGVO.',
     },
+    webAnalytics: {
+      title: 'Website-Statistik (Cloudflare Web Analytics)',
+      body: 'Um zu verstehen, wie die öffentlichen Seiten genutzt werden, verwende ich Cloudflare Web Analytics. Es setzt keine Cookies und speichert nichts in deinem Browser. Gezählt werden Seitenaufrufe und Besuche, welche Seite du aufrufst, von welcher Website du kommst, ungefähres Land, Browser, Gerätetyp und Ladezeiten. Cloudflare erhält dafür deine IP-Adresse technisch bedingt, nutzt sie aber nicht, um dich wiederzuerkennen oder über Websites hinweg zu verfolgen. Im nicht öffentlichen Verwaltungsbereich läuft es nie. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: mein berechtigtes Interesse, die Website zu verbessern.',
+    },
     updated: 'Stand: 24. September 2026',
   },
   en: {
@@ -77,6 +83,10 @@ const WORDS: Record<Language, V2Words> = {
     cookies: {
       title: 'Cookies and browser storage',
       body: 'The public website stores only technically necessary settings such as language and colour scheme. Your browser also keeps, for this tab, the handle of your conversation with the assistant, and permanently which articles you liked. The non-public admin area uses necessary session cookies for signing in. None of this is used for advertising or cross-site tracking. Legal basis: § 25(2) no. 2 TDDDG and Art. 6(1)(f) GDPR.',
+    },
+    webAnalytics: {
+      title: 'Website statistics (Cloudflare Web Analytics)',
+      body: 'To understand how the public pages are used, I use Cloudflare Web Analytics. It sets no cookies and stores nothing in your browser. It counts page views and visits, which page you open, which website you came from, your approximate country, browser, device type and page load times. Cloudflare receives your IP address because that is how the connection works, but does not use it to recognise you or follow you across websites. It never runs in the non-public admin area. Legal basis: Art. 6(1)(f) GDPR, my legitimate interest in improving the website.',
     },
     updated: 'Last updated: 24 September 2026',
   },
@@ -105,6 +115,10 @@ const WORDS: Record<Language, V2Words> = {
       title: 'ملفات الارتباط والتخزين في المتصفح',
       body: 'يحفظ الموقع العام الإعدادات الضرورية تقنياً فقط، مثل اللغة ونمط الألوان. ويحفظ متصفحك أيضاً، لهذا التبويب فقط، رمز محادثتك مع المساعد، وبشكل دائم المقالات التي أعجبتك. وتُستخدم في منطقة الإدارة غير العامة ملفات ارتباط ضرورية لتسجيل الدخول. لا يُستخدم شيء من ذلك للإعلانات أو للتتبع بين المواقع. الأساس القانوني: الفقرة 25 (2) رقم 2 من قانون TDDDG والمادة 6 (1) (و).',
     },
+    webAnalytics: {
+      title: 'إحصاءات الموقع (Cloudflare Web Analytics)',
+      body: 'لأفهم كيف تُستخدم الصفحات العامة، أستخدم خدمة Cloudflare Web Analytics. لا تضع أي ملفات ارتباط (Cookies) ولا تحفظ شيئاً في متصفحك. تَعُدّ مرات فتح الصفحات والزيارات، وأي صفحة تفتحها، ومن أي موقع جئت، وبلدك التقريبي، ونوع المتصفح والجهاز، وسرعة تحميل الصفحة. تصل عنوانَ IP الخاص بك إلى Cloudflare لأن الاتصال يتطلب ذلك، لكنها لا تستخدمه للتعرّف عليك أو لتتبعك بين المواقع. ولا تعمل أبداً في منطقة الإدارة غير العامة. الأساس القانوني: المادة 6 (1) (و)، أي مصلحتي المشروعة في تحسين الموقع.',
+    },
     updated: 'آخر تحديث: 24 سبتمبر 2026',
   },
 }
@@ -116,7 +130,11 @@ const WORDS: Record<Language, V2Words> = {
  */
 const AFTER_COOKIES = 5
 
-export const applyPrivacyV2 = (copy: LegalCopy, language: Language): LegalCopy => {
+export const applyPrivacyV2 = (
+  copy: LegalCopy,
+  language: Language,
+  options: { webAnalytics?: boolean } = {},
+): LegalCopy => {
   const words = WORDS[language]
   const sections = copy.sections
 
@@ -134,6 +152,8 @@ export const applyPrivacyV2 = (copy: LegalCopy, language: Language): LegalCopy =
       words.assistant,
       words.comments,
       words.cookies,
+      // Only while the public site really carries the beacon.
+      ...(options.webAnalytics ? [words.webAnalytics] : []),
       ...sections.slice(AFTER_COOKIES),
     ],
     updated: words.updated,

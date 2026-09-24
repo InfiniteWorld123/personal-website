@@ -1,4 +1,5 @@
 import type { BreakdownDef, MetricDef } from './analytics.metric'
+import { CLOUDFLARE_WORDING } from './sources/website'
 
 /**
  * Every figure Analytics can report, defined once: its key, what it means in
@@ -20,6 +21,7 @@ export const SOURCES = {
   services: 'backend2.services',
   contact: 'backend2.contact',
   posthog: 'posthog',
+  cloudflare: 'cloudflare',
   invoices: 'backend2.invoices',
   assistant: 'backend2.assistant',
 } as const
@@ -30,31 +32,43 @@ const breakdown = (input: BreakdownDef): BreakdownDef => input
 /* ------------------------------------------------------------------ website */
 
 export const WEBSITE = {
+  /*
+   * Worded for Cloudflare Web Analytics, the approved provider. Another
+   * adapter replaces the label, description and source with its own
+   * (`WebsiteAnalyticsSource.wording`), so a figure always names who counted it.
+   */
   visitors: def({
     key: 'website.visitors',
-    label: 'Website visitors',
-    description:
-      'Distinct people PostHog counted on public pages in the period. Approximate: one person on two devices can count twice. Not the same as pageviews.',
+    ...CLOUDFLARE_WORDING.visitors,
     unit: 'count',
     scope: 'period',
-    source: SOURCES.posthog,
+    source: SOURCES.cloudflare,
   }),
   pageviews: def({
     key: 'website.pageviews',
-    label: 'Pageviews',
-    description: 'Public pages opened in the period, counted by PostHog. One visitor can open many pages.',
+    ...CLOUDFLARE_WORDING.pageviews,
     unit: 'count',
     scope: 'period',
-    source: SOURCES.posthog,
+    source: SOURCES.cloudflare,
   }),
   topPages: breakdown({
     key: 'website.topPages',
     label: 'Most viewed pages',
-    description: 'Public pages by pageviews in the period, counted by PostHog.',
+    ...CLOUDFLARE_WORDING.topPages,
     unit: 'count',
     scope: 'period',
-    source: SOURCES.posthog,
+    source: SOURCES.cloudflare,
     ranking: 'website-pages',
+  }),
+  /** The Overview's weekday × time grid (a block, not a metric). */
+  heatmap: def({
+    key: 'website.visitsHeatmap',
+    label: 'When people visit',
+    description:
+      'Visits on public pages in the period, by Berlin weekday and time of day, counted by Cloudflare Web Analytics. Close estimates: Cloudflare samples page loads.',
+    unit: 'count',
+    scope: 'period',
+    source: SOURCES.cloudflare,
   }),
   onlineBookings: def({
     key: 'website.onlineBookings',
@@ -519,6 +533,36 @@ export const MONEY = {
     unit: 'count',
     scope: 'current',
     source: SOURCES.invoices,
+    link: '/dashboard/invoices',
+  }),
+  receivedByMonth: def({
+    key: 'money.receivedByMonth',
+    label: 'Money in',
+    description:
+      'Payments received in each Berlin calendar month, minus refunds recorded that month, each currency separately. Split into one-off invoices and invoices a subscription produced. The current month is the month so far. Never forecast revenue.',
+    unit: 'money',
+    scope: 'period',
+    source: SOURCES.invoices,
+    link: '/dashboard/invoices',
+  }),
+  paidOnTime: def({
+    key: 'invoices.paidOnTime',
+    label: 'Paid on time',
+    description:
+      'Of the issued invoices paid in full in the last 90 days, the share whose final payment arrived on or before the due date (the last instalment’s due date when there are instalments). Invoices still unpaid are not in it; they are under Outstanding.',
+    unit: 'ratio',
+    scope: 'last-90-days',
+    source: SOURCES.invoices,
+    link: '/dashboard/invoices',
+  }),
+  paidInFull: def({
+    key: 'invoices.paidInFull',
+    label: 'Paid',
+    description: 'Issued invoices whose final payment arrived in the period, so they are now paid in full.',
+    unit: 'count',
+    scope: 'period',
+    source: SOURCES.invoices,
+    link: '/dashboard/invoices',
   }),
   status: breakdown({
     key: 'invoices.status',
@@ -572,4 +616,6 @@ export const NOT_BUILT = {
   assistant: 'The public AI assistant is not built yet. This is not zero.',
   contact: 'The live contact form still sends to the old system; it moves to Backend2 at the approved public cutover. This is not zero.',
   assistantOutcome: 'The assistant does not record this, so it cannot be shown.',
+  moneyBoard: 'This money source does not provide monthly figures yet. This is not zero.',
+  heatmap: 'This website statistics provider does not report visits by hour, so this grid cannot be drawn.',
 } as const

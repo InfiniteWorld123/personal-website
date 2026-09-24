@@ -212,10 +212,12 @@ export const SCOPE_LABEL: Record<MetricScope, string> = {
   period: 'the selected period',
   current: 'right now',
   'next-7-days': 'the next 7 days',
+  'last-90-days': 'the last 90 days',
   'all-time': 'all time (a running total without dates)',
 }
 
 const SOURCE_NAMES: Record<string, string> = {
+  cloudflare: 'Cloudflare Web Analytics (website statistics, cookieless)',
   posthog: 'PostHog (website statistics)',
   backend2: 'your Dashboard modules',
   'backend2.leads': 'Leads',

@@ -45,7 +45,12 @@ const config = defineConfig({
   plugins: [
     requireTurnstileSiteKey(),
     devtools(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    nitro({
+      rollupConfig: { external: [/^@sentry\//] },
+      // The Worker's Cron Trigger → Backend2's periodic jobs. Inert on every
+      // runtime but Cloudflare, and on a Worker with no cron configured.
+      plugins: ['./src/backend2/jobs/cloudflare-scheduled.plugin.ts'],
+    }),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
     tanstackStart({

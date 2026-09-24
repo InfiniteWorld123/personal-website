@@ -96,6 +96,7 @@ import { Route as DashboardProjectsProjectIdRouteImport } from './../routes/dash
 import { Route as DashboardServicesIndexRouteImport } from './../routes/dashboard.services.index'
 import { Route as DashboardServicesServiceIdRouteImport } from './../routes/dashboard.services.$serviceId'
 import { Route as DashboardSettingsIndexRouteImport } from './../routes/dashboard.settings.index'
+import { Route as DashboardSettingsOldSiteRouteImport } from './../routes/dashboard.settings.old-site'
 import { Route as DashboardSettingsSecurityRouteImport } from './../routes/dashboard.settings.security'
 import { Route as DashboardLoginConfirmEmailRouteImport } from './../routes/dashboard_.login_.confirm-email'
 import { Route as DashboardLoginResetRouteImport } from './../routes/dashboard_.login_.reset'
@@ -554,6 +555,12 @@ const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardSettingsRoute,
 } as any)
+const DashboardSettingsOldSiteRoute =
+  DashboardSettingsOldSiteRouteImport.update({
+    id: '/old-site',
+    path: '/old-site',
+    getParentRoute: () => DashboardSettingsRoute,
+  } as any)
 const DashboardSettingsSecurityRoute =
   DashboardSettingsSecurityRouteImport.update({
     id: '/security',
@@ -710,6 +717,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
+  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -810,6 +818,7 @@ export interface FileRoutesByTo {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
+  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -915,6 +924,7 @@ export interface FileRoutesById {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
+  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard_/login_/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard_/login_/reset': typeof DashboardLoginResetRoute
@@ -1021,6 +1031,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
+    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -1121,6 +1132,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
+    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -1225,6 +1237,7 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
+    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard_/login_/confirm-email'
     | '/dashboard_/login_/reset'
@@ -1891,6 +1904,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsIndexRouteImport
       parentRoute: typeof DashboardSettingsRoute
     }
+    '/dashboard/settings/old-site': {
+      id: '/dashboard/settings/old-site'
+      path: '/old-site'
+      fullPath: '/dashboard/settings/old-site'
+      preLoaderRoute: typeof DashboardSettingsOldSiteRouteImport
+      parentRoute: typeof DashboardSettingsRoute
+    }
     '/dashboard/settings/security': {
       id: '/dashboard/settings/security'
       path: '/security'
@@ -2110,11 +2130,13 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DashboardSettingsRouteChildren {
+  DashboardSettingsOldSiteRoute: typeof DashboardSettingsOldSiteRoute
   DashboardSettingsSecurityRoute: typeof DashboardSettingsSecurityRoute
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
 }
 
 const DashboardSettingsRouteChildren: DashboardSettingsRouteChildren = {
+  DashboardSettingsOldSiteRoute: DashboardSettingsOldSiteRoute,
   DashboardSettingsSecurityRoute: DashboardSettingsSecurityRoute,
   DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
 }

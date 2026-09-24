@@ -96,7 +96,97 @@ Still needed before any switch goes live: the owner's real content in V2
 (services, projects, articles, booking types/hours), the production V2
 database connection on Cloudflare, the remote Dashboard access decision
 (`auth.md`), the privacy page wording for saved assistant conversations and
-comments, scheduled jobs (blog publishing, booking reminders, invoice billing,
-assistant purge) as Cloudflare Cron Triggers, and RealtimeKit for real video
+comments, the Cron Trigger for the scheduled jobs on the live Worker (see
+"Scheduled jobs" below — built, on the preview only), and RealtimeKit for real video
 calls. Open owner questions: how the project type is shown on cards, Turnstile
 on blog comments, two new comment-loading sentences.
+
+## Scheduled jobs (Cron Trigger) — built 24 Sep 2026
+
+Backend2's periodic jobs run from the Worker's `scheduled` event, through one
+entry, `runScheduledJobs` (`src/backend2/jobs/scheduled.ts`). Each job is
+idempotent and isolated: one that fails is logged and the rest still run.
+Nothing runs unless `DATABASE_URL_V2` is configured; the legacy database is
+never touched.
+
+| Job | When | Existing command |
+|---|---|---|
+| Blog: publish due schedules | every tick | `db2:blog:publish-due` |
+| Booking: visitor reminders | every tick | `db2:booking:send-reminders` |
+| Invoices: subscription billing, due charges/retries, reminder drafts | hourly (`:00` tick) | `db2:invoices:run-billing` |
+| Assistant: retention purge (`manual` deletes nothing) | hourly | `db2:assistant:purge` |
+| Media: finish interrupted deletions (24 h grace, never unused files) | hourly | `db2:media:sweep` |
+| Auth housekeeping: expired challenges, rate-limit windows, sessions | hourly | — (also on sign-in) |
+
+How it is wired: `src/backend2/jobs/cloudflare-scheduled.plugin.ts` is a Nitro
+plugin (registered in `vite.config.ts`) on the `cloudflare:scheduled` hook. It
+hands the tick to the server bundle as one in-process request carrying a
+single-use random token (`jobs/handoff.ts`), so Backend2 is not bundled twice;
+from the internet the path is an ordinary 404. Nitro's `scheduledTasks` was
+not used because it would write the cron into the generated `wrangler.json`
+that the live site deploys from.
+
+The preview Worker already gets the cron from `scripts/v2-preview.mjs`. At
+cutover — and only with the owner's approval — add this to `wrangler.jsonc`:
+
+```jsonc
+  // Backend2's periodic jobs (src/backend2/jobs/scheduled.ts).
+  "triggers": { "crons": ["*/15 * * * *"] },
+```
+
+Things to know before switching it on:
+
+- **Account limit.** The free plan allows 5 Cron Triggers per account; the
+  preview and the live Worker would use one each.
+- **CPU.** A free-plan cron invocation has 10 ms of CPU (15 min wall time).
+  Waiting for the database does not count, but a cold isolate also loads the
+  server bundle. Check `wrangler tail` on the preview for exceeded-CPU errors.
+- **Database cost.** Neon pauses the database after a few idle minutes; a
+  query every 5 minutes keeps it awake almost all the time, which uses more
+  of a free plan's compute hours. `*/15` roughly halves that at the cost of
+  reminders and schedules up to 15 minutes late (the blog also publishes on
+  the first visit after its time, whatever the cron does). `docs/v2/blog.md`
+  asked for every minute; `*/15` is chosen (24 Sep 2026) so Neon can sleep
+  between runs — a scheduled post still appears on time for its first
+  visitor, and a booking reminder 15 minutes late is harmless.
+- **Emails.** Reminders are real emails only where `INBOX_SEND_MODE=live`, and
+  billing is test-only unless `INVOICES_LIVE_ENABLED=true`.
+
+## Copy from the old site — built 24 Sep 2026
+
+Owner decision (24 Sep 2026): before the cutover, V2 starts from a copy of what
+the public website shows today, and the owner then edits it in the Dashboard.
+This supersedes the earlier "nothing is imported" lines in `projects.md`,
+`services.md` and `blog.md` for this one copy. Leads, clients, invoices, chats,
+bookings people made and accounts are **not** copied.
+
+Where: Dashboard → Settings → **Old site** (`/dashboard/settings/old-site`).
+**Check what would be copied** is a dry run (`GET /api/v2/owner/import/legacy`);
+**Copy N items** runs it (`POST … {"confirm": true}`), one image or one record
+per request, repeated by the page until nothing remains. Owner-only, behind
+`ownerGuard` (fence, V2 session, CSRF on the write). It runs inside the Worker,
+where both databases and both buckets are reachable.
+
+What is copied, and how:
+
+| Old site | V2 |
+|---|---|
+| Published projects (order, 3 languages, tech, website/source links, images with alt text) | Projects, published when V2's checks pass; `live` → Completed, `building` → In progress; type **Personal** (the old site had none); Starting point / What I built / What the project shows / Features become the case study under the old headings; the first image is the cover when none was marked |
+| The three services on `/services` (from the code, not the legacy `services` table, which no public page reads) | Services, published, starred, "from" price as a one-time price; promise + "a good fit if you" + price note become the longer text |
+| Published articles, their cover, inline images and tags | Blog, **as a private draft** (`blog.md` recorded the old article as test content) |
+| Active booking types, weekly hours, future exceptions | Booking types (on when all three names exist), V2 weekly hours only if none are set, exception days as the exact hours the old site had that day |
+| Image files (`/images/...` static files, the legacy `MEDIA` bucket, or https) | New assets in the Media folder "Imported from old site" |
+
+Rules: nothing already in V2 at the same address is touched (reported as
+skipped); nothing is written to the legacy database (read inside
+`BEGIN TRANSACTION READ ONLY`); a project whose picture cannot be copied stays
+private and says which picture to add. Every created record and copied file is
+recorded in `v2_legacy_imports` (migration `0014_legacy_import.sql`, applied by
+the owner with `bun run db2:migrate`), in the same transaction as the record,
+so a second run creates nothing twice.
+
+Code: `src/backend2/modules/import/` (`legacy.source.ts` is the only file that
+reads the old site), `src/backend2/contracts/import.contract.ts`,
+`src/frontend/features/legacy-import/`, `OldSitePage.tsx`. Delete all of it
+after the cutover. Tests: `backend2-legacy-import.test.ts`,
+`legacy-import-ui.test.tsx`.

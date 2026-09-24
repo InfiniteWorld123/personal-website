@@ -29,11 +29,44 @@ export type MoneySnapshot = {
   statusMix: Array<{ status: string; label: string; count: number }>
 }
 
+/** What the Overview's money charts need, in one read. */
+export type MoneyBoardSnapshot = {
+  /**
+   * Money received per Berlin calendar month in `[monthsFrom, monthsTo]`,
+   * net of refunds recorded that month, per currency and split by whether the
+   * invoice came from a subscription. Minor units; months with nothing are
+   * simply absent.
+   */
+  months: Array<{ month: string; currency: string; oneOff: number; subscription: number }>
+  /**
+   * Issued invoices paid in full whose final payment falls in
+   * `[onTimeFrom, onTimeTo]`, split by whether that payment was on or before
+   * the due date (the last instalment's, when there are instalments).
+   */
+  paidOnTime: { onTime: number; late: number }
+  /** Issued invoices whose final payment falls in the selected period. */
+  paidInFull: number
+}
+
+export type MoneyBoardQuery = {
+  /** Berlin calendar dates, both included. */
+  monthsFrom: string
+  monthsTo: string
+  onTimeFrom: string
+  onTimeTo: string
+  period: AnalyticsPeriod
+}
+
 export type MoneyAnalyticsSource = {
   /** Shown to the owner as the figure's source, e.g. `backend2.invoices`. */
   readonly source: string
   /** Throws on failure; Analytics turns that into `error` for these figures only. */
   read: (period: AnalyticsPeriod, now: Date) => Promise<MoneySnapshot>
+  /**
+   * The Overview's monthly money, paid-on-time and paid-in-full figures.
+   * Optional: a source without it leaves those figures `not-built`.
+   */
+  readBoard?: (query: MoneyBoardQuery) => Promise<MoneyBoardSnapshot>
 }
 
 /*

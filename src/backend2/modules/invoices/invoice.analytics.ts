@@ -154,3 +154,86 @@ export const subscriptionCounts = async (
 
   return result
 }
+
+/* --------------------------------------------------------- Overview charts */
+
+/**
+ * Money received per Berlin calendar month in `[from, to]`, net of refunds
+ * recorded that month, per currency, split by whether the invoice was
+ * produced by a subscription. Payments carry a calendar date (`paid_on`), so
+ * a month is simply the dates in it. Voided payments do not count.
+ */
+export const receivedByMonth = async (
+  input: { from: string; to: string } & AnalyticsScope,
+): Promise<Array<{ month: string; currency: Currency; oneOff: number; subscription: number }>> => {
+  const { rows } = await getDb().query<{
+    month: string
+    currency: Currency
+    one_off: string | number | null
+    subscription: string | number | null
+  }>(
+    `WITH moves AS (
+       SELECT p.paid_on AS day, p.currency, p.amount_minor AS amount, i.subscription_id IS NOT NULL AS recurring
+         FROM v2_invoice_payments p JOIN v2_invoices i ON i.id = p.invoice_id
+        WHERE i.mode = ANY($1) AND p.voided_at IS NULL AND p.paid_on BETWEEN $2 AND $3
+       UNION ALL
+       SELECT r.refunded_on, r.currency, -r.amount_minor, i.subscription_id IS NOT NULL
+         FROM v2_invoice_refunds r JOIN v2_invoices i ON i.id = r.invoice_id
+        WHERE i.mode = ANY($1) AND r.refunded_on BETWEEN $2 AND $3
+     )
+     SELECT to_char(date_trunc('month', day), 'YYYY-MM-DD') AS month, currency,
+            sum(amount) FILTER (WHERE NOT recurring) AS one_off,
+            sum(amount) FILTER (WHERE recurring) AS subscription
+       FROM moves
+      GROUP BY 1, 2
+      ORDER BY 1, 2`,
+    [modes(input), input.from, input.to],
+  )
+
+  return rows.map((row) => ({
+    month: row.month,
+    currency: row.currency,
+    oneOff: Number(row.one_off ?? 0),
+    subscription: Number(row.subscription ?? 0),
+  }))
+}
+
+/**
+ * The SQL for issued invoices that are paid in full today, with the date of
+ * their final (not voided) payment and the date it was due by: the last
+ * instalment's due date when there are instalments, otherwise the invoice's.
+ */
+const SETTLED_INVOICES = `
+  SELECT i.id,
+         (SELECT max(p.paid_on) FROM v2_invoice_payments p
+           WHERE p.invoice_id = i.id AND p.voided_at IS NULL) AS settled_on,
+         COALESCE((SELECT max(s.due_date) FROM v2_invoice_installments s WHERE s.invoice_id = i.id),
+                  i.due_date) AS due_by
+    FROM v2_invoices i
+   WHERE i.mode = ANY($1) AND i.kind = 'invoice' AND i.status = 'issued'
+     AND i.total_minor > 0
+     AND i.total_minor - i.paid_minor + i.refunded_minor <= 0`
+
+/**
+ * Invoices paid in full whose final payment falls in `[from, to]`: how many
+ * were paid on or before the date they were due, and how many after.
+ */
+export const paidOnTime = async (
+  input: { from: string; to: string } & AnalyticsScope,
+): Promise<{ onTime: number; late: number; paidInFull: number }> => {
+  const { rows } = await getDb().query<{ on_time: string | number; late: string | number; settled: string | number }>(
+    `WITH settled AS (${SETTLED_INVOICES})
+     SELECT count(*) FILTER (WHERE due_by IS NOT NULL AND settled_on <= due_by) AS on_time,
+            count(*) FILTER (WHERE due_by IS NOT NULL AND settled_on > due_by) AS late,
+            count(*) AS settled
+       FROM settled
+      WHERE settled_on BETWEEN $2 AND $3`,
+    [modes(input), input.from, input.to],
+  )
+
+  return {
+    onTime: Number(rows[0]?.on_time ?? 0),
+    late: Number(rows[0]?.late ?? 0),
+    paidInFull: Number(rows[0]?.settled ?? 0),
+  }
+}

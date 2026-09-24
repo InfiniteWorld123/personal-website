@@ -35,6 +35,7 @@ describe('building a database from nothing', () => {
       '0011_leads.sql',
       '0012_invoices.sql',
       '0013_assistant.sql',
+      '0014_legacy_import.sql',
     ])
 
     // The runner sorts by filename, so the names have to sort into the order
@@ -118,6 +119,8 @@ describe('building a database from nothing', () => {
       expect(tables).toContain('v2_assistant_conversations')
       expect(tables).toContain('v2_assistant_messages')
       expect(tables).toContain('v2_assistant_usage_days')
+      // "Copy from the old site", from 0014.
+      expect(tables).toContain('v2_legacy_imports')
 
       /*
        * A migration builds structure. Anything that arrived with rows would be

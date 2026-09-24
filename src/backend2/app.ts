@@ -1,6 +1,8 @@
 import { Elysia } from 'elysia'
 import { isDatabaseConfigured, withRequestScope } from './db/client'
 import { isApiError } from './http/error'
+import { acceptScheduledHandoff } from './jobs/handoff'
+import { runScheduledJobs } from './jobs/scheduled'
 import { normalizeError } from './http/error-handler'
 import { responseFailure, responseOk } from './http/response'
 import { HttpStatus } from './http/status'
@@ -30,6 +32,7 @@ import { publicProjectRoutes } from './modules/projects/project.public.route'
 import { ownerServiceRoutes } from './modules/services/service.owner.route'
 import { publicServiceRoutes } from './modules/services/service.public.route'
 import { ownerAssistantRoutes } from './modules/assistant/assistant.owner.route'
+import { ownerImportRoutes } from './modules/import/import.owner.route'
 import { publicAssistantRoutes } from './modules/assistant/assistant.public.route'
 
 /**
@@ -142,7 +145,9 @@ const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
         .use(ownerInvoiceRoutes)
         .use(ownerAnalyticsRoutes)
         .use(ownerAssistantRoutes)
-        .use(ownerSearchRoutes),
+        .use(ownerSearchRoutes)
+        // "Copy from the old site" — deletable with modules/import/ after cutover.
+        .use(ownerImportRoutes),
     )
   }
 
@@ -237,8 +242,18 @@ export const createAppForTest = (options?: { aot?: boolean }) => buildApp(option
  * Elysia returns an empty 404 body for an unmatched route. Normalised here so
  * every Backend2 response has the same envelope.
  */
-export const handleApiV2Request = (request: Request): Promise<Response> =>
-  withRequestScope(async () => {
+export const handleApiV2Request = (request: Request): Promise<Response> => {
+  /*
+   * The Worker's Cron Trigger, handed over in-process by the Nitro plugin
+   * (`jobs/handoff.ts`). Honoured only with the single-use token that plugin
+   * registered on this isolate; any other request falls through to the app,
+   * where this path is an ordinary "Route not found".
+   */
+  const scheduledTime = acceptScheduledHandoff(request)
+
+  if (scheduledTime !== null) return answerScheduledRun(scheduledTime)
+
+  return withRequestScope(async () => {
     const response = await app.fetch(request)
 
     if (response.status !== HttpStatus.NOT_FOUND) return response
@@ -252,3 +267,12 @@ export const handleApiV2Request = (request: Request): Promise<Response> =>
       { status: HttpStatus.NOT_FOUND, headers: { 'Cache-Control': 'no-store' } },
     )
   })
+}
+
+const answerScheduledRun = async (scheduledTime: number): Promise<Response> => {
+  const summary = await runScheduledJobs(new Date(scheduledTime))
+
+  return Response.json(responseOk({ data: summary, message: 'Scheduled jobs ran' }), {
+    headers: { 'Cache-Control': 'no-store' },
+  })
+}

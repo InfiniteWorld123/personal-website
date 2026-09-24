@@ -132,15 +132,15 @@ function WebsiteTab({ section }: { section: AnalyticsSectionResponse }) {
       {!connected ? (
         <NotConnectedBox title="Website statistics are not connected">
           <p>
-            Visitors, pageviews and the most viewed pages come from PostHog. It stays switched off until the privacy
-            review is done, the privacy page says so in all three languages, and you approve it. Nothing about visitors
-            is collected before that.
+            Visits, pageviews and the most viewed pages come from Cloudflare Web Analytics, which sets no cookies.
+            They appear once its beacon is switched on for the public site and the Dashboard is given read access
+            (three private settings). Nothing about visitors is collected before that.
           </p>
           <p>Everything below this box comes from your own modules and is real.</p>
         </NotConnectedBox>
       ) : (
         <>
-          {visitors ? <SeriesCard metric={visitors} title="Visitors" name={['visitor', 'visitors']} /> : null}
+          {visitors ? <SeriesCard metric={visitors} title="Visits" name={['visit', 'visits']} /> : null}
           {pageviews ? <FiguresCard title="Pageviews" metrics={[pageviews]} span="narrow" /> : null}
           {topPages ? <BreakdownCard breakdown={topPages} sub="Pageviews, not people" span="full" /> : null}
         </>

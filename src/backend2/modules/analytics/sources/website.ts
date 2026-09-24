@@ -1,24 +1,25 @@
 import type { AnalyticsPeriod, SeriesPoint } from '../../../contracts/analytics.contract'
 import { emptyBuckets } from '../analytics.period'
+import { createCloudflareWebsiteSource, resolveCloudflareConfig } from './cloudflare'
 
 /**
  * Public-website visitor statistics, behind a replaceable adapter.
  *
- * `docs/v2/analytics.md`: PostHog is the preferred provider *if* it passes
- * the cost and privacy checks, public capture stays off while the live
- * privacy text says there is no tracking, and a disabled or failing provider
- * must never become a zero. So:
+ * `docs/v2/analytics.md`: a disabled or failing provider must never become a
+ * zero, and nothing here captures anything — the adapters only *read* what a
+ * separately approved public capture records. So:
  *
  * - `disabledWebsiteSource` is the default and answers `not-connected`.
+ * - `createCloudflareWebsiteSource` (`./cloudflare.ts`) reads Cloudflare Web
+ *   Analytics — the cookieless provider the owner approved on 24 Sep 2026 —
+ *   through Cloudflare's GraphQL Analytics API. Chosen when
+ *   `CF_ANALYTICS_API_TOKEN`, `CF_ACCOUNT_ID` and `CF_WEB_ANALYTICS_SITE_TAG`
+ *   are all set.
  * - `createPostHogWebsiteSource` reads PostHog's query API with a private,
- *   server-only personal API key. It is chosen only when
- *   `POSTHOG_PERSONAL_API_KEY` and `POSTHOG_PROJECT_ID` are both set, and it
- *   **has never run against a real PostHog account** — its request shape is
- *   written from PostHog's published API and tested with a fake `fetch`.
- *
- * Nothing here captures anything. There is no browser script, no public
- * event endpoint and no change to any public page: this only *reads* what a
- * separately approved capture would one day record.
+ *   server-only personal API key. It is kept as the earlier, dormant choice:
+ *   used only when Cloudflare is not configured and `POSTHOG_PERSONAL_API_KEY`
+ *   and `POSTHOG_PROJECT_ID` are both set. It **has never run against a real
+ *   PostHog account** — its request shape is tested with a fake `fetch`.
  */
 
 export type WebsitePage = { path: string; pageviews: number }
@@ -37,8 +38,49 @@ export type WebsiteSnapshot = {
   exploreUrl: string
 }
 
+/** Visits by Berlin weekday (Monday first) × `HEATMAP_SLOTS`. */
+export type WebsiteHeatmap = { cells: number[][]; total: number; fetchedAt: string }
+
+/** How a provider names and defines its own figures; the defaults are Cloudflare's. */
+export type WebsiteWording = {
+  visitors: { label: string; description: string }
+  pageviews: { label: string; description: string }
+  topPages: { description: string }
+}
+
+export const CLOUDFLARE_WORDING: WebsiteWording = {
+  visitors: {
+    label: 'Website visits',
+    description:
+      'Visits Cloudflare Web Analytics counted on public pages in the period. A visit begins when someone arrives from another site or types the address. It is cookieless, so one person on two days counts twice, and Cloudflare samples page loads: treat the figure as a close estimate. Not the same as pageviews.',
+  },
+  pageviews: {
+    label: 'Pageviews',
+    description: 'Public pages opened in the period, counted by Cloudflare Web Analytics. One visit can open many pages.',
+  },
+  topPages: { description: 'Public pages by pageviews in the period, counted by Cloudflare Web Analytics.' },
+}
+
+export const POSTHOG_WORDING: WebsiteWording = {
+  visitors: {
+    label: 'Website visitors',
+    description:
+      'Distinct people PostHog counted on public pages in the period. Approximate: one person on two devices can count twice. Not the same as pageviews.',
+  },
+  pageviews: {
+    label: 'Pageviews',
+    description: 'Public pages opened in the period, counted by PostHog. One visitor can open many pages.',
+  },
+  topPages: { description: 'Public pages by pageviews in the period, counted by PostHog.' },
+}
+
 export type WebsiteAnalyticsSource = {
-  readonly id: 'disabled' | 'posthog'
+  readonly id: 'disabled' | 'posthog' | 'cloudflare'
+  /** The figures' `source`, e.g. `cloudflare`. */
+  readonly source: string
+  /** The provider's name as the owner reads it. */
+  readonly provider: string
+  readonly wording: WebsiteWording
   readonly connected: boolean
   /** Throws on any failure; the caller turns that into `error`, never 0. */
   readSummary: (period: AnalyticsPeriod) => Promise<WebsiteSnapshot>
@@ -46,6 +88,8 @@ export type WebsiteAnalyticsSource = {
     period: AnalyticsPeriod,
     page: { page: number; pageSize: number },
   ) => Promise<{ items: WebsitePage[]; total: number; fetchedAt: string }>
+  /** Optional: a provider without it leaves the Overview heatmap `not-built`. */
+  readHeatmap?: (period: AnalyticsPeriod) => Promise<WebsiteHeatmap>
 }
 
 const notConnected = (): never => {
@@ -54,6 +98,9 @@ const notConnected = (): never => {
 
 export const disabledWebsiteSource: WebsiteAnalyticsSource = {
   id: 'disabled',
+  source: 'cloudflare',
+  provider: 'Cloudflare Web Analytics',
+  wording: CLOUDFLARE_WORDING,
   connected: false,
   readSummary: async () => notConnected(),
   readTopPages: async () => notConnected(),
@@ -163,6 +210,9 @@ export const createPostHogWebsiteSource = (config: PostHogConfig): WebsiteAnalyt
 
   return {
     id: 'posthog',
+    source: 'posthog',
+    provider: 'PostHog',
+    wording: POSTHOG_WORDING,
     connected: true,
 
     readSummary: async (period) => {
@@ -237,13 +287,24 @@ export const createPostHogWebsiteSource = (config: PostHogConfig): WebsiteAnalyt
 }
 
 /**
- * The adapter this environment uses. PostHog only when both private settings
- * exist; anything else — including a malformed setting — is `disabled`, so a
- * typo can never make the Dashboard pretend to be connected.
+ * The adapter this environment uses: Cloudflare when its three private
+ * settings exist, else PostHog when both of its do, else `disabled`.
+ * Anything malformed is `disabled` too, so a typo can never make the
+ * Dashboard pretend to be connected. No setting is ever logged.
  */
 export const resolveWebsiteSource = (
   environment: Record<string, string | undefined> = process.env,
 ): WebsiteAnalyticsSource => {
+  const cloudflare = resolveCloudflareConfig(environment)
+
+  if (cloudflare === 'malformed') {
+    console.error('Backend2 analytics: Cloudflare Web Analytics settings are malformed; website statistics stay off')
+
+    return disabledWebsiteSource
+  }
+
+  if (cloudflare) return createCloudflareWebsiteSource(cloudflare)
+
   const apiKey = environment.POSTHOG_PERSONAL_API_KEY?.trim()
   const projectId = environment.POSTHOG_PROJECT_ID?.trim()
 

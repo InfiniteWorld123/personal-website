@@ -42,7 +42,7 @@ export const labelIndexes = (count: number, wanted: number): number[] => {
   return picked
 }
 
-const useWidth = (fallback: number) => {
+export const useWidth = (fallback: number) => {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(fallback)
 

@@ -10,10 +10,19 @@ import { useLanguage } from '#/frontend/i18n/language-provider'
  * holding either a paragraph or a short list. Plain text, no motion, no CTA —
  * a visitor here wants a fact, not to be sold to.
  */
-export function LegalPage({ document, v2Privacy = false }: { document: 'impressum' | 'privacy'; v2Privacy?: boolean }) {
+export function LegalPage({
+  document,
+  v2Privacy = false,
+  webAnalytics = false,
+}: {
+  document: 'impressum' | 'privacy'
+  v2Privacy?: boolean
+  /** Cloudflare Web Analytics is switched on: the V2 privacy page says so. */
+  webAnalytics?: boolean
+}) {
   const { language } = useLanguage()
   const base: LegalCopy = getContent(language).legal[document]
-  const copy = document === 'privacy' && v2Privacy ? applyPrivacyV2(base, language) : base
+  const copy = document === 'privacy' && v2Privacy ? applyPrivacyV2(base, language, { webAnalytics }) : base
 
   return (
     <>

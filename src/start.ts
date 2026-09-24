@@ -1,5 +1,6 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { responseError } from '#/backend/shared/response'
+import { CF_BEACON_REPORT_ORIGIN, CF_BEACON_SCRIPT_ORIGIN, webAnalyticsToken } from '#/shared/web-analytics'
 
 const UNSAFE_METHODS = new Set(['DELETE', 'PATCH', 'POST', 'PUT'])
 
@@ -103,14 +104,22 @@ export const buildContentSecurityPolicy = (
   const frames = ['https://challenges.cloudflare.com', youtubeFrameOrigin(environment)]
     .filter(Boolean)
     .join(' ')
+  // Cloudflare Web Analytics' beacon and where it reports, only while it is switched on.
+  const beacon = webAnalyticsToken(environment) !== null
+  const scripts = ["'self'", `'nonce-${nonce}'`, 'https://challenges.cloudflare.com', beacon ? CF_BEACON_SCRIPT_ORIGIN : '']
+    .filter(Boolean)
+    .join(' ')
+  const connects = ["'self'", 'https://challenges.cloudflare.com', beacon ? CF_BEACON_REPORT_ORIGIN : '']
+    .filter(Boolean)
+    .join(' ')
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com`,
+    `script-src ${scripts}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src ${images}`,
     "font-src 'self'",
-    "connect-src 'self' https://challenges.cloudflare.com",
+    `connect-src ${connects}`,
     `frame-src ${frames}`,
     "object-src 'none'",
     "base-uri 'self'",

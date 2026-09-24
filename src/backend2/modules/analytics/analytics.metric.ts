@@ -221,7 +221,7 @@ export const part = <T>(input: Part<T>): Part => input as unknown as Part
  * The shape of the failure is logged, never its message: a database error
  * can quote a row, and a provider error can quote a URL.
  */
-const logFailure = (source: string, error: unknown): void => {
+export const logFailure = (source: string, error: unknown): void => {
   const code =
     typeof error === 'object' && error !== null && typeof (error as { code?: unknown }).code === 'string'
       ? (error as { code: string }).code

@@ -27,6 +27,11 @@ const SECTIONS = [
     label: 'Security',
     note: 'Passkeys, password, sessions',
   },
+  {
+    to: '/dashboard/settings/old-site',
+    label: 'Old site',
+    note: 'Copy its content into V2',
+  },
 ] as const
 
 /** Settings sections named in `docs/v2/foundation.md`, and not designed yet. */

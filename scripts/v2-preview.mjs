@@ -39,6 +39,10 @@ const preview = {
   workers_dev: false,
   routes: [{ pattern: HOST, custom_domain: true, zone_name: 'yamanwarda.de' }],
   hyperdrive: [...(built.hyperdrive ?? []), { binding: 'HYPERDRIVE_V2', id: hyperdriveId }],
+  // Backend2's periodic jobs (`src/backend2/jobs/scheduled.ts`): blog schedules
+  // and booking reminders every tick, billing/purge/sweeps on the :00 tick.
+  // One trigger of the account's five on the free plan.
+  triggers: { crons: ['*/15 * * * *'] },
   vars: {
     ...(built.vars ?? {}),
     NODE_ENV: 'production',
@@ -85,6 +89,12 @@ const SECRETS = [
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
+  // The Dashboard's read access to Cloudflare Web Analytics (`docs/v2/analytics.md`).
+  // The public beacon (`CF_WEB_ANALYTICS_TOKEN`) is deliberately not copied:
+  // preview visits must not be counted as the live site's.
+  'CF_ANALYTICS_API_TOKEN',
+  'CF_ACCOUNT_ID',
+  'CF_WEB_ANALYTICS_SITE_TAG',
 ]
 
 const secrets = Object.fromEntries(SECRETS.filter((name) => env[name]).map((name) => [name, env[name]]))

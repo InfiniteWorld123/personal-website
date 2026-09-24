@@ -5,7 +5,13 @@ import {
   type AnalyticsPeriod,
   type AnalyticsSection,
   type AnalyticsSectionResponse,
+  type AnalyticsBlockMeta,
   ANALYTICS_TIME_ZONE,
+  HEATMAP_SLOTS,
+  HEATMAP_WEEKDAYS,
+  type MonthlyMoneyBlock,
+  type MonthlyMoneyCurrency,
+  type VisitHeatmapBlock,
   LEAD_ORIGIN_NOTE,
   type LeadOrigin,
   SECTION_LABELS,
@@ -36,6 +42,7 @@ import {
   UNAVAILABLE_MESSAGES,
   fillSeries,
   group,
+  logFailure,
   part,
   rateMetric,
   readyBreakdown,
@@ -45,6 +52,7 @@ import {
   unavailableMetric,
 } from './analytics.metric'
 import { readsFromV2 } from '../../public-source'
+import { addDays, berlinToday } from './analytics.period'
 import * as repo from './analytics.repo'
 import { type AnalyticsSources, currentSources } from './analytics.sources'
 import type { AssistantAnalyticsSource } from './sources/assistant'
@@ -99,8 +107,23 @@ const unavailablePart = (
 
 /* ------------------------------------------------------------------ website */
 
+/**
+ * A website figure worded for the adapter in use: Cloudflare's definitions by
+ * default, another provider's own when it is the one answering.
+ */
+const websiteDef = (ctx: Context, name: 'visitors' | 'pageviews' | 'topPages' | 'heatmap'): MetricDef => {
+  const source = ctx.sources.website
+  const base = WEBSITE[name]
+
+  if (name === 'heatmap') {
+    return { ...base, source: source.source, description: base.description.replace('Cloudflare Web Analytics', source.provider) }
+  }
+
+  return { ...base, ...source.wording[name], source: source.source }
+}
+
 const websiteSummaryPart = (ctx: Context, metrics: Array<'visitors' | 'pageviews'>): Part => {
-  const defs = metrics.map((name) => WEBSITE[name])
+  const defs = metrics.map((name) => websiteDef(ctx, name))
   const source = ctx.sources.website
 
   if (!source.connected) {
@@ -117,9 +140,9 @@ const websiteSummaryPart = (ctx: Context, metrics: Array<'visitors' | 'pageviews
     build: (snapshot) => ({
       metrics: metrics.map((name) => {
         const isVisitors = name === 'visitors'
-        const note = [`Explore further in PostHog: ${snapshot.exploreUrl}`]
+        const note = [`Explore further in ${source.provider}: ${snapshot.exploreUrl}`]
 
-        return readyMetric(WEBSITE[name], ctx, isVisitors ? snapshot.visitors : snapshot.pageviews, {
+        return readyMetric(websiteDef(ctx, name), ctx, isVisitors ? snapshot.visitors : snapshot.pageviews, {
           previous: isVisitors ? snapshot.previousVisitors : snapshot.previousPageviews,
           series: {
             bucket: ctx.period.bucket,
@@ -135,11 +158,12 @@ const websiteSummaryPart = (ctx: Context, metrics: Array<'visitors' | 'pageviews
 
 const websiteTopPagesPart = (ctx: Context): Part => {
   const source = ctx.sources.website
+  const topPages = { ...websiteDef(ctx, 'topPages'), ranking: WEBSITE.topPages.ranking }
 
   if (!source.connected) {
     return unavailablePart(ctx, {
       metrics: [],
-      breakdowns: [WEBSITE.topPages],
+      breakdowns: [topPages],
       state: 'not-connected',
       message: UNAVAILABLE_MESSAGES.notConnected,
     })
@@ -147,14 +171,14 @@ const websiteTopPagesPart = (ctx: Context): Part => {
 
   return part({
     metrics: [],
-    breakdowns: [WEBSITE.topPages],
+    breakdowns: [topPages],
     load: async () => ({
       // The same query the summary runs, so it comes from the provider cache.
       summary: await source.readSummary(ctx.period),
       pages: await source.readTopPages(ctx.period, { page: 1, pageSize: SECTION_BREAKDOWN_ITEMS }),
     }),
     build: ({ summary, pages }) => {
-      const breakdown = readyBreakdown(WEBSITE.topPages, ctx, {
+      const breakdown = readyBreakdown(topPages, ctx, {
         items: pages.items.map((page) => ({ key: page.path, label: page.path, value: page.pageviews })),
         total: summary.pageviews,
         truncated: pages.total > pages.items.length,
@@ -174,10 +198,10 @@ const buildWebsite = async (ctx: Context): Promise<AnalyticsGroup[]> => [
   await group(ctx, {
     key: 'traffic',
     label: 'Visitors',
-    source: SOURCES.posthog,
+    source: ctx.sources.website.source,
     notes: [
       'Only public pages count. The Dashboard, admin pages and the API are never included.',
-      'Public tracking is switched off until privacy and cost are separately approved.',
+      'Counted only while the public site carries the cookieless Cloudflare Web Analytics beacon, which is switched on separately.',
     ],
     parts: [websiteSummaryPart(ctx, ['visitors', 'pageviews']), websiteTopPagesPart(ctx)],
   }),
@@ -762,10 +786,141 @@ export const getSection = async (input: {
   }
 }
 
+/* -------------------------------------------------------------------- board */
+
+type BlockState = { state: 'ready' } | { state: Exclude<AnalyticsMetric['state'], 'ready'>; message: string }
+
+const blockMeta = (def: MetricDef, ctx: Context, status: BlockState, asOf = ctx.asOf): AnalyticsBlockMeta => ({
+  key: def.key,
+  label: def.label,
+  description: def.description,
+  source: def.source,
+  state: status.state,
+  timezone: ANALYTICS_TIME_ZONE,
+  asOf,
+  ...(def.link ? { link: def.link } : {}),
+  ...(def.notes && def.notes.length > 0 ? { notes: [...def.notes] } : {}),
+  ...(status.state === 'ready' ? {} : { message: status.message }),
+})
+
+/** Reads one source; a failure is logged by its shape only and answered as `null`. */
+const attempt = async <T>(source: string, load: () => Promise<T>): Promise<{ ok: true; data: T } | { ok: false }> => {
+  try {
+    return { ok: true, data: await load() }
+  } catch (error) {
+    logFailure(source, error)
+
+    return { ok: false }
+  }
+}
+
+/** The first day of the month `offset` months from the month of `date`. */
+const monthStart = (date: string, offset: number): string => {
+  const [year, month] = date.split('-').map(Number) as [number, number]
+  const index = year * 12 + (month - 1) + offset
+
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}-01`
+}
+
+const BOARD_MONTHS = 12
+const ON_TIME_DAYS = 90
+
+const failed = { state: 'error' as const, message: UNAVAILABLE_MESSAGES.error }
+
 /**
- * The short Overview: the four headline ideas and a compact glimpse of what
- * needs the owner now. Each figure is its own part, so an Inbox failure
- * leaves the follow-ups count standing, and the other way round.
+ * The money charts: monthly money in, paid on time (last 90 days) and paid
+ * in full (the period) — one read of the Invoices module, so they stand or
+ * fall together and apart from everything else.
+ */
+const buildMoneyBoard = async (
+  ctx: Context,
+): Promise<{ receivedByMonth: MonthlyMoneyBlock; paidOnTime: AnalyticsMetric; paidInFull: AnalyticsMetric }> => {
+  const today = berlinToday(ctx.now)
+  const months = Array.from({ length: BOARD_MONTHS }, (_, index) => monthStart(today, index - (BOARD_MONTHS - 1)))
+  const source = ctx.sources.money
+  const own = (def: MetricDef): MetricDef => (source ? { ...def, source: source.source } : def)
+  const unavailable = (status: Exclude<BlockState, { state: 'ready' }>) => ({
+    receivedByMonth: { ...blockMeta(own(MONEY.receivedByMonth), ctx, status), months, currencies: [] },
+    paidOnTime: unavailableMetric(own(MONEY.paidOnTime), ctx, status.state, status.message),
+    paidInFull: unavailableMetric(own(MONEY.paidInFull), ctx, status.state, status.message),
+  })
+
+  if (!source) return unavailable({ state: 'not-built', message: NOT_BUILT.money })
+  if (!source.readBoard) return unavailable({ state: 'not-built', message: NOT_BUILT.moneyBoard })
+
+  const read = source.readBoard
+  const answer = await attempt(source.source, () =>
+    read({
+      monthsFrom: months[0]!,
+      monthsTo: today,
+      onTimeFrom: addDays(today, -(ON_TIME_DAYS - 1)),
+      onTimeTo: today,
+      period: ctx.period,
+    }),
+  )
+
+  if (!answer.ok) return unavailable(failed)
+
+  const snapshot = answer.data
+  const currencies = [...new Set(snapshot.months.map((row) => row.currency.toUpperCase()))].sort()
+  const byCurrency: MonthlyMoneyCurrency[] = currencies.map((currency) => {
+    const rows = snapshot.months.filter((row) => row.currency.toUpperCase() === currency)
+    const at = (month: string) => rows.find((row) => row.month === month)
+    const oneOff = months.map((month) => at(month)?.oneOff ?? 0)
+    const subscription = months.map((month) => at(month)?.subscription ?? 0)
+
+    return { currency, oneOff, subscription, total: oneOff.map((value, index) => value + subscription[index]!) }
+  })
+  const { onTime, late } = snapshot.paidOnTime
+
+  return {
+    receivedByMonth: { ...blockMeta(own(MONEY.receivedByMonth), ctx, { state: 'ready' }), months, currencies: byCurrency },
+    paidOnTime: rateMetric(own(MONEY.paidOnTime), ctx, {
+      numerator: onTime,
+      denominator: onTime + late,
+      numeratorLabel: 'Paid on or before the due date',
+      denominatorLabel: 'Invoices paid in full in the last 90 days',
+      emptyMessage: 'No invoice was paid in full in the last 90 days, so there is no rate yet.',
+    }),
+    paidInFull: readyMetric(own(MONEY.paidInFull), ctx, snapshot.paidInFull),
+  }
+}
+
+const buildHeatmap = async (ctx: Context): Promise<VisitHeatmapBlock> => {
+  const def = websiteDef(ctx, 'heatmap')
+  const source = ctx.sources.website
+  const grid = {
+    weekdays: [...HEATMAP_WEEKDAYS],
+    slots: HEATMAP_SLOTS.map((slot) => slot.label),
+  }
+  const unavailable = (status: Exclude<BlockState, { state: 'ready' }>): VisitHeatmapBlock => ({
+    ...blockMeta(def, ctx, status),
+    ...grid,
+    cells: [],
+    total: null,
+  })
+
+  if (!source.connected) return unavailable({ state: 'not-connected', message: UNAVAILABLE_MESSAGES.notConnected })
+  if (!source.readHeatmap) return unavailable({ state: 'not-built', message: NOT_BUILT.heatmap })
+
+  const read = source.readHeatmap
+  const answer = await attempt(source.source, () => read(ctx.period))
+
+  if (!answer.ok) return unavailable(failed)
+
+  return {
+    ...blockMeta(def, ctx, { state: 'ready' }, answer.data.fetchedAt),
+    ...grid,
+    cells: answer.data.cells,
+    total: answer.data.total,
+  }
+}
+
+/**
+ * The short Overview: the four headline ideas, a compact glimpse of what
+ * needs the owner now, and the charts of the approved layout. Each figure is
+ * its own part, so an Inbox failure leaves the follow-ups count standing,
+ * and the other way round.
  */
 export const getOverview = async (input: {
   period: AnalyticsPeriod
@@ -773,8 +928,9 @@ export const getOverview = async (input: {
 }): Promise<AnalyticsOverviewResponse> => {
   const ctx = contextFor(input.period, currentSources(), input.now)
 
-  const headline = await runParts(ctx, [
-    moneyPart(ctx, ctx.sources.money, ['received', 'overdue'], false),
+  // Outstanding rides on the same Invoices read as the headline's money.
+  const top = await runParts(ctx, [
+    moneyPart(ctx, ctx.sources.money, ['received', 'overdue', 'outstanding'], false),
     websiteSummaryPart(ctx, ['visitors']),
     part({
       metrics: [INBOX.unread],
@@ -782,6 +938,9 @@ export const getOverview = async (input: {
       build: (unread) => ({ metrics: [readyMetric(INBOX.unread, ctx, unread)] }),
     }),
   ])
+  const outstanding = top.metrics.find((metric) => metric.key === MONEY.outstanding.key)!
+  const headline = top.metrics.filter((metric) => metric !== outstanding)
+  const visitors = headline.find((metric) => metric.key === WEBSITE.visitors.key)!
 
   const glimpse = await runParts(ctx, [
     part({
@@ -796,11 +955,50 @@ export const getOverview = async (input: {
     }),
   ])
 
+  const money = await buildMoneyBoard(ctx)
+  const visitsHeatmap = await buildHeatmap(ctx)
+
+  /*
+   * From visitor to paid. "Messages" is `inbox.new`, exactly as Analytics
+   * defines it: conversations someone else started (email, contact form,
+   * booking). Each step is its own count in the period, read on its own.
+   */
+  const steps = await runParts(ctx, [
+    part({
+      metrics: [INBOX.new],
+      load: () => repo.inboxCounts(ctx.window),
+      build: (counts) => ({
+        metrics: [readyMetric(INBOX.new, ctx, counts.new_now, { previous: counts.new_prev })],
+      }),
+    }),
+    part({
+      metrics: [BOOKING.made],
+      load: () => repo.bookingCounts(ctx.window, ctx.now),
+      build: (counts) => ({
+        metrics: [readyMetric(BOOKING.made, ctx, counts.booked_now, { previous: counts.booked_prev })],
+      }),
+    }),
+    part({
+      metrics: [CLIENTS.new],
+      load: () => repo.clientCounts(ctx.window),
+      build: (counts) => ({
+        metrics: [readyMetric(CLIENTS.new, ctx, counts.new_now, { previous: counts.new_prev })],
+      }),
+    }),
+  ])
+
   return {
     period: input.period,
     asOf: ctx.asOf,
     timezone: ANALYTICS_TIME_ZONE,
-    headline: headline.metrics,
+    headline,
     glimpse: glimpse.metrics,
+    board: {
+      receivedByMonth: money.receivedByMonth,
+      outstanding,
+      paidOnTime: money.paidOnTime,
+      visitsHeatmap,
+      funnel: [visitors, ...steps.metrics, money.paidInFull],
+    },
   }
 }

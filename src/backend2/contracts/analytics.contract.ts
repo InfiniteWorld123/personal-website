@@ -128,7 +128,7 @@ export const BlogRankingFilterSchema = v.object({
 /* ---------------------------------------------------------------- responses */
 
 export type MetricState = 'ready' | 'empty' | 'not-connected' | 'not-built' | 'error'
-export type MetricScope = 'period' | 'current' | 'next-7-days' | 'all-time'
+export type MetricScope = 'period' | 'current' | 'next-7-days' | 'last-90-days' | 'all-time'
 /**
  * `ratio` is 0–1, never a pre-multiplied percentage. `money` carries its
  * value in `amounts`, one entry per currency in minor units (cents), because
@@ -238,6 +238,83 @@ export type AnalyticsOverviewResponse = {
   headline: AnalyticsMetric[]
   /** A compact, actionable glimpse: what needs the owner now. */
   glimpse: AnalyticsMetric[]
+  /** The charts of the approved Overview (Design Lab Direction A, 24 Sep 2026). */
+  board: OverviewBoard
+}
+
+/**
+ * What every Overview chart block says about itself — the same identity and
+ * state vocabulary a metric carries, for a shape that is not one number.
+ */
+export type AnalyticsBlockMeta = {
+  key: string
+  label: string
+  description: string
+  source: string
+  state: MetricState
+  timezone: typeof ANALYTICS_TIME_ZONE
+  asOf: string
+  message?: string
+  notes?: string[]
+  link?: string
+}
+
+/** One currency's money per Berlin calendar month, in minor units, net of refunds. */
+export type MonthlyMoneyCurrency = {
+  currency: string
+  /** Paid invoices that belong to no subscription. */
+  oneOff: number[]
+  /** Paid invoices a subscription produced. */
+  subscription: number[]
+  total: number[]
+}
+
+/**
+ * Money received per Berlin calendar month: the twelve months ending with
+ * the current one, oldest first. The current month is the month so far.
+ */
+export type MonthlyMoneyBlock = AnalyticsBlockMeta & {
+  /** First day of each month, `YYYY-MM-01`, oldest first; the last is this month. */
+  months: string[]
+  /** One entry per currency that has any money in these months. Never added together. */
+  currencies: MonthlyMoneyCurrency[]
+}
+
+export const HEATMAP_WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+/** Berlin time slots, start hour included and end hour excluded. */
+export const HEATMAP_SLOTS = [
+  { label: '00–06', from: 0, to: 6 },
+  { label: '06–09', from: 6, to: 9 },
+  { label: '09–12', from: 9, to: 12 },
+  { label: '12–15', from: 12, to: 15 },
+  { label: '15–18', from: 15, to: 18 },
+  { label: '18–21', from: 18, to: 21 },
+  { label: '21–24', from: 21, to: 24 },
+] as const
+
+/** Visits by Berlin weekday (rows, Monday first) and time slot (columns). */
+export type VisitHeatmapBlock = AnalyticsBlockMeta & {
+  weekdays: string[]
+  slots: string[]
+  /** `cells[weekday][slot]`; empty unless ready. */
+  cells: number[][]
+  /** Every visit counted in the grid. `null` unless ready. */
+  total: number | null
+}
+
+export type OverviewBoard = {
+  receivedByMonth: MonthlyMoneyBlock
+  /** `invoices.outstanding` (count, with the open balance per currency). */
+  outstanding: AnalyticsMetric
+  /** `invoices.paidOnTime`: a rate over the last 90 days. */
+  paidOnTime: AnalyticsMetric
+  visitsHeatmap: VisitHeatmapBlock
+  /**
+   * From visitor to paid, in the Overview's period, each step counted on its
+   * own: `website.visitors`, `inbox.new`, `booking.made`, `clients.new`,
+   * `invoices.paidInFull`. Not a cohort — the same people are not followed.
+   */
+  funnel: AnalyticsMetric[]
 }
 
 export type RankingItem = { rank: number; key: string; label: string; value: number }

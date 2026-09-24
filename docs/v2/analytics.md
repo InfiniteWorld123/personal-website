@@ -138,3 +138,43 @@ Overview shows the four headline figures first, then “Needs you” and “This
 week”; the greeting line stays; Analytics sections are **tabs**; the default
 period is **30 days**. Every card has an ⓘ definition and a table view; states
 never show a fake zero. The Analytics menu item is added with the working page.
+
+## Overview (Direction A) and Cloudflare Web Analytics — implementation record, 24 Sep 2026
+
+The owner approved the Overview Design Lab **Direction A ("Hatch")** with its business funnel, and approved **Cloudflare Web Analytics** (cookieless) as the website-statistics provider in place of PostHog. PostHog's adapter stays in the code, dormant, and is used only if Cloudflare is not configured and the PostHog settings are.
+
+### What `/dashboard` shows
+
+One request, `GET /api/v2/owner/analytics/overview?period=30d`, now also returns `board` (`OverviewBoard` in `analytics.contract.ts`). Every block carries `state`, `source`, `asOf` and a plain-English `description`; a failing source takes down only its own block.
+
+| Card | Figure | Definition |
+| --- | --- | --- |
+| Received · month | `board.receivedByMonth` (last entry) | Payments received in the Berlin calendar month so far, minus refunds recorded that month, each currency apart. Split into **one-off** invoices and invoices a **subscription** produced (`v2_invoices.subscription_id`) — the only split the invoice data really supports. "Year" sums this calendar year. The delta compares with the *whole* previous month. |
+| Visits · 30 days | `headline` `website.visitors` | Cloudflare **visits** (a visit begins when someone arrives from another site or types the address), with a daily Berlin series and the change against the 30 days before. Cloudflare has no "unique visitors" (it is cookieless), so the card says *visits*, not visitors. |
+| Outstanding | `board.outstanding` (`invoices.outstanding`) + `invoices.overdue` | Issued live invoices not fully paid now, open balance per currency; overdue count beside it. |
+| Money in | `board.receivedByMonth` | The twelve months ending with the current one; the card shows this calendar year or the last 6 months, one currency at a time. |
+| Paid on time | `board.paidOnTime` (`invoices.paidOnTime`, scope `last-90-days`) | Of the issued live invoices **paid in full** whose final payment falls in the last 90 days, the share whose final payment was on or before the due date (the last instalment's due date when there are instalments). No such invoice → `empty`, never 0 %. Unpaid invoices are under Outstanding, not here. |
+| When people visit | `board.visitsHeatmap` | Cloudflare visits by Berlin weekday × slot (00–06, 06–09, 09–12, 12–15, 15–18, 18–21, 21–24), from hourly rows, 30 days. |
+| From visitor to paid | `board.funnel` | Visits (own line, with "% who write" = Messages ÷ Visits), then on one shared scale: **Messages** = `inbox.new` exactly as Analytics defines it (conversations someone else started: email, contact form, booking), **Bookings** = `booking.made`, **Clients** = `clients.new`, **Paid** = `invoices.paidInFull` (issued live invoices whose final payment arrived in the period). Each step is counted **on its own** in the same 30 days; it is not a cohort, and the card says so. |
+| Needs you | `headline`/`glimpse` | Overdue invoices, due Lead follow-ups, unread Inbox, appointments in the next 7 days. Only rows with something in them; a row whose source failed says so. |
+
+Money board figures come from the Invoices module's optional `readBoard` (`invoice.analytics-source.ts` → `receivedByMonth`, `paidOnTime` in `invoice.analytics.ts`); a money source without it answers `not-built`.
+
+### Cloudflare Web Analytics
+
+**Public beacon.** When `CF_WEB_ANALYTICS_TOKEN` is set, every public `/$lang/…` page renders Cloudflare's snippet — `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"…"}'>` — with the page's CSP nonce, and the CSP adds `script-src https://static.cloudflareinsights.com` and `connect-src https://cloudflareinsights.com`. Never on `/dashboard`, `/admin`, `/api`, or a booking's private `manage`/`room` link (`src/shared/web-analytics.ts`, tested). **Unset, the HTML and the CSP are exactly as before** (tested).
+
+**Dashboard reader** (`src/backend2/modules/analytics/sources/cloudflare.ts`). GraphQL Analytics API at `https://api.cloudflare.com/client/v4/graphql`, dataset `rumPageloadEventsAdaptiveGroups` under `viewer.accounts(filter: { accountTag })`, filtered by `siteTag` and `datetime_geq`/`datetime_lt`; `count` = page views, `sum { visits }` = visits; dimensions `datetimeHour` (≤ 92 days), `date` (longer), `requestPath` (top pages). 8-second timeout, answers cached in memory for 10 minutes, a failure logs only a short code — never the token, account or site tag. Field names were checked against Cloudflare's public descriptions of this dataset; they are isolated in four query strings and one parser with unit tests, and **have not yet run against the real account** — the first real read is the check. Cloudflare samples page loads, so figures are close estimates (said in each definition).
+
+| Setting | Where | What |
+| --- | --- | --- |
+| `CF_WEB_ANALYTICS_TOKEN` | Worker variable (public value) | The beacon token from the site's JS snippet. Switches the public beacon on. |
+| `CF_ACCOUNT_ID` | Worker variable or secret | The Cloudflare account ID (32 hex). |
+| `CF_WEB_ANALYTICS_SITE_TAG` | Worker variable or secret | The Web Analytics **site tag** (32 hex) — not the beacon token. |
+| `CF_ANALYTICS_API_TOKEN` | Worker **secret** | An API token with *Account → Account Analytics → Read*. |
+
+Any of the last three missing → website figures `not-connected`; malformed → `not-connected` with a log line naming no value. `scripts/v2-preview.mjs` copies the last three from `.env` into the preview's secrets, never the beacon token (preview visits must not count as the live site's).
+
+**Owner steps** (done on 24 Sep for the first two): Cloudflare dashboard → *Web Analytics* → *Add a site* → `yamanwarda.de` → *Enable with JS Snippet installation* → copy the token from the snippet (`CF_WEB_ANALYTICS_TOKEN`) and the site tag from the site's settings. Then *My Profile → API Tokens → Create Token → Custom* → permission *Account · Account Analytics · Read*, limited to this account → set it as the Worker secret `CF_ANALYTICS_API_TOKEN`, with `CF_ACCOUNT_ID` and `CF_WEB_ANALYTICS_SITE_TAG` beside it.
+
+**Before the beacon goes live on yamanwarda.de:** the privacy page must match. The V2 privacy page adds a "Website statistics (Cloudflare Web Analytics)" section (DE/EN/AR, `privacy-v2.ts`, **wording awaiting the owner's approval**) only while the beacon is on. Two sentences elsewhere then become untrue and need the owner's decision first: the privacy intro ("no analytics tools") and the section "What does not happen" ("no web analytics, no statistics software"), in all three languages — and the legacy privacy page (shown while no public module reads Backend2) has no Cloudflare section at all. Whether a cookieless beacon needs consent under § 25 TDDDG is a legal question for a qualified review, not decided here.

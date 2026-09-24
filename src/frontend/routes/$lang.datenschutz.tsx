@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { getContent } from '#/frontend/content'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { buildHead } from '#/frontend/lib/seo'
@@ -16,8 +16,11 @@ export const Route = createFileRoute('/$lang/datenschutz')({
   component: PrivacyRoute,
 })
 
+const languageRoute = getRouteApi('/$lang')
+
 function PrivacyRoute() {
   const { v2 } = Route.useLoaderData()
+  const { beacon } = languageRoute.useLoaderData()
 
-  return <LegalPage document="privacy" v2Privacy={v2} />
+  return <LegalPage document="privacy" v2Privacy={v2} webAnalytics={beacon !== null} />
 }

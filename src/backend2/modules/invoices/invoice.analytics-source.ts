@@ -1,8 +1,8 @@
 import type { AnalyticsPeriod, CurrencyAmount } from '../../contracts/analytics.contract'
 import type { Currency } from '../../contracts/invoice.contract'
 import { getDb } from '../../db/client'
-import type { MoneyAnalyticsSource, MoneySnapshot } from '../analytics/sources/money'
-import { invoiceStatusMix, overdueInvoices, receivedPayments } from './invoice.analytics'
+import type { MoneyAnalyticsSource, MoneyBoardSnapshot, MoneySnapshot } from '../analytics/sources/money'
+import { invoiceStatusMix, overdueInvoices, paidOnTime, receivedByMonth, receivedPayments } from './invoice.analytics'
 import { today as berlinToday } from './invoice.clock'
 import { paymentStateSql } from './invoice.repo'
 
@@ -60,6 +60,18 @@ export const invoiceAnalyticsSource: MoneyAnalyticsSource = {
       },
       outstanding: open,
       statusMix: Object.entries(mix.states).map(([status, count]) => ({ status, label: LABEL[status] ?? status, count })),
+    }
+  },
+  /** One statement after another: a repository never runs two at once on its connection. */
+  readBoard: async (query): Promise<MoneyBoardSnapshot> => {
+    const months = await receivedByMonth({ from: query.monthsFrom, to: query.monthsTo })
+    const recent = await paidOnTime({ from: query.onTimeFrom, to: query.onTimeTo })
+    const inPeriod = await paidOnTime({ from: query.period.from, to: query.period.to })
+
+    return {
+      months,
+      paidOnTime: { onTime: recent.onTime, late: recent.late },
+      paidInFull: inPeriod.paidInFull,
     }
   },
 }

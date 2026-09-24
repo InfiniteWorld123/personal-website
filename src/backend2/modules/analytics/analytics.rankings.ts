@@ -89,10 +89,10 @@ const definitionOf = (
     case 'website-pages':
       return {
         label: 'Most viewed pages',
-        description: 'Public pages by pageviews in the period, counted by PostHog.',
+        description: currentSources().website.wording.topPages.description,
         unit: 'count',
         scope: 'period',
-        source: SOURCES.posthog,
+        source: currentSources().website.source,
         notes: ['Only public pages count. The Dashboard, admin pages and the API are never included.'],
       }
   }

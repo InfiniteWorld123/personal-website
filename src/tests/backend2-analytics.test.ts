@@ -21,6 +21,9 @@ process.env.AUTH_V2_SECRET = 'test-only-auth-secret-at-least-32-chars-long'
 delete process.env.BACKEND2_OWNER_AUTH
 delete process.env.POSTHOG_PERSONAL_API_KEY
 delete process.env.POSTHOG_PROJECT_ID
+delete process.env.CF_ANALYTICS_API_TOKEN
+delete process.env.CF_ACCOUNT_ID
+delete process.env.CF_WEB_ANALYTICS_SITE_TAG
 
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
@@ -29,6 +32,8 @@ const { withAnalyticsSources } = await import('#/backend2/modules/analytics/anal
 const { ownerAnalyticsPaths } = await import('#/backend2/modules/analytics/analytics.owner.route')
 const period = await import('#/backend2/modules/analytics/analytics.period')
 const website = await import('#/backend2/modules/analytics/sources/website')
+const cloudflare = await import('#/backend2/modules/analytics/sources/cloudflare')
+const { useInvoiceClockForTest } = await import('#/backend2/modules/invoices/invoice.clock')
 
 type Json = Record<string, any>
 type Sources = Parameters<typeof withAnalyticsSources>[0]
@@ -758,7 +763,7 @@ describe('rankings', () => {
     ])
   })
 
-  it('answers an empty ranking as empty, and a disabled PostHog as not connected', async () => {
+  it('answers an empty ranking as empty, and switched-off website statistics as not connected', async () => {
     expect(await ok('/owner/analytics/rankings/lead-lost-reasons')).toMatchObject({
       state: 'empty',
       items: [],
@@ -768,7 +773,7 @@ describe('rankings', () => {
     expect(await ok('/owner/analytics/rankings/website-pages')).toMatchObject({
       state: 'not-connected',
       items: [],
-      source: 'posthog',
+      source: 'cloudflare',
     })
   })
 })
@@ -1265,5 +1270,442 @@ describe('privacy and the owner boundary', () => {
 
   it('has no public Analytics route', async () => {
     expect((await call('/analytics/overview')).status).toBe(404)
+  })
+})
+
+/* ======================================================= the Overview board */
+
+const insertClient = async (createdAt = '2026-09-05T10:00:00Z') =>
+  (
+    await sql(
+      `INSERT INTO v2_clients (kind, name, email, country_code, status, created_at)
+       VALUES ('person', 'Probe Client', $1, 'DE', 'active', $2) RETURNING id`,
+      [`client${(seq += 1)}@example.org`, createdAt],
+    )
+  ).rows[0].id as string
+
+const insertSubscription = async (clientId: string) =>
+  (
+    await sql(
+      `INSERT INTO v2_subscriptions (mode, client_id, collection, billing_interval, start_date, currency, description)
+       VALUES ('live', $1, 'manual', 'monthly', '2026-01-01', 'EUR', 'Care plan') RETURNING id`,
+      [clientId],
+    )
+  ).rows[0].id as string
+
+/**
+ * An issued invoice with its payments and refunds, `paid_minor` and
+ * `refunded_minor` kept in step the way the Invoices module keeps them.
+ */
+const insertInvoice = async (input: {
+  clientId: string
+  total: number
+  due: string
+  currency?: 'EUR' | 'USD'
+  mode?: 'live' | 'test'
+  subscriptionId?: string
+  periodStart?: string
+  payments?: Array<{ amount: number; on: string; voided?: boolean }>
+  refunds?: Array<{ amount: number; on: string }>
+}) => {
+  seq += 1
+
+  const currency = input.currency ?? 'EUR'
+  const payments = input.payments ?? []
+  const refunds = input.refunds ?? []
+  const paid = payments.filter((p) => !p.voided).reduce((sum, p) => sum + p.amount, 0)
+  const refunded = refunds.reduce((sum, r) => sum + r.amount, 0)
+  const id = (
+    await sql(
+      `INSERT INTO v2_invoices
+         (mode, kind, status, client_id, number, number_year, number_seq, currency, issue_date, due_date,
+          snapshot, total_minor, paid_minor, refunded_minor, subscription_id, period_start, period_end)
+       VALUES ($1, 'invoice', 'issued', $2, $3, 2026, $4, $5, '2026-01-01', $6, '{}'::jsonb, $7, $8, $9, $10, $11, $12)
+       RETURNING id`,
+      [
+        input.mode ?? 'live',
+        input.clientId,
+        `2026-${String(seq).padStart(4, '0')}${input.mode === 'test' ? '-T' : ''}`,
+        seq,
+        currency,
+        input.due,
+        input.total,
+        paid,
+        refunded,
+        input.subscriptionId ?? null,
+        input.periodStart ?? null,
+        input.periodStart ?? null,
+      ],
+    )
+  ).rows[0].id as string
+
+  for (const payment of payments) {
+    await sql(
+      `INSERT INTO v2_invoice_payments (invoice_id, method, amount_minor, currency, paid_on, voided_at, void_reason)
+       VALUES ($1, 'bank', $2, $3, $4, $5, $6)`,
+      [id, payment.amount, currency, payment.on, payment.voided ? NOW : null, payment.voided ? 'Typed twice' : ''],
+    )
+  }
+
+  for (const refund of refunds) {
+    await sql(
+      `INSERT INTO v2_invoice_refunds (invoice_id, method, amount_minor, currency, refunded_on)
+       VALUES ($1, 'bank', $2, $3, $4)`,
+      [id, refund.amount, currency, refund.on],
+    )
+  }
+
+  return id
+}
+
+describe('the Overview board', () => {
+  afterEach(() => useInvoiceClockForTest(undefined))
+
+  it('on an empty database: twelve empty months, no invented rate, and honest gaps', async () => {
+    const data = await ok('/owner/analytics/overview')
+    const board = data.board
+
+    expect(board.receivedByMonth).toMatchObject({
+      key: 'money.receivedByMonth',
+      state: 'ready',
+      source: 'backend2.invoices',
+      currencies: [],
+      timezone: 'Europe/Berlin',
+    })
+    expect(board.receivedByMonth.months).toHaveLength(12)
+    expect(board.receivedByMonth.months[0]).toBe('2025-10-01')
+    expect(board.receivedByMonth.months.at(-1)).toBe('2026-09-01')
+    expect(board.outstanding).toMatchObject({ key: 'invoices.outstanding', state: 'ready', value: 0, amounts: [] })
+    expect(board.paidOnTime).toMatchObject({ key: 'invoices.paidOnTime', state: 'empty', value: null, scope: 'last-90-days' })
+    expect(board.paidOnTime.message).toMatch(/no rate/u)
+    expect(board.visitsHeatmap).toMatchObject({ state: 'not-connected', cells: [], total: null, source: 'cloudflare' })
+    expect(board.visitsHeatmap.slots).toEqual(['00–06', '06–09', '09–12', '12–15', '15–18', '18–21', '21–24'])
+    expect(board.funnel.map((m: Json) => [m.key, m.state, m.value])).toEqual([
+      ['website.visitors', 'not-connected', null],
+      ['inbox.new', 'ready', 0],
+      ['booking.made', 'ready', 0],
+      ['clients.new', 'ready', 0],
+      ['invoices.paidInFull', 'ready', 0],
+    ])
+    // Outstanding moved to the board; the headline still has its four ideas.
+    expect(data.headline.map((m: Json) => m.key)).toEqual([
+      'money.received',
+      'invoices.overdue',
+      'website.visitors',
+      'inbox.unread',
+    ])
+  })
+
+  it('reads money per month, split one-off and subscription, net of refunds, each currency apart', async () => {
+    useInvoiceClockForTest(NOW)
+
+    const client = await insertClient()
+    const plan = await insertSubscription(client)
+
+    // Paid in two parts, the last before the due date: on time, and paid in the period.
+    await insertInvoice({
+      clientId: client,
+      total: 50000,
+      due: '2026-09-10',
+      payments: [
+        { amount: 20000, on: '2026-09-01' },
+        { amount: 30000, on: '2026-09-09' },
+      ],
+    })
+    // A subscription invoice paid four days late, before the 30-day period.
+    await insertInvoice({
+      clientId: client,
+      total: 10000,
+      due: '2026-08-01',
+      subscriptionId: plan,
+      periodStart: '2026-07-01',
+      payments: [{ amount: 10000, on: '2026-08-05' }],
+    })
+    // Dollars stay dollars.
+    await insertInvoice({
+      clientId: client,
+      total: 20000,
+      due: '2026-09-30',
+      currency: 'USD',
+      payments: [{ amount: 20000, on: '2026-09-20' }],
+    })
+    // Partly paid, partly refunded, one payment voided: still open and overdue.
+    await insertInvoice({
+      clientId: client,
+      total: 30000,
+      due: '2026-09-01',
+      payments: [
+        { amount: 5000, on: '2026-09-15' },
+        { amount: 9999, on: '2026-09-15', voided: true },
+      ],
+      refunds: [{ amount: 2000, on: '2026-09-16' }],
+    })
+    // Practice documents and money older than the twelve months never count.
+    await insertInvoice({ clientId: client, total: 7777, due: '2026-09-30', mode: 'test', payments: [{ amount: 7777, on: '2026-09-10' }] })
+    await insertInvoice({ clientId: client, total: 1234, due: '2025-09-30', payments: [{ amount: 1234, on: '2025-09-15' }] })
+
+    const board = (await ok('/owner/analytics/overview')).board
+    const eur = board.receivedByMonth.currencies.find((c: Json) => c.currency === 'EUR')
+    const usd = board.receivedByMonth.currencies.find((c: Json) => c.currency === 'USD')
+
+    expect(board.receivedByMonth.currencies.map((c: Json) => c.currency)).toEqual(['EUR', 'USD'])
+    expect(eur.oneOff.at(-1)).toBe(50000 + 5000 - 2000)
+    expect(eur.subscription.at(-1)).toBe(0)
+    expect(eur.subscription.at(-2)).toBe(10000)
+    expect(eur.total.at(-2)).toBe(10000)
+    expect(eur.total.slice(0, 10)).toEqual(Array(10).fill(0))
+    expect(usd.oneOff.at(-1)).toBe(20000)
+
+    expect(board.paidOnTime).toMatchObject({
+      state: 'ready',
+      unit: 'ratio',
+      rate: { numerator: 2, denominator: 3 },
+    })
+    expect(board.paidOnTime.value).toBeCloseTo(2 / 3)
+    expect(board.funnel.at(-1)).toMatchObject({ key: 'invoices.paidInFull', value: 2 })
+    expect(board.outstanding).toMatchObject({ value: 1, amounts: [{ currency: 'EUR', minor: 27000 }] })
+    expect(JSON.stringify(board)).not.toContain('Probe Client')
+  })
+
+  it('counts each funnel step on its own in the period', async () => {
+    await insertConversation({ origin: 'contact', createdAt: '2026-09-20T10:00:00Z' })
+    await insertConversation({ origin: 'booking', createdAt: '2026-09-21T10:00:00Z' })
+    await insertConversation({ origin: 'incoming', createdAt: '2026-09-22T10:00:00Z' })
+    await insertConversation({ origin: 'outgoing', createdAt: '2026-09-22T10:00:00Z' })
+    await insertConversation({ origin: 'contact', createdAt: '2026-07-01T10:00:00Z' })
+    await insertAppointment({ startsAt: '2026-10-01T10:00:00Z', createdAt: '2026-09-21T10:00:00Z' })
+    await insertClient('2026-09-22T10:00:00Z')
+    await insertClient('2026-06-01T10:00:00Z')
+
+    const funnel = (await ok('/owner/analytics/overview')).board.funnel
+
+    expect(funnel.map((m: Json) => [m.key, m.value])).toEqual([
+      ['website.visitors', null],
+      ['inbox.new', 3],
+      ['booking.made', 1],
+      ['clients.new', 1],
+      ['invoices.paidInFull', 0],
+    ])
+  })
+
+  it('keeps the rest of the board when the money charts fail, and says what a source cannot do', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const read = async () => ({
+      receivedNet: [],
+      previousReceivedNet: [],
+      refunds: [],
+      overdue: { count: 0, balance: [] },
+      outstanding: { count: 0, balance: [] },
+      statusMix: [],
+    })
+    const failing = await ok('/owner/analytics/overview', {
+      money: {
+        source: 'backend2.invoices',
+        read,
+        readBoard: async () => {
+          throw new Error('invoice for Secret Client failed')
+        },
+      },
+    })
+
+    expect(failing.board.receivedByMonth).toMatchObject({ state: 'error', currencies: [] })
+    expect(failing.board.paidOnTime).toMatchObject({ state: 'error', value: null })
+    expect(failing.board.funnel.at(-1)).toMatchObject({ state: 'error', value: null })
+    expect(failing.board.outstanding).toMatchObject({ state: 'ready', value: 0 })
+    expect(failing.board.funnel[1]).toMatchObject({ key: 'inbox.new', state: 'ready' })
+    expect(JSON.stringify(failing)).not.toContain('Secret Client')
+
+    const partial = await ok('/owner/analytics/overview', { money: { source: 'backend2.invoices', read } })
+
+    expect(partial.board.receivedByMonth.state).toBe('not-built')
+    expect(partial.board.paidOnTime.state).toBe('not-built')
+
+    const none = await ok('/owner/analytics/overview', { money: null })
+
+    expect(none.board.receivedByMonth).toMatchObject({ state: 'not-built' })
+    expect(none.board.outstanding).toMatchObject({ state: 'not-built', value: null })
+  })
+})
+
+/* ========================================================= Cloudflare adapter */
+
+const ACCOUNT = 'a'.repeat(32)
+const SITE = 'b'.repeat(32)
+
+const cfReply = (account: Record<string, unknown> | null, errors: unknown = null) =>
+  new Response(JSON.stringify({ data: { viewer: { accounts: account ? [account] : [] } }, errors }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  })
+
+/** A fake Cloudflare GraphQL API that answers by which of the four queries it was asked. */
+const fakeCloudflare = (options: { account?: 'missing'; errors?: boolean } = {}) => {
+  const requests: Array<{ url: string; init: RequestInit; query: string; variables: Record<string, string> }> = []
+  const fetch = async (url: string, init: RequestInit) => {
+    const body = JSON.parse(String(init.body))
+
+    requests.push({ url, init, query: body.query, variables: body.variables })
+
+    if (options.errors) return cfReply(null, [{ message: 'not authorized for that account' }])
+    if (options.account === 'missing') return cfReply(null)
+    if (body.query.includes('OwnerDashboardTotals')) {
+      return cfReply({ current: [{ count: 100, sum: { visits: 40 } }], previous: [{ count: 50, sum: { visits: 20 } }] })
+    }
+    if (body.query.includes('OwnerDashboardHourly')) {
+      return cfReply({
+        rows: [
+          // Sunday 20 Sep, 22:00 in Berlin.
+          { count: 4, sum: { visits: 3 }, dimensions: { datetimeHour: '2026-09-20T20:00:00Z' } },
+          // Monday 21 Sep, 10:00 in Berlin.
+          { count: 9, sum: { visits: 5 }, dimensions: { datetimeHour: '2026-09-21T08:00:00Z' } },
+          // Monday 21 Sep, 01:00 in Berlin — still Sunday in UTC.
+          { count: 1, sum: { visits: 1 }, dimensions: { datetimeHour: '2026-09-20T23:00:00Z' } },
+        ],
+      })
+    }
+    if (body.query.includes('OwnerDashboardPages')) {
+      return cfReply({
+        rows: [
+          { count: 60, dimensions: { requestPath: '/de' } },
+          { count: 25, dimensions: { requestPath: '/en/work' } },
+          { count: 15, dimensions: { requestPath: '/ar' } },
+        ],
+      })
+    }
+
+    return cfReply({ rows: [] })
+  }
+
+  return { requests, fetch }
+}
+
+const cfSource = (fake: ReturnType<typeof fakeCloudflare>) =>
+  cloudflare.createCloudflareWebsiteSource({
+    apiToken: 'cf-secret-token',
+    accountId: ACCOUNT,
+    siteTag: SITE,
+    fetch: fake.fetch,
+    now: () => NOW,
+  })
+
+describe('Cloudflare Web Analytics', () => {
+  it('is chosen only with all three settings, each well-formed, and ahead of PostHog', () => {
+    const full = { CF_ANALYTICS_API_TOKEN: 'token', CF_ACCOUNT_ID: ACCOUNT, CF_WEB_ANALYTICS_SITE_TAG: SITE }
+
+    expect(website.resolveWebsiteSource(full).id).toBe('cloudflare')
+    expect(website.resolveWebsiteSource({ ...full, CF_ANALYTICS_API_TOKEN: '' }).id).toBe('disabled')
+    expect(website.resolveWebsiteSource({ ...full, CF_ACCOUNT_ID: undefined }).id).toBe('disabled')
+    expect(website.resolveWebsiteSource({ ...full, CF_WEB_ANALYTICS_SITE_TAG: '  ' }).id).toBe('disabled')
+    expect(
+      website.resolveWebsiteSource({ ...full, POSTHOG_PERSONAL_API_KEY: 'phx', POSTHOG_PROJECT_ID: '1' }).id,
+    ).toBe('cloudflare')
+
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    // The beacon token pasted where the site tag belongs, or a mistyped account.
+    expect(website.resolveWebsiteSource({ ...full, CF_WEB_ANALYTICS_SITE_TAG: 'not-a-site-tag' }).id).toBe('disabled')
+    expect(website.resolveWebsiteSource({ ...full, CF_ACCOUNT_ID: 'acc' }).id).toBe('disabled')
+    expect(JSON.stringify(logged.mock.calls)).not.toContain('token')
+  })
+
+  it('shows visits, the Berlin-day series and the weekday grid, and asks Cloudflare the documented way', async () => {
+    const fake = fakeCloudflare()
+    const source = cfSource(fake)
+    const data = await ok('/owner/analytics/overview', { website: source })
+    const visits = metric(data, 'website.visitors')
+
+    expect(visits).toMatchObject({
+      state: 'ready',
+      value: 40,
+      previous: { value: 20 },
+      source: 'cloudflare',
+      label: 'Website visits',
+      asOf: NOW.toISOString(),
+    })
+    expect(visits.description).toMatch(/cookieless/u)
+    expect(visits.notes.join(' ')).toContain(`https://dash.cloudflare.com/${ACCOUNT}/web-analytics`)
+    expect(visits.series.points).toHaveLength(30)
+    expect(visits.series.points.find((p: Json) => p.date === '2026-09-20').value).toBe(3)
+    expect(visits.series.points.find((p: Json) => p.date === '2026-09-21').value).toBe(6)
+
+    const grid = data.board.visitsHeatmap
+
+    expect(grid).toMatchObject({ state: 'ready', total: 9, source: 'cloudflare' })
+    expect(grid.weekdays).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    expect(grid.cells[0][2]).toBe(5) // Monday 09–12
+    expect(grid.cells[0][0]).toBe(1) // Monday 00–06
+    expect(grid.cells[6][6]).toBe(3) // Sunday 21–24
+    expect(data.board.funnel[0]).toMatchObject({ key: 'website.visitors', value: 40 })
+
+    const first = fake.requests[0]!
+
+    expect(first.url).toBe('https://api.cloudflare.com/client/v4/graphql')
+    expect(new Headers(first.init.headers).get('authorization')).toBe('Bearer cf-secret-token')
+    expect(first.query).toContain('rumPageloadEventsAdaptiveGroups')
+    expect(first.query).toContain('sum { visits }')
+    expect(first.variables).toMatchObject({
+      accountTag: ACCOUNT,
+      siteTag: SITE,
+      // The period's Berlin midnights, as instants.
+      start: '2026-08-24T22:00:00.000Z',
+      end: '2026-09-23T22:00:00.000Z',
+      previousStart: '2026-07-25T22:00:00.000Z',
+    })
+    expect(JSON.stringify(data)).not.toContain('cf-secret-token')
+
+    // Asked again within ten minutes: answered from the cache.
+    const before = fake.requests.length
+
+    await ok('/owner/analytics/overview', { website: source })
+    expect(fake.requests.length).toBe(before)
+  })
+
+  it('pages the most viewed pages', async () => {
+    const source = cfSource(fakeCloudflare())
+    const ranking = await ok('/owner/analytics/rankings/website-pages?pageSize=2&page=2', { website: source })
+
+    expect(ranking).toMatchObject({ state: 'ready', total: 3, page: 2, pageCount: 2, source: 'cloudflare' })
+    expect(ranking.items).toEqual([{ rank: 3, key: '/ar', label: '/ar', value: 15 }])
+  })
+
+  it('turns a refusal, a GraphQL error or an unseen account into an error, never a zero', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    for (const fake of [
+      { fetch: async () => new Response('{"errors":[{"message":"bad token cf-secret-token"}]}', { status: 403 }) },
+      fakeCloudflare({ errors: true }),
+      fakeCloudflare({ account: 'missing' }),
+    ]) {
+      const source = cloudflare.createCloudflareWebsiteSource({
+        apiToken: 'cf-secret-token',
+        accountId: ACCOUNT,
+        siteTag: SITE,
+        fetch: fake.fetch as never,
+      })
+      const data = await ok('/owner/analytics/overview', { website: source })
+
+      expect(metric(data, 'website.visitors')).toMatchObject({ state: 'error', value: null })
+      expect(data.board.visitsHeatmap).toMatchObject({ state: 'error', total: null, cells: [] })
+      expect(metric(data, 'inbox.unread')).toMatchObject({ state: 'ready', value: 0 })
+      expect(JSON.stringify(data)).not.toContain('cf-secret-token')
+    }
+
+    expect(JSON.stringify(logged.mock.calls)).not.toContain('cf-secret-token')
+    expect(JSON.stringify(logged.mock.calls)).not.toContain(ACCOUNT)
+  })
+
+  it('parses the answer strictly', () => {
+    const body = { data: { viewer: { accounts: [{ rows: [{ count: 7, sum: { visits: 2 }, dimensions: { date: '2026-09-01' } }] }] } } }
+
+    expect(cloudflare.parseRows(body, 'rows')).toEqual([{ pageviews: 7, visits: 2, dimensions: { date: '2026-09-01' } }])
+    expect(() => cloudflare.parseRows({ data: { viewer: { accounts: [] } } }, 'rows')).toThrow()
+    expect(() => cloudflare.parseRows({ errors: [{ message: 'x' }], data: null }, 'rows')).toThrow()
+    expect(() => cloudflare.parseRows(body, 'other')).toThrow()
+    expect(() =>
+      cloudflare.parseRows({ data: { viewer: { accounts: [{ rows: [{ count: -1 }] }] } } }, 'rows'),
+    ).toThrow()
+    expect(cloudflare.berlinHour('2026-03-29T01:00:00Z')).toEqual({ date: '2026-03-29', weekday: 6, hour: 3 })
+    expect(cloudflare.berlinHour('2026-10-25T00:00:00Z')).toEqual({ date: '2026-10-25', weekday: 6, hour: 2 })
   })
 })

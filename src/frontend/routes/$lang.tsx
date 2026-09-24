@@ -1,7 +1,12 @@
-import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
+import { Outlet, createFileRoute, notFound, useRouter, useRouterState } from '@tanstack/react-router'
 import { PublicShell } from '#/frontend/components/layout/public/PublicShell'
 import { fetchPublishedContent } from '#/frontend/features/content/server/published-content'
 import { useContentOverrides } from '#/frontend/features/content/use-published-content'
+import {
+  CloudflareBeacon,
+  loadBeaconToken,
+  rememberBeaconToken,
+} from '#/frontend/features/web-analytics/CloudflareBeacon'
 import { getContent } from '#/frontend/content'
 import { site } from '#/frontend/content/site'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
@@ -19,7 +24,11 @@ export const Route = createFileRoute('/$lang')({
   beforeLoad: ({ params }) => {
     if (!isLanguage(params.lang)) throw notFound()
   },
-  loader: async () => ({ published: await fetchPublishedContent() }),
+  loader: async () => {
+    const [published, beacon] = await Promise.all([fetchPublishedContent(), loadBeaconToken()])
+
+    return { published, beacon }
+  },
   component: LanguageLayout,
   notFoundComponent: LanguageNotFound,
   /*
@@ -41,14 +50,21 @@ export const Route = createFileRoute('/$lang')({
 })
 
 function LanguageLayout() {
-  const { published } = Route.useLoaderData()
+  const { published, beacon } = Route.useLoaderData()
+  const router = useRouter()
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const nonce = typeof router.options.ssr === 'object' ? router.options.ssr.nonce : undefined
 
   useContentOverrides(published)
+  rememberBeaconToken(beacon)
 
   return (
-    <PublicShell>
-      <Outlet />
-    </PublicShell>
+    <>
+      <PublicShell>
+        <Outlet />
+      </PublicShell>
+      <CloudflareBeacon token={beacon} pathname={pathname} nonce={nonce} />
+    </>
   )
 }
 
