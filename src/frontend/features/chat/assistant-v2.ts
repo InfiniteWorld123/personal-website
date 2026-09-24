@@ -1,20 +1,7 @@
-import { createServerFn } from '@tanstack/react-start'
 import type { AskResult, AssistantLanguage, AssistantStatus } from '#/backend2/contracts/assistant.contract'
 import type { Language } from '#/frontend/i18n/language'
 
-/**
- * The widget's Backend2 path (`docs/v2/public-cutover.md`, step 7).
- *
- * Which path answers is the server's decision (`PUBLIC_V2_MODULES` lists
- * `assistant`), asked once when the panel opens — a visitor who never opens
- * the chat never pays for the question. The flag only picks which public
- * endpoint the widget calls; each endpoint enforces its own rules.
- */
-export const fetchAssistantSource = createServerFn({ method: 'GET' }).handler(async (): Promise<{ v2: boolean }> => {
-  const { readsFromV2 } = await import('#/backend2/public-source')
-
-  return { v2: readsFromV2('assistant') }
-})
+/** The widget's Backend2 calls (`docs/v2/public-cutover.md`, step 7). */
 
 export class AssistantRequestError extends Error {
   constructor(

@@ -19,24 +19,16 @@ export const clampPostPage = (requested: number | undefined, count: number): num
  * "Load more" grows one list rather than paging between several, so the page
  * number is a count of batches shown, clamped to what actually exists.
  *
- * `total` is set when the server already paged the list (Backend2): `items`
- * is then exactly what to show, and only the count says whether more exist.
- * Without it the list is every post (legacy) and is sliced here, as before.
+ * The server already paged the list: `items` is exactly what to show, and
+ * only the count says whether more exist.
  */
-export function getPostBatch(items: PublicPostSummary[], requestedPage?: number, total?: number | null) {
-  if (typeof total === 'number') {
-    return {
-      page: clampPostPage(requestedPage, total),
-      visible: items,
-      total,
-      hasMore: items.length < total,
-    }
+export function getPostBatch(items: PublicPostSummary[], requestedPage: number | undefined, total: number) {
+  return {
+    page: clampPostPage(requestedPage, total),
+    visible: items,
+    total,
+    hasMore: items.length < total,
   }
-
-  const page = clampPostPage(requestedPage, items.length)
-  const visible = items.slice(0, page * POST_BATCH_SIZE)
-
-  return { page, visible, total: items.length, hasMore: visible.length < items.length }
 }
 
 type Head = {

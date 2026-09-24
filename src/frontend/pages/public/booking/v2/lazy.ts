@@ -1,6 +1,6 @@
 import { lazyPage } from '#/frontend/features/booking/v2/lazy-page'
 
-/** The Backend2 booking pages, downloaded only when the booking switch is on. */
+/** The Backend2 booking pages, each in its own chunk, fetched by its route's loader. */
 export const typesPageV2 = lazyPage(() => import('./BookingTypesPageV2').then((module) => module.BookingTypesPageV2))
 export const flowPageV2 = lazyPage(() => import('./BookingFlowPageV2').then((module) => module.BookingFlowPageV2))
 export const managePageV2 = lazyPage(() => import('./BookingManagePageV2').then((module) => module.BookingManagePageV2))

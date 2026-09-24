@@ -1,11 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
-import { fetchBookingSource } from '#/frontend/features/booking/server/booking-source'
 import { readFragmentToken } from '#/frontend/features/booking/v2/api'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { site } from '#/frontend/content/site'
-import { BookingManagePage } from '#/frontend/pages/public/booking/BookingManagePage'
 import { managePageV2 } from '#/frontend/pages/public/booking/v2/lazy'
 
 /**
@@ -28,43 +26,21 @@ export const Route = createFileRoute('/$lang/booking/manage/$reference')({
     }
   },
   loader: async () => {
-    const source = await fetchBookingSource()
-
-    if (source.v2) await managePageV2.preload()
-
-    return source
+    await managePageV2.preload()
   },
   component: BookingManageRoute,
 })
 
 function BookingManageRoute() {
   const { reference } = Route.useParams()
-  const { v2 } = Route.useLoaderData()
   const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
     // Backend2's links carry the credential bare in the fragment (`#<credential>`).
-    if (v2) {
-      setToken(readFragmentToken(window.location.hash))
-
-      return
-    }
-
-    const url = new URL(window.location.href)
-    const hash = new URLSearchParams(url.hash.replace(/^#/, ''))
-    const legacyToken = url.searchParams.get('token')
-    const found = hash.get('token') ?? legacyToken ?? ''
-
-    if (legacyToken) {
-      url.searchParams.delete('token')
-      url.hash = `token=${encodeURIComponent(legacyToken)}`
-      window.history.replaceState(window.history.state, '', url)
-    }
-
-    setToken(found)
-  }, [v2])
+    setToken(readFragmentToken(window.location.hash))
+  }, [])
 
   if (token === null) return null
 
-  return v2 ? <managePageV2.Page reference={reference} token={token} /> : <BookingManagePage reference={reference} token={token} />
+  return <managePageV2.Page reference={reference} token={token} />
 }

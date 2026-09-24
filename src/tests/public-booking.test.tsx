@@ -16,17 +16,17 @@ import {
 import { ApiRequestError } from '#/frontend/api/response'
 
 /**
- * Public cutover step 5: the booking pages behind the switch.
+ * Public cutover step 5: the booking pages.
  *
- * With the switch on they talk to Backend2 and follow the approved lab: how
+ * They talk to Backend2 and follow the approved lab: how
  * to meet before the time with video chosen, the phone only for a phone call,
  * a time just taken, a success page per way of meeting and for a failed
  * email, the private page with its deadline and five reasons, and a video
  * room that waits honestly instead of faking a call. The home band quotes
- * times from whichever backend the switch names.
+ * Backend2's times.
  */
 
-const state = vi.hoisted(() => ({ language: 'en' as 'de' | 'en' | 'ar', v2: true, camera: 'ready' as 'ready' | 'failed' }))
+const state = vi.hoisted(() => ({ language: 'en' as 'de' | 'en' | 'ar', camera: 'ready' as 'ready' | 'failed' }))
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to, hash, params }: { children: ReactNode; to: string; hash?: string; params?: Record<string, string> }) => {
@@ -50,10 +50,6 @@ vi.mock('#/frontend/features/security/TurnstileWidget', () => ({
     return null
   },
 }))
-vi.mock('#/frontend/features/booking/server/booking-source', () => ({
-  fetchBookingSource: vi.fn(async () => ({ v2: state.v2 })),
-  bookingSourceQuery: () => ({ queryKey: ['public-source', 'booking'], queryFn: async () => ({ v2: state.v2 }), staleTime: Infinity }),
-}))
 vi.mock('#/frontend/features/call/use-media', () => ({
   useMedia: () => ({
     status: state.camera,
@@ -73,10 +69,8 @@ vi.mock('#/frontend/features/booking/v2/api', async (importOriginal) => ({
   videoPreflight: vi.fn(),
   videoJoin: vi.fn(),
 }))
-vi.mock('#/frontend/api/booking.api', () => ({ fetchBookingTypes: vi.fn(), fetchSlots: vi.fn() }))
 
 const api = await import('#/frontend/features/booking/v2/api')
-const legacyApi = await import('#/frontend/api/booking.api')
 const { BookingFlowPageV2 } = await import('#/frontend/pages/public/booking/v2/BookingFlowPageV2')
 const { BookingManagePageV2 } = await import('#/frontend/pages/public/booking/v2/BookingManagePageV2')
 const { BookingRoomPageV2, countdown } = await import('#/frontend/pages/public/booking/v2/BookingRoomPageV2')
@@ -155,7 +149,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(NOW)
   state.language = 'en'
-  state.v2 = true
   state.camera = 'ready'
   vi.mocked(api.fetchTypes).mockResolvedValue([TYPE])
   vi.mocked(api.fetchSlots).mockImplementation(slotsAnswer)
@@ -250,7 +243,7 @@ const fill = (label: string, value: string) => fireEvent.change(screen.getByLabe
 
 const confirm = () => act(async () => fireEvent.click(screen.getByRole('button', { name: /confirm booking/i })))
 
-describe('booking with the switch on', () => {
+describe('booking', () => {
   it('asks how to meet first, with video chosen, and no phone for a video call', async () => {
     await toDetails()
 
@@ -563,7 +556,7 @@ describe('the video room', () => {
 /* ------------------------------------------------------- next free times */
 
 describe('the home band', () => {
-  it('quotes Backend2 times when the switch is on', async () => {
+  it('quotes Backend2 times', async () => {
     wrap(<BookingBand />)
 
     const link = await screen.findByRole('link', { name: /Wed/ })
@@ -571,25 +564,5 @@ describe('the home band', () => {
     expect(link.getAttribute('href')).toBe('/en/booking/intro')
     expect(api.fetchTypes).toHaveBeenCalledWith('en')
     expect(vi.mocked(api.fetchSlots).mock.calls[0]![0]).toMatchObject({ slug: 'intro', method: 'video', from: '2026-10-05' })
-    expect(legacyApi.fetchBookingTypes).not.toHaveBeenCalled()
-  })
-
-  it('keeps the legacy times when the switch is off', async () => {
-    state.v2 = false
-    vi.mocked(legacyApi.fetchBookingTypes).mockResolvedValue([
-      { slug: 'legacy-call', name: 'Call', description: '', durationMinutes: 30, locationKind: 'VIDEO', priceCents: 0, currency: 'EUR' },
-    ] as never)
-    vi.mocked(legacyApi.fetchSlots).mockResolvedValue({
-      bookingType: {} as never,
-      timezone: 'Europe/Berlin',
-      lastBookableDate: '2026-11-01',
-      days: [{ date: '2026-10-07', slots: [{ startsAt: SLOT, endsAt: SLOT }] }],
-    })
-    wrap(<BookingBand />)
-
-    const link = await screen.findByRole('link', { name: /Wed/ })
-
-    expect(link.getAttribute('href')).toBe('/en/booking/legacy-call')
-    expect(api.fetchTypes).not.toHaveBeenCalled()
   })
 })

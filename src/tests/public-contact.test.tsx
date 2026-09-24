@@ -6,12 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CONTACT_FILE_ACCEPT, CONTACT_LIMITS } from '#/backend2/contracts/contact.contract'
 
 /**
- * Public cutover step 6: the Contact form behind the switch.
- *
- * Off, the page keeps today's form, which posts to the legacy `/api/contact`.
- * On, the same page posts to Backend2 — without the two selects the owner
- * removed from Contact, with one checked attachment, and with one
- * `submissionId` per fill so a retry can never become a second conversation.
+ * Public cutover step 6: the Contact form posts to Backend2 — without the two
+ * selects the owner removed from Contact, with one checked attachment, and
+ * with one `submissionId` per fill so a retry can never become a second
+ * conversation.
  */
 
 const state = vi.hoisted(() => ({ language: 'en' as 'de' | 'en' | 'ar' }))
@@ -42,8 +40,6 @@ const { ContactPage } = await import('#/frontend/pages/public/contact/ContactPag
 // The V2 form is its own chunk; the route loader fetches it before rendering, and so does this file.
 await (await import('#/frontend/features/contact/contact-v2-lazy')).contactFormV2.preload()
 const { CONTACT_V2_ACCEPT, CONTACT_V2_ENDPOINT, CONTACT_V2_LIMITS, fileProblem } = await import('#/frontend/features/contact/contact-v2')
-const { site } = await import('#/frontend/content/site')
-const { readsFromV2 } = await import('#/backend2/public-source')
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -77,18 +73,6 @@ const submit = () => fireEvent.click(screen.getByRole('button', { name: /send/i 
 
 const sentForm = (call: number) => fetchMock.mock.calls[call]![1].body as FormData
 
-describe('the switch', () => {
-  it('reads Contact and Booking from Backend2 only when listed and a V2 database exists', () => {
-    const db = { DATABASE_URL_V2: 'postgres://x/y' }
-
-    expect(readsFromV2('contact', { ...db })).toBe(false)
-    expect(readsFromV2('contact', { ...db, PUBLIC_V2_MODULES: 'contact' })).toBe(true)
-    expect(readsFromV2('booking', { ...db, PUBLIC_V2_MODULES: 'contact' })).toBe(false)
-    expect(readsFromV2('booking', { ...db, PUBLIC_V2_MODULES: 'booking,contact' })).toBe(true)
-    expect(readsFromV2('contact', { PUBLIC_V2_MODULES: 'contact' })).toBe(false)
-  })
-})
-
 describe('client rules equal the contract', () => {
   it('copies the limits and the accepted files exactly', () => {
     expect(CONTACT_V2_LIMITS).toEqual(CONTACT_LIMITS)
@@ -104,28 +88,9 @@ describe('client rules equal the contract', () => {
   })
 })
 
-describe('switch off — the legacy form', () => {
-  it('keeps both selects and posts to the legacy endpoint', async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }))
-    render(<ContactPage />)
-
-    expect(document.getElementById('projectType')).not.toBeNull()
-    expect(document.getElementById('budget')).not.toBeNull()
-
-    type('Name', 'Dana Example')
-    type('Email', 'dana@example.com')
-    fireEvent.change(document.getElementById('message')!, { target: { value: 'We would like a new website.' } })
-    fireEvent.submit(document.querySelector('form')!)
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
-    expect(fetchMock.mock.calls[0]![0]).toBe(site.contactEndpoint)
-    expect(fetchMock.mock.calls[0]![0]).not.toBe(CONTACT_V2_ENDPOINT)
-  })
-})
-
-describe('switch on — the Backend2 form', () => {
+describe('the Backend2 form', () => {
   it('has no "What is it about?" or "Budget range" select', () => {
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
 
     expect(document.getElementById('projectType')).toBeNull()
     expect(document.getElementById('budget')).toBeNull()
@@ -133,7 +98,7 @@ describe('switch on — the Backend2 form', () => {
   })
 
   it('says nothing before the first press, then marks and focuses the first wrong field', async () => {
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
 
     expect(screen.queryByText('Please enter your name.', { exact: false })).toBeNull()
     expect(document.querySelectorAll('[aria-invalid="true"]')).toHaveLength(0)
@@ -154,7 +119,7 @@ describe('switch on — the Backend2 form', () => {
   })
 
   it('refuses a file over 10 MB or of the wrong kind as soon as it is chosen', async () => {
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     const input = document.getElementById('attachment') as HTMLInputElement
     const big = new File(['x'], 'film.mp4', { type: 'video/mp4' })
 
@@ -173,7 +138,7 @@ describe('switch on — the Backend2 form', () => {
 
   it('posts one multipart message with a submission id, the file and nothing about budget', async () => {
     fetchMock.mockResolvedValue(received())
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     fillValid()
     type('Company', 'Bakery Ltd')
     fireEvent.change(document.getElementById('attachment')!, {
@@ -202,7 +167,7 @@ describe('switch on — the Backend2 form', () => {
 
   it('retries with the same submission id, so the Inbox gets one conversation', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('network down')).mockResolvedValueOnce(received())
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     fillValid()
 
     await act(async () => submit())
@@ -224,7 +189,7 @@ describe('switch on — the Backend2 form', () => {
       )
       .mockResolvedValueOnce(json(422, { success: false, code: 'UNSUPPORTED_FILE_TYPE', message: 'no', details: { field: 'attachment' } }))
       .mockResolvedValueOnce(json(429, { success: false, code: 'RATE_LIMITED', message: 'slow down' }))
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     fillValid()
 
     await act(async () => submit())
@@ -246,7 +211,7 @@ describe('switch on — the Backend2 form', () => {
     let answer: (response: Response) => void = () => {}
 
     fetchMock.mockReturnValue(new Promise<Response>((resolve) => (answer = resolve)))
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     fillValid()
 
     await act(async () => {
@@ -267,13 +232,13 @@ describe('switch on — the Backend2 form', () => {
     const container = document.createElement('div')
 
     document.body.append(container)
-    container.innerHTML = renderToString(<ContactPage v2 />)
+    container.innerHTML = renderToString(<ContactPage />)
     // Typed into the server's HTML, before React takes the page over.
     ;(container.querySelector('#name') as HTMLInputElement).value = 'Early Typer'
     ;(container.querySelector('#email') as HTMLInputElement).value = 'early@example.com'
     ;(container.querySelector('#message') as HTMLTextAreaElement).value = 'Typed before the script arrived.'
 
-    const root = await act(async () => hydrateRoot(container, <ContactPage v2 />))
+    const root = await act(async () => hydrateRoot(container, <ContactPage />))
 
     expect((container.querySelector('#name') as HTMLInputElement).value).toBe('Early Typer')
     await act(async () => fireEvent.click(within(container).getByRole('button', { name: /send/i })))
@@ -286,7 +251,7 @@ describe('switch on — the Backend2 form', () => {
 
   it('speaks the page language', async () => {
     state.language = 'ar'
-    render(<ContactPage v2 />)
+    render(<ContactPage />)
     fireEvent.change(document.getElementById('attachment')!, { target: { files: [new File(['x'], 'a.zip')] } })
 
     expect(await screen.findByText(/لا يمكن إرسال هذا النوع/)).toBeTruthy()

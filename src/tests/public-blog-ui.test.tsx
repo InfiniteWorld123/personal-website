@@ -444,10 +444,10 @@ describe('reads and likes of a Backend2 article', () => {
         : undefined,
     )
 
-    // Liked on the legacy page long ago: that must not show as liked here.
+    // Liked on the old site long ago: that must not show as liked here.
     window.localStorage.setItem('blog:liked', JSON.stringify(['rich-article']))
 
-    render(<PostEngagement source="v2" slug="rich-article" viewCount={0} likeCount={0} />)
+    render(<PostEngagement slug="rich-article" viewCount={0} likeCount={0} />)
 
     await screen.findByText('1 read')
     const like = screen.getByRole('button', { pressed: false })
@@ -467,7 +467,7 @@ describe('reads and likes of a Backend2 article', () => {
     window.localStorage.setItem('blog:v2:read', JSON.stringify(['a']))
     routes.push((call) => (call.url.endsWith('/like') ? refuse(429, 'RATE_LIMITED', 'too_fast') : undefined))
 
-    render(<PostEngagement source="v2" slug="a" viewCount={5} likeCount={2} />)
+    render(<PostEngagement slug="a" viewCount={5} likeCount={2} />)
 
     fireEvent.click(screen.getByRole('button', { pressed: false }))
     await waitFor(() => expect(calls).toHaveLength(1))

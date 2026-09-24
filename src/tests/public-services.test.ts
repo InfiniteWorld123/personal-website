@@ -1,21 +1,19 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { createTestDatabase } from './helpers/backend2-db'
 
 /**
  * Public cutover step 2: `/services`, the homepage section and the service
- * pages reading Backend2 behind PUBLIC_V2_MODULES (`docs/v2/public-cutover.md`).
+ * pages reading Backend2 (`docs/v2/public-cutover.md`).
  *
  * The services are created and published through the real owner routes against
  * a PostgreSQL inside this process, then read back through the functions the
  * public pages' server functions call. Nothing here reaches a real database.
  */
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'
 process.env.AUTH_V2_SECRET = 'test-only-auth-secret-at-least-32-chars-long'
 delete process.env.BACKEND2_OWNER_AUTH
-delete process.env.PUBLIC_V2_MODULES
 
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
@@ -32,11 +30,6 @@ const app = createAppForTest()
 
 beforeEach(async () => {
   await database.reset()
-  process.env.PUBLIC_V2_MODULES = 'services'
-})
-
-afterEach(() => {
-  delete process.env.PUBLIC_V2_MODULES
 })
 
 afterAll(async () => {
@@ -112,27 +105,6 @@ const service = async (slug: string, options: { live?: boolean; featured?: boole
 
   return id
 }
-
-/* =================================================================== switch */
-
-describe('with the switch off', () => {
-  it('keeps every page on the legacy source, even while Backend2 has live services', async () => {
-    await service('websites', { featured: true })
-    delete process.env.PUBLIC_V2_MODULES
-
-    expect(await read(() => source.loadServicesPage({ language: 'de', page: 1 }))).toEqual({ source: 'legacy' })
-    expect(await read(() => source.loadHomeServices({ language: 'de' }))).toEqual({ source: 'legacy' })
-    // Legacy has no service pages: every address is a 404, as today.
-    expect(await read(() => source.loadPublishedService({ language: 'de', slug: 'websites' }))).toBeNull()
-    expect(await read(() => source.loadPublishedServiceSlugs())).toEqual([])
-  })
-
-  it('stays on legacy when only another module is switched', async () => {
-    process.env.PUBLIC_V2_MODULES = 'content,projects'
-
-    expect(await read(() => source.loadServicesPage({ language: 'en', page: 1 }))).toEqual({ source: 'legacy' })
-  })
-})
 
 /* ================================================================= the list */
 

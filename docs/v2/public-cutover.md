@@ -211,3 +211,51 @@ after the cutover. Tests: `backend2-legacy-import.test.ts`,
   (`npx wrangler delete --name yamanwarda-v2-preview`), then remove `/admin`
   and the legacy backend in a separate change; the legacy database is dropped
   a week later.
+
+## Legacy removed (24 Sep 2026, owner-approved)
+
+The owner approved deleting the old admin and the old code. V2 is now the only
+system in the repository; the public pages render exactly what the live V2
+site rendered.
+
+- **Gone:** `/admin` (routes, pages, components), `src/backend/` (Elysia app,
+  Better Auth, legacy migrations and seeds, image storage, `/api/*` including
+  `/api/contact`, `/api/inbound-email`, `/api/stripe-webhook`, the WebRTC call
+  room API), the legacy Eden client (`src/frontend/api/*.api.ts`),
+  `src/shared/env.ts`, and the legacy-only shared types and validation.
+- **Public pages read Backend2 unconditionally.** `PUBLIC_V2_MODULES` and
+  `src/backend2/public-source.ts` are removed with every legacy branch: the
+  static services cards, the legacy booking and contact forms, the legacy chat,
+  the legacy blog counters. The privacy page always applies
+  `privacy-v2.ts` (statistics wording while `CF_WEB_ANALYTICS_TOKEN` is set).
+  The CSP always allows the YouTube frame; the legacy `R2_PUBLIC_URL` image
+  origin is gone.
+- **Dashboard:** the guard is the V2 owner session only (no legacy session
+  fallback, whatever `BACKEND2_OWNER_AUTH` says); `dashboard-guard.test.ts`.
+- **One-time copies removed:** `modules/import/`, `import.contract.ts`,
+  Settings → Old site, and the Content import tools
+  (`db2:content:export-legacy`, `db2:content:import`). Migrations `0007` and
+  `0014` and their tables stay: applied migrations are never edited.
+- **Mail Worker:** `workers/inbound-email` no longer posts to the legacy
+  inbox; `INBOUND_ENDPOINT` / `INBOUND_MAIL_SECRET` are ignored.
+- **Kept on purpose:** the legacy database (dropped a week later, by the
+  owner), the guard that refuses a `DATABASE_URL_V2` equal to `DATABASE_URL`,
+  `workers/call-room/` (legacy-only, not used by V2's RealtimeKit video; delete
+  the directory together with its Worker), the static `/images` files.
+- **Worker size:** 3030 → 2345 KiB gzip (`wrangler deploy --dry-run`).
+
+Cloudflare clean-up that is now safe (owner action; `wrangler.jsonc` and
+`workers/inbound-email/wrangler.jsonc` are unchanged until then):
+
+- `yamanwarda`: remove the `HYPERDRIVE` binding, the `MEDIA` bucket binding and
+  the `PUBLIC_V2_MODULES` var; delete the secrets `BETTER_AUTH_SECRET`,
+  `BETTER_AUTH_URL`, `DATABASE_URL`, `RATE_LIMIT_SECRET`, `R2_*`,
+  `PREVIEW_TOKEN_SECRET`, `CALL_ROOM_SECRET`, `CALL_ROOM_URL`, `TURN_KEY_*`,
+  `CHAT_*`, `INBOUND_MAIL_SECRET`, `INBOUND_MAIL_ADDRESS`, `CONTACT_TO_EMAIL`
+  (whichever exist). Keep `HYPERDRIVE_V2`, `MEDIA_V2`, the cron and every V2
+  var and secret.
+- `yamanwarda-inbound-email`: remove the `INBOUND_ENDPOINT` var and the
+  `INBOUND_MAIL_SECRET` secret, then redeploy it with the new code.
+- Later: the legacy Hyperdrive config `ff94beb8…`, the `yamanwarda-media`
+  bucket (its images were copied into V2 Media; the JSON backup holds rows, not
+  files), the `yamanwarda-call-room` Worker, and the preview Worker.

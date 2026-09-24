@@ -24,9 +24,7 @@ import { listPublicTags } from './tag.service'
  * a comment, a read and a like.
  *
  * Mounted only where the V2 database is configured, like the Projects and
- * Services reads: production has no `DATABASE_URL_V2` yet, so none of this
- * answers there, and the live `/blog` keeps reading the legacy backend until a
- * separately approved cutover.
+ * Services reads.
  *
  * Every answer is built by the projections in `post.mapper.ts` from the live
  * snapshot alone. A draft sentence or a scheduled article is not filtered out

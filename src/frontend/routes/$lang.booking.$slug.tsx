@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
-import { fetchBookingSource } from '#/frontend/features/booking/server/booking-source'
 import { defaultLanguage, isLanguage } from '#/frontend/i18n/language'
 import { buildHead } from '#/frontend/lib/seo'
-import { BookingFlowPage } from '#/frontend/pages/public/booking/BookingFlowPage'
 import { flowPageV2 } from '#/frontend/pages/public/booking/v2/lazy'
 
 /**
@@ -31,11 +29,7 @@ export const Route = createFileRoute('/$lang/booking/$slug')({
     })
   },
   loader: async () => {
-    const source = await fetchBookingSource()
-
-    if (source.v2) await flowPageV2.preload()
-
-    return source
+    await flowPageV2.preload()
   },
   component: BookingFlowRoute,
 })
@@ -44,5 +38,5 @@ function BookingFlowRoute() {
   const { slug } = Route.useParams()
   const { slot } = Route.useSearch()
 
-  return Route.useLoaderData().v2 ? <flowPageV2.Page slug={slug} slot={slot} /> : <BookingFlowPage slug={slug} slot={slot} />
+  return <flowPageV2.Page slug={slug} slot={slot} />
 }

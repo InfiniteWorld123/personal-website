@@ -42,7 +42,6 @@ export const Route = createFileRoute('/sitemap.xml')({
         const [projectSlugs, postSlugs, serviceSlugs] = await Promise.all([
           fetchPublishedProjectSlugs(),
           fetchPublishedPostSlugs(),
-          // Empty until Services reads Backend2 (`PUBLIC_V2_MODULES`).
           fetchPublishedServiceSlugs(),
         ])
 

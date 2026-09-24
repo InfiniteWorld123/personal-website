@@ -16,8 +16,7 @@ export const Route = createFileRoute('/$lang/services/')({
   },
   /* The page is read from the location rather than declared as a loader
      dependency, for the reason `/work` gives: "Load more" keeps the list on
-     screen and lets it grow. With the switch off the answer is only
-     `{ source: 'legacy' }` and the page draws today's services. */
+     screen and lets it grow. */
   loader: async ({ params, location }) => {
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
     const page = parseServicePage((location.search as { page?: unknown }).page)

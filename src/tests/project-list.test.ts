@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   getProjectBatch,
   parseProjectPage,
-  toProjectEntry,
   toStructuredProject,
 } from '#/frontend/features/work/project-list'
-import { publicProjectFixture } from './fixtures/project'
+import { publicProjectFixture, toProjectEntry } from './fixtures/project'
 
 describe('local project collection', () => {
   it.each([0, 1, 3, 6, 10])('renders %i records in cumulative batches of six', count => {

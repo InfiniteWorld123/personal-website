@@ -1,23 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useRouterState } from '@tanstack/react-router'
 import { MessageSquare, Send, X } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { askAssistant, fetchChatIntro } from '#/frontend/api/chat.api'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { cn } from '#/frontend/lib/utils'
-import { CHAT_MESSAGE_MAX_LENGTH } from '#/shared/validation/chat.validation'
 import type { AssistantLink, AssistantSource } from '#/backend2/contracts/assistant.contract'
 import { assistantV2Notice } from '#/frontend/features/assistant-v2/widget-copy'
-import { AssistantLine } from './AssistantLine'
-import {
-  AssistantRequestError,
-  askAssistantV2,
-  assistantV2Words,
-  fetchAssistantSource,
-  readAssistantStatus,
-} from './assistant-v2'
+import { AssistantRequestError, askAssistantV2, assistantV2Words, readAssistantStatus } from './assistant-v2'
 import { chatCopy } from './chat.copy'
 
 /**
@@ -41,15 +31,14 @@ type Line = {
   author: 'VISITOR' | 'ASSISTANT'
   body: string
   fresh?: boolean
-  /** Backend2 only: where the answer came from, and Contact/Booking when it cannot help. */
+  /** Where the answer came from, and Contact/Booking when it cannot help. */
   sources?: AssistantSource[]
   links?: AssistantLink[]
   lang?: string
 }
 
-const STORAGE_KEY = 'chat.conversation'
-/** A V2 conversation handle is a different kind of id; the two never mix. */
-const STORAGE_KEY_V2 = 'chat.conversation.v2'
+/** Backend2's conversation handle; the old site's `chat.conversation` id is never read. */
+const STORAGE_KEY = 'chat.conversation.v2'
 
 /** `sessionStorage` throws in a private window; a lost id costs a new conversation, nothing more. */
 const readStoredConversation = (key = STORAGE_KEY): string | undefined => {
@@ -70,7 +59,6 @@ const storeConversation = (id: string, key = STORAGE_KEY): void => {
 
 export function ChatWidget() {
   const { language } = useLanguage()
-  const pathname = useRouterState({ select: (state) => state.location.pathname })
   const copy = chatCopy[language]
 
   const [open, setOpen] = useState(false)
@@ -87,55 +75,33 @@ export function ChatWidget() {
   // Fetched rather than bundled, so a settings change reaches the next visitor
   // instead of the next deploy. Only once the panel is opened: a visitor who
   // never opens it should not pay for a request.
-  // Which backend answers — asked once, when the panel first opens.
-  const { data: source } = useQuery({
-    queryKey: ['chat-source'],
-    queryFn: () => fetchAssistantSource(),
-    enabled: open,
-    staleTime: Infinity,
-  })
-  const v2 = source?.v2 === true
-
-  const { data: intro } = useQuery({
-    queryKey: ['chat-intro', language],
-    queryFn: () => fetchChatIntro(language),
-    enabled: open && source?.v2 === false,
-    staleTime: 5 * 60 * 1000,
-  })
-
   const { data: status } = useQuery({
     queryKey: ['chat-status-v2', language],
     queryFn: () => readAssistantStatus(language),
-    enabled: open && v2,
+    enabled: open,
     staleTime: 60 * 1000,
   })
   const words = assistantV2Words[language]
-  const resting = v2 && status?.enabled === false
+  const resting = status?.enabled === false
 
   const ask = useMutation({
     mutationFn: async (message: string): Promise<Line & { conversationId: string; canContinue: boolean }> => {
-      if (v2) {
-        const result = await askAssistantV2({ message, conversationId, locale: language })
+      const result = await askAssistantV2({ message, conversationId, locale: language })
 
-        return {
-          author: 'ASSISTANT',
-          body: result.answer.text,
-          fresh: true,
-          sources: result.answer.sources,
-          links: result.answer.links,
-          lang: result.answer.language,
-          conversationId: result.conversationId,
-          canContinue: true,
-        }
+      return {
+        author: 'ASSISTANT',
+        body: result.answer.text,
+        fresh: true,
+        sources: result.answer.sources,
+        links: result.answer.links,
+        lang: result.answer.language,
+        conversationId: result.conversationId,
+        canContinue: true,
       }
-
-      const answer = await askAssistant({ message, language, conversationId, path: pathname })
-
-      return { author: 'ASSISTANT', body: answer.reply, fresh: true, conversationId: answer.conversationId, canContinue: answer.canContinue }
     },
     onSuccess: ({ conversationId: id, canContinue, ...line }) => {
       setConversationId(id)
-      storeConversation(id, v2 ? STORAGE_KEY_V2 : STORAGE_KEY)
+      storeConversation(id)
       setExhausted(!canContinue)
       setLines((current) => [...current, line])
     },
@@ -144,13 +110,14 @@ export function ChatWidget() {
       const unavailable = error instanceof AssistantRequestError && error.code === 'ASSISTANT_UNAVAILABLE'
       const body = limited ? words.slowDown : unavailable ? words.resting : copy.failed
 
-      setLines((current) => [...current, { author: 'ASSISTANT', body, fresh: true, links: v2 ? status?.links.filter((link) => link.kind !== 'privacy') : undefined }])
+      setLines((current) => [...current, { author: 'ASSISTANT', body, fresh: true, links: status?.links.filter((link) => link.kind !== 'privacy') }])
     },
   })
 
+  // Once the panel first opens: a conversation from earlier in this tab carries on.
   useEffect(() => {
-    if (source) setConversationId(readStoredConversation(source.v2 ? STORAGE_KEY_V2 : STORAGE_KEY))
-  }, [source])
+    if (open) setConversationId((current) => current ?? readStoredConversation())
+  }, [open])
 
   // The log is the thing that moves; the page behind it must not.
   useEffect(() => {
@@ -186,7 +153,7 @@ export function ChatWidget() {
     ask.mutate(text)
   }
 
-  const suggestions = v2 ? words.suggestions : (intro?.suggestions ?? [])
+  const suggestions = words.suggestions
   const showSuggestions = lines.length === 0 && suggestions.length > 0 && !ask.isPending && !resting
   const privacy = assistantV2Notice[language]
 
@@ -239,16 +206,10 @@ export function ChatWidget() {
           {/* The signature. Stated at the top, in the brand's own accent, at
               the size of real copy — not hidden under the composer. */}
           <p className="border-b border-border/60 bg-accent px-3.5 py-2 text-xs leading-relaxed text-accent-foreground">
-            {v2 ? (
-              <>
-                {status?.notice.text ?? privacy.notice}{' '}
-                <a href={privacy.privacyPath} className="font-medium underline underline-offset-2">
-                  {privacy.privacy}
-                </a>
-              </>
-            ) : (
-              (intro?.disclosure ?? copy.disclosureFallback)
-            )}
+            {status?.notice.text ?? privacy.notice}{' '}
+            <a href={privacy.privacyPath} className="font-medium underline underline-offset-2">
+              {privacy.privacy}
+            </a>
           </p>
 
           <div
@@ -257,17 +218,13 @@ export function ChatWidget() {
             aria-live="polite"
             aria-busy={ask.isPending}
           >
-            {v2 ? (
-              resting ? (
-                <Bubble author="ASSISTANT" links={status?.links.filter((link) => link.kind !== 'privacy')}>
-                  {words.resting}
-                </Bubble>
-              ) : (
-                <Bubble author="ASSISTANT">{words.greeting}</Bubble>
-              )
-            ) : intro?.settings.opening !== 'silent' && intro ? (
-              <Bubble author="ASSISTANT">{intro.greeting}</Bubble>
-            ) : null}
+            {resting ? (
+              <Bubble author="ASSISTANT" links={status?.links.filter((link) => link.kind !== 'privacy')}>
+                {words.resting}
+              </Bubble>
+            ) : (
+              <Bubble author="ASSISTANT">{words.greeting}</Bubble>
+            )}
 
             {lines.map((line, index) => (
               <Bubble
@@ -278,11 +235,7 @@ export function ChatWidget() {
                 sourcesLabel={words.sources}
                 links={line.links}
               >
-                {line.author === 'ASSISTANT' && line.fresh && intro?.settings.reveal === 'stream' ? (
-                  <AssistantLine text={line.body} />
-                ) : (
-                  line.body
-                )}
+                {line.body}
               </Bubble>
             ))}
 
@@ -337,7 +290,7 @@ export function ChatWidget() {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={exhausted ? copy.exhausted : copy.placeholder}
-              maxLength={v2 ? (status?.limits.messageMaxLength ?? 1000) : CHAT_MESSAGE_MAX_LENGTH}
+              maxLength={status?.limits.messageMaxLength ?? 1000}
               disabled={exhausted || resting}
               autoComplete="off"
               className="h-9 rounded-full text-sm"

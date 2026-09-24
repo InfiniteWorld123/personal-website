@@ -21,8 +21,10 @@ from Git history and silently treat it as a V2 decision.
 - New backend code belongs under `src/backend2/`.
 - The new private application lives at `/dashboard`.
 - V2 uses a new database and a new migration history.
-- Keep `/admin`, `src/backend/`, the legacy database, and the current public
-  behavior operational until an approved cutover removes them.
+- Done on 24 Sep 2026 (owner-approved cutover): `/admin` and `src/backend/`
+  were removed, and every public page reads Backend2. Keep the legacy database
+  and the current public behavior until an approved step removes or changes
+  them.
 - Do not make V2 write to the legacy and V2 databases simultaneously without an
   approved migration design.
 - Do not delete legacy code, routes, configuration, or data merely because a V2
@@ -43,9 +45,10 @@ the owner explicitly approves a visible change.
   dashboard.
 - Module details are not approved until their individual specifications exist.
 - Do not build V2 authentication during the initial local-only Projects slice.
-  MFA is required when V2 authentication is planned later. Keep existing
-  `/admin` authentication, the current `/dashboard` guard, and live Turnstile
-  protections unchanged until separately approved work replaces them.
+  MFA is required when V2 authentication is planned later. Done on 24 Sep
+  2026: the `/admin` authentication was removed and the `/dashboard` guard is
+  the V2 owner session. Keep live Turnstile protections unchanged until
+  separately approved work replaces them.
 - Never expose owner-only Backend2 routes without approved authentication.
   Before that exists, they must be unavailable outside verified local
   development. A Git branch, hidden UI, Origin/CORS check, or URL hostname

@@ -89,8 +89,7 @@ export const bootstrapOwner = async (): Promise<void> => {
     )
   }
 
-  console.log('\nV2 owner setup — this runs once, against the V2 database only.')
-  console.log('The legacy /admin account is untouched; the same address is fine here.\n')
+  console.log('\nV2 owner setup — this runs once, against the V2 database only.\n')
 
   const rawEmail = await readVisible('Email address: ')
   const email = (() => {

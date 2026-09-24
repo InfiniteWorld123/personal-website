@@ -19,10 +19,9 @@ import { type DeliveryEnv, deliver } from './deliver'
  * owner still has it.
  *
  * Then the letter is turned into JSON, signed, and handed to the V2 Inbox
- * (`INBOX_V2_ENDPOINT`, `INBOX_INGRESS_SECRET`), and — while it is still
- * configured — to the legacy admin inbox (`INBOUND_ENDPOINT`,
- * `INBOUND_MAIL_SECRET`). The Worker decides nothing about conversations: the
- * site verifies the signature over the exact bytes sent and files the letter.
+ * (`INBOX_V2_ENDPOINT`, `INBOX_INGRESS_SECRET`). The Worker decides nothing
+ * about conversations: the site verifies the signature over the exact bytes
+ * sent and files the letter.
  * All of that is in `deliver.ts`, so it can be tested without Cloudflare.
  *
  * It is deliberately a separate Worker from the site. An email handler cannot

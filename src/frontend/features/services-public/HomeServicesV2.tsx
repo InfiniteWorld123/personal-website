@@ -13,16 +13,11 @@ import type { HomeServicesData } from './server/services-source'
 import { SERVICE_WORDS, initialOf } from './service-words'
 
 /**
- * Which homepage section to draw: today's three static cards (switch off, or
- * the admin's preview, which passes nothing), Backend2's starred services, or
- * nothing at all — no starred service is live, or they could not be read. The
- * homepage never shows an empty heading or an error (Design Lab).
+ * Which homepage section to draw: Backend2's starred services, or nothing at
+ * all — no starred service is live, or they could not be read. The homepage
+ * never shows an empty heading or an error (Design Lab).
  */
-export const homeServicesView = (data: HomeServicesData | undefined): 'legacy' | 'v2' | 'hidden' => {
-  if (!data || data.source === 'legacy') return 'legacy'
-
-  return data.items.length ? 'v2' : 'hidden'
-}
+export const homeServicesView = (data: HomeServicesData): 'v2' | 'hidden' => (data.items.length ? 'v2' : 'hidden')
 
 /**
  * The homepage services from Backend2: the starred, published services in the

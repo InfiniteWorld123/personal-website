@@ -1,6 +1,5 @@
 import type { PublicRichTextDoc } from '#/backend2/contracts/project.contract'
 import type { StructuredProject } from '#/frontend/lib/structured-data'
-import type { PublicProject } from '#/shared/types/project.types'
 import type { ProjectStatus } from '#/shared/validation/project.validation'
 
 /**
@@ -45,26 +44,6 @@ export type ProjectEntry = {
    */
   caseStudy?: PublicRichTextDoc | null
 }
-
-export const toProjectEntry = (project: PublicProject): ProjectEntry => ({
-  facts: {
-    slug: project.slug,
-    status: project.status,
-    website: project.website,
-    source: project.source,
-    stack: project.tech,
-    images: project.images,
-  },
-  copy: {
-    name: project.name,
-    kind: project.kind,
-    summary: project.summary,
-    problem: project.problem,
-    approach: project.approach,
-    shows: project.shows,
-    features: project.features,
-  },
-})
 
 /** What the page's JSON-LD needs from a project it has already loaded. */
 export const toStructuredProject = ({ facts, copy }: ProjectEntry): StructuredProject => ({

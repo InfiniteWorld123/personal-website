@@ -1,12 +1,9 @@
 import PostalMime from 'postal-mime'
-import { describe, expect, it, vi } from 'vitest'
-
-vi.mock('#/shared/env', () => ({
-  env: { BASE_URL: 'https://yamanwarda.de', APP_NAME: 'Yaman Warda' },
-}))
-
+import { describe, expect, it } from 'vitest'
 import { filesFrom } from '../../workers/inbound-email/src/files'
-import { fromBase64 } from '#/backend/modules/inbox/message.service'
+
+/** Standard base64, as the V2 Inbox decodes the Worker's files. */
+const fromBase64 = (value: string): Uint8Array => new Uint8Array(Buffer.from(value, 'base64'))
 
 /**
  * A real letter, parsed by the real parser.

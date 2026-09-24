@@ -19,7 +19,7 @@ import { MethodChoice } from '#/frontend/features/booking/v2/MethodChoice'
 import { v2SlotsQuery, v2TypesQuery } from '#/frontend/features/booking/v2/queries'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
-import { type Step, StepRail, TimezoneSelect } from '../BookingFlowPage'
+import { type Step, StepRail, TimezoneSelect } from './flow-parts'
 
 /**
  * One appointment type, booked against Backend2 (`docs/v2/public-cutover.md`,

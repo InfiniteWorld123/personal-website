@@ -1046,30 +1046,24 @@ describe('website statistics', () => {
     expect(fake.requests.at(-1)!.query).toContain('LIMIT 2 OFFSET 2')
   })
 
-  it('reports the contact form as not connected until it sends to Backend2, and live catalogue counts', async () => {
+  it('reports live catalogue counts', async () => {
     await sql(`INSERT INTO v2_projects (position, lifecycle) VALUES (1, 'active'), (2, 'archived')`)
 
     const data = await ok('/owner/analytics/sections/website')
 
-    expect(metric(data, 'website.contactSubmissions')).toMatchObject({ state: 'not-connected', value: null })
     expect(metric(data, 'website.projectsLive')).toMatchObject({ state: 'ready', value: 0 })
     expect(metric(data, 'website.servicesLive')).toMatchObject({ state: 'ready', value: 0 })
     expect(metric(data, 'website.visitors').state).toBe('not-connected')
     expect(breakdown(data, 'website.topPages')).toMatchObject({ state: 'not-connected', total: null })
   })
 
-  it('counts contact messages once the public form sends to Backend2', async () => {
+  it('counts the contact messages the public form sent to Backend2', async () => {
     await insertConversation({ origin: 'contact', createdAt: '2026-09-20T10:00:00Z', isRead: false })
     await insertConversation({ origin: 'contact', createdAt: '2026-08-10T10:00:00Z', isRead: true })
-    process.env.PUBLIC_V2_MODULES = 'contact'
 
-    try {
-      const data = await ok('/owner/analytics/sections/website')
+    const data = await ok('/owner/analytics/sections/website')
 
-      expect(metric(data, 'website.contactSubmissions')).toMatchObject({ state: 'ready', value: 1, previous: { value: 1 } })
-    } finally {
-      delete process.env.PUBLIC_V2_MODULES
-    }
+    expect(metric(data, 'website.contactSubmissions')).toMatchObject({ state: 'ready', value: 1, previous: { value: 1 } })
   })
 })
 

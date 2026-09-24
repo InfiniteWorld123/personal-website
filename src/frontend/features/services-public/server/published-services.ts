@@ -16,7 +16,7 @@ export type { HomeServicesData, ServicesPageData }
 /**
  * The public services, read on the server while the page renders — the same
  * shortcut the projects and posts loaders take: no HTTP round trip back to our
- * own API. Which backend answers is decided in `services-source.ts`.
+ * own API. The reads themselves are in `services-source.ts`.
  */
 
 /* Spelled out rather than imported, so this file's client stub does not pull a
@@ -54,15 +54,12 @@ export const fetchHomeServices = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(LanguageInput, input))
   .handler(({ data }): Promise<HomeServicesData> => loadHomeServices(data))
 
-/** With the switch off every address answers 404, as it does today. */
+/** One published service, or null for a 404. */
 export const fetchPublishedService = createServerFn({ method: 'GET' })
   .validator((input: unknown) => v.parse(SlugInput, input))
   .handler(({ data }): Promise<PublicServiceDetail | null> => loadPublishedService(data))
 
-/**
- * Every published service address, for the sitemap's `/services/:slug`
- * entries. Legacy has no service pages, so it has none.
- */
+/** Every published service address, for the sitemap's `/services/:slug` entries. */
 export const fetchPublishedServiceSlugs = createServerFn({ method: 'GET' }).handler(
   (): Promise<string[]> => loadPublishedServiceSlugs(),
 )

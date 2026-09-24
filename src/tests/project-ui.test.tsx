@@ -3,26 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ProjectCard } from '#/frontend/features/work/ProjectCard'
 import { ProjectCarousel } from '#/frontend/features/work/ProjectCarousel'
-import { toProjectEntry } from '#/frontend/features/work/project-list'
 import { getContent } from '#/frontend/content'
-import { ContactForm } from '#/frontend/features/contact/ContactForm'
-import { publicProjectFixture } from './fixtures/project'
+import { publicProjectFixture, toProjectEntry } from './fixtures/project'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, params, children, ...props }: any) => <a href={to.replace('$lang', params.lang).replace('$slug', params.slug ?? '')} {...props}>{children}</a>,
 }))
 vi.mock('#/frontend/hooks/use-prefers-reduced-motion', () => ({ usePrefersReducedMotion: () => true }))
-vi.mock('#/frontend/features/security/TurnstileWidget', async () => {
-  const { useEffect } = await import('react')
-
-  return {
-    TurnstileWidget: ({ onTokenChange }: { onTokenChange: (token: string) => void }) => {
-      useEffect(() => onTokenChange('verified-test-token'), [onTokenChange])
-      return <div data-testid="turnstile" />
-    },
-  }
-})
-
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 const work = getContent('en').work
 const labels = { visit: work.visit, source: work.source, detail: work.detailLabel }
@@ -76,47 +63,5 @@ describe('equal project presentation', () => {
     unmount()
     expect(disconnect).toHaveBeenCalledOnce()
     delete (HTMLElement.prototype as any).scrollBy
-  })
-})
-
-describe('contact behavior is preserved', () => {
-  const copy = getContent('en').contact.form
-  it('validates without sending invalid requests', () => {
-    const fetch = vi.fn()
-    vi.stubGlobal('fetch', fetch)
-    render(<ContactForm copy={copy} language="en" />)
-    fireEvent.click(screen.getByRole('button', { name: copy.submit }))
-    expect(screen.getByText(copy.errors.name)).toBeTruthy()
-    expect(screen.getByText(copy.errors.email)).toBeTruthy()
-    expect(screen.getByText(copy.errors.message)).toBeTruthy()
-    expect(fetch).not.toHaveBeenCalled()
-  })
-  it('sends the words the visitor read, not the option ids', async () => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 201 })
-    vi.stubGlobal('fetch', fetch)
-    render(<ContactForm copy={copy} language="en" />)
-    fireEvent.change(document.querySelector('#name')!, { target: { value: 'Test Person' } })
-    fireEvent.change(document.querySelector('#email')!, { target: { value: 'test@example.com' } })
-    fireEvent.change(document.querySelector('#message')!, { target: { value: 'Local test message, never sent.' } })
-    fireEvent.change(document.querySelector('#budget')!, { target: { value: copy.budgets[2].value } })
-    fireEvent.click(screen.getByRole('button', { name: copy.submit }))
-
-    await screen.findByRole('status')
-    const body = fetch.mock.calls[0][1].body as FormData
-
-    // "3000-6000" would reach the inbox as "3000-6000" and read as machinery.
-    expect(body.get('budget')).toBe(copy.budgets[2].label)
-    expect(body.get('projectType')).toBe(copy.projectTypes[0].label)
-    expect(body.get('language')).toBe('en')
-  })
-
-  it.each([true, false])('keeps the %s response state with a mocked transport', async ok => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, status: ok ? 200 : 500 }))
-    render(<ContactForm copy={copy} language="en" />)
-    fireEvent.change(document.querySelector('#name')!, { target: { value: 'Test Person' } })
-    fireEvent.change(document.querySelector('#email')!, { target: { value: 'test@example.com' } })
-    fireEvent.change(document.querySelector('#message')!, { target: { value: 'Local test message, never sent.' } })
-    fireEvent.click(screen.getByRole('button', { name: copy.submit }))
-    expect(await screen.findByRole(ok ? 'status' : 'alert')).toBeTruthy()
   })
 })

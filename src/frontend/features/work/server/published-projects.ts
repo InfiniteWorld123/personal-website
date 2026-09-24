@@ -9,12 +9,11 @@ import { loadProject, loadProjectSlugs, loadProjects, loadProjectsBatch, loadPro
  * service. There is no HTTP round trip back to our own API: the page is being
  * rendered on the machine that owns the database.
  *
- * Every read goes through `withRequestScope` for the same reason
- * `handleApiRequest` does: this path renders on a Worker too, and without the
- * scope the query lands on the module-level pool, whose sockets Cloudflare has
- * already torn down between requests — and which never sees Hyperdrive.
- * Which backend answers — legacy or Backend2 — is decided in
- * `projects-source.ts`.
+ * Every read goes through Backend2's `withRequestScope` (in `v2-projects.ts`):
+ * this path renders on a Worker too, and without the scope the query lands on
+ * the module-level pool, whose sockets Cloudflare has already torn down
+ * between requests — and which never sees Hyperdrive. The reads themselves
+ * are in `projects-source.ts`.
  */
 const LanguageInput = v.object({ language: v.picklist(PROJECT_LANGUAGES) })
 

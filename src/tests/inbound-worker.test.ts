@@ -21,7 +21,6 @@ import {
  */
 
 const SECRET = 'test-only-inbox-ingress-secret-0123456789'
-const LEGACY_SECRET = 'test-only-legacy-secret'
 
 const env = (over: Partial<DeliveryEnv> = {}): DeliveryEnv => ({
   FORWARD_COPY_TO: 'owner@example.com',
@@ -82,27 +81,21 @@ const fakeMessage = (
 
 type Call = { url: string; headers: Record<string, string>; body: string }
 
-const network = (events: Events, statuses: Array<number | 'throw'>, legacyStatus = 200) => {
+const network = (events: Events, statuses: Array<number | 'throw'>) => {
   const calls: Call[] = []
   let v2Index = 0
 
   const fetch = async (url: string, init: { headers: Record<string, string>; body: string }) => {
     calls.push({ url, headers: init.headers, body: init.body })
 
-    if (url.includes('/v2/')) {
-      events.push('post-v2')
-      const status = statuses[Math.min(v2Index, statuses.length - 1)]!
+    events.push('post-v2')
+    const status = statuses[Math.min(v2Index, statuses.length - 1)]!
 
-      v2Index += 1
+    v2Index += 1
 
-      if (status === 'throw') throw new Error('connection reset')
+    if (status === 'throw') throw new Error('connection reset')
 
-      return { ok: status >= 200 && status < 300, status }
-    }
-
-    events.push('post-legacy')
-
-    return { ok: legacyStatus >= 200 && legacyStatus < 300, status: legacyStatus }
+    return { ok: status >= 200 && status < 300, status }
   }
 
   return { fetch, calls }
@@ -118,14 +111,13 @@ const run = async (
   options: {
     env?: DeliveryEnv
     statuses?: Array<number | 'throw'>
-    legacyStatus?: number
     forwardFails?: boolean
     parse?: (raw: ArrayBuffer) => Promise<ParsedMail>
   } = {},
 ) => {
   const events: Events = []
   const { message, state } = fakeMessage(events, { forwardFails: options.forwardFails })
-  const net = network(events, options.statuses ?? [200], options.legacyStatus)
+  const net = network(events, options.statuses ?? [200])
   let clock = 1_790_000_000_000
   const sleeps: number[] = []
 
@@ -156,7 +148,7 @@ describe('every letter reaches the owner’s mailbox first', () => {
     expect(events).toEqual(['forward', 'parse', 'post-v2'])
     expect(state.forwardedTo).toBe('owner@example.com')
     expect(state.rejected).toBeNull()
-    expect(result).toMatchObject({ forwarded: 'forwarded', v2: { status: 200, taken: true, attempts: 1 }, legacy: null })
+    expect(result).toMatchObject({ forwarded: 'forwarded', v2: { status: 200, taken: true, attempts: 1 } })
 
     const [call] = calls
 
@@ -258,28 +250,14 @@ describe('when the V2 Inbox cannot take the letter', () => {
   })
 })
 
-describe('the legacy admin inbox, while it is configured', () => {
-  const withLegacy = env({ INBOUND_ENDPOINT: 'https://site.example/api/inbound-email', INBOUND_MAIL_SECRET: LEGACY_SECRET })
+describe('the removed legacy admin inbox', () => {
+  it('is never posted to, even while its old settings are still on the Worker', async () => {
+    const { result, calls } = await run({
+      env: { ...env(), INBOUND_ENDPOINT: 'https://site.example/api/inbound-email', INBOUND_MAIL_SECRET: 'old' } as DeliveryEnv,
+    })
 
-  it('gets the same letter with its own signature', async () => {
-    const { result, calls } = await run({ env: withLegacy })
-    const legacy = calls.find((call) => call.url.endsWith('/api/inbound-email'))!
-
-    expect(result.legacy).toEqual({ status: 200, taken: true })
-    expect(legacy.headers['x-inbound-signature']).toBe(createHmac('sha256', LEGACY_SECRET).update(legacy.body).digest('hex'))
-    expect(legacy.headers['x-inbox-signature']).toBeUndefined()
-  })
-
-  it('is not called once its endpoint is removed', async () => {
-    const { calls } = await run()
-
-    expect(calls.every((call) => call.url.includes('/v2/'))).toBe(true)
-  })
-
-  it('counts as taken when the V2 Inbox is down and the forward failed', async () => {
-    const { result } = await run({ env: withLegacy, forwardFails: true, statuses: [503] })
-
-    expect(result).toMatchObject({ legacy: { taken: true }, rejected: false })
+    expect(calls.map((call) => call.url)).toEqual(['https://site.example/api/v2/inbound-email'])
+    expect(result).not.toHaveProperty('legacy')
   })
 })
 

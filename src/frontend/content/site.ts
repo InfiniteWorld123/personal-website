@@ -16,7 +16,6 @@ export const site = {
   linkedin: 'https://linkedin.com/in/yaman-warda',
   /** Transparent cutout of the studio portrait; shown in front of the blob. */
   heroPortrait: '/images/yaman-cutout.png',
-  contactEndpoint: '/api/contact',
   /**
    * Subjects claimed in the `Person` node's `knowsAbout`. Every entry is
    * covered by a published service or by a project in the registry below;

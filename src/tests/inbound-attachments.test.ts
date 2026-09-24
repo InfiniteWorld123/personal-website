@@ -1,14 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
-
-// The service is imported for one pure function; the module it lives in also
-// reaches for the mail configuration at load, which a test has no business
-// carrying.
-vi.mock('#/shared/env', () => ({
-  env: { BASE_URL: 'https://yamanwarda.de', APP_NAME: 'Yaman Warda' },
-}))
-
+import { describe, expect, it } from 'vitest'
 import { filesFrom, type ParsedAttachment } from '../../workers/inbound-email/src/files'
-import { fromBase64, withToken } from '#/backend/modules/inbox/message.service'
+
+/** Standard base64, as the V2 Inbox decodes the Worker's files. */
+const fromBase64 = (value: string): Uint8Array => new Uint8Array(Buffer.from(value, 'base64'))
 
 /**
  * The two halves of an arriving attachment, checked against each other.
@@ -115,23 +109,5 @@ describe('what the Worker leaves behind', () => {
     const [file] = filesFrom([attachment({ filename: '   ', content: bytes([1]) })])
 
     expect(file?.filename).toBe('attachment')
-  })
-})
-
-describe('the address a client answers to', () => {
-  /**
-   * The setting used to have to contain a `+` as a placeholder. A perfectly
-   * reasonable `reply@yamanwarda.de` then switched the entire inbound path
-   * off, with a 503 as the only explanation — which is what it did on the live
-   * site the first time this code reached it.
-   */
-  it('writes the token in whether or not the setting has a plus', () => {
-    expect(withToken('reply@yamanwarda.de', 'abc123')).toBe('reply+abc123@yamanwarda.de')
-    expect(withToken('reply+@yamanwarda.de', 'abc123')).toBe('reply+abc123@yamanwarda.de')
-  })
-
-  /** A leftover token in the setting is replaced, never appended to. */
-  it('does not stack tokens', () => {
-    expect(withToken('reply+old@yamanwarda.de', 'new')).toBe('reply+new@yamanwarda.de')
   })
 })

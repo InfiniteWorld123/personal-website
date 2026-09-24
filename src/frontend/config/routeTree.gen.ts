@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './../routes/__root'
 import { Route as IndexRouteImport } from './../routes/index'
 import { Route as LangRouteImport } from './../routes/$lang'
-import { Route as AdminRouteImport } from './../routes/admin'
 import { Route as DashboardRouteImport } from './../routes/dashboard'
 import { Route as SitemapDotxmlRouteImport } from './../routes/sitemap[.]xml'
 import { Route as LangIndexRouteImport } from './../routes/$lang.index'
@@ -21,13 +20,6 @@ import { Route as LangDatenschutzRouteImport } from './../routes/$lang.datenschu
 import { Route as LangFaqRouteImport } from './../routes/$lang.faq'
 import { Route as LangImpressumRouteImport } from './../routes/$lang.impressum'
 import { Route as LangStackRouteImport } from './../routes/$lang.stack'
-import { Route as AdminIndexRouteImport } from './../routes/admin.index'
-import { Route as AdminContentRouteImport } from './../routes/admin.content'
-import { Route as AdminLoginRouteImport } from './../routes/admin_.login'
-import { Route as ApiSplatRouteImport } from './../routes/api.$'
-import { Route as ApiContactRouteImport } from './../routes/api/contact'
-import { Route as ApiInboundEmailRouteImport } from './../routes/api/inbound-email'
-import { Route as ApiStripeWebhookRouteImport } from './../routes/api/stripe-webhook'
 import { Route as DashboardIndexRouteImport } from './../routes/dashboard.index'
 import { Route as DashboardAnalyticsRouteImport } from './../routes/dashboard.analytics'
 import { Route as DashboardCalendarRouteImport } from './../routes/dashboard.calendar'
@@ -47,30 +39,6 @@ import { Route as LangServicesIndexRouteImport } from './../routes/$lang.service
 import { Route as LangServicesSlugRouteImport } from './../routes/$lang.services.$slug'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
-import { Route as AdminBlogIndexRouteImport } from './../routes/admin.blog.index'
-import { Route as AdminBlogIdRouteImport } from './../routes/admin.blog.$id'
-import { Route as AdminBlogNewRouteImport } from './../routes/admin.blog.new'
-import { Route as AdminBlogTagsRouteImport } from './../routes/admin.blog.tags'
-import { Route as AdminBookingsIndexRouteImport } from './../routes/admin.bookings.index'
-import { Route as AdminBookingsIdRouteImport } from './../routes/admin.bookings.$id'
-import { Route as AdminBookingsAvailabilityRouteImport } from './../routes/admin.bookings.availability'
-import { Route as AdminBookingsNewRouteImport } from './../routes/admin.bookings.new'
-import { Route as AdminInboxIndexRouteImport } from './../routes/admin.inbox.index'
-import { Route as AdminInboxPersonIdRouteImport } from './../routes/admin.inbox.$personId'
-import { Route as AdminInboxNewRouteImport } from './../routes/admin.inbox.new'
-import { Route as AdminInboxSettingsRouteImport } from './../routes/admin.inbox.settings'
-import { Route as AdminInvoicesIndexRouteImport } from './../routes/admin.invoices.index'
-import { Route as AdminInvoicesInvoiceIdRouteImport } from './../routes/admin.invoices.$invoiceId'
-import { Route as AdminInvoicesClientsRouteImport } from './../routes/admin.invoices.clients'
-import { Route as AdminInvoicesNewRouteImport } from './../routes/admin.invoices.new'
-import { Route as AdminInvoicesSentRouteImport } from './../routes/admin.invoices.sent'
-import { Route as AdminInvoicesSubscriptionsRouteImport } from './../routes/admin.invoices.subscriptions'
-import { Route as AdminLeadsIndexRouteImport } from './../routes/admin.leads.index'
-import { Route as AdminLeadsPersonIdRouteImport } from './../routes/admin.leads.$personId'
-import { Route as AdminLeadsBoardRouteImport } from './../routes/admin.leads.board'
-import { Route as AdminProjectsIndexRouteImport } from './../routes/admin.projects.index'
-import { Route as AdminProjectsIdRouteImport } from './../routes/admin.projects.$id'
-import { Route as AdminProjectsNewRouteImport } from './../routes/admin.projects.new'
 import { Route as ApiV2SplatRouteImport } from './../routes/api.v2.$'
 import { Route as DashboardAssistantIndexRouteImport } from './../routes/dashboard.assistant.index'
 import { Route as DashboardAssistantSettingsRouteImport } from './../routes/dashboard.assistant.settings'
@@ -96,16 +64,11 @@ import { Route as DashboardProjectsProjectIdRouteImport } from './../routes/dash
 import { Route as DashboardServicesIndexRouteImport } from './../routes/dashboard.services.index'
 import { Route as DashboardServicesServiceIdRouteImport } from './../routes/dashboard.services.$serviceId'
 import { Route as DashboardSettingsIndexRouteImport } from './../routes/dashboard.settings.index'
-import { Route as DashboardSettingsOldSiteRouteImport } from './../routes/dashboard.settings.old-site'
 import { Route as DashboardSettingsSecurityRouteImport } from './../routes/dashboard.settings.security'
 import { Route as DashboardLoginConfirmEmailRouteImport } from './../routes/dashboard_.login_.confirm-email'
 import { Route as DashboardLoginResetRouteImport } from './../routes/dashboard_.login_.reset'
 import { Route as LangBookingManageReferenceRouteImport } from './../routes/$lang.booking.manage.$reference'
 import { Route as LangBookingRoomReferenceRouteImport } from './../routes/$lang.booking.room.$reference'
-import { Route as AdminBookingsIdRoomRouteImport } from './../routes/admin.bookings.$id_.room'
-import { Route as AdminBookingsTypesIndexRouteImport } from './../routes/admin.bookings.types.index'
-import { Route as AdminBookingsTypesIdRouteImport } from './../routes/admin.bookings.types.$id'
-import { Route as AdminBookingsTypesNewRouteImport } from './../routes/admin.bookings.types.new'
 import { Route as DashboardClientsClientIdEditRouteImport } from './../routes/dashboard.clients.$clientId.edit'
 import { Route as DashboardInvoicesInvoiceIdIndexRouteImport } from './../routes/dashboard.invoices.$invoiceId.index'
 import { Route as DashboardInvoicesInvoiceIdPreviewRouteImport } from './../routes/dashboard.invoices.$invoiceId.preview'
@@ -121,11 +84,6 @@ const IndexRoute = IndexRouteImport.update({
 const LangRoute = LangRouteImport.update({
   id: '/$lang',
   path: '/$lang',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -172,41 +130,6 @@ const LangStackRoute = LangStackRouteImport.update({
   id: '/stack',
   path: '/stack',
   getParentRoute: () => LangRoute,
-} as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminContentRoute = AdminContentRouteImport.update({
-  id: '/content',
-  path: '/content',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin_/login',
-  path: '/admin/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiContactRoute = ApiContactRouteImport.update({
-  id: '/api/contact',
-  path: '/api/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiInboundEmailRoute = ApiInboundEmailRouteImport.update({
-  id: '/api/inbound-email',
-  path: '/api/inbound-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
-  id: '/api/stripe-webhook',
-  path: '/api/stripe-webhook',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
@@ -302,128 +225,6 @@ const LangWorkSlugRoute = LangWorkSlugRouteImport.update({
   id: '/work/$slug',
   path: '/work/$slug',
   getParentRoute: () => LangRoute,
-} as any)
-const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
-  id: '/blog/',
-  path: '/blog/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
-  id: '/blog/$id',
-  path: '/blog/$id',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
-  id: '/blog/new',
-  path: '/blog/new',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBlogTagsRoute = AdminBlogTagsRouteImport.update({
-  id: '/blog/tags',
-  path: '/blog/tags',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
-  id: '/bookings/',
-  path: '/bookings/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsIdRoute = AdminBookingsIdRouteImport.update({
-  id: '/bookings/$id',
-  path: '/bookings/$id',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsAvailabilityRoute =
-  AdminBookingsAvailabilityRouteImport.update({
-    id: '/bookings/availability',
-    path: '/bookings/availability',
-    getParentRoute: () => AdminRoute,
-  } as any)
-const AdminBookingsNewRoute = AdminBookingsNewRouteImport.update({
-  id: '/bookings/new',
-  path: '/bookings/new',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInboxIndexRoute = AdminInboxIndexRouteImport.update({
-  id: '/inbox/',
-  path: '/inbox/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInboxPersonIdRoute = AdminInboxPersonIdRouteImport.update({
-  id: '/inbox/$personId',
-  path: '/inbox/$personId',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInboxNewRoute = AdminInboxNewRouteImport.update({
-  id: '/inbox/new',
-  path: '/inbox/new',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInboxSettingsRoute = AdminInboxSettingsRouteImport.update({
-  id: '/inbox/settings',
-  path: '/inbox/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesIndexRoute = AdminInvoicesIndexRouteImport.update({
-  id: '/invoices/',
-  path: '/invoices/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesInvoiceIdRoute = AdminInvoicesInvoiceIdRouteImport.update({
-  id: '/invoices/$invoiceId',
-  path: '/invoices/$invoiceId',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesClientsRoute = AdminInvoicesClientsRouteImport.update({
-  id: '/invoices/clients',
-  path: '/invoices/clients',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesNewRoute = AdminInvoicesNewRouteImport.update({
-  id: '/invoices/new',
-  path: '/invoices/new',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesSentRoute = AdminInvoicesSentRouteImport.update({
-  id: '/invoices/sent',
-  path: '/invoices/sent',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminInvoicesSubscriptionsRoute =
-  AdminInvoicesSubscriptionsRouteImport.update({
-    id: '/invoices/subscriptions',
-    path: '/invoices/subscriptions',
-    getParentRoute: () => AdminRoute,
-  } as any)
-const AdminLeadsIndexRoute = AdminLeadsIndexRouteImport.update({
-  id: '/leads/',
-  path: '/leads/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLeadsPersonIdRoute = AdminLeadsPersonIdRouteImport.update({
-  id: '/leads/$personId',
-  path: '/leads/$personId',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLeadsBoardRoute = AdminLeadsBoardRouteImport.update({
-  id: '/leads/board',
-  path: '/leads/board',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProjectsIndexRoute = AdminProjectsIndexRouteImport.update({
-  id: '/projects/',
-  path: '/projects/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProjectsIdRoute = AdminProjectsIdRouteImport.update({
-  id: '/projects/$id',
-  path: '/projects/$id',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProjectsNewRoute = AdminProjectsNewRouteImport.update({
-  id: '/projects/new',
-  path: '/projects/new',
-  getParentRoute: () => AdminRoute,
 } as any)
 const ApiV2SplatRoute = ApiV2SplatRouteImport.update({
   id: '/api/v2/$',
@@ -555,12 +356,6 @@ const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardSettingsRoute,
 } as any)
-const DashboardSettingsOldSiteRoute =
-  DashboardSettingsOldSiteRouteImport.update({
-    id: '/old-site',
-    path: '/old-site',
-    getParentRoute: () => DashboardSettingsRoute,
-  } as any)
 const DashboardSettingsSecurityRoute =
   DashboardSettingsSecurityRouteImport.update({
     id: '/security',
@@ -590,26 +385,6 @@ const LangBookingRoomReferenceRoute =
     path: '/booking/room/$reference',
     getParentRoute: () => LangRoute,
   } as any)
-const AdminBookingsIdRoomRoute = AdminBookingsIdRoomRouteImport.update({
-  id: '/bookings/$id_/room',
-  path: '/bookings/$id/room',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsTypesIndexRoute = AdminBookingsTypesIndexRouteImport.update({
-  id: '/bookings/types/',
-  path: '/bookings/types/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsTypesIdRoute = AdminBookingsTypesIdRouteImport.update({
-  id: '/bookings/types/$id',
-  path: '/bookings/types/$id',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBookingsTypesNewRoute = AdminBookingsTypesNewRouteImport.update({
-  id: '/bookings/types/new',
-  path: '/bookings/types/new',
-  getParentRoute: () => AdminRoute,
-} as any)
 const DashboardClientsClientIdEditRoute =
   DashboardClientsClientIdEditRouteImport.update({
     id: '/clients/$clientId/edit',
@@ -650,7 +425,6 @@ const DashboardLeadsLeadIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$lang': typeof LangRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
@@ -659,12 +433,6 @@ export interface FileRoutesByFullPath {
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/stack': typeof LangStackRoute
-  '/admin/content': typeof AdminContentRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/contact': typeof ApiContactRoute
-  '/api/inbound-email': typeof ApiInboundEmailRoute
-  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
@@ -676,30 +444,11 @@ export interface FileRoutesByFullPath {
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
-  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
-  '/admin/blog/$id': typeof AdminBlogIdRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog/tags': typeof AdminBlogTagsRoute
-  '/admin/bookings/$id': typeof AdminBookingsIdRoute
-  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
-  '/admin/bookings/new': typeof AdminBookingsNewRoute
-  '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
-  '/admin/inbox/new': typeof AdminInboxNewRoute
-  '/admin/inbox/settings': typeof AdminInboxSettingsRoute
-  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
-  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
-  '/admin/invoices/new': typeof AdminInvoicesNewRoute
-  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
-  '/admin/invoices/subscriptions': typeof AdminInvoicesSubscriptionsRoute
-  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
-  '/admin/leads/board': typeof AdminLeadsBoardRoute
-  '/admin/projects/$id': typeof AdminProjectsIdRoute
-  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
@@ -717,7 +466,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
-  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -725,12 +473,6 @@ export interface FileRoutesByFullPath {
   '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/services/': typeof LangServicesIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
-  '/admin/blog/': typeof AdminBlogIndexRoute
-  '/admin/bookings/': typeof AdminBookingsIndexRoute
-  '/admin/inbox/': typeof AdminInboxIndexRoute
-  '/admin/invoices/': typeof AdminInvoicesIndexRoute
-  '/admin/leads/': typeof AdminLeadsIndexRoute
-  '/admin/projects/': typeof AdminProjectsIndexRoute
   '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
@@ -741,14 +483,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
-  '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
-  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
-  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
   '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
-  '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
   '/dashboard/invoices/$invoiceId/': typeof DashboardInvoicesInvoiceIdIndexRoute
   '/dashboard/invoices/subscriptions/': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
@@ -761,12 +499,6 @@ export interface FileRoutesByTo {
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/stack': typeof LangStackRoute
-  '/admin/content': typeof AdminContentRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/contact': typeof ApiContactRoute
-  '/api/inbound-email': typeof ApiInboundEmailRoute
-  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
@@ -777,30 +509,11 @@ export interface FileRoutesByTo {
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang': typeof LangIndexRoute
-  '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
-  '/admin/blog/$id': typeof AdminBlogIdRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog/tags': typeof AdminBlogTagsRoute
-  '/admin/bookings/$id': typeof AdminBookingsIdRoute
-  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
-  '/admin/bookings/new': typeof AdminBookingsNewRoute
-  '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
-  '/admin/inbox/new': typeof AdminInboxNewRoute
-  '/admin/inbox/settings': typeof AdminInboxSettingsRoute
-  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
-  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
-  '/admin/invoices/new': typeof AdminInvoicesNewRoute
-  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
-  '/admin/invoices/subscriptions': typeof AdminInvoicesSubscriptionsRoute
-  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
-  '/admin/leads/board': typeof AdminLeadsBoardRoute
-  '/admin/projects/$id': typeof AdminProjectsIdRoute
-  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
@@ -818,7 +531,6 @@ export interface FileRoutesByTo {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
-  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard/login/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard/login/reset': typeof DashboardLoginResetRoute
@@ -826,12 +538,6 @@ export interface FileRoutesByTo {
   '/$lang/booking': typeof LangBookingIndexRoute
   '/$lang/services': typeof LangServicesIndexRoute
   '/$lang/work': typeof LangWorkIndexRoute
-  '/admin/blog': typeof AdminBlogIndexRoute
-  '/admin/bookings': typeof AdminBookingsIndexRoute
-  '/admin/inbox': typeof AdminInboxIndexRoute
-  '/admin/invoices': typeof AdminInvoicesIndexRoute
-  '/admin/leads': typeof AdminLeadsIndexRoute
-  '/admin/projects': typeof AdminProjectsIndexRoute
   '/dashboard/assistant': typeof DashboardAssistantIndexRoute
   '/dashboard/blog': typeof DashboardBlogIndexRoute
   '/dashboard/clients': typeof DashboardClientsIndexRoute
@@ -842,14 +548,10 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
-  '/admin/bookings/$id/room': typeof AdminBookingsIdRoomRoute
-  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
-  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
   '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
-  '/admin/bookings/types': typeof AdminBookingsTypesIndexRoute
   '/dashboard/invoices/$invoiceId': typeof DashboardInvoicesInvoiceIdIndexRoute
   '/dashboard/invoices/subscriptions': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
@@ -857,7 +559,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$lang': typeof LangRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
@@ -866,12 +567,6 @@ export interface FileRoutesById {
   '/$lang/faq': typeof LangFaqRoute
   '/$lang/impressum': typeof LangImpressumRoute
   '/$lang/stack': typeof LangStackRoute
-  '/admin/content': typeof AdminContentRoute
-  '/admin_/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/contact': typeof ApiContactRoute
-  '/api/inbound-email': typeof ApiInboundEmailRoute
-  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/content': typeof DashboardContentRoute
@@ -883,30 +578,11 @@ export interface FileRoutesById {
   '/rss/de.xml': typeof RssDeDotxmlRoute
   '/rss/en.xml': typeof RssEnDotxmlRoute
   '/$lang/': typeof LangIndexRoute
-  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
-  '/admin/blog/$id': typeof AdminBlogIdRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog/tags': typeof AdminBlogTagsRoute
-  '/admin/bookings/$id': typeof AdminBookingsIdRoute
-  '/admin/bookings/availability': typeof AdminBookingsAvailabilityRoute
-  '/admin/bookings/new': typeof AdminBookingsNewRoute
-  '/admin/inbox/$personId': typeof AdminInboxPersonIdRoute
-  '/admin/inbox/new': typeof AdminInboxNewRoute
-  '/admin/inbox/settings': typeof AdminInboxSettingsRoute
-  '/admin/invoices/$invoiceId': typeof AdminInvoicesInvoiceIdRoute
-  '/admin/invoices/clients': typeof AdminInvoicesClientsRoute
-  '/admin/invoices/new': typeof AdminInvoicesNewRoute
-  '/admin/invoices/sent': typeof AdminInvoicesSentRoute
-  '/admin/invoices/subscriptions': typeof AdminInvoicesSubscriptionsRoute
-  '/admin/leads/$personId': typeof AdminLeadsPersonIdRoute
-  '/admin/leads/board': typeof AdminLeadsBoardRoute
-  '/admin/projects/$id': typeof AdminProjectsIdRoute
-  '/admin/projects/new': typeof AdminProjectsNewRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
   '/dashboard/blog/$postId': typeof DashboardBlogPostIdRoute
@@ -924,7 +600,6 @@ export interface FileRoutesById {
   '/dashboard/leads/trash': typeof DashboardLeadsTrashRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/services/$serviceId': typeof DashboardServicesServiceIdRoute
-  '/dashboard/settings/old-site': typeof DashboardSettingsOldSiteRoute
   '/dashboard/settings/security': typeof DashboardSettingsSecurityRoute
   '/dashboard_/login_/confirm-email': typeof DashboardLoginConfirmEmailRoute
   '/dashboard_/login_/reset': typeof DashboardLoginResetRoute
@@ -932,12 +607,6 @@ export interface FileRoutesById {
   '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/services/': typeof LangServicesIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
-  '/admin/blog/': typeof AdminBlogIndexRoute
-  '/admin/bookings/': typeof AdminBookingsIndexRoute
-  '/admin/inbox/': typeof AdminInboxIndexRoute
-  '/admin/invoices/': typeof AdminInvoicesIndexRoute
-  '/admin/leads/': typeof AdminLeadsIndexRoute
-  '/admin/projects/': typeof AdminProjectsIndexRoute
   '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
@@ -948,14 +617,10 @@ export interface FileRoutesById {
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/$lang/booking/manage/$reference': typeof LangBookingManageReferenceRoute
   '/$lang/booking/room/$reference': typeof LangBookingRoomReferenceRoute
-  '/admin/bookings/$id_/room': typeof AdminBookingsIdRoomRoute
-  '/admin/bookings/types/$id': typeof AdminBookingsTypesIdRoute
-  '/admin/bookings/types/new': typeof AdminBookingsTypesNewRoute
   '/dashboard/clients/$clientId/edit': typeof DashboardClientsClientIdEditRoute
   '/dashboard/invoices/$invoiceId/preview': typeof DashboardInvoicesInvoiceIdPreviewRoute
   '/dashboard/invoices/subscriptions/new': typeof DashboardInvoicesSubscriptionsNewRoute
   '/dashboard/leads/$leadId/edit': typeof DashboardLeadsLeadIdEditRoute
-  '/admin/bookings/types/': typeof AdminBookingsTypesIndexRoute
   '/dashboard/invoices/$invoiceId/': typeof DashboardInvoicesInvoiceIdIndexRoute
   '/dashboard/invoices/subscriptions/': typeof DashboardInvoicesSubscriptionsIndexRoute
 }
@@ -964,7 +629,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$lang'
-    | '/admin'
     | '/dashboard'
     | '/sitemap.xml'
     | '/$lang/about'
@@ -973,12 +637,6 @@ export interface FileRouteTypes {
     | '/$lang/faq'
     | '/$lang/impressum'
     | '/$lang/stack'
-    | '/admin/content'
-    | '/admin/login'
-    | '/api/$'
-    | '/api/contact'
-    | '/api/inbound-email'
-    | '/api/stripe-webhook'
     | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
@@ -990,30 +648,11 @@ export interface FileRouteTypes {
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang/'
-    | '/admin/'
     | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
     | '/$lang/work/$slug'
-    | '/admin/blog/$id'
-    | '/admin/blog/new'
-    | '/admin/blog/tags'
-    | '/admin/bookings/$id'
-    | '/admin/bookings/availability'
-    | '/admin/bookings/new'
-    | '/admin/inbox/$personId'
-    | '/admin/inbox/new'
-    | '/admin/inbox/settings'
-    | '/admin/invoices/$invoiceId'
-    | '/admin/invoices/clients'
-    | '/admin/invoices/new'
-    | '/admin/invoices/sent'
-    | '/admin/invoices/subscriptions'
-    | '/admin/leads/$personId'
-    | '/admin/leads/board'
-    | '/admin/projects/$id'
-    | '/admin/projects/new'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
@@ -1031,7 +670,6 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
-    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -1039,12 +677,6 @@ export interface FileRouteTypes {
     | '/$lang/booking/'
     | '/$lang/services/'
     | '/$lang/work/'
-    | '/admin/blog/'
-    | '/admin/bookings/'
-    | '/admin/inbox/'
-    | '/admin/invoices/'
-    | '/admin/leads/'
-    | '/admin/projects/'
     | '/dashboard/assistant/'
     | '/dashboard/blog/'
     | '/dashboard/clients/'
@@ -1055,14 +687,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings/'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
-    | '/admin/bookings/$id/room'
-    | '/admin/bookings/types/$id'
-    | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
     | '/dashboard/invoices/$invoiceId/preview'
     | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
-    | '/admin/bookings/types/'
     | '/dashboard/invoices/$invoiceId/'
     | '/dashboard/invoices/subscriptions/'
   fileRoutesByTo: FileRoutesByTo
@@ -1075,12 +703,6 @@ export interface FileRouteTypes {
     | '/$lang/faq'
     | '/$lang/impressum'
     | '/$lang/stack'
-    | '/admin/content'
-    | '/admin/login'
-    | '/api/$'
-    | '/api/contact'
-    | '/api/inbound-email'
-    | '/api/stripe-webhook'
     | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
@@ -1091,30 +713,11 @@ export interface FileRouteTypes {
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang'
-    | '/admin'
     | '/dashboard'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
     | '/$lang/work/$slug'
-    | '/admin/blog/$id'
-    | '/admin/blog/new'
-    | '/admin/blog/tags'
-    | '/admin/bookings/$id'
-    | '/admin/bookings/availability'
-    | '/admin/bookings/new'
-    | '/admin/inbox/$personId'
-    | '/admin/inbox/new'
-    | '/admin/inbox/settings'
-    | '/admin/invoices/$invoiceId'
-    | '/admin/invoices/clients'
-    | '/admin/invoices/new'
-    | '/admin/invoices/sent'
-    | '/admin/invoices/subscriptions'
-    | '/admin/leads/$personId'
-    | '/admin/leads/board'
-    | '/admin/projects/$id'
-    | '/admin/projects/new'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
@@ -1132,7 +735,6 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
-    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard/login/confirm-email'
     | '/dashboard/login/reset'
@@ -1140,12 +742,6 @@ export interface FileRouteTypes {
     | '/$lang/booking'
     | '/$lang/services'
     | '/$lang/work'
-    | '/admin/blog'
-    | '/admin/bookings'
-    | '/admin/inbox'
-    | '/admin/invoices'
-    | '/admin/leads'
-    | '/admin/projects'
     | '/dashboard/assistant'
     | '/dashboard/blog'
     | '/dashboard/clients'
@@ -1156,21 +752,16 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
-    | '/admin/bookings/$id/room'
-    | '/admin/bookings/types/$id'
-    | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
     | '/dashboard/invoices/$invoiceId/preview'
     | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
-    | '/admin/bookings/types'
     | '/dashboard/invoices/$invoiceId'
     | '/dashboard/invoices/subscriptions'
   id:
     | '__root__'
     | '/'
     | '/$lang'
-    | '/admin'
     | '/dashboard'
     | '/sitemap.xml'
     | '/$lang/about'
@@ -1179,12 +770,6 @@ export interface FileRouteTypes {
     | '/$lang/faq'
     | '/$lang/impressum'
     | '/$lang/stack'
-    | '/admin/content'
-    | '/admin_/login'
-    | '/api/$'
-    | '/api/contact'
-    | '/api/inbound-email'
-    | '/api/stripe-webhook'
     | '/dashboard/analytics'
     | '/dashboard/calendar'
     | '/dashboard/content'
@@ -1196,30 +781,11 @@ export interface FileRouteTypes {
     | '/rss/de.xml'
     | '/rss/en.xml'
     | '/$lang/'
-    | '/admin/'
     | '/dashboard/'
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
     | '/$lang/work/$slug'
-    | '/admin/blog/$id'
-    | '/admin/blog/new'
-    | '/admin/blog/tags'
-    | '/admin/bookings/$id'
-    | '/admin/bookings/availability'
-    | '/admin/bookings/new'
-    | '/admin/inbox/$personId'
-    | '/admin/inbox/new'
-    | '/admin/inbox/settings'
-    | '/admin/invoices/$invoiceId'
-    | '/admin/invoices/clients'
-    | '/admin/invoices/new'
-    | '/admin/invoices/sent'
-    | '/admin/invoices/subscriptions'
-    | '/admin/leads/$personId'
-    | '/admin/leads/board'
-    | '/admin/projects/$id'
-    | '/admin/projects/new'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
     | '/dashboard/blog/$postId'
@@ -1237,7 +803,6 @@ export interface FileRouteTypes {
     | '/dashboard/leads/trash'
     | '/dashboard/projects/$projectId'
     | '/dashboard/services/$serviceId'
-    | '/dashboard/settings/old-site'
     | '/dashboard/settings/security'
     | '/dashboard_/login_/confirm-email'
     | '/dashboard_/login_/reset'
@@ -1245,12 +810,6 @@ export interface FileRouteTypes {
     | '/$lang/booking/'
     | '/$lang/services/'
     | '/$lang/work/'
-    | '/admin/blog/'
-    | '/admin/bookings/'
-    | '/admin/inbox/'
-    | '/admin/invoices/'
-    | '/admin/leads/'
-    | '/admin/projects/'
     | '/dashboard/assistant/'
     | '/dashboard/blog/'
     | '/dashboard/clients/'
@@ -1261,14 +820,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings/'
     | '/$lang/booking/manage/$reference'
     | '/$lang/booking/room/$reference'
-    | '/admin/bookings/$id_/room'
-    | '/admin/bookings/types/$id'
-    | '/admin/bookings/types/new'
     | '/dashboard/clients/$clientId/edit'
     | '/dashboard/invoices/$invoiceId/preview'
     | '/dashboard/invoices/subscriptions/new'
     | '/dashboard/leads/$leadId/edit'
-    | '/admin/bookings/types/'
     | '/dashboard/invoices/$invoiceId/'
     | '/dashboard/invoices/subscriptions/'
   fileRoutesById: FileRoutesById
@@ -1276,14 +831,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LangRoute: typeof LangRouteWithChildren
-  AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  ApiSplatRoute: typeof ApiSplatRoute
-  ApiContactRoute: typeof ApiContactRoute
-  ApiInboundEmailRoute: typeof ApiInboundEmailRoute
-  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   DashboardLoginRoute: typeof DashboardLoginRoute
   RssArDotxmlRoute: typeof RssArDotxmlRoute
   RssDeDotxmlRoute: typeof RssDeDotxmlRoute
@@ -1307,13 +856,6 @@ declare module '@tanstack/react-router' {
       path: '/$lang'
       fullPath: '/$lang'
       preLoaderRoute: typeof LangRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -1378,55 +920,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$lang/stack'
       preLoaderRoute: typeof LangStackRouteImport
       parentRoute: typeof LangRoute
-    }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/content': {
-      id: '/admin/content'
-      path: '/content'
-      fullPath: '/admin/content'
-      preLoaderRoute: typeof AdminContentRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin_/login': {
-      id: '/admin_/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/contact': {
-      id: '/api/contact'
-      path: '/api/contact'
-      fullPath: '/api/contact'
-      preLoaderRoute: typeof ApiContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/inbound-email': {
-      id: '/api/inbound-email'
-      path: '/api/inbound-email'
-      fullPath: '/api/inbound-email'
-      preLoaderRoute: typeof ApiInboundEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/stripe-webhook': {
-      id: '/api/stripe-webhook'
-      path: '/api/stripe-webhook'
-      fullPath: '/api/stripe-webhook'
-      preLoaderRoute: typeof ApiStripeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
       id: '/dashboard/'
@@ -1560,174 +1053,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$lang/work/$slug'
       preLoaderRoute: typeof LangWorkSlugRouteImport
       parentRoute: typeof LangRoute
-    }
-    '/admin/blog/': {
-      id: '/admin/blog/'
-      path: '/blog'
-      fullPath: '/admin/blog/'
-      preLoaderRoute: typeof AdminBlogIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/blog/$id': {
-      id: '/admin/blog/$id'
-      path: '/blog/$id'
-      fullPath: '/admin/blog/$id'
-      preLoaderRoute: typeof AdminBlogIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/blog/new': {
-      id: '/admin/blog/new'
-      path: '/blog/new'
-      fullPath: '/admin/blog/new'
-      preLoaderRoute: typeof AdminBlogNewRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/blog/tags': {
-      id: '/admin/blog/tags'
-      path: '/blog/tags'
-      fullPath: '/admin/blog/tags'
-      preLoaderRoute: typeof AdminBlogTagsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/': {
-      id: '/admin/bookings/'
-      path: '/bookings'
-      fullPath: '/admin/bookings/'
-      preLoaderRoute: typeof AdminBookingsIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/$id': {
-      id: '/admin/bookings/$id'
-      path: '/bookings/$id'
-      fullPath: '/admin/bookings/$id'
-      preLoaderRoute: typeof AdminBookingsIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/availability': {
-      id: '/admin/bookings/availability'
-      path: '/bookings/availability'
-      fullPath: '/admin/bookings/availability'
-      preLoaderRoute: typeof AdminBookingsAvailabilityRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/new': {
-      id: '/admin/bookings/new'
-      path: '/bookings/new'
-      fullPath: '/admin/bookings/new'
-      preLoaderRoute: typeof AdminBookingsNewRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/inbox/': {
-      id: '/admin/inbox/'
-      path: '/inbox'
-      fullPath: '/admin/inbox/'
-      preLoaderRoute: typeof AdminInboxIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/inbox/$personId': {
-      id: '/admin/inbox/$personId'
-      path: '/inbox/$personId'
-      fullPath: '/admin/inbox/$personId'
-      preLoaderRoute: typeof AdminInboxPersonIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/inbox/new': {
-      id: '/admin/inbox/new'
-      path: '/inbox/new'
-      fullPath: '/admin/inbox/new'
-      preLoaderRoute: typeof AdminInboxNewRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/inbox/settings': {
-      id: '/admin/inbox/settings'
-      path: '/inbox/settings'
-      fullPath: '/admin/inbox/settings'
-      preLoaderRoute: typeof AdminInboxSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/': {
-      id: '/admin/invoices/'
-      path: '/invoices'
-      fullPath: '/admin/invoices/'
-      preLoaderRoute: typeof AdminInvoicesIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/$invoiceId': {
-      id: '/admin/invoices/$invoiceId'
-      path: '/invoices/$invoiceId'
-      fullPath: '/admin/invoices/$invoiceId'
-      preLoaderRoute: typeof AdminInvoicesInvoiceIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/clients': {
-      id: '/admin/invoices/clients'
-      path: '/invoices/clients'
-      fullPath: '/admin/invoices/clients'
-      preLoaderRoute: typeof AdminInvoicesClientsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/new': {
-      id: '/admin/invoices/new'
-      path: '/invoices/new'
-      fullPath: '/admin/invoices/new'
-      preLoaderRoute: typeof AdminInvoicesNewRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/sent': {
-      id: '/admin/invoices/sent'
-      path: '/invoices/sent'
-      fullPath: '/admin/invoices/sent'
-      preLoaderRoute: typeof AdminInvoicesSentRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/invoices/subscriptions': {
-      id: '/admin/invoices/subscriptions'
-      path: '/invoices/subscriptions'
-      fullPath: '/admin/invoices/subscriptions'
-      preLoaderRoute: typeof AdminInvoicesSubscriptionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/leads/': {
-      id: '/admin/leads/'
-      path: '/leads'
-      fullPath: '/admin/leads/'
-      preLoaderRoute: typeof AdminLeadsIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/leads/$personId': {
-      id: '/admin/leads/$personId'
-      path: '/leads/$personId'
-      fullPath: '/admin/leads/$personId'
-      preLoaderRoute: typeof AdminLeadsPersonIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/leads/board': {
-      id: '/admin/leads/board'
-      path: '/leads/board'
-      fullPath: '/admin/leads/board'
-      preLoaderRoute: typeof AdminLeadsBoardRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/projects/': {
-      id: '/admin/projects/'
-      path: '/projects'
-      fullPath: '/admin/projects/'
-      preLoaderRoute: typeof AdminProjectsIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/projects/$id': {
-      id: '/admin/projects/$id'
-      path: '/projects/$id'
-      fullPath: '/admin/projects/$id'
-      preLoaderRoute: typeof AdminProjectsIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/projects/new': {
-      id: '/admin/projects/new'
-      path: '/projects/new'
-      fullPath: '/admin/projects/new'
-      preLoaderRoute: typeof AdminProjectsNewRouteImport
-      parentRoute: typeof AdminRoute
     }
     '/api/v2/$': {
       id: '/api/v2/$'
@@ -1904,13 +1229,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsIndexRouteImport
       parentRoute: typeof DashboardSettingsRoute
     }
-    '/dashboard/settings/old-site': {
-      id: '/dashboard/settings/old-site'
-      path: '/old-site'
-      fullPath: '/dashboard/settings/old-site'
-      preLoaderRoute: typeof DashboardSettingsOldSiteRouteImport
-      parentRoute: typeof DashboardSettingsRoute
-    }
     '/dashboard/settings/security': {
       id: '/dashboard/settings/security'
       path: '/security'
@@ -1945,34 +1263,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$lang/booking/room/$reference'
       preLoaderRoute: typeof LangBookingRoomReferenceRouteImport
       parentRoute: typeof LangRoute
-    }
-    '/admin/bookings/$id_/room': {
-      id: '/admin/bookings/$id_/room'
-      path: '/bookings/$id/room'
-      fullPath: '/admin/bookings/$id/room'
-      preLoaderRoute: typeof AdminBookingsIdRoomRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/types/': {
-      id: '/admin/bookings/types/'
-      path: '/bookings/types'
-      fullPath: '/admin/bookings/types/'
-      preLoaderRoute: typeof AdminBookingsTypesIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/types/$id': {
-      id: '/admin/bookings/types/$id'
-      path: '/bookings/types/$id'
-      fullPath: '/admin/bookings/types/$id'
-      preLoaderRoute: typeof AdminBookingsTypesIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bookings/types/new': {
-      id: '/admin/bookings/types/new'
-      path: '/bookings/types/new'
-      fullPath: '/admin/bookings/types/new'
-      preLoaderRoute: typeof AdminBookingsTypesNewRouteImport
-      parentRoute: typeof AdminRoute
     }
     '/dashboard/clients/$clientId/edit': {
       id: '/dashboard/clients/$clientId/edit'
@@ -2061,82 +1351,12 @@ const LangRouteChildren: LangRouteChildren = {
 
 const LangRouteWithChildren = LangRoute._addFileChildren(LangRouteChildren)
 
-interface AdminRouteChildren {
-  AdminContentRoute: typeof AdminContentRoute
-  AdminIndexRoute: typeof AdminIndexRoute
-  AdminBlogIdRoute: typeof AdminBlogIdRoute
-  AdminBlogNewRoute: typeof AdminBlogNewRoute
-  AdminBlogTagsRoute: typeof AdminBlogTagsRoute
-  AdminBookingsIdRoute: typeof AdminBookingsIdRoute
-  AdminBookingsAvailabilityRoute: typeof AdminBookingsAvailabilityRoute
-  AdminBookingsNewRoute: typeof AdminBookingsNewRoute
-  AdminInboxPersonIdRoute: typeof AdminInboxPersonIdRoute
-  AdminInboxNewRoute: typeof AdminInboxNewRoute
-  AdminInboxSettingsRoute: typeof AdminInboxSettingsRoute
-  AdminInvoicesInvoiceIdRoute: typeof AdminInvoicesInvoiceIdRoute
-  AdminInvoicesClientsRoute: typeof AdminInvoicesClientsRoute
-  AdminInvoicesNewRoute: typeof AdminInvoicesNewRoute
-  AdminInvoicesSentRoute: typeof AdminInvoicesSentRoute
-  AdminInvoicesSubscriptionsRoute: typeof AdminInvoicesSubscriptionsRoute
-  AdminLeadsPersonIdRoute: typeof AdminLeadsPersonIdRoute
-  AdminLeadsBoardRoute: typeof AdminLeadsBoardRoute
-  AdminProjectsIdRoute: typeof AdminProjectsIdRoute
-  AdminProjectsNewRoute: typeof AdminProjectsNewRoute
-  AdminBlogIndexRoute: typeof AdminBlogIndexRoute
-  AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
-  AdminInboxIndexRoute: typeof AdminInboxIndexRoute
-  AdminInvoicesIndexRoute: typeof AdminInvoicesIndexRoute
-  AdminLeadsIndexRoute: typeof AdminLeadsIndexRoute
-  AdminProjectsIndexRoute: typeof AdminProjectsIndexRoute
-  AdminBookingsIdRoomRoute: typeof AdminBookingsIdRoomRoute
-  AdminBookingsTypesIdRoute: typeof AdminBookingsTypesIdRoute
-  AdminBookingsTypesNewRoute: typeof AdminBookingsTypesNewRoute
-  AdminBookingsTypesIndexRoute: typeof AdminBookingsTypesIndexRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminContentRoute: AdminContentRoute,
-  AdminIndexRoute: AdminIndexRoute,
-  AdminBlogIdRoute: AdminBlogIdRoute,
-  AdminBlogNewRoute: AdminBlogNewRoute,
-  AdminBlogTagsRoute: AdminBlogTagsRoute,
-  AdminBookingsIdRoute: AdminBookingsIdRoute,
-  AdminBookingsAvailabilityRoute: AdminBookingsAvailabilityRoute,
-  AdminBookingsNewRoute: AdminBookingsNewRoute,
-  AdminInboxPersonIdRoute: AdminInboxPersonIdRoute,
-  AdminInboxNewRoute: AdminInboxNewRoute,
-  AdminInboxSettingsRoute: AdminInboxSettingsRoute,
-  AdminInvoicesInvoiceIdRoute: AdminInvoicesInvoiceIdRoute,
-  AdminInvoicesClientsRoute: AdminInvoicesClientsRoute,
-  AdminInvoicesNewRoute: AdminInvoicesNewRoute,
-  AdminInvoicesSentRoute: AdminInvoicesSentRoute,
-  AdminInvoicesSubscriptionsRoute: AdminInvoicesSubscriptionsRoute,
-  AdminLeadsPersonIdRoute: AdminLeadsPersonIdRoute,
-  AdminLeadsBoardRoute: AdminLeadsBoardRoute,
-  AdminProjectsIdRoute: AdminProjectsIdRoute,
-  AdminProjectsNewRoute: AdminProjectsNewRoute,
-  AdminBlogIndexRoute: AdminBlogIndexRoute,
-  AdminBookingsIndexRoute: AdminBookingsIndexRoute,
-  AdminInboxIndexRoute: AdminInboxIndexRoute,
-  AdminInvoicesIndexRoute: AdminInvoicesIndexRoute,
-  AdminLeadsIndexRoute: AdminLeadsIndexRoute,
-  AdminProjectsIndexRoute: AdminProjectsIndexRoute,
-  AdminBookingsIdRoomRoute: AdminBookingsIdRoomRoute,
-  AdminBookingsTypesIdRoute: AdminBookingsTypesIdRoute,
-  AdminBookingsTypesNewRoute: AdminBookingsTypesNewRoute,
-  AdminBookingsTypesIndexRoute: AdminBookingsTypesIndexRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 interface DashboardSettingsRouteChildren {
-  DashboardSettingsOldSiteRoute: typeof DashboardSettingsOldSiteRoute
   DashboardSettingsSecurityRoute: typeof DashboardSettingsSecurityRoute
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
 }
 
 const DashboardSettingsRouteChildren: DashboardSettingsRouteChildren = {
-  DashboardSettingsOldSiteRoute: DashboardSettingsOldSiteRoute,
   DashboardSettingsSecurityRoute: DashboardSettingsSecurityRoute,
   DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
 }
@@ -2232,14 +1452,8 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LangRoute: LangRouteWithChildren,
-  AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  ApiSplatRoute: ApiSplatRoute,
-  ApiContactRoute: ApiContactRoute,
-  ApiInboundEmailRoute: ApiInboundEmailRoute,
-  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   DashboardLoginRoute: DashboardLoginRoute,
   RssArDotxmlRoute: RssArDotxmlRoute,
   RssDeDotxmlRoute: RssDeDotxmlRoute,

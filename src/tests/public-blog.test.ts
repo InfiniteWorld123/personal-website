@@ -1,17 +1,15 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createMemoryStore, createTestDatabase } from './helpers/backend2-db'
 import { allLanguages, altText, blogHarness, doc, image, paragraph, video } from './helpers/backend2-blog'
 
 /**
  * Public cutover step 4 (`docs/v2/public-cutover.md`): the public blog reads
- * Backend2 behind `PUBLIC_V2_MODULES=blog`, and reads the legacy backend —
- * exactly as before — without it.
+ * Backend2 — the only backend since the legacy one was removed.
  *
  * The server functions are exercised through their real handlers:
  * `createServerFn` is replaced by a stand-in that runs the validator and the
  * handler, which is all the framework adds on the server. Backend2 runs
- * against a real PostgreSQL inside this process; the legacy service is a fake
- * that records it was asked, so nothing here can reach a real database.
+ * against a real PostgreSQL inside this process.
  */
 
 vi.mock('@tanstack/react-start', () => {
@@ -38,57 +36,11 @@ vi.mock('@tanstack/react-start', () => {
   return { createServerFn, createMiddleware: inert, createStart: () => ({}) }
 })
 
-const legacy = vi.hoisted(() => ({
-  calls: [] as string[],
-  post: {
-    slug: 'legacy-post',
-    title: 'Legacy title',
-    excerpt: 'Legacy excerpt',
-    publishedOn: '2026-01-02',
-    readingMinutes: 2,
-    cover: null,
-    tags: [{ slug: 'old', name: 'Old' }],
-    viewCount: 40,
-    likeCount: 4,
-  },
-}))
-
-vi.mock('#/shared/env', () => ({ env: { DATABASE_URL: 'postgres://legacy.invalid/legacy' } }))
-
-vi.mock('#/backend/db/client', () => ({ withRequestScope: <T>(fn: () => Promise<T>) => fn() }))
-
-vi.mock('#/backend/modules/posts/post.service', () => ({
-  listPublishedPosts: async (language: string) => {
-    legacy.calls.push(`list:${language}`)
-
-    return [legacy.post]
-  },
-  listPublishedTags: async () => {
-    legacy.calls.push('tags')
-
-    return [{ slug: 'old', name: 'Old' }]
-  },
-  getPublishedPost: async (_language: string, slug: string) => {
-    legacy.calls.push(`get:${slug}`)
-
-    return slug === legacy.post.slug
-      ? { ...legacy.post, body: { type: 'doc', content: [] }, project: null }
-      : null
-  },
-  listPublishedPostSlugs: async () => {
-    legacy.calls.push('slugs')
-
-    return [legacy.post.slug]
-  },
-}))
-
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'
 process.env.AUTH_V2_SECRET = 'test-only-auth-secret-at-least-32-chars-long'
 delete process.env.BACKEND2_OWNER_AUTH
-delete process.env.PUBLIC_V2_MODULES
 
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
@@ -166,67 +118,17 @@ beforeAll(async () => {
   await call('POST', `/owner/blog/posts/${gone}/unpublish`, {})
 }, 60_000)
 
-beforeEach(() => {
-  legacy.calls.length = 0
-})
-
-afterEach(() => {
-  delete process.env.PUBLIC_V2_MODULES
-})
-
 afterAll(async () => {
   useMediaStoreForTest(undefined)
   await database.close()
 })
 
-describe('with the switch off', () => {
-  it('reads every public blog page from the legacy backend, unchanged', async () => {
-    const list = await posts.fetchPublishedPosts({ data: { language: 'de' } })
-    const page = await posts.fetchPublishedPostPage({ data: { language: 'de', page: 1 } })
-    const tags = await posts.fetchPublishedTags({ data: { language: 'de' } })
-    const article = await posts.fetchPublishedPost({ data: { language: 'de', slug: 'legacy-post' } })
-    const slugs = await posts.fetchPublishedPostSlugs()
-
-    expect(list).toEqual([legacy.post])
-    expect(page).toEqual({ source: 'legacy', posts: [legacy.post], total: null, page: 1 })
-    expect(tags).toEqual([{ slug: 'old', name: 'Old' }])
-    expect(article).toMatchObject({ source: 'legacy', title: 'Legacy title', commentsEnabled: false, seo: null, updatedOn: null })
-    expect(slugs).toEqual(['legacy-post'])
-    expect(legacy.calls).toEqual(['list:de', 'list:de', 'tags', 'get:legacy-post', 'slugs'])
-  })
-
-  it('stays on legacy when another module is listed, or no V2 database exists', async () => {
-    process.env.PUBLIC_V2_MODULES = 'content,services'
-    expect(await posts.fetchPublishedPostSlugs()).toEqual(['legacy-post'])
-
-    process.env.PUBLIC_V2_MODULES = 'blog'
-    const saved = process.env.DATABASE_URL_V2
-    delete process.env.DATABASE_URL_V2
-    expect(await posts.fetchPublishedPostSlugs()).toEqual(['legacy-post'])
-    process.env.DATABASE_URL_V2 = saved
-  })
-
-  it('keeps legacy article pages 404 for an unknown address', async () => {
-    expect(await posts.fetchPublishedPost({ data: { language: 'en', slug: 'nope' } })).toBeNull()
-  })
-
-  it('does not allow a YouTube frame', () => {
-    expect(buildContentSecurityPolicy('n', {})).toContain('frame-src https://challenges.cloudflare.com;')
-    expect(buildContentSecurityPolicy('n', {})).not.toContain('youtube')
-  })
-})
-
-describe('with PUBLIC_V2_MODULES=blog', () => {
-  beforeEach(() => {
-    process.env.PUBLIC_V2_MODULES = 'blog'
-  })
-
+describe('the public blog', () => {
   it('pages the archive on the server, nine at a time, newest first', async () => {
     const first = await inV2(() => posts.fetchPublishedPostPage({ data: { language: 'en', page: 1 } }))
     const second = await inV2(() => posts.fetchPublishedPostPage({ data: { language: 'en', page: 2 } }))
     const beyond = await inV2(() => posts.fetchPublishedPostPage({ data: { language: 'en', page: 40 } }))
 
-    expect(first.source).toBe('v2')
     expect(first.total).toBe(11)
     expect(first.posts).toHaveLength(9)
     expect(first.posts[0]?.slug).toBe('rich-article')
@@ -235,7 +137,6 @@ describe('with PUBLIC_V2_MODULES=blog', () => {
     // A page past the end shows what exists and names the last real page.
     expect(beyond).toMatchObject({ page: 2, total: 11 })
     expect(beyond.posts).toHaveLength(11)
-    expect(legacy.calls).toEqual([])
 
     const batch = getPostBatch(first.posts, 1, first.total)
     expect(batch).toMatchObject({ page: 1, total: 11, hasMore: true })
@@ -266,7 +167,7 @@ describe('with PUBLIC_V2_MODULES=blog', () => {
     expect(tagsAr).toEqual([{ slug: tagSlug, name: 'Search AR' }])
   })
 
-  it('maps a card into the legacy shape the list, the home section and the feeds draw', async () => {
+  it('maps a card into the shape the list, the home section and the feeds draw', async () => {
     const [card] = await inV2(() => posts.fetchPublishedPosts({ data: { language: 'ar' } }))
 
     expect(card).toEqual({
@@ -286,7 +187,6 @@ describe('with PUBLIC_V2_MODULES=blog', () => {
     const article = await inV2(() => posts.fetchPublishedPost({ data: { language: 'en', slug: 'rich-article' } }))
 
     expect(article).toMatchObject({
-      source: 'v2',
       title: 'Rich article',
       seo: { title: 'Rich SEO title', description: 'Summary en' },
       updatedOn: null,
@@ -328,11 +228,10 @@ describe('with PUBLIC_V2_MODULES=blog', () => {
     const german = await (await inV2(() => buildFeedResponse('de'))).text()
     expect(german).toContain('<title>Reicher Artikel</title>')
     expect(german).not.toContain('مقال غني')
-    expect(legacy.calls).toEqual([])
   })
 
   it('allows the one YouTube frame origin the click-to-load player needs', () => {
-    expect(buildContentSecurityPolicy('n', { PUBLIC_V2_MODULES: 'content, Blog' })).toContain(
+    expect(buildContentSecurityPolicy('n', {})).toContain(
       'frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com;',
     )
   })

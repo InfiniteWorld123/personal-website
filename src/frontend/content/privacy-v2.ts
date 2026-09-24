@@ -5,9 +5,9 @@ import type { LegalCopy } from './types'
  * The privacy page once V2 serves the public site (`docs/v2/privacy-v2.md`,
  * approved by the owner on 24 Sep 2026).
  *
- * Applied on top of the current copy — after any owner edits — only while at
- * least one public module reads Backend2 (`PUBLIC_V2_MODULES`), so the page
- * always describes what the site actually does. The existing sections keep
+ * Applied on top of the current copy — after any owner edits — on every
+ * render since the cutover (24 Sep 2026), so the page describes what the site
+ * actually does. The existing sections keep
  * their place; the contact and cookie sections are replaced, and the new ones
  * (where data is stored, booking, the assistant, comments) are inserted where
  * a reader looks for them.

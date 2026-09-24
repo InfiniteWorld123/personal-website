@@ -51,7 +51,6 @@ import {
   unavailableBreakdown,
   unavailableMetric,
 } from './analytics.metric'
-import { readsFromV2 } from '../../public-source'
 import { addDays, berlinToday } from './analytics.period'
 import * as repo from './analytics.repo'
 import { type AnalyticsSources, currentSources } from './analytics.sources'
@@ -222,26 +221,15 @@ const buildWebsite = async (ctx: Context): Promise<AnalyticsGroup[]> => [
           ],
         }),
       }),
-      /*
-       * Counted only once the public form really sends to Backend2
-       * (`PUBLIC_V2_MODULES` lists `contact`); before that the live form
-       * writes to the legacy system and a V2 count would be a false zero.
-       */
-      readsFromV2('contact')
-        ? part({
-            metrics: [WEBSITE.contactSubmissions],
-            load: () => repo.inboxCounts(ctx.window),
-            build: (counts) => ({
-              metrics: [
-                readyMetric(WEBSITE.contactSubmissions, ctx, counts.contact_now, { previous: counts.contact_prev }),
-              ],
-            }),
-          })
-        : unavailablePart(ctx, {
-            metrics: [WEBSITE.contactSubmissions],
-            state: 'not-connected',
-            message: NOT_BUILT.contact,
-          }),
+      part({
+        metrics: [WEBSITE.contactSubmissions],
+        load: () => repo.inboxCounts(ctx.window),
+        build: (counts) => ({
+          metrics: [
+            readyMetric(WEBSITE.contactSubmissions, ctx, counts.contact_now, { previous: counts.contact_prev }),
+          ],
+        }),
+      }),
     ],
   }),
   await group(ctx, {

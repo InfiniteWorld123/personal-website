@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { bookingTypesQuery, slotsQuery } from './booking-queries'
 import { addDays, dayIn, detectTimezone } from './booking-time'
-import { bookingSourceQuery } from './server/booking-source'
 import { v2SlotsQuery, v2TypesQuery } from './v2/queries'
 
 /** How far ahead a teaser looks. Beyond this a "next free time" is not news. */
 const HORIZON_DAYS = 21
 
-/** The call a teaser invites to, whichever backend it came from. */
+/** The call a teaser invites to. */
 export type TeaserType = {
   slug: string
   name: string
@@ -29,9 +27,9 @@ export type NextSlots = {
  * site that invite rather than book: the line under the hero, the band on the
  * home page, the card on the contact page.
  *
- * Read from the same backend the booking pages use — the legacy one, or
- * Backend2 when the server's booking switch is on (`docs/v2/public-cutover.md`,
- * step 5) — so a teaser never quotes a time the calendar would not offer.
+ * Read from the same Backend2 endpoints the booking pages use
+ * (`docs/v2/public-cutover.md`, step 5), so a teaser never quotes a time the
+ * calendar would not offer.
  *
  * Everything here degrades to nothing. If the types call fails, the slots call
  * never runs; if either comes back empty, the caller renders no line at all —
@@ -47,21 +45,7 @@ export function useNextSlots(count: number): NextSlots {
   const today = dayIn(new Date(), timezone)
   const to = addDays(today, HORIZON_DAYS)
 
-  const source = useQuery(bookingSourceQuery())
-  // A switch that cannot be read leaves the teaser where it always was.
-  const settled = source.isSuccess || source.isError
-  const v2 = source.data?.v2 === true
-
-  /* ---------------------------------------------------------------- legacy */
-  const legacyTypes = useQuery({ ...bookingTypesQuery(language), enabled: settled && !v2 })
-  const legacyType = legacyTypes.data?.[0] ?? null
-  const legacySlots = useQuery({
-    ...slotsQuery(legacyType?.slug ?? '', language, { from: today, to, timezone }),
-    enabled: settled && !v2 && Boolean(legacyType),
-  })
-
-  /* -------------------------------------------------------------- Backend2 */
-  const v2Types = useQuery({ ...v2TypesQuery(language), enabled: v2 })
+  const v2Types = useQuery(v2TypesQuery(language))
   const v2Type = v2Types.data?.[0] ?? null
   const v2Slots = useQuery({
     ...v2SlotsQuery({
@@ -72,18 +56,15 @@ export function useNextSlots(count: number): NextSlots {
       timeZone: timezone,
       language,
     }),
-    enabled: v2 && Boolean(v2Type),
+    enabled: Boolean(v2Type),
   })
 
-  const type: TeaserType | null = useMemo(() => {
-    if (v2) return v2Type ? { slug: v2Type.slug, name: v2Type.name, durationMinutes: v2Type.durationMinutes, free: true } : null
+  const type: TeaserType | null = useMemo(
+    () => (v2Type ? { slug: v2Type.slug, name: v2Type.name, durationMinutes: v2Type.durationMinutes, free: true } : null),
+    [v2Type],
+  )
 
-    return legacyType
-      ? { slug: legacyType.slug, name: legacyType.name, durationMinutes: legacyType.durationMinutes, free: legacyType.priceCents === 0 }
-      : null
-  }, [v2, v2Type, legacyType])
-
-  const days = v2 ? v2Slots.data?.days : legacySlots.data?.days
+  const days = v2Slots.data?.days
 
   const next = useMemo(
     () =>

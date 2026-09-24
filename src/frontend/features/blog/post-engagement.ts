@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { countPostRead, likePost, unlikePost } from '#/frontend/api/post.api'
 import { countRead, setLike } from './blog-v2-api'
 
 /**
@@ -15,39 +14,27 @@ import { countRead, setLike } from './blog-v2-api'
  * trade, taken deliberately — the alternative is keeping something that
  * identifies a reader, which is the thing this was built not to do.
  */
-const READ_KEY = 'blog:read'
-const LIKED_KEY = 'blog:liked'
-
 /**
- * Backend2 keeps its own counters, starting from zero (`docs/v2/public-cutover.md`
- * step 4: legacy counts are not imported). So it gets its own memory too: a
- * like remembered from the legacy article would show "Liked" beside a count
- * that never included it, and a read counted there was never counted here.
+ * Backend2's counters started from zero (`docs/v2/public-cutover.md` step 4:
+ * the old site's counts were not copied), so its memory has its own keys: a
+ * like remembered from the old site's article would show "Liked" beside a
+ * count that never included it.
  */
-const KEYS = {
-  legacy: { read: READ_KEY, liked: LIKED_KEY },
-  v2: { read: 'blog:v2:read', liked: 'blog:v2:liked' },
-} as const
+const KEYS = { read: 'blog:v2:read', liked: 'blog:v2:liked' } as const
 
 type Counts = { viewCount: number; likeCount: number }
 
-/** Where a read and a like go, per backend, answered in the page's own shape. */
+/** Where a read and a like go, answered in the page's own shape. */
 const SERVER = {
-  legacy: {
-    read: (slug: string): Promise<Counts> => countPostRead(slug),
-    like: (slug: string, liked: boolean): Promise<Counts> => (liked ? likePost(slug) : unlikePost(slug)),
+  read: async (slug: string): Promise<Counts> => {
+    const counts = await countRead(slug)
+
+    return { viewCount: counts.readCount, likeCount: counts.likeCount }
   },
-  v2: {
-    read: async (slug: string): Promise<Counts> => {
-      const counts = await countRead(slug)
+  like: async (slug: string, liked: boolean): Promise<Counts> => {
+    const counts = await setLike(slug, liked)
 
-      return { viewCount: counts.readCount, likeCount: counts.likeCount }
-    },
-    like: async (slug: string, liked: boolean): Promise<Counts> => {
-      const counts = await setLike(slug, liked)
-
-      return { viewCount: counts.readCount, likeCount: counts.likeCount }
-    },
+    return { viewCount: counts.readCount, likeCount: counts.likeCount }
   },
 } as const
 
@@ -92,10 +79,9 @@ export type Engagement = { viewCount: number; likeCount: number; liked: boolean 
 export const usePostEngagement = (
   slug: string,
   initial: { viewCount: number; likeCount: number },
-  source: 'legacy' | 'v2' = 'legacy',
 ): Engagement & { toggleLike: () => void; pending: boolean } => {
-  const keys = KEYS[source]
-  const server = SERVER[source]
+  const keys = KEYS
+  const server = SERVER
   const [counts, setCounts] = useState(initial)
   const [liked, setLiked] = useState(false)
   const [pending, setPending] = useState(false)

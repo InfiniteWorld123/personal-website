@@ -56,9 +56,7 @@ const card = (slug: string, over: Partial<PublicServiceCard> = {}): PublicServic
 })
 
 describe('the homepage services section', () => {
-  it('keeps today’s cards with the switch off and hides the section when nothing is starred', () => {
-    expect(homeServicesView(undefined)).toBe('legacy')
-    expect(homeServicesView({ source: 'legacy' })).toBe('legacy')
+  it('hides the section when nothing is starred', () => {
     expect(homeServicesView({ source: 'v2', items: [] })).toBe('hidden')
     expect(homeServicesView({ source: 'v2', items: [card('websites')] })).toBe('v2')
   })

@@ -10,12 +10,11 @@ import type { PublicPostSummary, PublicTag } from '#/shared/types/post.types'
 import { type PublicArticle, toArticle, toPostSummary } from '../public-article'
 
 /**
- * The public blog, read from Backend2 while `PUBLIC_V2_MODULES` lists `blog`.
+ * The public blog, read from Backend2.
  *
  * Server only: the handlers in `published-posts.ts` and the feed call these
- * inside the render, straight into the Backend2 services — the same shortcut
- * the legacy loaders take, for the same reason (the machine rendering the page
- * owns the database). Every call opens its own request scope, so on a Worker
+ * inside the render, straight into the Backend2 services (the machine
+ * rendering the page owns the database). Every call opens its own request scope, so on a Worker
  * no socket outlives the request.
  *
  * Only the live snapshot is ever read: the services join the published

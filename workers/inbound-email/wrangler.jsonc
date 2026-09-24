@@ -18,7 +18,6 @@
     // The legacy admin inbox (`/admin/inbox`). Kept while the legacy backend
     // runs. Delete this line — and redeploy — to stop posting there; nothing
     // else changes.
-    "INBOUND_ENDPOINT": "https://yamanwarda.de/api/inbound-email",
 
     // Every letter is also delivered here, first, exactly as it was before
     // this Worker existed. It is the fallback if the site is down: a bug here

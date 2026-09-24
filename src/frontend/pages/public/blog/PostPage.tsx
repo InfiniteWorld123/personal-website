@@ -16,7 +16,7 @@ import { useReveal } from '#/frontend/motion'
 /*
  * The comment section is its own chunk, fetched after the article is on
  * screen: the form library and the thread code are not worth delaying the
- * text a reader came for, and a legacy article never loads them at all.
+ * text a reader came for, and an article with comments off never loads them.
  */
 const PostComments = lazy(() =>
   import('#/frontend/features/blog/PostComments').then((module) => ({ default: module.PostComments })),
@@ -94,7 +94,6 @@ export function PostPage({ post }: { post: PublicArticle }) {
           {/* After the article, not before it: the number is worth something
               once it has been read, and worth nothing as a claim on arrival. */}
           <PostEngagement
-            source={post.source}
             slug={post.slug}
             viewCount={post.viewCount}
             likeCount={post.likeCount}
@@ -112,7 +111,7 @@ export function PostPage({ post }: { post: PublicArticle }) {
             </aside>
           ) : null}
 
-          {post.source === 'v2' && post.commentsEnabled && mounted ? (
+          {post.commentsEnabled && mounted ? (
             <Suspense fallback={null}>
               <PostComments slug={post.slug} initialCount={post.commentCount} />
             </Suspense>

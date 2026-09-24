@@ -32,16 +32,13 @@ import { publicProjectRoutes } from './modules/projects/project.public.route'
 import { ownerServiceRoutes } from './modules/services/service.owner.route'
 import { publicServiceRoutes } from './modules/services/service.public.route'
 import { ownerAssistantRoutes } from './modules/assistant/assistant.owner.route'
-import { ownerImportRoutes } from './modules/import/import.owner.route'
 import { publicAssistantRoutes } from './modules/assistant/assistant.public.route'
 
 /**
  * Backend2.
  *
- * A separate Elysia application from the legacy one, mounted under `/api/v2`,
- * importing nothing from `src/backend/`. Duplicating a small envelope and an
- * error module is the price of being able to delete the legacy backend at
- * cutover without breaking V2.
+ * The site's only backend since the legacy one was removed (24 Sep 2026),
+ * an Elysia application mounted under `/api/v2`.
  *
  * Authentication is the first module here. Every later one registers itself in
  * `buildApp` beside it — public reads outside the fence, owner routes inside
@@ -145,9 +142,7 @@ const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
         .use(ownerInvoiceRoutes)
         .use(ownerAnalyticsRoutes)
         .use(ownerAssistantRoutes)
-        .use(ownerSearchRoutes)
-        // "Copy from the old site" — deletable with modules/import/ after cutover.
-        .use(ownerImportRoutes),
+        .use(ownerSearchRoutes),
     )
   }
 
@@ -163,26 +158,9 @@ const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
    * connection string.
    */
   /*
-   * The same reasoning covers the public Projects reads (D13): they answer
-   * only where a V2 database exists, so `DATABASE_URL_V2` being absent in
-   * production means `/api/v2/projects` simply does not answer there and
-   * nothing on the live site changes.
-   */
-  /*
-   * And the public Services reads (`docs/v2/services.md`), for the same
-   * reason: where no V2 database exists they do not answer, so the live
-   * `/services` page keeps its current content until an approved cutover.
-   */
-  /*
-   * And the public Blog (`docs/v2/blog.md`): the reads, and a visitor's
-   * comments, reads and likes. Where no V2 database exists none of it
-   * answers, so the live `/blog` keeps reading the legacy backend until an
-   * approved cutover.
-   */
-  /*
-   * And the public static copy (`docs/v2/content.md`). Where no V2 database
-   * exists it does not answer, so the live site keeps its current wording
-   * until an approved cutover.
+   * The same reasoning covers every public read and visitor write below —
+   * Projects (D13), Services, the Blog with its comments, reads and likes, and
+   * the static copy: where no V2 database exists they do not answer.
    */
   if (isDatabaseConfigured()) {
     app
@@ -203,17 +181,9 @@ const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
        * `STRIPE_WEBHOOK_SECRET` it takes nothing at all.
        */
       .use(stripeWebhookRoutes)
-      /*
-       * The visitor's booking API (`docs/v2/booking.md`). Where no V2
-       * database exists it does not answer, so the live booking pages keep the
-       * legacy backend until an approved cutover.
-       */
+      /* The visitor's booking API (`docs/v2/booking.md`). */
       .use(publicBookingRoutes)
-      /*
-       * The website's Contact form, V2 (`docs/v2/inbox.md`). Where no V2
-       * database exists it does not answer, so the live form keeps posting to
-       * the legacy `/api/contact` until an approved cutover.
-       */
+      /* The website's Contact form (`docs/v2/inbox.md`). */
       .use(publicContactRoutes)
       /*
        * The public AI assistant (`docs/v2/ai-assistant.md`). Where no V2

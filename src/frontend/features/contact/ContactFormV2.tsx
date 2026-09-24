@@ -10,7 +10,7 @@ import { newSubmissionId } from '#/frontend/features/booking/v2/format'
 import { TurnstileWidget } from '#/frontend/features/security/TurnstileWidget'
 import type { Language } from '#/frontend/i18n/language'
 import { cn } from '#/frontend/lib/utils'
-import { CallInstead, Field } from './ContactForm'
+import { CallInstead, Field } from './contact-parts'
 import {
   CONTACT_V2_ACCEPT,
   CONTACT_V2_ENDPOINT,

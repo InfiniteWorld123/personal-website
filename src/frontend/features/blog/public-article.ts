@@ -4,36 +4,32 @@ import type {
   PublicBlogPost,
 } from '#/backend2/contracts/blog.contract'
 import type { PublicPost, PublicPostSummary } from '#/shared/types/post.types'
-import type { RichTextDoc } from '#/shared/validation/rich-text'
 
 /**
  * The shapes the public blog pages render, and the one place Backend2's
  * answers are turned into them (`docs/v2/public-cutover.md` step 4).
  *
- * The list, the home section and the feeds keep the legacy card shape
- * (`PublicPostSummary`) unchanged, so a card looks the same whichever backend
- * filled it. The article gets one shape of its own, because Backend2 brings
- * things the legacy article never had — tables, a click-to-load video, a
- * "last updated" date, per-language search texts and comments.
+ * The list, the home section and the feeds keep the accepted card shape
+ * (`PublicPostSummary`) unchanged, so a card looks as it always did. The
+ * article gets one shape of its own, because Backend2 brings things the old
+ * site's article never had — tables, a click-to-load video, a "last updated"
+ * date, per-language search texts and comments.
  *
  * Types only from the contracts: nothing here runs a query, so this file can
  * sit in the page bundle.
  */
 
-/** An article body from either backend. The renderer knows every node of both. */
-export type ArticleDoc = RichTextDoc | PublicBlogDoc
+/** An article body. */
+export type ArticleDoc = PublicBlogDoc
 
 export type PublicArticle = Omit<PublicPost, 'body' | 'cover'> & {
-  /** Which backend answered; decides where reads, likes and comments go. */
-  source: 'legacy' | 'v2'
   body: ArticleDoc
   /** Size is unknown for an image the library could not measure. */
   cover: { src: string; width?: number; height?: number; alt: string } | null
   /** The day of the last real published update (Berlin), or null. */
   updatedOn: string | null
-  /** The owner's search title and description, already resolved; null on legacy. */
-  seo: { title: string; description: string } | null
-  /** Legacy articles have no comments at all. */
+  /** The owner's search title and description, already resolved. */
+  seo: { title: string; description: string }
   commentsEnabled: boolean
   commentCount: number
 }
@@ -59,7 +55,7 @@ export const berlinDay = (iso: string): string => {
 }
 
 /**
- * The legacy card needs a size for its `width`/`height` attributes. A cover
+ * The card needs a size for its `width`/`height` attributes. A cover
  * the library could not measure gets the card's own 16:9 box, which is what
  * the card crops every cover to anyway.
  */
@@ -85,7 +81,6 @@ export const toPostSummary = (card: PublicBlogCard): PublicPostSummary => ({
 })
 
 export const toArticle = (post: PublicBlogPost): PublicArticle => ({
-  source: 'v2',
   slug: post.slug,
   title: post.title,
   excerpt: post.summary,
@@ -108,13 +103,4 @@ export const toArticle = (post: PublicBlogPost): PublicArticle => ({
   seo: { title: post.seo.title, description: post.seo.description },
   commentsEnabled: post.commentsEnabled,
   commentCount: post.commentCount,
-})
-
-export const fromLegacyPost = (post: PublicPost): PublicArticle => ({
-  ...post,
-  source: 'legacy',
-  updatedOn: null,
-  seo: null,
-  commentsEnabled: false,
-  commentCount: 0,
 })

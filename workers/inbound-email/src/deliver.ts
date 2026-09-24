@@ -18,13 +18,13 @@ import { type ParsedAttachment, packFiles } from './files'
  * 3. **The letter is parsed and posted to the V2 Inbox**, signed, and retried
  *    a few times on a server error — the Inbox deduplicates by Message-ID, so
  *    a retry after a lost answer files it once.
- * 4. **The legacy admin inbox** gets the same letter too, while it is still
- *    configured (`INBOUND_ENDPOINT` + `INBOUND_MAIL_SECRET`). Removing those
- *    two switches it off without a code change.
- * 5. **The letter is refused only when nobody took it**: no copy was
- *    forwarded and neither inbox accepted it. A letter that reached the
+ * 4. **The letter is refused only when nobody took it**: no copy was
+ *    forwarded and the Inbox did not accept it. A letter that reached the
  *    owner's mailbox is never refused — refusing tells the sender it failed,
  *    and it did not.
+ *
+ * The legacy admin inbox (`INBOUND_ENDPOINT`, `INBOUND_MAIL_SECRET`) was
+ * removed with the legacy backend on 24 Sep 2026; those settings are ignored.
  */
 
 export type DeliveryEnv = {
@@ -34,10 +34,6 @@ export type DeliveryEnv = {
   INBOX_V2_ENDPOINT?: string
   /** Shared with Backend2 (`INBOX_INGRESS_SECRET` on the site). 32+ characters. */
   INBOX_INGRESS_SECRET?: string
-  /** The legacy admin inbox, e.g. https://yamanwarda.de/api/inbound-email. Optional. */
-  INBOUND_ENDPOINT?: string
-  /** Shared with the legacy site. Optional, with the endpoint above. */
-  INBOUND_MAIL_SECRET?: string
 }
 
 /** The part of Cloudflare's `ForwardableEmailMessage` this file reads. */
@@ -79,7 +75,6 @@ export type DeliveryResult = {
   forwarded: 'forwarded' | 'failed' | 'off'
   /** The last HTTP status from the V2 Inbox; null when off or unreachable. */
   v2: { status: number | null; taken: boolean; attempts: number } | null
-  legacy: { status: number | null; taken: boolean } | null
   rejected: boolean
 }
 
@@ -150,8 +145,7 @@ const configured = (value: string | undefined): value is string => Boolean(value
 /* ----------------------------------------------------------------- payload */
 
 /**
- * The letter as the V2 Inbox reads it — the legacy site reads the same JSON
- * and ignores the fields it does not know (`references`, `omittedFiles`).
+ * The letter as the V2 Inbox reads it.
  *
  * Every field is clamped to what the receiving schema accepts, and the files
  * are packed into whatever the rest of the letter leaves of the body limit.
@@ -247,28 +241,6 @@ const postToV2 = async (
   return { status, taken: false, attempts }
 }
 
-const postToLegacy = async (
-  env: DeliveryEnv,
-  body: string,
-  deps: Required<Omit<DeliveryDeps, 'parse'>>,
-): Promise<NonNullable<DeliveryResult['legacy']>> => {
-  try {
-    const response = await deps.fetch(env.INBOUND_ENDPOINT!.trim(), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-inbound-signature': await hmacHex(env.INBOUND_MAIL_SECRET!, body),
-      },
-      body,
-      signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
-    })
-
-    return { status: response.status, taken: response.ok }
-  } catch {
-    return { status: null, taken: false }
-  }
-}
-
 /**
  * The copy to the owner's own mailbox.
  *
@@ -317,16 +289,14 @@ export const deliver = async (
   const forwarded = await forwardCopy(message, env)
 
   const v2On = configured(env.INBOX_V2_ENDPOINT) && configured(env.INBOX_INGRESS_SECRET)
-  const legacyOn = configured(env.INBOUND_ENDPOINT) && configured(env.INBOUND_MAIL_SECRET)
 
   if (!v2On) console.error('inbound: the V2 Inbox is not configured on this Worker')
 
   let v2: DeliveryResult['v2'] = null
-  let legacy: DeliveryResult['legacy'] = null
   let files = 0
   let omitted = 0
 
-  if (v2On || legacyOn) {
+  if (v2On) {
     // Nothing below may throw out of the handler: the copy has been
     // forwarded, and an exception here would only turn a delivered letter
     // into a reported failure.
@@ -353,10 +323,7 @@ export const deliver = async (
       parsed = null
       files = payload.files
       omitted = payload.omitted
-      ;[v2, legacy] = await Promise.all([
-        v2On ? postToV2(env, body, runtime) : Promise.resolve(null),
-        legacyOn ? postToLegacy(env, body, runtime) : Promise.resolve(null),
-      ])
+      v2 = await postToV2(env, body, runtime)
     } catch (error) {
       console.error('inbound: the letter could not be posted', {
         name: error instanceof Error ? error.name : 'UnknownError',
@@ -364,7 +331,7 @@ export const deliver = async (
     }
   }
 
-  const taken = Boolean(v2?.taken || legacy?.taken)
+  const taken = Boolean(v2?.taken)
   const rejected = forwarded !== 'forwarded' && !taken
 
   if (rejected) {
@@ -379,11 +346,10 @@ export const deliver = async (
     forwarded,
     v2Status: v2?.status ?? null,
     v2Attempts: v2?.attempts ?? 0,
-    legacyStatus: legacy?.status ?? null,
     files,
     omitted,
     rejected,
   })
 
-  return { forwarded, v2, legacy, rejected }
+  return { forwarded, v2, rejected }
 }

@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { content } from '#/frontend/content/base'
 import {
-  codeDefault,
-  editableFieldByKey,
-  editableFields,
-  isEditableKey,
-} from '#/frontend/content/editable'
-import {
   applyContentOverrides,
   emptyOverrides,
   getServicePrices,
@@ -15,53 +9,6 @@ import {
 } from '#/frontend/content/overrides'
 
 afterEach(() => applyContentOverrides(emptyOverrides()))
-
-describe('the editable registry', () => {
-  it('offers the copy that sells and withholds the copy that is furniture', () => {
-    expect(isEditableKey('home.hero.headline')).toBe(true)
-    expect(isEditableKey('home.meta.description')).toBe(true)
-    expect(isEditableKey('legal.impressum.intro')).toBe(true)
-    expect(isEditableKey('site.phone')).toBe(true)
-    expect(isEditableKey('price.websites')).toBe(true)
-
-    // The owner ruled these out on 13 Sep 2026, and D12 rules out the rest.
-    expect(isEditableKey('contact.form.submit')).toBe(false)
-    expect(isEditableKey('shell.nav.0.label')).toBe(false)
-    expect(isEditableKey('work.items.inknest.name')).toBe(false)
-    expect(isEditableKey('blog.loadMore')).toBe(false)
-  })
-
-  it('never offers a route as something to rewrite', () => {
-    expect(editableFields.some((field) => field.key.endsWith('.to'))).toBe(false)
-  })
-
-  it('knows a list from a sentence from a price', () => {
-    expect(editableFieldByKey.get('home.hero.typed[]')?.kind).toBe('list')
-    expect(editableFieldByKey.get('home.hero.cta')?.kind).toBe('text')
-    expect(editableFieldByKey.get('home.hero.sub')?.kind).toBe('area')
-    expect(editableFieldByKey.get('price.shopify')?.kind).toBe('number')
-  })
-
-  it('holds the owner’s own details once rather than three times', () => {
-    expect(editableFieldByKey.get('site.email')?.shared).toBe(true)
-    expect(editableFieldByKey.get('home.hero.cta')?.shared).toBe(false)
-  })
-
-  it('recommends the length the design was built for, and the conventions for search', () => {
-    expect(editableFieldByKey.get('home.meta.title')?.max).toBe(60)
-    expect(editableFieldByKey.get('home.meta.description')?.max).toBe(155)
-
-    const headline = editableFieldByKey.get('home.hero.headline')
-    expect(headline?.max).toBeGreaterThan(content.de.home.hero.headline.length)
-  })
-
-  it('can always name the wording the code ships', () => {
-    expect(codeDefault('home.hero.cta', 'de')).toBe(content.de.home.hero.cta)
-    expect(codeDefault('home.hero.cta', 'ar')).toBe(content.ar.home.hero.cta)
-    expect(codeDefault('price.websites', 'de')).toBe(990)
-    expect(codeDefault('site.phone', 'de')).toBe('')
-  })
-})
 
 describe('published overrides', () => {
   it('serves the code’s wording while nothing has been published', () => {

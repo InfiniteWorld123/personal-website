@@ -13,8 +13,7 @@ import { readContactRequest, submitContact } from './contact.service'
  * a repeat of one, and a bot caught by the honeypot — no id, nothing private,
  * and `no-store` so no cache keeps it.
  *
- * The live form keeps posting to the legacy `/api/contact` until an approved
- * cutover; this route answers only where a V2 database is configured.
+ * This route answers only where a V2 database is configured.
  */
 
 const received = (): Response =>

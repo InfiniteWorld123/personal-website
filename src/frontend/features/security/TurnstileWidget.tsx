@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '#/frontend/components/ui/button'
 import type { Language } from '#/frontend/i18n/language'
-import type { TurnstileAction } from '#/backend/shared/turnstile'
+
+/** The action each public form names when it asks Cloudflare for a token. */
+export type TurnstileAction = 'booking_create' | 'contact_submit'
 
 type WidgetState = 'error' | 'expired' | 'loading' | 'ready' | 'verified'
 

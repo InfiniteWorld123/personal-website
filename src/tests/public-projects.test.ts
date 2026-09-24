@@ -1,32 +1,19 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryStore, createTestDatabase, pngBytes } from './helpers/backend2-db'
 
 /**
  * Public cutover step 3: `/work`, the homepage selection and the project pages
- * reading Backend2 behind PUBLIC_V2_MODULES (`docs/v2/public-cutover.md`).
+ * reading Backend2 (`docs/v2/public-cutover.md`).
  *
  * Projects are created and published through the real owner routes against a
  * PostgreSQL inside this process and read back through the functions the
- * public server functions call. The legacy service is replaced by a stub, so a
- * test that reaches it proves the legacy path was taken — and nothing here can
- * touch a real database of either kind.
+ * public server functions call. Nothing here can touch a real database.
  */
-const legacy = vi.hoisted(() => ({
-  listPublishedProjects: vi.fn(async (_language: string) => [] as unknown[]),
-  getPublishedProject: vi.fn(async (_language: string, _slug: string) => null as unknown),
-}))
-
-vi.mock('#/backend/modules/projects/project.service', () => legacy)
-// The legacy database client is never reached: its scope simply runs the call.
-vi.mock('#/backend/db/client', () => ({ withRequestScope: <T>(fn: () => Promise<T>) => fn() }))
-
-process.env.DATABASE_URL = 'postgres://legacy.invalid/legacy'
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
 process.env.NODE_ENV = 'development'
 process.env.AUTH_V2_SECRET = 'test-only-auth-secret-at-least-32-chars-long'
 delete process.env.BACKEND2_OWNER_AUTH
-delete process.env.PUBLIC_V2_MODULES
 
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
@@ -34,7 +21,6 @@ const { useMediaStoreForTest } = await import('#/backend2/media/store')
 const source = await import('#/frontend/features/work/server/projects-source')
 const { projectKind } = await import('#/frontend/features/work/server/v2-projects')
 const { getProjectBatch } = await import('#/frontend/features/work/project-list')
-const { publicProjectFixture } = await import('./fixtures/project')
 
 type Json = Record<string, any>
 
@@ -44,14 +30,10 @@ const app = createAppForTest()
 beforeEach(async () => {
   await database.reset()
   useMediaStoreForTest(createMemoryStore().store)
-  legacy.listPublishedProjects.mockClear()
-  legacy.getPublishedProject.mockClear()
-  process.env.PUBLIC_V2_MODULES = 'projects'
 })
 
 afterEach(() => {
   useMediaStoreForTest(undefined)
-  delete process.env.PUBLIC_V2_MODULES
 })
 
 afterAll(async () => {
@@ -133,32 +115,7 @@ const project = async (
   return id
 }
 
-/* =================================================================== switch */
-
-describe('with the switch off', () => {
-  it('reads every page from the legacy service, even while Backend2 has live projects', async () => {
-    await project('prime-estate')
-    delete process.env.PUBLIC_V2_MODULES
-    legacy.listPublishedProjects.mockResolvedValue([publicProjectFixture()])
-    legacy.getPublishedProject.mockResolvedValue(publicProjectFixture())
-
-    const home = await read(() => source.loadProjects({ language: 'de' }))
-    const page = await read(() => source.loadProjectsPage({ language: 'de', page: 1 }))
-    const slugs = await read(() => source.loadProjectSlugs())
-    const detail = await read(() => source.loadProject({ language: 'de', slug: 'fixture-project' }))
-
-    expect(home.map((entry) => entry.facts.slug)).toEqual(['fixture-project'])
-    expect(page).toMatchObject({ total: 1 })
-    expect(slugs).toEqual(['fixture-project'])
-    expect(detail?.facts.slug).toBe('fixture-project')
-    // A legacy entry has no case study key at all: the page keeps its three blocks.
-    expect(detail).not.toHaveProperty('caseStudy')
-    expect(legacy.listPublishedProjects).toHaveBeenCalledTimes(3)
-    expect(legacy.getPublishedProject).toHaveBeenCalledWith('de', 'fixture-project')
-  })
-})
-
-/* ============================================================== with V2 on */
+/* ============================================================ from Backend2 */
 
 describe('/work and the homepage from Backend2', () => {
   it('maps a published project into the shape the accepted card draws', async () => {
@@ -204,7 +161,6 @@ describe('/work and the homepage from Backend2', () => {
         features: [],
       },
     })
-    expect(legacy.listPublishedProjects).not.toHaveBeenCalled()
   })
 
   it('names the project type in the owner approved words of each language', () => {
@@ -339,7 +295,7 @@ describe('a project page from Backend2', () => {
 })
 
 describe('the /work batch arithmetic', () => {
-  it('keeps the legacy slicing when the whole list arrives', () => {
+  it('slices a whole list when no server total is given', () => {
     const items = Array.from({ length: 10 }, (_, index) => index)
 
     expect(getProjectBatch(items, 1)).toMatchObject({ page: 1, total: 10, hasMore: true })

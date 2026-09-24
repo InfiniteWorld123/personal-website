@@ -10,17 +10,14 @@ import { useLanguage } from '#/frontend/i18n/language-provider'
 import { SplitWords, useReveal } from '#/frontend/motion'
 import type { PublicPostSummary, PublicTag } from '#/shared/types/post.types'
 
-/**
- * `total` is set when the server paged the list (Backend2): `posts` is then
- * exactly what to show. Null keeps the legacy archive, which slices here.
- */
+/** The server paged the list: `posts` is exactly what to show, `total` how many exist. */
 export function BlogPage({
   posts,
-  total = null,
+  total,
   tags,
 }: {
   posts: PublicPostSummary[]
-  total?: number | null
+  total: number
   tags: PublicTag[]
 }) {
   const { language } = useLanguage()

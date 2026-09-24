@@ -105,7 +105,7 @@ describe('Turnstile UI states', () => {
 
     const { container } = render(
       <TurnstileWidget
-        action="admin_login"
+        action="contact_submit"
         language="de"
         resetKey={0}
         onTokenChange={onTokenChange}

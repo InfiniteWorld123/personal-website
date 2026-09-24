@@ -39,14 +39,12 @@ import { SearchField, SearchIconButton } from './SearchPaletteOpener'
 export function DashboardTopBar({
   userName,
   userEmail,
-  sessionKind,
   railCollapsed,
   onToggleRail,
   onOpenDrawer,
 }: {
   userName: string
   userEmail: string
-  sessionKind: 'legacy' | 'v2'
   railCollapsed: boolean
   onToggleRail: () => void
   onOpenDrawer: () => void
@@ -80,7 +78,7 @@ export function DashboardTopBar({
 
       <SearchIconButton />
 
-      <AccountMenu userName={userName} userEmail={userEmail} sessionKind={sessionKind} />
+      <AccountMenu userName={userName} userEmail={userEmail} />
     </header>
   )
 }
@@ -109,15 +107,7 @@ const THEME_CHOICES: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
 ]
 
-function AccountMenu({
-  userName,
-  userEmail,
-  sessionKind,
-}: {
-  userName: string
-  userEmail: string
-  sessionKind: 'legacy' | 'v2'
-}) {
+function AccountMenu({ userName, userEmail }: { userName: string; userEmail: string }) {
   const { preference, setPreference } = useTheme()
   const { surface } = useDashboardPreferences()
   const initials = userName
@@ -212,30 +202,16 @@ function AccountMenu({
 
         <DropdownMenuSeparator className="my-1.5 bg-[var(--dash-line)]" />
 
-        {/*
-          Enabled only where it would tell the truth. Under the V2 session it
-          ends that session and returns to the V2 sign-in; while the legacy
-          guard is still the boundary, ending the V2 session would leave the
-          Dashboard open and look like a log-out that did nothing.
-        */}
-        {sessionKind === 'v2' ? (
-          <DropdownMenuItem
-            className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
-            onSelect={async () => {
-              await signOut().catch(() => {})
-              window.location.assign('/dashboard/login')
-            }}
-          >
-            Log out
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            disabled
-            className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
-          >
-            Log out — sign out from /admin for now
-          </DropdownMenuItem>
-        )}
+        {/* Ends the V2 session and returns to the V2 sign-in. */}
+        <DropdownMenuItem
+          className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-[var(--dash-red-ink)]"
+          onSelect={async () => {
+            await signOut().catch(() => {})
+            window.location.assign('/dashboard/login')
+          }}
+        >
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

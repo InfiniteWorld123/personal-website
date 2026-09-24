@@ -12,9 +12,7 @@ import { askAssistant, readStatus } from './assistant.service'
  * The visitor's half of the assistant (`docs/v2/ai-assistant.md`).
  *
  * Mounted only where the V2 database is configured, like every other public
- * V2 route: production has no `DATABASE_URL_V2` yet, so none of this answers
- * there, and the live widget keeps the legacy chat until an approved cutover.
- * Even where it is mounted it answers nothing until the owner switches the
+ * V2 route. Even where it is mounted it answers nothing until the owner switches the
  * assistant on (off by default).
  *
  * Nothing here is cached: an answer belongs to one conversation, and the

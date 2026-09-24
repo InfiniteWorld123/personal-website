@@ -1,3 +1,4 @@
+import type { ProjectEntry } from '#/frontend/features/work/project-list'
 import type { PublicProject } from '#/shared/types/project.types'
 
 /**
@@ -20,4 +21,25 @@ export const publicProjectFixture = (overrides: Partial<PublicProject> = {}): Pu
   shows: 'What it proves.',
   features: ['One', 'Two'],
   ...overrides,
+})
+
+/** The fixture in the shape the public pages draw. */
+export const toProjectEntry = (project: PublicProject): ProjectEntry => ({
+  facts: {
+    slug: project.slug,
+    status: project.status,
+    website: project.website,
+    source: project.source,
+    stack: project.tech,
+    images: project.images,
+  },
+  copy: {
+    name: project.name,
+    kind: project.kind,
+    summary: project.summary,
+    problem: project.problem,
+    approach: project.approach,
+    shows: project.shows,
+    features: project.features,
+  },
 })

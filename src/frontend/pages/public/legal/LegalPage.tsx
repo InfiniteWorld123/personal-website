@@ -12,17 +12,16 @@ import { useLanguage } from '#/frontend/i18n/language-provider'
  */
 export function LegalPage({
   document,
-  v2Privacy = false,
   webAnalytics = false,
 }: {
   document: 'impressum' | 'privacy'
-  v2Privacy?: boolean
-  /** Cloudflare Web Analytics is switched on: the V2 privacy page says so. */
+  /** Cloudflare Web Analytics is switched on: the privacy page says so. */
   webAnalytics?: boolean
 }) {
   const { language } = useLanguage()
   const base: LegalCopy = getContent(language).legal[document]
-  const copy = document === 'privacy' && v2Privacy ? applyPrivacyV2(base, language, { webAnalytics }) : base
+  // The privacy page describes what V2 does (`docs/v2/privacy-v2.md`).
+  const copy = document === 'privacy' ? applyPrivacyV2(base, language, { webAnalytics }) : base
 
   return (
     <>

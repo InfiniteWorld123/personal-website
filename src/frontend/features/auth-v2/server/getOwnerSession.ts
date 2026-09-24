@@ -2,47 +2,30 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { isDatabaseConfigured, withRequestScope } from '#/backend2/db/client'
 import { readSessionFromRequest } from '#/backend2/auth/session'
-import { ownerAuthRequired } from '#/backend2/security/local-only'
 
 /**
- * Whether the Dashboard is guarded by the V2 session yet, and if so, who is at
- * the door.
+ * Who is at the Dashboard's door: the V2 owner session, or nobody.
  *
- * Two answers rather than one, because the switch matters to the caller.
- * `legacy` means Auth V2 is built but not in force, so the route keeps asking
- * the existing admin session exactly as it did — that is the state
- * `docs/v2/auth.md` describes until the cutover. `v2` means this session is
- * the boundary, and a missing one sends the browser to `/dashboard/login`.
+ * Since the legacy admin was removed (24 Sep 2026) the V2 session is the only
+ * boundary, whatever `BACKEND2_OWNER_AUTH` says; a missing one sends the
+ * browser to `/dashboard/login`. Without a configured database there is no
+ * session at all, which shuts the Dashboard — the safe direction.
  *
- * `withRequestScope` for the same reason the legacy loader uses it: on a
- * Worker a query outside the scope lands on a module-level pool holding
- * sockets Cloudflare already tore down.
+ * `withRequestScope` because on a Worker a query outside the scope lands on a
+ * module-level pool holding sockets Cloudflare already tore down.
  */
-export type OwnerRouteSession =
-  | { mode: 'legacy' }
-  | { mode: 'v2'; session: { email: string; expiresAt: string } | null }
+export type OwnerRouteSession = { session: { email: string; expiresAt: string } | null }
 
 export const getOwnerRouteSession = createServerFn({ method: 'GET' }).handler(
   async (): Promise<OwnerRouteSession> => {
-    if (!ownerAuthRequired()) return { mode: 'legacy' }
-
-    /*
-     * The flag is on but the database is not configured: fail closed. Treating
-     * that as "no session" shuts the Dashboard, which is the safe direction —
-     * the alternative would quietly hand the surface back to the legacy guard
-     * after someone had decided it should not be.
-     */
-    if (!isDatabaseConfigured()) return { mode: 'v2', session: null }
+    if (!isDatabaseConfigured()) return { session: null }
 
     return withRequestScope(async () => {
       const session = await readSessionFromRequest(getRequest())
 
-      if (!session || !session.enrolled) return { mode: 'v2', session: null }
+      if (!session || !session.enrolled) return { session: null }
 
-      return {
-        mode: 'v2',
-        session: { email: session.email, expiresAt: session.expiresAt.toISOString() },
-      }
+      return { session: { email: session.email, expiresAt: session.expiresAt.toISOString() } }
     })
   },
 )

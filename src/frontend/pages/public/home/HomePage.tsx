@@ -10,7 +10,6 @@ import { BlogSection } from './BlogSection'
 import { HeroSection } from './HeroSection'
 import { HomeFaqSection } from './HomeFaqSection'
 import { ProcessSection } from './ProcessSection'
-import { ServicesSection } from './ServicesSection'
 import { WorkSection } from './WorkSection'
 
 /**
@@ -32,19 +31,15 @@ export function HomePage({
 }: {
   entries: ProjectEntry[]
   posts: PublicPostSummary[]
-  /** Absent in the admin's preview, and `legacy` with the switch off: today's three cards. */
-  services?: HomeServicesData
+  services: HomeServicesData
 }) {
   const { language } = useLanguage()
-  const { home, services, work, faq, blog } = getContent(language)
-  const servicesView = homeServicesView(servicesData)
+  const { home, work, faq, blog } = getContent(language)
 
   return (
     <>
       <HeroSection copy={home.hero} />
-      {servicesView === 'legacy' ? (
-        <ServicesSection copy={home.services} services={services.items} language={language} />
-      ) : servicesView === 'v2' && servicesData?.source === 'v2' ? (
+      {homeServicesView(servicesData) === 'v2' ? (
         <HomeServicesV2 copy={home.services} items={servicesData.items} language={language} />
       ) : null}
       <WorkSection copy={home.work} work={work} language={language} entries={entries} />
