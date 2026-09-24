@@ -1,6 +1,7 @@
 # Trying V2 on the internet — the preview Worker
 
-Status: **ready to run, 24 Sep 2026; not deployed.** A second Cloudflare
+Status: **deployed and working, 24 Sep 2026** (every public page 200, the
+Dashboard redirects to its sign-in, owner API 401 without a session). A second Cloudflare
 Worker, `yamanwarda-v2-preview`, on `https://v2.yamanwarda.de` only. The live
 site (`yamanwarda`, `yamanwarda.de`, deployed from `main` by GitHub Actions)
 is not touched. Every public module reads Backend2 there, and the Dashboard
@@ -27,6 +28,9 @@ real emails.
    `v2.yamanwarda.de`; then
    `npx wrangler secret put TURNSTILE_SECRET_KEY --config .output/server/wrangler.preview.json`
    and paste the widget's secret key into the terminal (never into the chat).
+   Without this key every page of the preview answers 500 (the old backend
+   refuses to start in production without it). `RATE_LIMIT_SECRET` is
+   generated fresh by the script in step 3.
 6. Deploy the preview: `npx wrangler deploy --config .output/server/wrangler.preview.json`.
 7. Open `https://v2.yamanwarda.de`, and `https://v2.yamanwarda.de/dashboard`
    (sign in with password + authenticator code the first time; a passkey is

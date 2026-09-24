@@ -15,6 +15,7 @@
  *   machine, for `wrangler secret bulk`. Delete it after uploading; it never
  *   leaves this computer otherwise and is never printed.
  */
+import { randomBytes } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 
 const hyperdriveId = process.argv[2]?.trim()
@@ -87,6 +88,8 @@ const SECRETS = [
 ]
 
 const secrets = Object.fromEntries(SECRETS.filter((name) => env[name]).map((name) => [name, env[name]]))
+// The old backend refuses to start in production without it; the preview gets its own.
+secrets.RATE_LIMIT_SECRET = randomBytes(32).toString('base64')
 const missing = SECRETS.filter((name) => !env[name])
 
 if ((env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_')) {
