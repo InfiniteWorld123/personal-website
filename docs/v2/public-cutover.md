@@ -190,3 +190,24 @@ reads the old site), `src/backend2/contracts/import.contract.ts`,
 `src/frontend/features/legacy-import/`, `OldSitePage.tsx`. Delete all of it
 after the cutover. Tests: `backend2-legacy-import.test.ts`,
 `legacy-import-ui.test.tsx`.
+
+## Cutover record (24 Sep 2026, owner-approved)
+
+- Backup first: branch `main-legacy-backup` on GitHub (the live `main` as it
+  was), and a read-only JSON export of every legacy table on the owner's Mac
+  (`~/Documents/yamanwarda-legacy-backup-2026-09-24`, never in the repo).
+- `wrangler.jsonc` gains `HYPERDRIVE_V2`, the `*/15` cron, every public module
+  on Backend2, the remote Dashboard (`AUTH_V2_ORIGIN=https://yamanwarda.de`),
+  `INBOX_SEND_MODE=live` (real booking and Inbox mail; invoices stay test),
+  and Cloudflare Web Analytics (public beacon token, account id, site tag).
+- New live secrets, set by the owner (Claude may not write secrets):
+  `node scripts/v2-live-secrets.mjs` then
+  `npx wrangler secret bulk live-secrets.json --name yamanwarda && rm live-secrets.json`
+  (DATABASE_URL_V2, AUTH_V2_SECRET, CALL_ROOM_SECRET), and
+  `npx wrangler secret put CF_ANALYTICS_API_TOKEN --name yamanwarda`.
+- Then `main-v2` is fast-forwarded onto `main` by the owner; GitHub Actions
+  deploys. The same checks already pass on `main-v2` (`check.yml`).
+- After a clean check: delete the preview Worker
+  (`npx wrangler delete --name yamanwarda-v2-preview`), then remove `/admin`
+  and the legacy backend in a separate change; the legacy database is dropped
+  a week later.

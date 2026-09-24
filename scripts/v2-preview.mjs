@@ -59,6 +59,11 @@ const preview = {
   },
 }
 
+// Live-only settings the build now carries from wrangler.jsonc: preview visits
+// must not count as the live site's, and the preview must not send real mail.
+delete preview.vars.CF_WEB_ANALYTICS_TOKEN
+delete preview.vars.INBOX_SEND_MODE
+
 if (preview.routes.some((route) => route.pattern === 'yamanwarda.de' || route.pattern === 'www.yamanwarda.de')) {
   throw new Error('Refusing: the preview must never claim the live addresses')
 }

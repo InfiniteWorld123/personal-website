@@ -40,8 +40,19 @@
     {
       "binding": "HYPERDRIVE",
       "id": "ff94beb83ae744a38526c880364ac7a9"
+    },
+    // V2's database (Neon, Frankfurt), caching off. Created 24 Sep 2026 for
+    // the preview and shared by the live site since the cutover.
+    {
+      "binding": "HYPERDRIVE_V2",
+      "id": "eb58d725f53141a0abdebe3ffb5a51b3"
     }
   ],
+
+  // Backend2's periodic jobs (`src/backend2/jobs/scheduled.ts`): blog
+  // schedules and booking reminders every tick; billing, purge and sweeps on
+  // the :00 tick. Every 15 minutes so Neon can sleep between runs.
+  "triggers": { "crons": ["*/15 * * * *"] },
 
   // The media bucket, handed to the Worker directly.
   //
@@ -83,6 +94,27 @@
   //   bunx wrangler secret put BETTER_AUTH_SECRET
   // and are listed in `.env.example`.
   "vars": {
-    "APP_NAME": "Yaman Warda"
+    "APP_NAME": "Yaman Warda",
+
+    // The V2 cutover (24 Sep 2026, owner-approved): every public module reads
+    // Backend2, and the Dashboard is reachable at yamanwarda.de/dashboard
+    // behind the V2 sign-in (password + authenticator code, or a passkey).
+    // Owner routes answer only on this exact host, not on www.
+    "PUBLIC_V2_MODULES": "content,services,projects,blog,booking,contact,assistant",
+    "BACKEND2_OWNER_API": "remote",
+    "AUTH_V2_ORIGIN": "https://yamanwarda.de",
+    "AUTH_V2_RP_ID": "yamanwarda.de",
+
+    // Real email from V2 (booking confirmations and reminders, Inbox replies)
+    // through Resend. Invoices stay in test mode: INVOICES_LIVE_ENABLED is
+    // deliberately absent until the owner turns real payments on.
+    "INBOX_SEND_MODE": "live",
+
+    // Cookieless Cloudflare Web Analytics. The beacon token is public (it is
+    // printed in every page); the Dashboard reads the numbers with the secret
+    // CF_ANALYTICS_API_TOKEN.
+    "CF_WEB_ANALYTICS_TOKEN": "9e78c46c11c24493a6164659195c1177",
+    "CF_ACCOUNT_ID": "9e77752659ea97f8c387249ac9fbeee1",
+    "CF_WEB_ANALYTICS_SITE_TAG": "9f7927267754453da9225c4fab37f78b"
   }
 }

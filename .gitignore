@@ -38,3 +38,5 @@ REVIEW-PROMPT.md
 
 # The local V2 development database (`bun run db2:dev`).
 .backend2-db/
+live-secrets.json
+inbound-secrets.json
