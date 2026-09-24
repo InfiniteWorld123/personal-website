@@ -52,6 +52,10 @@ const preview = {
     BACKEND2_OWNER_API: 'remote',
     AUTH_V2_ORIGIN: `https://${HOST}`,
     AUTH_V2_RP_ID: HOST,
+    // Which Cloudflare Web Analytics site the Dashboard reads (public ids, not
+    // secrets). The API token, CF_ANALYTICS_API_TOKEN, is a Worker secret.
+    CF_ACCOUNT_ID: '9e77752659ea97f8c387249ac9fbeee1',
+    CF_WEB_ANALYTICS_SITE_TAG: '9f7927267754453da9225c4fab37f78b',
   },
 }
 
@@ -93,8 +97,6 @@ const SECRETS = [
   // The public beacon (`CF_WEB_ANALYTICS_TOKEN`) is deliberately not copied:
   // preview visits must not be counted as the live site's.
   'CF_ANALYTICS_API_TOKEN',
-  'CF_ACCOUNT_ID',
-  'CF_WEB_ANALYTICS_SITE_TAG',
 ]
 
 const secrets = Object.fromEntries(SECRETS.filter((name) => env[name]).map((name) => [name, env[name]]))
