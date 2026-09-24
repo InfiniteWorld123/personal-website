@@ -57,3 +57,31 @@ After the answers: implement the `remote` mode and its tests locally (no
 deployment), then walk the owner through the Cloudflare Access setup step by
 step, then a preview deployment of `main-v2` to test everything on the
 internet before the real site changes.
+
+## Owner decision — 24 Sep 2026
+
+The owner chose **no Cloudflare Access and no separate Dashboard host**: the
+Dashboard stays at `yamanwarda.de/dashboard` and is reachable from the
+internet, protected by the V2 sign-in (passkey, or password + authenticator
+code, recovery codes) with its server-side limits. The `remote` mode below is
+therefore implemented without the Access pass; everything else in the plan
+stands (secrets, host check, session always required, prerequisites, tests).
+
+## Implementation record — 24 Sep 2026
+
+- `BACKEND2_OWNER_API=remote` in `src/backend2/security/local-only.ts`: owner
+  and sign-in routes mount only when `AUTH_V2_SECRET` (≥ 32 chars), an
+  `https://` `AUTH_V2_ORIGIN` without a path and `AUTH_V2_RP_ID` are all set;
+  otherwise nothing mounts, as before. `local` still never opens in a
+  production build.
+- Per request (`decideOwnerRequest`): only the configured host — a
+  `workers.dev` address or any other hostname gets `404`. On the site host a
+  missing session answers `401` (the sign-in page itself is public anyway).
+- The V2 session is always required in `remote` mode, whatever
+  `BACKEND2_OWNER_AUTH` says; the Dashboard page guard follows the same rule.
+- The sign-in API now carries the same per-request gate in both modes (before,
+  in `local` mode it relied on mounting alone).
+- Verified: `src/tests/backend2-remote-access.test.ts` and the full suite.
+- Not done yet, before switching it on: production secrets on Cloudflare,
+  a verified email sender, one rehearsal of the lost-everything runbook, a
+  backup/restore check, and a first run on a separate preview address.

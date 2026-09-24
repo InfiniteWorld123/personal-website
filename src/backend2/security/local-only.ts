@@ -54,7 +54,73 @@ export const decideLocalOnly = (input: {
 export const ownerRoutesEnabled = (
   environment: Record<string, string | undefined> = process.env,
 ): boolean =>
-  environment.BACKEND2_OWNER_API?.trim() === 'local' && !isProductionEnvironment(environment)
+  (environment.BACKEND2_OWNER_API?.trim() === 'local' && !isProductionEnvironment(environment)) ||
+  remoteOwnerConfig(environment) !== null
+
+/* -------------------------------------------------------------- remote mode */
+
+/**
+ * `BACKEND2_OWNER_API=remote` — the Dashboard reachable from the internet at
+ * the site's own address (`docs/v2/remote-access.md`; the owner chose no
+ * Cloudflare Access and no separate host on 24 Sep 2026). Every piece must be
+ * configured or the answer is `null` and the owner routes stay unmounted,
+ * exactly as without the flag:
+ *
+ * - a strong `AUTH_V2_SECRET` (the key for stored authenticator secrets);
+ * - an `https://` `AUTH_V2_ORIGIN` (the site's own address) and
+ *   `AUTH_V2_RP_ID` for passkeys.
+ *
+ * A V2 session — passkey, or password with an authenticator code — is then
+ * required on every owner route (`ownerAuthRequired`), whatever
+ * `BACKEND2_OWNER_AUTH` says, and a stranger still gets 404, not 401.
+ */
+export type RemoteOwnerConfig = { host: string }
+
+export const remoteOwnerConfig = (
+  environment: Record<string, string | undefined> = process.env,
+): RemoteOwnerConfig | null => {
+  if (environment.BACKEND2_OWNER_API?.trim() !== 'remote') return null
+
+  const secret = environment.AUTH_V2_SECRET?.trim() ?? ''
+  const rpId = environment.AUTH_V2_RP_ID?.trim() ?? ''
+  let origin: URL
+
+  try {
+    origin = new URL(environment.AUTH_V2_ORIGIN?.trim() ?? '')
+  } catch {
+    return null
+  }
+
+  if (secret.length < 32 || !rpId) return null
+  if (origin.protocol !== 'https:' || origin.pathname !== '/' || origin.search || origin.hash) return null
+
+  return { host: origin.host.toLowerCase() }
+}
+
+/**
+ * The per-request rule in either mode. `local`: this machine only. `remote`:
+ * the request is for the site's configured host (a `workers.dev` address or
+ * any other hostname pointing at the same Worker is refused); the session
+ * guard then decides who it is.
+ */
+export const decideOwnerRequest = async (
+  request: Request,
+  environment: Record<string, string | undefined> = process.env,
+): Promise<{ allowed: true } | { allowed: false; reason: string }> => {
+  const remote = remoteOwnerConfig(environment)
+
+  if (!remote) return isLocalOwnerRequest(request, environment)
+
+  let host: string
+
+  try {
+    host = new URL(request.url).host.toLowerCase()
+  } catch {
+    return { allowed: false, reason: 'host' }
+  }
+
+  return host === remote.host ? { allowed: true } : { allowed: false, reason: 'host' }
+}
 
 /**
  * Whether the Projects and media owner routes demand a V2 session on top of
@@ -70,7 +136,7 @@ export const ownerRoutesEnabled = (
  */
 export const ownerAuthRequired = (
   environment: Record<string, string | undefined> = process.env,
-): boolean => environment.BACKEND2_OWNER_AUTH?.trim() === 'required'
+): boolean => environment.BACKEND2_OWNER_AUTH?.trim() === 'required' || remoteOwnerConfig(environment) !== null
 
 /** The per-request half. Reads the environment fresh every time. */
 export const isLocalOwnerRequest = (

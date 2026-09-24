@@ -33,6 +33,7 @@ import {
   startPasswordSignIn,
 } from './auth.service'
 import { revokeSession } from '../../auth/session'
+import { localOwnerGuard } from '../../security/owner-guard'
 
 /**
  * The public half of Auth V2: the routes a signed-out browser may reach.
@@ -46,6 +47,12 @@ import { revokeSession } from '../../auth/session'
  * Thin, like the Projects routes: parse, delegate, respond.
  */
 export const publicAuthRoutes = new Elysia({ prefix: '/auth' })
+  /*
+   * The same gate as every owner route: this machine only in `local` mode;
+   * the Dashboard host with a valid Cloudflare Access pass in `remote` mode
+   * (`docs/v2/remote-access.md`). A stranger never reaches the sign-in API.
+   */
+  .use(localOwnerGuard)
   /* ------------------------------------------------------------- passkey */
   .post('/passkey/start', async ({ request }) => {
     const result = await startPasskeySignIn(request, requestIdentity(request))

@@ -2,7 +2,7 @@ import { Elysia } from 'elysia'
 import type { OwnerSession } from '../auth/session'
 import { assertCsrf, readSessionFromRequest } from '../auth/session'
 import { enrollmentRequired, notFound, unauthorized } from '../http/error'
-import { isLocalOwnerRequest, ownerAuthRequired } from './local-only'
+import { decideOwnerRequest, ownerAuthRequired } from './local-only'
 
 /**
  * What stands between a stranger and the owner's data.
@@ -35,8 +35,8 @@ import { isLocalOwnerRequest, ownerAuthRequired } from './local-only'
  * propagate up to the root application and refuse the *public* project routes
  * as well. So each guard states the fence for itself.
  */
-const refuseNonLocal = ({ request }: { request: Request }): void => {
-  if (isLocalOwnerRequest(request).allowed) return
+const refuseNonLocal = async ({ request }: { request: Request }): Promise<void> => {
+  if ((await decideOwnerRequest(request)).allowed) return
 
   // 404, never 401 or 403: those confirm that a private API is there.
   throw notFound('Route not found')
