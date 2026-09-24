@@ -6,8 +6,10 @@ export default defineConfig({
   plugins: [tsconfigPaths({ projects: ['./tsconfig.json'] })],
   test: {
     include: ['src/tests/**/*.test.{ts,tsx}'],
-    // A two-core CI runner is far slower than a laptop: the PGlite suites and
-    // the sign-in hashing tests pass everywhere but brush 5 s there.
-    ...(process.env.CI ? { testTimeout: 30_000, hookTimeout: 60_000 } : {}),
+    // The PGlite suites and the sign-in hashing tests pass everywhere but
+    // brush the 5 s default on a two-core CI runner, or on a laptop busy with
+    // a second test run — the gapless-numbering race test most of all.
+    testTimeout: process.env.CI ? 30_000 : 15_000,
+    hookTimeout: process.env.CI ? 60_000 : 30_000,
   },
 })
