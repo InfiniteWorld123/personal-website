@@ -79,12 +79,39 @@ export const isWorkerRuntime = (): boolean =>
 let sharedPool: Pool | undefined
 const requestPool = new AsyncLocalStorage<{ pool?: Pool }>()
 
+/*
+ * On Cloudflare, V2 connects through its own Hyperdrive binding when one is
+ * configured (`HYPERDRIVE_V2`): Hyperdrive keeps warm connections to the
+ * database, so a request does not pay for a fresh TLS handshake to Neon.
+ * Without the binding the Worker connects to `DATABASE_URL_V2` directly, which
+ * works, only slower. Resolved on first use, like the legacy client, because
+ * a top-level await would break the Worker's module graph.
+ */
+let hyperdriveV2Url: string | undefined
+let hyperdriveV2Resolution: Promise<void> | undefined
+
+const resolveHyperdriveV2 = (): Promise<void> =>
+  (hyperdriveV2Resolution ??= (async () => {
+    try {
+      const specifier = ['cloudflare', 'workers'].join(':')
+      const workerModule = (await import(/* @vite-ignore */ specifier)) as { env?: Record<string, unknown> }
+      const binding = workerModule.env?.HYPERDRIVE_V2 as { connectionString?: string } | undefined
+
+      hyperdriveV2Url = binding?.connectionString
+    } catch {
+      hyperdriveV2Url = undefined
+    }
+  })())
+
 const getPool = (): Pool => {
   const scope = requestPool.getStore()
 
   if (scope) {
+    // `readDatabaseUrl` still runs first: V2 is only "configured" with its own URL.
+    const configured = readDatabaseUrl()
+
     return (scope.pool ??= new Pool({
-      connectionString: readDatabaseUrl(),
+      connectionString: hyperdriveV2Url ?? configured,
       max: 5,
       connectionTimeoutMillis: 10_000,
     }))
@@ -122,6 +149,8 @@ export const runWithDb = <T>(db: Db, fn: () => Promise<T>): Promise<T> => inject
 /** Runs one request with a connection that does not outlive it. */
 export const withRequestScope = async <T>(fn: () => Promise<T>): Promise<T> => {
   if (!isWorkerRuntime() || injectedDb.getStore()) return fn()
+
+  await resolveHyperdriveV2()
 
   return requestPool.run({}, async () => {
     try {

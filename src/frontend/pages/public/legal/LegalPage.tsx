@@ -1,6 +1,7 @@
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { getContent } from '#/frontend/content'
+import { applyPrivacyV2 } from '#/frontend/content/privacy-v2'
 import type { LegalCopy } from '#/frontend/content/types'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 
@@ -9,9 +10,10 @@ import { useLanguage } from '#/frontend/i18n/language-provider'
  * holding either a paragraph or a short list. Plain text, no motion, no CTA —
  * a visitor here wants a fact, not to be sold to.
  */
-export function LegalPage({ document }: { document: 'impressum' | 'privacy' }) {
+export function LegalPage({ document, v2Privacy = false }: { document: 'impressum' | 'privacy'; v2Privacy?: boolean }) {
   const { language } = useLanguage()
-  const copy: LegalCopy = getContent(language).legal[document]
+  const base: LegalCopy = getContent(language).legal[document]
+  const copy = document === 'privacy' && v2Privacy ? applyPrivacyV2(base, language) : base
 
   return (
     <>

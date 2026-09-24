@@ -1,6 +1,6 @@
 # Privacy page for V2 — draft for the owner's approval
 
-Status: **draft, 24 Sep 2026. Not on the live site.** The current privacy
+Status: **approved by the owner on 24 Sep 2026; built behind the switch** — the privacy page shows this wording as soon as any public module reads Backend2 (`src/frontend/content/privacy-v2.ts`), and today's wording until then. The current privacy
 page (`legal.privacy` in `src/frontend/content/{de,en,ar}.ts`) stays until the
 owner approves this text; it then goes live together with the first public
 step that needs it. This is a technical description of what the software
