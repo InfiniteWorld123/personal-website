@@ -226,8 +226,14 @@ export type PasswordStartResult =
  * Without it, an unknown address answers in a millisecond and a known one
  * answers after a full scrypt — which is an account-enumeration oracle wearing
  * a stopwatch instead of an error message.
+ *
+ * Made on first use, not when the module loads: a Worker forbids generating
+ * random values (the salt) outside a request.
  */
-const DUMMY_HASH_PROMISE = hashPassword('a password that belongs to nobody at all')
+let dummyHashPromise: Promise<string> | null = null
+
+const dummyHash = (): Promise<string> =>
+  (dummyHashPromise ??= hashPassword('a password that belongs to nobody at all'))
 
 /**
  * Step one of the fallback route.
@@ -255,7 +261,7 @@ export const startPasswordSignIn = async (options: {
   await sweep()
 
   const owner = await findOwnerByEmail(options.email)
-  const stored = owner?.password_hash ?? (await DUMMY_HASH_PROMISE)
+  const stored = owner?.password_hash ?? (await dummyHash())
   const correct = await verifyPassword(options.password, stored)
 
   if (!owner || !correct) {

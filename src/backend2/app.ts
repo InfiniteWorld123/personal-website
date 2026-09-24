@@ -68,8 +68,22 @@ const supportsCodeGeneration = (() => {
  * reach. The per-request guard is the second, and either alone refuses a
  * stranger.
  */
-const buildApp = () => {
-  const app = new Elysia({ prefix: '/api/v2', aot: supportsCodeGeneration }).onError(
+/**
+ * Every route reads its own body, under its own ceiling (`http/body.ts`).
+ *
+ * Compiled (Node, Bun), Elysia sees that no handler asks for `body` and leaves
+ * the stream alone. Uncompiled — every Cloudflare Worker — it reads any body
+ * that has a content type before the handler runs, even with `parse: 'none'`,
+ * and the handler's own read then fails on a locked stream. Answering the
+ * parse step with a marker, without touching the stream, keeps the body for
+ * the handler in both modes.
+ */
+const BODY_LEFT_FOR_HANDLER = Symbol('body left for the handler')
+
+const buildApp = ({ aot = supportsCodeGeneration }: { aot?: boolean } = {}) => {
+  const app = new Elysia({ prefix: '/api/v2', aot })
+    .onParse({ as: 'global' }, () => BODY_LEFT_FOR_HANDLER)
+    .onError(
     ({ code, error, status }) => {
       /*
        * Our own errors are answered first, on purpose. Elysia derives `code`
@@ -217,7 +231,7 @@ export type Backend2App = typeof app
  * Rebuilds the application. Only for tests, which need to see what a different
  * environment would have mounted.
  */
-export const createAppForTest = () => buildApp()
+export const createAppForTest = (options?: { aot?: boolean }) => buildApp(options)
 
 /**
  * Elysia returns an empty 404 body for an unmatched route. Normalised here so
