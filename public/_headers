@@ -31,8 +31,20 @@
 /robots.txt
   Cache-Control: public, max-age=86400
 
-/*.png
+# The icons at the root, named one by one. A `/*.png` pattern also matched
+# `/images/yaman-cutout.png`, and Cloudflare joins every matching rule, so the
+# portrait went out with two contradicting `Cache-Control` values.
+/favicon.svg
   Cache-Control: public, max-age=604800
 
-/*.svg
+/app-icon.svg
+  Cache-Control: public, max-age=604800
+
+/icon-192.png
+  Cache-Control: public, max-age=604800
+
+/icon-512.png
+  Cache-Control: public, max-age=604800
+
+/apple-touch-icon.png
   Cache-Control: public, max-age=604800

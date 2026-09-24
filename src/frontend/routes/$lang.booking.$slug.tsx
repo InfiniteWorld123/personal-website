@@ -26,6 +26,11 @@ export const Route = createFileRoute('/$lang/booking/$slug')({
       language,
       path: `/booking/${params.slug}`,
       ...getBookingCopy(language).meta,
+      // A step of the booking form, not a page of its own: it carries the
+      // same title and description as `/booking`, and any slug renders it
+      // (with a 200) before the client learns the type does not exist. The
+      // sitemap lists `/booking` only; this keeps the steps out of the index.
+      noIndex: true,
     })
   },
   loader: async () => {

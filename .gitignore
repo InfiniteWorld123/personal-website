@@ -4,6 +4,10 @@ dist
 dist-ssr
 *.local
 .env
+# Any per-environment variant (`.env.production`, `.env.staging`, …); only the
+# documented template is tracked.
+.env.*
+!.env.example
 .nitro
 .tanstack
 .wrangler
@@ -21,6 +25,7 @@ my images/
 
 # Wrangler's local secret file for `wrangler dev`. Same contents as `.env`.
 .dev.vars
+.dev.vars.*
 
 # Vercel CLI link data. `.env` and `*.local` above already cover its env files.
 .vercel

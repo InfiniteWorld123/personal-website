@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { SEARCH_LIMITS, type SearchResult, type SearchSectionResult } from '#/backend2/contracts/search.contract'
+
+// The palette's lazy chunk can take over a second to arrive while the whole
+// suite runs in parallel; the default 1 s wait made these tests flaky.
+configure({ asyncUtilTimeout: 5_000 })
 
 /**
  * The Dashboard's global search palette (`docs/v2/search.md`, Design Lab

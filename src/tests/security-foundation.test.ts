@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { toJsonLd } from '#/frontend/lib/seo'
-import { buildContentSecurityPolicy, validateMutationRequest } from '#/start'
+import { buildContentSecurityPolicy, canonicalRedirect, validateMutationRequest } from '#/start'
 
 describe('structured data', () => {
   it('cannot close the script block it is written into', () => {
@@ -94,5 +94,34 @@ describe('request security', () => {
     expect(policy).toContain("script-src 'self' 'nonce-nonce123' https://challenges.cloudflare.com")
     expect(policy).toContain("object-src 'none'")
     expect(policy).toContain("frame-ancestors 'none'")
+  })
+})
+
+describe('canonical host', () => {
+  it('sends a www read to the bare domain, keeping the path and query', () => {
+    expect(canonicalRedirect(new Request('https://www.yamanwarda.de/en/work?x=1'))).toBe(
+      'https://yamanwarda.de/en/work?x=1',
+    )
+    expect(canonicalRedirect(new Request('https://www.yamanwarda.de/', { method: 'HEAD' }))).toBe(
+      'https://yamanwarda.de/',
+    )
+  })
+
+  it('drops a trailing slash permanently, in the same hop as www', () => {
+    expect(canonicalRedirect(new Request('https://yamanwarda.de/de/work/'))).toBe('https://yamanwarda.de/de/work')
+    expect(canonicalRedirect(new Request('https://www.yamanwarda.de/en/work/tech-store/?a=b'))).toBe(
+      'https://yamanwarda.de/en/work/tech-store?a=b',
+    )
+    expect(canonicalRedirect(new Request('https://yamanwarda.de/'))).toBeNull()
+    expect(canonicalRedirect(new Request('https://yamanwarda.de/api/v2/'))).toBeNull()
+  })
+
+  it('leaves the bare domain, local development and every write alone', () => {
+    expect(canonicalRedirect(new Request('https://yamanwarda.de/de'))).toBeNull()
+    expect(canonicalRedirect(new Request('http://localhost:3000/de'))).toBeNull()
+    // A webhook or form posted to www must not be silently turned into a GET.
+    expect(
+      canonicalRedirect(new Request('https://www.yamanwarda.de/api/v2/stripe/webhook', { method: 'POST' })),
+    ).toBeNull()
   })
 })

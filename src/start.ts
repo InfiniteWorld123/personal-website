@@ -55,6 +55,47 @@ export const validateMutationRequest = (
     : null
 }
 
+/**
+ * One address per page, answered with a permanent redirect.
+ *
+ * - `www.` is attached to the same Worker (`wrangler.jsonc`), so without this
+ *   it served a second, complete copy of the site. Its canonical tags already
+ *   name the bare domain; the redirect makes the address bar and every crawler
+ *   agree.
+ * - A trailing slash (`/de/work/`) was already sent to the slash-less page by
+ *   the router, but with a *temporary* 307, which tells a search engine to
+ *   keep both addresses. Same destination, now permanent, and in one hop when
+ *   both apply.
+ *
+ * Reads only: a webhook or form posted to `www.` must not be turned into a GET
+ * by a redirect, and the origin check refuses it anyway. `/api` keeps its own
+ * paths untouched.
+ */
+export const canonicalRedirect = (request: Request): string | null => {
+  const method = request.method.toUpperCase()
+
+  if (method !== 'GET' && method !== 'HEAD') return null
+
+  const url = new URL(request.url)
+  let changed = false
+
+  if (url.hostname.startsWith('www.')) {
+    url.hostname = url.hostname.slice('www.'.length)
+    changed = true
+  }
+
+  if (url.pathname.length > 1 && url.pathname.endsWith('/') && !url.pathname.startsWith('/api/')) {
+    url.pathname = url.pathname.replace(/\/+$/, '') || '/'
+    changed = true
+  }
+
+  return changed ? url.toString() : null
+}
+
+/** Private surfaces: never indexed, whatever a page's own meta tag says. */
+const noIndexPath = (pathname: string): boolean =>
+  pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname.startsWith('/api/')
+
 /** The Blog's click-to-load YouTube player (`docs/v2/blog.md`, answer 1A): the one frame origin it needs. */
 const YOUTUBE_FRAME_ORIGIN = 'https://www.youtube-nocookie.com'
 
@@ -96,6 +137,15 @@ const securityMiddleware = createMiddleware({ type: 'request' }).server(
     const requestId = crypto.randomUUID()
     const isApi = url.pathname.startsWith('/api')
 
+    const canonicalLocation = canonicalRedirect(request)
+
+    if (canonicalLocation) {
+      return new Response(null, {
+        status: 301,
+        headers: { Location: canonicalLocation, 'X-Request-ID': requestId },
+      })
+    }
+
     const mutationError = validateMutationRequest(request)
 
     if (mutationError) {
@@ -124,6 +174,10 @@ const securityMiddleware = createMiddleware({ type: 'request' }).server(
     response.headers.set('X-Content-Type-Options', 'nosniff')
     response.headers.set('X-Frame-Options', 'DENY')
     response.headers.set('Referrer-Policy', 'no-referrer')
+    // No page here needs a handle on a window it opened or was opened by;
+    // every external link already carries `noopener`.
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+    if (noIndexPath(url.pathname)) response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     response.headers.set(
       'Permissions-Policy',
       'camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), browsing-topics=()',
