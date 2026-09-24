@@ -69,7 +69,7 @@
     "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260915.1",
+    "@cloudflare/workers-types": "^5.20260921.1",
     "@electric-sql/pglite": "^0.5.8",
     "@electric-sql/pglite-socket": "^0.2.11",
     "@tailwindcss/typography": "^0.5.16",
