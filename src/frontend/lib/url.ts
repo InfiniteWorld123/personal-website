@@ -23,7 +23,7 @@ export const pageUrl = (language: Language, path: string) => absolute(publicPath
  *
  * The bare path still resolves, so links shared before this stay intact.
  */
-export const OG_CARD_VERSION = '2026-09-10'
+export const OG_CARD_VERSION = '2026-09-24'
 
 /** Social preview card for a language. 1200×630, generated into `public/og`. */
 export const socialCard = (language: Language) => `/og/${language}.jpg?v=${OG_CARD_VERSION}`
