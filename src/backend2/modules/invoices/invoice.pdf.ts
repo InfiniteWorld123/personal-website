@@ -86,7 +86,6 @@ type Words = {
   testReceipt: string
   signature: string
   months: string[]
-  tagline: string
   shortNumber: string
   shortDate: string
   shortDue: string
@@ -149,7 +148,6 @@ const WORDS: Record<DocumentLanguage, Words> = {
     testReceipt: 'TEST – keine gültige Quittung',
     signature: 'Unterschrift',
     months: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'],
-    tagline: 'Webentwicklung',
     shortNumber: 'Nummer',
     shortDate: 'Datum',
     shortDue: 'Fällig bis',
@@ -210,7 +208,6 @@ const WORDS: Record<DocumentLanguage, Words> = {
     testReceipt: 'TEST – not a valid receipt',
     signature: 'Signature',
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    tagline: 'Web development',
     shortNumber: 'Number',
     shortDate: 'Date',
     shortDue: 'Due',
@@ -581,10 +578,6 @@ const brandMark = (canvas: Canvas, left: number, top: number, size: number) => {
   stroke([24, 34], [24, 42], BRAND_BLUE)
 }
 
-/** The town from the last address line: `99084 Erfurt` → `Erfurt`. */
-const townOf = (address: string): string =>
-  (address.split('\n').filter((line) => line.trim() !== '').at(-1) ?? '').replace(/^\s*\d{4,5}\s+/u, '').trim()
-
 /**
  * The EPC QR code ("GiroCode") a German banking app reads to prefill a SEPA
  * transfer: recipient, IBAN, amount and reference. Latin-1 (character set 2)
@@ -676,15 +669,15 @@ export const renderInvoicePdf = async (
   canvas.pdf.setCreationDate(new Date(`${document.issueDate}T12:00:00Z`))
   canvas.pdf.setModificationDate(new Date(`${document.issueDate}T12:00:00Z`))
 
-  // Letterhead: the mark, the name, a quiet line under it, and a blue rule.
+  // Letterhead: the mark, the name, the website under it, and a blue rule.
   const top = canvas.y
 
   brandMark(canvas, MARGIN.left - 5, top + 3, 36)
   text(canvas, seller.name, { x: MARGIN.left + 36, y: top - 2, size: 17, bold: true, width: 300 })
 
-  const town = townOf(seller.address)
-
-  text(canvas, [words.tagline, town].filter(Boolean).join(' · '), {
+  // Under the name, only the website: no trade or town, so the letterhead fits
+  // whatever is being sold.
+  text(canvas, seller.website, {
     x: MARGIN.left + 36.5,
     y: top - 24,
     size: 7,
