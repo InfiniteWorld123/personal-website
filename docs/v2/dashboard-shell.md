@@ -21,7 +21,10 @@ The private V2 interface at `/dashboard`, frontend only:
 - the shell — collapsible sidebar, top bar, light and dark, mobile drawer;
 - the **Overview** screen;
 - **Settings** — real: it chooses the surface and the theme, and Security is a
-  working screen backed by V2 authentication.
+  working screen backed by V2 authentication. Owner decision, 25 Sep 2026:
+  the greyed "not designed yet" list is gone; an "In each section" list links
+  to the settings each module keeps for itself (Inbox signatures, Invoices
+  seller & tax, Calendar hours & limits, Assistant settings).
 - **Media** — real, and the first module built end to end: the shared library
   at `/dashboard/media` with folders, uploads, search and the picker every
   other module will use. Added 22 Sep 2026; `docs/v2/media.md` owns it.

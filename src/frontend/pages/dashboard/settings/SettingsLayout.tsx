@@ -1,4 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { DashboardPage, PageHead } from '#/frontend/dashboard/primitives'
 import { cn } from '#/frontend/lib/utils'
@@ -11,9 +12,9 @@ import { cn } from '#/frontend/lib/utils'
  * itself here for a reason beyond habit: Security alone is five panels, and a
  * single scrolling page would bury Appearance under it.
  *
- * The sections that do not exist yet are in the list too, greyed and
- * unclickable. That is the same rule the rest of this dashboard follows: show
- * the shape, and never let it pretend to be finished.
+ * Each module keeps its own settings where the work happens — signatures in
+ * the Inbox, seller details in Invoices. The second list only points at them,
+ * so the owner finds every setting from here without any of it living twice.
  */
 
 const SECTIONS = [
@@ -29,8 +30,13 @@ const SECTIONS = [
   },
 ] as const
 
-/** Settings sections named in `docs/v2/foundation.md`, and not designed yet. */
-const LATER = ['Mailbox', 'Invoicing', 'Booking', 'Public site'] as const
+/** Settings that live inside their module. Each link opens them in place. */
+const ELSEWHERE = [
+  { to: '/dashboard/inbox', search: { settings: true }, label: 'Inbox', note: 'Signatures & ready replies' },
+  { to: '/dashboard/invoices/settings', search: {}, label: 'Invoices', note: 'Seller, tax, bank, test mode' },
+  { to: '/dashboard/calendar', search: { tab: 'hours' }, label: 'Calendar', note: 'Hours & booking limits' },
+  { to: '/dashboard/assistant/settings', search: {}, label: 'Assistant', note: 'On/off, how long chats are kept' },
+] as const
 
 export function SettingsLayout() {
   return (
@@ -38,7 +44,7 @@ export function SettingsLayout() {
       <PageHead
         eyebrow="SETTINGS"
         title="Settings"
-        description="How the dashboard looks, how you sign in, and the rest of it once it is designed."
+        description="How the dashboard looks, how you sign in, and where each section keeps its own settings."
         className="dash-rise dash-rise-1"
       />
 
@@ -72,19 +78,26 @@ export function SettingsLayout() {
             ))}
           </ul>
 
-          <div className="mt-6 hidden lg:block">
-            <p className="dash-eyebrow-quiet px-3">NOT DESIGNED YET</p>
-            <ul className="mt-2">
-              {LATER.map((label) => (
-                <li
-                  key={label}
-                  className="px-3 py-2 text-[13px] font-semibold text-[var(--dash-quiet)] opacity-45"
+          <p className="dash-eyebrow-quiet mt-4 px-3 lg:mt-6">IN EACH SECTION</p>
+          <ul className="mt-2 flex gap-1.5 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+            {ELSEWHERE.map((section) => (
+              <li key={section.to} className="shrink-0">
+                <Link
+                  to={section.to}
+                  search={section.search}
+                  className="flex flex-col rounded-[9px] px-3 py-2 text-[13px] font-semibold text-[var(--dash-quiet)] hover:bg-[var(--dash-hover)] hover:text-[var(--dash-ink)]"
                 >
-                  {label}
-                </li>
-              ))}
-            </ul>
-          </div>
+                  <span className="flex items-center gap-1.5">
+                    {section.label}
+                    <ArrowUpRight className="size-3.5 opacity-60" aria-hidden="true" />
+                  </span>
+                  <span className="hidden text-[11px] font-normal opacity-70 lg:block">
+                    {section.note}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
 
         <div className="min-w-0 flex-1">

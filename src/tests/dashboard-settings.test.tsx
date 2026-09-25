@@ -6,17 +6,19 @@ import type { ReactNode } from 'react'
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     to,
+    search,
     children,
     activeOptions: _activeOptions,
     activeProps: _activeProps,
     ...rest
   }: {
     to: string
+    search?: Record<string, unknown>
     children: ReactNode
     activeOptions?: unknown
     activeProps?: unknown
   }) => (
-    <a href={to} {...rest}>
+    <a href={search && Object.keys(search).length ? `${to}?${new URLSearchParams(search as Record<string, string>)}` : to} {...rest}>
       {children}
     </a>
   ),
@@ -155,13 +157,11 @@ describe('choosing the theme', () => {
 })
 
 describe('the rest of the settings screen', () => {
-  /** Appearance is real. Nothing else on this screen is, and it says so. */
   /**
-   * The list of unbuilt sections moved out of the Appearance page and into the
-   * settings navigation when Security arrived. Where it lives changed; that it
-   * is shown, and shown as unbuilt, did not.
+   * The greyed "not designed yet" list is gone: every module's settings now
+   * exist inside that module, and Settings links straight to each of them.
    */
-  it('still marks everything that has no specification yet', () => {
+  it('links to the settings each section keeps for itself', () => {
     render(
       <ThemeProvider>
         <DashboardPreferencesProvider>
@@ -170,14 +170,17 @@ describe('the rest of the settings screen', () => {
       </ThemeProvider>,
     )
 
-    expect(screen.getByText('NOT DESIGNED YET')).toBeTruthy()
-    expect(screen.getByText('Mailbox')).toBeTruthy()
-    expect(screen.getByText('Invoicing')).toBeTruthy()
+    expect(screen.queryByText('NOT DESIGNED YET')).toBeNull()
+    expect(screen.getByText('IN EACH SECTION')).toBeTruthy()
 
-    // The two that are real are links; the rest are plain text.
-    expect(screen.getByRole('link', { name: /Appearance/ })).toBeTruthy()
-    expect(screen.getByRole('link', { name: /Security/ })).toBeTruthy()
-    expect(screen.queryByRole('link', { name: /Mailbox/ })).toBeNull()
+    const href = (name: RegExp) => screen.getByRole('link', { name }).getAttribute('href')
+
+    expect(href(/Appearance/)).toBe('/dashboard/settings')
+    expect(href(/Security/)).toBe('/dashboard/settings/security')
+    expect(href(/Inbox/)).toBe('/dashboard/inbox?settings=true')
+    expect(href(/Invoices/)).toBe('/dashboard/invoices/settings')
+    expect(href(/Calendar/)).toBe('/dashboard/calendar?tab=hours')
+    expect(href(/Assistant/)).toBe('/dashboard/assistant/settings')
   })
 
   it('opens on Appearance and keeps it a section of its own', () => {

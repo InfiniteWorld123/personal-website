@@ -15,6 +15,8 @@ export type InboxSearch = {
   q?: string
   filter?: 'unread' | 'starred'
   page?: number
+  /** Signatures & replies is open — so Settings can link straight to it. */
+  settings?: true
 }
 
 /** The owner's mailbox. Everything on screen is in the address. */
@@ -29,6 +31,7 @@ export const Route = createFileRoute('/dashboard/inbox')({
       q: typeof search.q === 'string' && search.q.trim() ? search.q.trim().slice(0, 120) : undefined,
       filter: search.filter === 'unread' || search.filter === 'starred' ? search.filter : undefined,
       page: Number.isInteger(page) && page > 1 ? page : undefined,
+      settings: search.settings === true || search.settings === 'true' ? true : undefined,
     }
   },
   head: () => ({

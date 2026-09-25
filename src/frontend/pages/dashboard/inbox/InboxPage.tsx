@@ -143,7 +143,6 @@ export function InboxPage() {
   const view = search.view ?? 'inbox'
   const page = search.page ?? 1
   const [query, setQuery] = useState(search.q ?? '')
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [emptying, setEmptying] = useState(false)
   const [creating, setCreating] = useState(false)
 
@@ -366,7 +365,7 @@ export function InboxPage() {
         description="info@yamanwarda.de — every email to it, one conversation per first email."
         actions={
           <>
-            <button type="button" className="dash-btn dash-btn-ghost" onClick={() => setSettingsOpen(true)}>
+            <button type="button" className="dash-btn dash-btn-ghost" onClick={() => go({ settings: true })}>
               <Settings2 className="size-4" aria-hidden="true" /> <span className="hidden sm:inline">Signatures &amp; replies</span>
             </button>
             <button type="button" className="dash-btn dash-btn-primary" onClick={() => void startNew()} disabled={creating}>
@@ -382,7 +381,7 @@ export function InboxPage() {
         <div className={cn('min-h-0 min-w-0 flex-1 flex-col', reading ? 'flex' : 'hidden xl:flex')}>{readingPane}</div>
       </div>
 
-      {settingsOpen ? <InboxSettingsDialog onClose={() => setSettingsOpen(false)} /> : null}
+      {search.settings ? <InboxSettingsDialog onClose={() => go({ settings: undefined }, true)} /> : null}
       {emptying ? <EmptyTrashDialog count={counts.data?.trash ?? 0} onClose={() => setEmptying(false)} /> : null}
     </div>
   )
