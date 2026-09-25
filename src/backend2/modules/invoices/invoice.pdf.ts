@@ -1,5 +1,6 @@
 import fontkit from '@pdf-lib/fontkit'
-import { PDFDocument, type PDFFont, type PDFPage, degrees, rgb } from 'pdf-lib'
+import { LineCapStyle, PDFDocument, type PDFFont, type PDFPage, degrees, rgb, setCharacterSpacing } from 'pdf-lib'
+import qrcode from 'qrcode-generator'
 import { countryName as englishCountryName } from '../../contracts/country.contract'
 import { type DocumentLanguage, formatMoney } from '../../contracts/invoice.contract'
 import type { InvoiceDocument } from './invoice.document'
@@ -19,17 +20,21 @@ import { SPACE_GROTESK_BOLD, SPACE_GROTESK_REGULAR } from './invoice.font'
  */
 
 const PAGE = { width: 595.28, height: 841.89 }
-const MARGIN = { left: 50, right: 50, top: 50, bottom: 70 }
+/** The bottom margin keeps running content clear of the three-column footer. */
+const MARGIN = { left: 62, right: 62, top: 56, bottom: 132 }
 const CONTENT_WIDTH = PAGE.width - MARGIN.left - MARGIN.right
+/** Where the footer's hairline sits; its columns hang below it. */
+const FOOTER_TOP = 112
 
-const INK = rgb(0.1, 0.1, 0.12)
-const MUTED = rgb(0.42, 0.42, 0.46)
-const RULE = rgb(0.82, 0.82, 0.85)
+/** The site's ink, `#10172f`, and its muted foreground, `#617095`. */
+const INK = rgb(16 / 255, 23 / 255, 47 / 255)
+const MUTED = rgb(97 / 255, 112 / 255, 149 / 255)
+const RULE = rgb(221 / 255, 226 / 255, 239 / 255)
 const MARK = rgb(0.85, 0.15, 0.15)
-/** The site's blue, `#355cff`, for the “YW” mark. */
+/** The TEST / DRAFT watermark: a pale grey that never competes with the figures. */
+const WATERMARK = rgb(0.91, 0.92, 0.95)
+/** The site's blue, `#355cff`: the mark's caret, the rule, the number and the total. */
 export const BRAND_BLUE = rgb(53 / 255, 92 / 255, 1)
-/** The mark's square, in points; it sits in the top-right corner. */
-export const BRAND_MARK_SIZE = 30
 
 type Words = {
   invoice: string
@@ -81,6 +86,15 @@ type Words = {
   testReceipt: string
   signature: string
   months: string[]
+  tagline: string
+  shortNumber: string
+  shortDate: string
+  shortDue: string
+  intro: string
+  payToAccount: (date: string, number: string) => string
+  scan: string
+  sellerAddress: string
+  contact: string
 }
 
 const WORDS: Record<DocumentLanguage, Words> = {
@@ -135,6 +149,16 @@ const WORDS: Record<DocumentLanguage, Words> = {
     testReceipt: 'TEST – keine gültige Quittung',
     signature: 'Unterschrift',
     months: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'],
+    tagline: 'Webentwicklung',
+    shortNumber: 'Nummer',
+    shortDate: 'Datum',
+    shortDue: 'Fällig bis',
+    intro: 'Vielen Dank für Ihren Auftrag. Ich stelle Ihnen folgende Leistungen in Rechnung:',
+    payToAccount: (date, number) =>
+      `Zahlbar ohne Abzug bis ${date} auf das unten genannte Konto. Bitte geben Sie ${number} als Verwendungszweck an.`,
+    scan: 'Mit der Banking-App scannen',
+    sellerAddress: 'Anschrift',
+    contact: 'Kontakt',
   },
   en: {
     invoice: 'Invoice',
@@ -186,6 +210,16 @@ const WORDS: Record<DocumentLanguage, Words> = {
     testReceipt: 'TEST – not a valid receipt',
     signature: 'Signature',
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    tagline: 'Web development',
+    shortNumber: 'Number',
+    shortDate: 'Date',
+    shortDue: 'Due',
+    intro: 'Thank you for your order. I am invoicing you for the following services:',
+    payToAccount: (date, number) =>
+      `Payable without deduction by ${date} to the account below. Please use ${number} as the payment reference.`,
+    scan: 'Scan with your banking app',
+    sellerAddress: 'Address',
+    contact: 'Contact',
   },
 }
 
@@ -318,14 +352,19 @@ const wrap = (font: PDFFont, text: string, size: number, width: number): string[
 const drawWatermark = (canvas: Canvas, page: PDFPage) => {
   if (!canvas.watermark) return
 
+  // Centred on the page along a 45° diagonal, whatever the word's length.
+  const size = canvas.watermark.length > 4 ? 96 : 150
+  const width = canvas.bold.widthOfTextAtSize(canvas.watermark, size)
+  const angle = Math.PI / 4
+  const centre = { x: PAGE.width / 2, y: PAGE.height / 2 - 30 }
+
   page.drawText(canvas.watermark, {
-    x: 120,
-    y: 250,
-    size: 110,
+    x: centre.x - (width / 2) * Math.cos(angle) + (size * 0.35) * Math.sin(angle),
+    y: centre.y - (width / 2) * Math.sin(angle) - (size * 0.35) * Math.cos(angle),
+    size,
     font: canvas.bold,
-    color: MARK,
-    opacity: 0.1,
-    rotate: degrees(40),
+    color: WATERMARK,
+    rotate: degrees(45),
   })
 }
 
@@ -343,17 +382,32 @@ const ensureSpace = (canvas: Canvas, height: number): void => {
 const text = (
   canvas: Canvas,
   value: string,
-  options: { x?: number; size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; width?: number; align?: 'left' | 'right'; y?: number },
+  options: {
+    x?: number
+    size?: number
+    bold?: boolean
+    color?: ReturnType<typeof rgb>
+    width?: number
+    align?: 'left' | 'right'
+    y?: number
+    /** Letter spacing in points, for the small uppercase labels. */
+    tracking?: number
+    leading?: number
+  },
 ): number => {
   const size = options.size ?? 9.5
   const font = options.bold ? canvas.bold : canvas.regular
   const width = options.width ?? CONTENT_WIDTH
   const x = options.x ?? MARGIN.left
+  const tracking = options.tracking ?? 0
+  const leading = options.leading ?? 1.35
   const lines = wrap(font, clean(canvas, value), size, width)
   let y = options.y ?? canvas.y
 
+  if (tracking) canvas.page.pushOperators(setCharacterSpacing(tracking))
+
   for (const line of lines) {
-    const lineWidth = font.widthOfTextAtSize(line, size)
+    const lineWidth = font.widthOfTextAtSize(line, size) + tracking * Math.max(0, [...line].length - 1)
 
     canvas.page.drawText(line, {
       x: options.align === 'right' ? x + width - lineWidth : x,
@@ -362,10 +416,12 @@ const text = (
       font,
       color: options.color ?? INK,
     })
-    y -= size * 1.35
+    y -= size * leading
   }
 
-  return lines.length * size * 1.35
+  if (tracking) canvas.page.pushOperators(setCharacterSpacing(0))
+
+  return lines.length * size * leading
 }
 
 const rule = (canvas: Canvas, y = canvas.y) => {
@@ -402,31 +458,82 @@ const createCanvas = async (language: DocumentLanguage, watermark: string | null
   return canvas
 }
 
+/** A small uppercase label: the table heads and the footer's column titles. */
+const label = (
+  canvas: Canvas,
+  value: string,
+  options: { x: number; y: number; width?: number; align?: 'left' | 'right'; size?: number },
+) =>
+  text(canvas, value.toLocaleUpperCase(canvas.language), {
+    ...options,
+    size: options.size ?? 6.8,
+    bold: true,
+    color: MUTED,
+    tracking: 0.9,
+  })
+
+/**
+ * The foot of every page: address, bank details and contact in three
+ * columns under a hairline, and the page count bottom right. The bank column
+ * is left out when no IBAN is on file.
+ */
 const footer = (canvas: Canvas, seller: InvoiceDocument['seller']) => {
   const pages = canvas.pdf.getPages()
-  const { words } = canvas
-  const parts = [
-    seller.name,
-    seller.email,
-    seller.taxNumber ? `${words.taxNumber}: ${seller.taxNumber}` : '',
-    seller.vatId ? `${words.vatId}: ${seller.vatId}` : '',
-  ].filter((part) => part.trim() !== '')
+  const { words, language } = canvas
+  const columnWidth = CONTENT_WIDTH / 3
+  const columns: Array<{ title: string; lines: string[] }> = [
+    {
+      title: words.sellerAddress,
+      lines: [
+        seller.name,
+        ...seller.address.split('\n'),
+        seller.country && seller.country !== 'DE' ? countryName(seller.country, language) : '',
+        seller.taxNumber ? `${language === 'de' ? 'St.-Nr.' : words.taxNumber}: ${seller.taxNumber}` : '',
+        seller.vatId ? `${words.vatId}: ${seller.vatId}` : '',
+      ],
+    },
+    {
+      title: words.bank,
+      lines: seller.bank.iban
+        ? [
+            seller.bank.name,
+            seller.bank.holder && seller.bank.holder !== seller.name ? seller.bank.holder : '',
+            `IBAN ${seller.bank.iban.replace(/\s+/gu, '').replace(/(.{4})/gu, '$1 ').trim()}`,
+            seller.bank.bic ? `BIC ${seller.bank.bic}` : '',
+          ]
+        : [],
+    },
+    { title: words.contact, lines: [seller.website, seller.email, seller.phone] },
+  ]
 
   pages.forEach((page, index) => {
-    const line = clean(canvas, parts.join('  ·  '))
+    const previous = canvas.page
 
+    canvas.page = page
     page.drawLine({
-      start: { x: MARGIN.left, y: 52 },
-      end: { x: PAGE.width - MARGIN.right, y: 52 },
+      start: { x: MARGIN.left, y: FOOTER_TOP },
+      end: { x: PAGE.width - MARGIN.right, y: FOOTER_TOP },
       thickness: 0.6,
       color: RULE,
     })
-    page.drawText(line, { x: MARGIN.left, y: 38, size: 7.5, font: canvas.regular, color: MUTED })
 
-    const label = words.page(index + 1, pages.length)
-    const width = canvas.regular.widthOfTextAtSize(label, 7.5)
+    columns.forEach((column, position) => {
+      const lines = column.lines.filter((line) => line.trim() !== '')
 
-    page.drawText(label, { x: PAGE.width - MARGIN.right - width, y: 26, size: 7.5, font: canvas.regular, color: MUTED })
+      if (lines.length === 0) return
+
+      const x = MARGIN.left + position * columnWidth
+      let y = FOOTER_TOP - 10
+
+      y -= label(canvas, column.title, { x, y, width: columnWidth - 12, size: 6.3 }) + 2
+
+      for (const line of lines) {
+        y -= text(canvas, line, { x, y, width: columnWidth - 12, size: 7, color: MUTED, leading: 1.4 })
+      }
+    })
+
+    text(canvas, words.page(index + 1, pages.length), { y: 34, size: 7, color: MUTED, align: 'right' })
+    canvas.page = previous
   })
 }
 
@@ -451,41 +558,93 @@ const banner = (canvas: Canvas, message: string) => {
 }
 
 /**
- * The site's “YW” mark, top right: a blue rounded square with the letters in
- * white, as approved in the Invoices Design Lab (24 Sep 2026). Drawn, not an
- * image, so it stays sharp at any zoom and adds no file to the bundle.
+ * The site's mark (`BrandMark.tsx`): a Y whose lower stem is the blue caret.
+ * Drawn from the same 48-unit strokes with round caps, not embedded as an
+ * image, so it stays sharp at any zoom and prints in one pass. Two arms meet
+ * at the fork with round caps, which gives the round join the site's SVG has.
  */
-const brandMark = (canvas: Canvas, top: number) => {
-  const size = BRAND_MARK_SIZE
-  const radius = 8
-  const x = PAGE.width - MARGIN.right - size
-  // `drawSvgPath` measures y downwards from the point it is given.
-  const path = [
-    `M ${radius} 0`,
-    `H ${size - radius}`,
-    `Q ${size} 0 ${size} ${radius}`,
-    `V ${size - radius}`,
-    `Q ${size} ${size} ${size - radius} ${size}`,
-    `H ${radius}`,
-    `Q 0 ${size} 0 ${size - radius}`,
-    `V ${radius}`,
-    `Q 0 0 ${radius} 0`,
-    'Z',
-  ].join(' ')
+const brandMark = (canvas: Canvas, left: number, top: number, size: number) => {
+  const scale = size / 48
+  const point = (x: number, y: number) => ({ x: left + x * scale, y: top - y * scale })
+  const stroke = (from: [number, number], to: [number, number], color: ReturnType<typeof rgb>) =>
+    canvas.page.drawLine({
+      start: point(...from),
+      end: point(...to),
+      thickness: 5 * scale,
+      color,
+      lineCap: LineCapStyle.Round,
+    })
 
-  canvas.page.drawSvgPath(path, { x, y: top, color: BRAND_BLUE, borderWidth: 0 })
+  stroke([10, 10], [24, 27], INK)
+  stroke([38, 10], [24, 27], INK)
+  stroke([24, 27], [24, 33], INK)
+  stroke([24, 34], [24, 42], BRAND_BLUE)
+}
 
-  const letters = clean(canvas, 'YW')
-  const letterSize = 11.5
-  const width = canvas.bold.widthOfTextAtSize(letters, letterSize)
+/** The town from the last address line: `99084 Erfurt` → `Erfurt`. */
+const townOf = (address: string): string =>
+  (address.split('\n').filter((line) => line.trim() !== '').at(-1) ?? '').replace(/^\s*\d{4,5}\s+/u, '').trim()
 
-  canvas.page.drawText(letters, {
-    x: x + (size - width) / 2,
-    y: top - size / 2 - letterSize * 0.36,
-    size: letterSize,
-    font: canvas.bold,
-    color: rgb(1, 1, 1),
-  })
+/**
+ * The EPC QR code ("GiroCode") a German banking app reads to prefill a SEPA
+ * transfer: recipient, IBAN, amount and reference. Latin-1 (character set 2)
+ * because that is what the QR library writes byte for byte.
+ */
+const girocode = (input: { name: string; iban: string; bic: string; amountMinor: number; reference: string }): string => {
+  const latin1 = (value: string, max: number) =>
+    [...value.replace(/\s+/gu, ' ').trim()]
+      .map((character) => (character.codePointAt(0)! <= 0xff ? character : '?'))
+      .join('')
+      .slice(0, max)
+  const amount = `${Math.floor(input.amountMinor / 100)}.${String(input.amountMinor % 100).padStart(2, '0')}`
+
+  return [
+    'BCD',
+    '002',
+    '2',
+    'SCT',
+    latin1(input.bic, 11),
+    latin1(input.name, 70),
+    input.iban.replace(/\s+/gu, '').toUpperCase(),
+    `EUR${amount}`,
+    '',
+    '',
+    latin1(input.reference, 140),
+  ].join('\n')
+}
+
+const drawQr = (canvas: Canvas, payload: string, x: number, top: number, size: number) => {
+  const qr = qrcode(0, 'M')
+
+  qr.addData(payload, 'Byte')
+  qr.make()
+
+  const count = qr.getModuleCount()
+  const cell = size / count
+
+  // One rectangle per run of dark modules in a row keeps the page small.
+  for (let row = 0; row < count; row += 1) {
+    let column = 0
+
+    while (column < count) {
+      if (!qr.isDark(row, column)) {
+        column += 1
+        continue
+      }
+
+      const start = column
+
+      while (column < count && qr.isDark(row, column)) column += 1
+
+      canvas.page.drawRectangle({
+        x: x + start * cell,
+        y: top - (row + 1) * cell,
+        width: (column - start) * cell,
+        height: cell,
+        color: INK,
+      })
+    }
+  }
 }
 
 /* --------------------------------------------------------------- invoices */
@@ -507,6 +666,7 @@ export const renderInvoicePdf = async (
   const money = (minor: number) => formatMoney(minor, document.currency, language)
   const date = (value: string) => formatDate(value, language)
   const isCancellation = document.kind === 'cancellation'
+  const seller = document.seller
 
   canvas.pdf.setTitle(
     `${isCancellation ? words.cancellation : words.invoice} ${document.number ?? ''}`.trim(),
@@ -516,99 +676,121 @@ export const renderInvoicePdf = async (
   canvas.pdf.setCreationDate(new Date(`${document.issueDate}T12:00:00Z`))
   canvas.pdf.setModificationDate(new Date(`${document.issueDate}T12:00:00Z`))
 
-  if (options.watermark === 'test') banner(canvas, words.test)
-  if (options.watermark === 'draft') banner(canvas, words.draft)
-
-  // The mark in the corner; the seller under it, right-aligned; a one-line
-  // sender above the recipient block.
+  // Letterhead: the mark, the name, a quiet line under it, and a blue rule.
   const top = canvas.y
 
-  brandMark(canvas, top)
+  brandMark(canvas, MARGIN.left - 5, top + 3, 36)
+  text(canvas, seller.name, { x: MARGIN.left + 36, y: top - 2, size: 17, bold: true, width: 300 })
 
-  const sellerLines = [
-    document.seller.name,
-    ...document.seller.address.split('\n'),
-    document.seller.country && document.seller.country !== 'DE' ? countryName(document.seller.country, language) : '',
-    document.seller.email,
-    document.seller.phone,
-    document.seller.website,
-  ].filter((line) => line.trim() !== '')
+  const town = townOf(seller.address)
 
-  let sellerY = top - BRAND_MARK_SIZE - 8
+  text(canvas, [words.tagline, town].filter(Boolean).join(' · '), {
+    x: MARGIN.left + 36.5,
+    y: top - 24,
+    size: 7,
+    color: BRAND_BLUE,
+    tracking: 1.1,
+    width: 300,
+  })
+  canvas.page.drawLine({
+    start: { x: MARGIN.left, y: top - 42 },
+    end: { x: PAGE.width - MARGIN.right, y: top - 42 },
+    thickness: 0.9,
+    color: BRAND_BLUE,
+  })
 
-  for (const [index, line] of sellerLines.entries()) {
-    sellerY -= text(canvas, line, {
-      x: PAGE.width - MARGIN.right - 200,
-      width: 200,
-      align: 'right',
-      size: index === 0 ? 10.5 : 8.5,
-      bold: index === 0,
-      color: index === 0 ? INK : MUTED,
-      y: sellerY,
-    })
-  }
+  // Sender line and recipient on the left; the key facts on the right.
+  const blockTop = top - 88
+  const leftWidth = 250
+  const sender = [seller.name, ...seller.address.split('\n')].filter((line) => line.trim() !== '').join(' · ')
+
+  text(canvas, sender, { y: blockTop, size: 6.5, color: MUTED, width: leftWidth })
+  canvas.page.drawLine({
+    start: { x: MARGIN.left, y: blockTop - 12 },
+    end: { x: MARGIN.left + leftWidth, y: blockTop - 12 },
+    thickness: 0.5,
+    color: RULE,
+  })
 
   const recipient = document.recipient
   const recipientLines = [
     recipient.company,
     recipient.name,
     ...recipient.address.split('\n'),
-    recipient.country && recipient.country !== document.seller.country
-      ? countryName(recipient.country, language)
-      : '',
+    recipient.country && recipient.country !== seller.country ? countryName(recipient.country, language) : '',
   ].filter((line) => line.trim() !== '')
+  let recipientY = blockTop - 20
 
-  let recipientY = top - 46
-
-  text(canvas, [document.seller.name, document.seller.address.split('\n').join(', ')].filter(Boolean).join(' · '), {
-    size: 7,
-    color: MUTED,
-    width: 280,
-    y: top - 30,
-  })
-
-  for (const line of recipientLines) {
-    recipientY -= text(canvas, line, { size: 10, width: 280, y: recipientY })
+  for (const [index, line] of recipientLines.entries()) {
+    recipientY -= text(canvas, line, {
+      y: recipientY,
+      size: 10,
+      bold: index === 0 && recipient.company.trim() !== '',
+      width: leftWidth,
+      leading: 1.5,
+    })
   }
 
   if (recipient.vatId) {
-    recipientY -= text(canvas, `${words.customerVat}: ${recipient.vatId}`, { size: 8.5, color: MUTED, width: 280, y: recipientY })
+    recipientY -= text(canvas, `${words.customerVat}: ${recipient.vatId}`, { y: recipientY, size: 8, color: MUTED, width: leftWidth })
   }
 
-  canvas.y = Math.min(sellerY, recipientY) - 26
-
-  // Title and facts.
-  canvas.y -= text(canvas, isCancellation ? words.cancellation : words.invoice, { size: 20, bold: true })
-  canvas.y -= 4
-
-  const facts: Array<[string, string]> = [
-    [isCancellation ? words.cancellationNumber : words.number, document.number ?? '—'],
-    [words.date, date(document.issueDate)],
+  const facts: Array<[string, string, boolean]> = [
+    [isCancellation ? words.cancellationNumber : words.shortNumber, document.number ?? '—', false],
+    [words.shortDate, date(document.issueDate), false],
   ]
 
   if (document.period) {
-    facts.push([words.billingPeriod, `${date(document.period.start)} – ${date(document.period.end)}`])
+    facts.push([words.billingPeriod, `${date(document.period.start)} – ${date(document.period.end)}`, false])
   } else if (document.serviceDateFrom && document.serviceDateTo && document.serviceDateTo !== document.serviceDateFrom) {
-    facts.push([words.servicePeriod, `${date(document.serviceDateFrom)} – ${date(document.serviceDateTo)}`])
+    facts.push([words.servicePeriod, `${date(document.serviceDateFrom)} – ${date(document.serviceDateTo)}`, false])
   } else if (document.serviceDateFrom) {
-    facts.push([words.serviceDate, date(document.serviceDateFrom)])
+    facts.push([words.serviceDate, date(document.serviceDateFrom), false])
   }
 
-  if (!isCancellation && document.dueDate) facts.push([words.due, date(document.dueDate)])
+  if (!isCancellation && document.dueDate) facts.push([words.shortDue, date(document.dueDate), true])
 
-  for (const [label, value] of facts) {
-    text(canvas, label, { size: 9, color: MUTED, width: 140 })
-    canvas.y -= text(canvas, value, { size: 9, x: MARGIN.left + 145, width: 250 })
+  const factsX = MARGIN.left + 300
+  const factsWidth = CONTENT_WIDTH - 300
+  let factsY = blockTop - 20
+
+  for (const [name, value, due] of facts) {
+    text(canvas, name, { x: factsX, y: factsY, size: 8, color: MUTED, width: 90 })
+    factsY -= text(canvas, value, {
+      x: factsX + 90,
+      y: factsY,
+      width: factsWidth - 90,
+      size: 8.5,
+      bold: true,
+      color: due ? BRAND_BLUE : INK,
+      align: 'right',
+      leading: 1.6,
+    })
   }
 
-  canvas.y -= 6
+  canvas.y = Math.min(recipientY, factsY) - 28
 
-  if (document.title) {
-    canvas.y -= text(canvas, document.title, { size: 11, bold: true })
-    canvas.y -= 2
+  // Title: the word in ink, the number in blue.
+  const heading = isCancellation ? words.cancellation : words.invoice
+  const headingSize = 25
+
+  text(canvas, heading, { size: headingSize, bold: true })
+
+  if (document.number) {
+    text(canvas, document.number, {
+      x: MARGIN.left + canvas.bold.widthOfTextAtSize(clean(canvas, `${heading} `), headingSize),
+      size: headingSize,
+      bold: true,
+      color: BRAND_BLUE,
+    })
   }
 
-  const baseline = document.language
+  canvas.y -= headingSize * 1.35 + 2
+
+  if (options.watermark) {
+    canvas.y -= text(canvas, options.watermark === 'test' ? words.test : words.draft, { size: 8.5, bold: true, color: MUTED })
+  }
+
   const notices: string[] = []
 
   if (isCancellation && document.cancels) {
@@ -618,35 +800,51 @@ export const renderInvoicePdf = async (
   }
 
   if (document.replaces) notices.push(words.replaces(document.replaces.number))
-  if (language !== baseline && document.number) notices.push(words.copyOf(document.number))
+  if (language !== document.language && document.number) notices.push(words.copyOf(document.number))
 
   for (const notice of notices) canvas.y -= text(canvas, notice, { size: 9 })
 
-  canvas.y -= 10
+  if (!isCancellation) canvas.y -= text(canvas, words.intro, { size: 9, color: MUTED })
+
+  canvas.y -= 20
+
+  if (document.title) {
+    canvas.y -= text(canvas, document.title, { size: 11, bold: true })
+    canvas.y -= 8
+  }
 
   // The lines table.
   const showVat = document.taxMode === 'standard' && !document.reverseCharge
+  const amountWidth = 78
+  const unitWidth = 74
+  const vatWidth = showVat ? 40 : 0
+  const qtyWidth = 46
   const columns = {
-    item: { x: MARGIN.left, width: 26 },
-    description: { x: MARGIN.left + 28, width: showVat ? 214 : 250 },
-    qty: { x: MARGIN.left + (showVat ? 246 : 282), width: 60 },
-    unit: { x: MARGIN.left + (showVat ? 310 : 346), width: 70 },
-    vat: { x: MARGIN.left + 384, width: 40 },
-    amount: { x: MARGIN.left + 425, width: CONTENT_WIDTH - 425 },
+    item: { x: MARGIN.left, width: 22 },
+    description: { x: MARGIN.left + 24, width: CONTENT_WIDTH - 24 - qtyWidth - unitWidth - vatWidth - amountWidth - 16 },
+    qty: { x: PAGE.width - MARGIN.right - amountWidth - vatWidth - unitWidth - qtyWidth, width: qtyWidth },
+    unit: { x: PAGE.width - MARGIN.right - amountWidth - vatWidth - unitWidth, width: unitWidth },
+    vat: { x: PAGE.width - MARGIN.right - amountWidth - vatWidth, width: vatWidth },
+    amount: { x: PAGE.width - MARGIN.right - amountWidth, width: amountWidth },
   }
 
   const header = (target: Canvas) => {
     const y = target.y
 
-    text(target, words.item, { ...columns.item, size: 8.5, bold: true, color: MUTED, y })
-    text(target, words.description, { ...columns.description, size: 8.5, bold: true, color: MUTED, y })
-    text(target, words.qty, { ...columns.qty, size: 8.5, bold: true, color: MUTED, align: 'right', y })
-    text(target, words.unitPrice, { ...columns.unit, size: 8.5, bold: true, color: MUTED, align: 'right', y })
-    if (showVat) text(target, words.vat, { ...columns.vat, size: 8.5, bold: true, color: MUTED, align: 'right', y })
-    text(target, words.amount, { ...columns.amount, size: 8.5, bold: true, color: MUTED, align: 'right', y })
+    label(target, language === 'de' ? 'Pos' : 'No', { ...columns.item, y })
+    label(target, words.description, { ...columns.description, y })
+    label(target, words.qty, { ...columns.qty, y, align: 'right' })
+    label(target, words.unitPrice, { ...columns.unit, y, align: 'right' })
+    if (showVat) label(target, words.vat, { ...columns.vat, y, align: 'right' })
+    label(target, words.amount, { ...columns.amount, y, align: 'right' })
     target.y -= 14
-    rule(target)
-    target.y -= 6
+    target.page.drawLine({
+      start: { x: MARGIN.left, y: target.y },
+      end: { x: PAGE.width - MARGIN.right, y: target.y },
+      thickness: 1,
+      color: INK,
+    })
+    target.y -= 12
   }
 
   header(canvas)
@@ -654,66 +852,85 @@ export const renderInvoicePdf = async (
 
   for (const line of document.lines) {
     const descriptionText = [line.description, line.unit ? `(${line.unit})` : ''].filter(Boolean).join(' ')
-    const height = wrap(canvas.regular, clean(canvas, descriptionText), 9, columns.description.width).length * 9 * 1.35
+    const height = wrap(canvas.regular, clean(canvas, descriptionText), 10, columns.description.width).length * 10 * 1.35
 
-    ensureSpace(canvas, height + 6)
+    ensureSpace(canvas, height + 20)
 
     const y = canvas.y
 
-    text(canvas, String(line.position), { ...columns.item, size: 9, y })
-    text(canvas, descriptionText, { ...columns.description, size: 9, y })
-    text(canvas, formatQuantity(line.quantityMilli, language), { ...columns.qty, size: 9, align: 'right', y })
-    text(canvas, money(line.unitPriceMinor), { ...columns.unit, size: 9, align: 'right', y })
-    if (showVat) text(canvas, formatRate(line.taxRateBp, language), { ...columns.vat, size: 9, align: 'right', y })
-    text(canvas, money(line.netMinor), { ...columns.amount, size: 9, align: 'right', y })
-    canvas.y -= height + 5
+    text(canvas, String(line.position), { ...columns.item, size: 8.5, color: MUTED, y: y - 1 })
+    text(canvas, descriptionText, { ...columns.description, size: 10, y })
+    text(canvas, formatQuantity(line.quantityMilli, language), { ...columns.qty, size: 10, align: 'right', y })
+    text(canvas, money(line.unitPriceMinor), { ...columns.unit, size: 10, align: 'right', y })
+    if (showVat) text(canvas, formatRate(line.taxRateBp, language), { ...columns.vat, size: 10, align: 'right', y })
+    text(canvas, money(line.netMinor), { ...columns.amount, size: 10, bold: true, align: 'right', y })
+    canvas.y -= height + 8
+    rule(canvas)
+    canvas.y -= 12
   }
 
   canvas.onNewPage = undefined
-  rule(canvas)
-  canvas.y -= 8
 
-  // Totals.
-  const totals: Array<[string, string, boolean]> = []
+  // Totals, right-aligned under the amounts.
+  const totals: Array<[string, string]> = []
 
   if (document.totals.discountMinor !== 0) {
-    totals.push([words.subtotal, money(document.totals.subtotalMinor), false])
+    totals.push([words.subtotal, money(document.totals.subtotalMinor)])
 
-    const label =
+    const discountLabel =
       document.discount.type === 'percent'
         ? `${words.discount} ${formatRate(document.discount.value, language)}`
         : words.discount
 
-    totals.push([label, money(-document.totals.discountMinor), false])
+    totals.push([discountLabel, money(-document.totals.discountMinor)])
   }
 
   if (showVat) {
-    totals.push([words.net, money(document.totals.netMinor), false])
+    totals.push([words.net, money(document.totals.netMinor)])
 
     for (const group of document.totals.taxGroups) {
-      totals.push([words.vatAt(formatRate(group.rateBp, language)), money(group.taxMinor), false])
+      totals.push([words.vatAt(formatRate(group.rateBp, language)), money(group.taxMinor)])
     }
   }
 
-  totals.push([words.total, money(document.totals.totalMinor), true])
-  ensureSpace(canvas, totals.length * 15 + 10)
+  const totalsX = MARGIN.left + CONTENT_WIDTH * 0.52
+  const totalsWidth = PAGE.width - MARGIN.right - totalsX
 
-  for (const [label, value, strong] of totals) {
+  ensureSpace(canvas, totals.length * 15 + 40)
+
+  for (const [name, value] of totals) {
     const y = canvas.y
 
-    text(canvas, label, { x: MARGIN.left + 260, width: 150, size: strong ? 11 : 9, bold: strong, y })
-    canvas.y -= text(canvas, value, {
-      ...columns.amount,
-      x: MARGIN.left + 380,
-      width: CONTENT_WIDTH - 380,
-      size: strong ? 11 : 9,
-      bold: strong,
-      align: 'right',
+    text(canvas, name, { x: totalsX, y, size: 9.5, color: MUTED, width: totalsWidth - 90 })
+    canvas.y -= text(canvas, value, { x: totalsX, y, size: 9.5, width: totalsWidth, align: 'right', leading: 1.55 })
+  }
+
+  if (totals.length > 0) canvas.y -= 4
+
+  canvas.page.drawLine({
+    start: { x: totalsX, y: canvas.y },
+    end: { x: PAGE.width - MARGIN.right, y: canvas.y },
+    thickness: 1,
+    color: INK,
+  })
+  canvas.y -= 8
+
+  {
+    const y = canvas.y
+
+    text(canvas, words.total, { x: totalsX, y, size: 13, bold: true, width: totalsWidth - 100 })
+    canvas.y -= text(canvas, money(document.totals.totalMinor), {
+      x: totalsX,
       y,
+      size: 13,
+      bold: true,
+      color: BRAND_BLUE,
+      width: totalsWidth,
+      align: 'right',
     })
   }
 
-  canvas.y -= 10
+  canvas.y -= 22
 
   // Tax note.
   const taxNote =
@@ -721,53 +938,70 @@ export const renderInvoicePdf = async (
 
   if (taxNote) {
     ensureSpace(canvas, 20)
-    canvas.y -= text(canvas, taxNote, { size: 9 })
-    canvas.y -= 6
+    canvas.y -= text(canvas, taxNote, { size: 8.5, color: MUTED })
+    canvas.y -= 12
   }
 
   // Installments.
   if (!isCancellation && document.installments.length > 0) {
-    ensureSpace(canvas, 30 + document.installments.length * 13)
-    canvas.y -= text(canvas, words.schedule, { size: 10, bold: true })
+    ensureSpace(canvas, 30 + document.installments.length * 14)
+    label(canvas, words.schedule, { x: MARGIN.left, y: canvas.y })
+    canvas.y -= 14
 
     for (const part of document.installments) {
       const y = canvas.y
 
       text(canvas, `${part.position}. ${date(part.dueDate)}${part.label ? ` — ${part.label}` : ''}`, { size: 9, width: 330, y })
-      canvas.y -= text(canvas, money(part.amountMinor), { x: MARGIN.left + 380, width: CONTENT_WIDTH - 380, size: 9, align: 'right', y })
+      canvas.y -= text(canvas, money(part.amountMinor), { x: totalsX, width: totalsWidth, size: 9, align: 'right', y, leading: 1.5 })
     }
 
-    canvas.y -= 6
+    canvas.y -= 10
   }
 
-  // How to pay.
+  // How to pay, with a GiroCode beside it when a bank transfer in euros is the way.
   if (!isCancellation) {
+    const bank = document.payment.allowBank && seller.bank.iban.trim() !== ''
+    const qr =
+      bank && document.currency === 'EUR' && document.installments.length === 0 && document.totals.totalMinor > 0
+        ? girocode({
+            name: seller.bank.holder || seller.name,
+            iban: seller.bank.iban,
+            bic: seller.bank.bic,
+            amountMinor: document.totals.totalMinor,
+            reference: document.number ?? '',
+          })
+        : null
+    const qrSize = 76
+    const textWidth = qr ? CONTENT_WIDTH - qrSize - 28 : CONTENT_WIDTH
+    const sentences: string[] = []
+
     if (document.installments.length === 0 && document.dueDate) {
-      ensureSpace(canvas, 16)
-      canvas.y -= text(canvas, document.dueDate === document.issueDate ? words.payNow : words.payBy(date(document.dueDate)), { size: 9 })
+      if (document.dueDate === document.issueDate) sentences.push(words.payNow)
+      if (bank && document.number) {
+        sentences.push(words.payToAccount(date(document.dueDate), document.number))
+      } else if (document.dueDate !== document.issueDate) {
+        sentences.push(words.payBy(date(document.dueDate)))
+      }
+    } else if (bank && document.number) {
+      sentences.push(`${words.reference}: ${document.number}`)
     }
 
-    if (document.payment.allowBank && document.seller.bank.iban) {
-      ensureSpace(canvas, 70)
-      canvas.y -= 6
-      canvas.y -= text(canvas, words.bank, { size: 10, bold: true })
+    if (document.payment.allowStripe) sentences.push(words.card)
 
-      const bankLines = [
-        document.seller.bank.holder ? `${words.holder}: ${document.seller.bank.holder}` : '',
-        `IBAN: ${document.seller.bank.iban.replace(/(.{4})/gu, '$1 ').trim()}`,
-        document.seller.bank.bic ? `BIC: ${document.seller.bank.bic}` : '',
-        document.seller.bank.name,
-        document.number ? `${words.reference}: ${document.number}` : '',
-      ].filter((line) => line.trim() !== '')
+    ensureSpace(canvas, qr ? qrSize + 20 : 16 * sentences.length)
 
-      for (const line of bankLines) canvas.y -= text(canvas, line, { size: 9 })
+    const blockTop = canvas.y
+    let y = blockTop
+
+    for (const sentence of sentences) y -= text(canvas, sentence, { y, size: 9, color: MUTED, width: textWidth, leading: 1.45 }) + 4
+
+    if (qr) {
+      drawQr(canvas, qr, PAGE.width - MARGIN.right - qrSize, blockTop, qrSize)
+      text(canvas, words.scan, { y: blockTop - qrSize - 5, size: 6.5, color: MUTED, align: 'right' })
+      y = Math.min(y, blockTop - qrSize - 16)
     }
 
-    if (document.payment.allowStripe) {
-      ensureSpace(canvas, 16)
-      canvas.y -= 4
-      canvas.y -= text(canvas, words.card, { size: 9 })
-    }
+    canvas.y = y
   }
 
   if (document.notes) {
@@ -776,7 +1010,7 @@ export const renderInvoicePdf = async (
     canvas.y -= text(canvas, document.notes, { size: 9, color: MUTED })
   }
 
-  footer(canvas, document.seller)
+  footer(canvas, seller)
 
   return canvas.pdf.save()
 }

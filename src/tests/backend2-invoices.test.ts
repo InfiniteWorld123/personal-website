@@ -782,19 +782,20 @@ describe('documents in Media', () => {
     expect(arabic.body.code).toBe('LANGUAGE_NOT_SUPPORTED')
   })
 
-  it('prints the site’s “YW” mark top right on invoices, previews and cancellations', async () => {
-    // The mark is the only thing on the page filled in the site's blue (#355cff).
-    const blue = /0\.2078\d* 0\.3607\d* 1 rg/u
-    const firstPage = async (bytes: Uint8Array): Promise<string> => {
-      const page = (await PDFDocument.load(bytes)).getPages()[0]!
-      const contents = page.node.Contents()
-      const streams = contents instanceof PDFArray ? contents.asArray().map((ref) => page.doc.context.lookup(ref)) : [contents]
+  const firstPage = async (bytes: Uint8Array): Promise<string> => {
+    const page = (await PDFDocument.load(bytes)).getPages()[0]!
+    const contents = page.node.Contents()
+    const streams = contents instanceof PDFArray ? contents.asArray().map((ref) => page.doc.context.lookup(ref)) : [contents]
 
-      return streams
-        .filter((stream): stream is PDFRawStream => stream instanceof PDFRawStream)
-        .map((stream) => new TextDecoder().decode(decodePDFRawStream(stream).decode()))
-        .join('\n')
-    }
+    return streams
+      .filter((stream): stream is PDFRawStream => stream instanceof PDFRawStream)
+      .map((stream) => new TextDecoder().decode(decodePDFRawStream(stream).decode()))
+      .join('\n')
+  }
+
+  it('prints the site’s Y mark, with its blue caret, on invoices, previews and cancellations', async () => {
+    // The caret is the only stroke on the page drawn in the site's blue (#355cff).
+    const blue = /0\.2078\d* 0\.3607\d* 1 RG/u
 
     const draft = await createDraft()
     const preview = await call('GET', `/owner/invoices/${draft.id}/preview`)
@@ -810,6 +811,44 @@ describe('documents in Media', () => {
     const storno = await call('GET', `/owner/invoices/${cancellation.id}/pdf`)
 
     expect(await firstPage(storno.bytes)).toMatch(blue)
+  })
+
+  it('draws the TEST watermark only when asked, and a GiroCode only for euro bank transfers', async () => {
+    const { renderInvoicePdf } = await import('#/backend2/modules/invoices/invoice.pdf')
+    const { readSnapshot } = await import('#/backend2/modules/invoices/invoice.document')
+
+    await setSeller()
+
+    const invoice = await issued()
+    const { rows } = await database.db.query('SELECT snapshot FROM v2_invoices WHERE id = $1', [invoice.id])
+    const snapshot = readSnapshot(rows[0].snapshot)
+    const document = {
+      ...snapshot,
+      currency: 'EUR' as const,
+      seller: { ...snapshot.seller, bank: { ...snapshot.seller.bank, iban: 'DE89370400440532013000', bic: 'COBADEFFXXX' } },
+      payment: { ...snapshot.payment, allowBank: true },
+    }
+    // The watermark's pale grey.
+    const grey = /0\.91 0\.92 0\.95 rg/u
+
+    const test = await firstPage(await renderInvoicePdf(document, { language: 'de', watermark: 'test' }))
+    const real = await firstPage(await renderInvoicePdf(document, { language: 'de', watermark: null }))
+
+    expect(test).toMatch(grey)
+    expect(real).not.toMatch(grey)
+
+    const dollars = await firstPage(
+      await renderInvoicePdf({ ...document, currency: 'USD' }, { language: 'de', watermark: null }),
+    )
+    const noBank = await firstPage(
+      await renderInvoicePdf({ ...document, payment: { ...document.payment, allowBank: false } }, { language: 'de', watermark: null }),
+    )
+
+    // The code is drawn as filled rectangles, one per run of dark modules.
+    const rectangles = (content: string) => content.split('\nf\n').length
+
+    expect(rectangles(real)).toBeGreaterThan(rectangles(dollars) + 50)
+    expect(rectangles(noBank)).toBe(rectangles(dollars))
   })
 
   it('renders a long invoice over several pages', async () => {
