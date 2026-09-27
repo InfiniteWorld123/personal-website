@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, notFound, useRouter, useRouterState } from '@tanstack/react-router'
 import { PublicShell, useInsidePublicShell } from '#/frontend/components/layout/public/PublicShell'
 import { fetchPublishedContent } from '#/frontend/features/content/server/published-content'
-import { useContentOverrides } from '#/frontend/features/content/use-published-content'
+import { applyPublishedContent, useContentOverrides } from '#/frontend/features/content/use-published-content'
 import {
   CloudflareBeacon,
   loadBeaconToken,
@@ -36,8 +36,14 @@ export const Route = createFileRoute('/$lang')({
    * The wording is the page's own, already written in all three languages.
    * `noindex` matters more than the title: without it a mistyped URL that
    * still returns markup is a candidate for the index.
+   *
+   * The router runs this head before every child's, one after the other, and
+   * before React renders — so this is where the saved copy is put in place
+   * for the pages' titles and descriptions. See `applyPublishedContent`.
    */
-  head: ({ params }) => {
+  head: ({ params, loaderData }) => {
+    applyPublishedContent(loaderData?.published)
+
     const language = isLanguage(params.lang) ? params.lang : defaultLanguage
 
     return {
