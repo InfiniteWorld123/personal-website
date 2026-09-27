@@ -77,6 +77,11 @@ const perLanguage = (key: string, values: Record<'de' | 'en' | 'ar', ContentValu
   slots: { de: slot(values.de), en: slot(values.en), ar: slot(values.ar) },
 })
 
+const LINKS = [
+  { platform: 'github' as const, url: 'https://github.com/InfiniteWorld123', label: '', hidden: false },
+  { platform: 'linkedin' as const, url: 'https://linkedin.com/in/yaman-warda', label: '', hidden: false },
+]
+
 const snapshot = (): ContentSnapshot => ({
   pages: ['home', 'legal', 'site'],
   reviewCounts: { de: 0, en: 1, ar: 0 },
@@ -99,8 +104,22 @@ const snapshot = (): ContentSnapshot => ({
       ...definition('site.email', { page: 'site', section: 'facts', scope: 'fact', format: 'email', shared: true, guidance: 0 }),
       slots: { shared: slot('info@yamanwarda.de') },
     },
+    {
+      ...definition('site.links', { page: 'site', section: 'facts', kind: 'links', scope: 'fact', format: 'url', shared: true, optional: true, guidance: 0, maxEntries: 12 }),
+      slots: { shared: slot(LINKS) },
+    },
   ],
 })
+
+/** The shared profile links saved as `value`: what the server answers. */
+const savedLinks = (value: ContentValue) => {
+  const field = snapshot().fields.find((item) => item.key === 'site.links')!
+
+  return {
+    changed: true,
+    field: { ...field, slots: { shared: { ...field.slots.shared!, value, isOriginal: false, revision: 1, updatedAt: new Date().toISOString() } } },
+  }
+}
 
 /** What the server answers after a save: the field, with the new wording live. */
 const savedField = (key: string, language: 'de' | 'en' | 'ar', value: ContentValue) => {
@@ -303,6 +322,99 @@ describe('saving a field', () => {
     await waitFor(() =>
       expect(api.saveContentField).toHaveBeenCalledWith(expect.objectContaining({ key: 'home.hero.typed[]', value: ['WEB-', 'SHOP-', 'APP-'] })),
     )
+  })
+})
+
+/* ========================================================= profile links */
+
+describe('the profile links', () => {
+  const open = async () => {
+    search = { page: 'site' }
+    api.saveContentField.mockImplementation(async (input: { value: ContentValue }) => savedLinks(input.value))
+    renderPage()
+
+    await screen.findByRole('textbox', { name: 'Address of link 1' })
+    return fieldBox('site.links')
+  }
+
+  it('shows each link with its platform and address, in order', async () => {
+    const box = await open()
+
+    expect(within(box).getByText('Profile links')).toBeTruthy()
+    expect((within(box).getByRole('combobox', { name: 'Platform of link 1' }) as HTMLSelectElement).value).toBe('github')
+    expect((within(box).getByRole('textbox', { name: 'Address of link 2' }) as HTMLInputElement).value).toBe('https://linkedin.com/in/yaman-warda')
+    expect(within(box).getByRole('button', { name: 'Move link 1 up' })).toHaveProperty('disabled', true)
+  })
+
+  it('never sends a new row without an address, and saves it once it has one', async () => {
+    const box = await open()
+
+    fireEvent.click(within(box).getByRole('button', { name: /Add link/ }))
+    // The first platform not in the list yet.
+    expect((within(box).getByRole('combobox', { name: 'Platform of link 3' }) as HTMLSelectElement).value).toBe('instagram')
+
+    const address = within(box).getByRole('textbox', { name: 'Address of link 3' })
+    await leave(address)
+    expect(api.saveContentField).not.toHaveBeenCalled()
+    // The empty row stays on screen, outside what is saved.
+    expect(within(box).getByRole('textbox', { name: 'Address of link 3' })).toBe(address)
+
+    fireEvent.change(address, { target: { value: ' https://instagram.com/yaman ' } })
+    await leave(address)
+
+    await waitFor(() =>
+      expect(api.saveContentField).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: 'site.links',
+          language: 'shared',
+          value: [...LINKS, { platform: 'instagram', url: 'https://instagram.com/yaman', label: '', hidden: false }],
+        }),
+      ),
+    )
+  })
+
+  it('refuses an address that is not the platform’s, beside that row, and sends nothing', async () => {
+    const box = await open()
+
+    const address = within(box).getByRole('textbox', { name: 'Address of link 1' })
+    fireEvent.change(address, { target: { value: 'https://linkedin.com/in/someone-else' } })
+    await leave(address)
+
+    expect(await within(box).findByText('A GitHub link starts with https://github.com/')).toBeTruthy()
+    expect(address.getAttribute('aria-invalid')).toBe('true')
+    expect(api.saveContentField).not.toHaveBeenCalled()
+
+    // Rechecked while typing once a save was attempted.
+    fireEvent.change(address, { target: { value: 'https://github.com/someone' } })
+    expect(within(box).queryByText('A GitHub link starts with https://github.com/')).toBeNull()
+  })
+
+  it('hides, moves and removes a link at once', async () => {
+    const box = await open()
+
+    fireEvent.click(within(box).getByRole('button', { name: 'Hide link 2 on the website' }))
+    await waitFor(() =>
+      expect(api.saveContentField).toHaveBeenLastCalledWith(expect.objectContaining({ value: [LINKS[0], { ...LINKS[1], hidden: true }] })),
+    )
+    expect(await within(box).findByText('Hidden')).toBeTruthy()
+
+    fireEvent.click(within(box).getByRole('button', { name: 'Move link 2 up' }))
+    await waitFor(() =>
+      expect(api.saveContentField).toHaveBeenLastCalledWith(expect.objectContaining({ value: [{ ...LINKS[1], hidden: true }, LINKS[0]] })),
+    )
+
+    fireEvent.click(within(box).getByRole('button', { name: 'Remove link 1' }))
+    await waitFor(() => expect(api.saveContentField).toHaveBeenLastCalledWith(expect.objectContaining({ value: [LINKS[0]] })))
+  })
+
+  it('keeps the links when saving fails, and says the website did not change', async () => {
+    const box = await open()
+    api.saveContentField.mockRejectedValueOnce(new ApiRequestError({ message: 'Network down', code: 'NETWORK', status: 0 }))
+
+    fireEvent.click(within(box).getByRole('button', { name: 'Remove link 2' }))
+
+    expect(await within(box).findByText(/Not saved\./)).toBeTruthy()
+    expect(within(box).queryByRole('textbox', { name: 'Address of link 2' })).toBeNull()
   })
 })
 

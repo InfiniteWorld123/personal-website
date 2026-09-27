@@ -1,4 +1,13 @@
-import type { ContentFieldDefinition, ContentLanguage, ContentSlot, ContentValue } from '#/backend2/contracts/content.contract'
+import {
+  type ContentFieldDefinition,
+  type ContentLanguage,
+  type ContentSlot,
+  type ContentLink,
+  type ContentValue,
+  contentAsText,
+  isTextList,
+  linkName,
+} from '#/backend2/contracts/content.contract'
 
 /**
  * How the Content editor names things, in the owner's words rather than the
@@ -64,13 +73,15 @@ const WORDS: Record<string, string> = {
   email: 'Email', builtWith: 'Built-with line', faqLink: 'FAQ link', emailLabel: 'Email label',
   locationLabel: 'Location label', languagesLabel: 'Languages label', languages: 'Languages',
   packages: 'Website packages', others: 'Other services', note: 'Small note', details: 'Details link',
-  all: 'All-link', phone: 'Phone number', city: 'City', github: 'GitHub link', linkedin: 'LinkedIn link',
+  all: 'All-link', phone: 'Phone number', city: 'City',
 }
 
 const word = (part: string) =>
   WORDS[part] ?? part.replace(/([A-Z])/g, ' $1').replace(/^./, (first) => first.toUpperCase())
 
 export const fieldLabel = (field: Pick<ContentFieldDefinition, 'key' | 'section'>): string => {
+  if (field.key === 'site.links') return 'Profile links'
+
   const parts = field.key.replace(/\[\]$/u, '').split('.').slice(1)
   const out: string[] = []
 
@@ -92,8 +103,17 @@ export const sectionLabel = (section: string) => (section === 'header' ? 'Page t
 export const slotOf = (field: ContentFieldDefinition, language: ContentLanguage): ContentSlot =>
   field.shared ? 'shared' : language
 
-export const asText = (value: ContentValue): string =>
-  Array.isArray(value) ? value.join(' · ') : value === '' ? '(empty)' : value
+/** A profile link as the editor writes it in history and search: name and address. */
+const linkText = (link: ContentLink): string =>
+  `${link.hidden ? '(hidden) ' : ''}${linkName(link)} ${link.url.replace(/^https:\/\/(www\.)?/u, '')}`
+
+export const asText = (value: ContentValue): string => {
+  if (value === '') return '(empty)'
+  if (Array.isArray(value) && value.length === 0) return '(none)'
+  if (typeof value !== 'string' && !isTextList(value)) return value.map(linkText).join(' · ')
+
+  return contentAsText(value)
+}
 
 export const directionOf = (slot: ContentSlot) => (slot === 'ar' ? 'rtl' : 'ltr')
 

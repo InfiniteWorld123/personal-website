@@ -115,7 +115,10 @@ const siteNodes = (language: Language) => {
       address: postalAddress,
       knowsLanguage: spokenLanguages,
       knowsAbout: site.knowsAbout,
-      sameAs: [getSite().github, getSite().linkedin],
+      // Profiles only: a WhatsApp or Telegram chat link is a way to write, not a page about the person.
+      sameAs: getSite()
+        .links.filter((link) => link.platform !== 'whatsapp' && link.platform !== 'telegram')
+        .map((link) => link.url),
       worksFor: { '@id': BUSINESS },
     },
     {

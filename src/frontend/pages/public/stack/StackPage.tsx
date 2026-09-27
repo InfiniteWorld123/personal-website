@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, Github, Linkedin, Mail } from 'lucide-react'
+import { ArrowRight, Mail } from 'lucide-react'
+import { SocialIcon } from '#/frontend/components/SocialIcon'
+import { linkName } from '#/backend2/contracts/content.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Eyebrow, Section } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
@@ -86,18 +88,14 @@ export function StackPage() {
                 {stack.links.email}
               </a>
             </Button>
-            <Button asChild variant="outline" className="rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
-              <a href={getSite().github} target="_blank" rel="me noreferrer">
-                <Github className="size-4" />
-                GitHub
-              </a>
-            </Button>
-            <Button asChild variant="outline" className="rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
-              <a href={getSite().linkedin} target="_blank" rel="me noreferrer">
-                <Linkedin className="size-4" />
-                LinkedIn
-              </a>
-            </Button>
+            {getSite().links.map((link) => (
+              <Button key={link.url} asChild variant="outline" className="rounded-full border-border/60 bg-card px-5 text-foreground hover:border-primary/30 hover:bg-primary/5">
+                <a href={link.url} target="_blank" rel="me noreferrer">
+                  <SocialIcon platform={link.platform} className="size-4" />
+                  {linkName(link)}
+                </a>
+              </Button>
+            ))}
           </div>
         </Container>
       </Section>

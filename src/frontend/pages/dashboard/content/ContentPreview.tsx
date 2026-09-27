@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ContentFieldState, ContentLanguage, ContentValue } from '#/backend2/contracts/content.contract'
-import { sameContentValue } from '#/backend2/contracts/content.contract'
+import { contentAsText, isTextList, linkName, sameContentValue } from '#/backend2/contracts/content.contract'
+import { SocialIcon } from '#/frontend/components/SocialIcon'
 import { type LocalEntry, slotKey, useAllLocal } from '#/frontend/features/content-v2/content-store'
 import { PAGE_PATH, slotOf } from '#/frontend/features/content-v2/content-words'
 import { cn } from '#/frontend/lib/utils'
@@ -47,15 +48,33 @@ export function ContentPreview({
   const T = ({ k, className, as: Tag = 'span' }: { k: string; className?: string; as?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'div' }) => {
     const got = read(k)
     if (!got) return null
-    const text = Array.isArray(got.value) ? got.value.join(' ') : got.value
+    const text = contentAsText(got.value, ' ')
     if (text === '') return null
 
     return <Tag className={className}>{got.unsaved ? <mark className="cv-unsaved" title="Not saved yet">{text}</mark> : text}</Tag>
   }
 
+  /** The profile links as the footer shows them: shown ones only, icon and name. */
+  const Links = () => {
+    const got = read('site.links')
+    if (!got || !Array.isArray(got.value) || isTextList(got.value)) return null
+    const shown = got.value.filter((link) => !link.hidden && link.url.trim() !== '')
+
+    return (
+      <>
+        {shown.map((link, index) => (
+          <span key={index} className="cvs-link">
+            <SocialIcon platform={link.platform} className="size-3.5" />
+            {got.unsaved ? <mark className="cv-unsaved" title="Not saved yet">{linkName(link)}</mark> : linkName(link)}
+          </span>
+        ))}
+      </>
+    )
+  }
+
   const L = ({ k, minus = false }: { k: string; minus?: boolean }) => {
     const got = read(k)
-    if (!got || !Array.isArray(got.value)) return null
+    if (!got || !isTextList(got.value)) return null
 
     return (
       <ul className={cn('cvs-list', minus && 'is-minus')}>
@@ -102,7 +121,7 @@ export function ContentPreview({
         <T k="home.hero.greeting" className="cvs-h3" as="p" />
         <T k="home.hero.prefix" className="cvs-small" as="p" />
         <h1 className="cvs-title cvs-title-lg">
-          <span className="cvs-typed">{Array.isArray(typed?.value) ? typed.value[0] : ''}</span> <T k="home.hero.staticLine" />
+          <span className="cvs-typed">{typed && isTextList(typed.value) ? typed.value[0] : ''}</span> <T k="home.hero.staticLine" />
         </h1>
         <T k="home.hero.headline" className="cvs-h3" as="p" />
         <T k="home.hero.sub" className="cvs-soft" as="p" />
@@ -204,8 +223,7 @@ export function ContentPreview({
           <T k="site.phone" />
         </div>
         <div className="cvs-row" dir="ltr">
-          <T k="site.github" />
-          <T k="site.linkedin" />
+          <Links />
         </div>
         <T k="shell.footer.builtWith" className="cvs-small" as="p" />
       </div>,

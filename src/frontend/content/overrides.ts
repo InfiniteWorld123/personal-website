@@ -1,6 +1,8 @@
 import type { Language } from '#/frontend/i18n/language'
 import { content } from './base'
-import { type ContentValue, writeContentPath } from './content-path'
+import type { ContentLink } from '#/backend2/contracts/content.contract'
+import type { ContentValue } from '#/shared/types/content.types'
+import { writeContentPath } from './content-path'
 import { servicePrices, site } from './site'
 import type { ServiceSlug, SiteContent } from './types'
 
@@ -59,7 +61,13 @@ export const resolveContent = (language: Language): SiteContent => {
       ? content[language]
       : (() => {
           const draft = structuredClone(content[language]) as SiteContent
-          for (const key of keys) writeContentPath(draft, key, overrides[key])
+          for (const key of keys) {
+            const value = overrides[key]
+            // Only the shared facts hold links; a language never does.
+            if (typeof value === 'string' || typeof value === 'number' || value.every((entry) => typeof entry === 'string')) {
+              writeContentPath(draft, key, value as string | number | string[])
+            }
+          }
           return draft
         })()
 
@@ -73,19 +81,37 @@ const sharedText = (key: string, fallback: string): string => {
   return typeof value === 'string' ? value : fallback
 }
 
+/** The profile links the owner saved, or the release list; hidden ones left out. */
+const visibleLinks = (): ContentLink[] => {
+  const saved = current.shared['site.links']
+  const links = Array.isArray(saved) && saved.every((entry) => typeof entry === 'object')
+    ? (saved as ContentLink[])
+    : site.links
+
+  return links.filter((link) => !link.hidden)
+}
+
 /**
  * The owner's own details. Read through this rather than importing `site`
  * directly wherever a value is editable, so the footer and the contact page
  * cannot disagree about the address after it changes.
+ *
+ * `links` holds only the links shown on the website, in the owner's order.
+ * `github` is the first shown GitHub link, for the places that show GitHub
+ * alone; it is absent when the owner removed or hid it.
  */
-export const getSite = () => ({
-  ...site,
-  email: sharedText('site.email', site.email),
-  phone: sharedText('site.phone', site.phone),
-  city: sharedText('site.city', site.city),
-  github: sharedText('site.github', site.github),
-  linkedin: sharedText('site.linkedin', site.linkedin),
-})
+export const getSite = () => {
+  const links = visibleLinks()
+
+  return {
+    ...site,
+    email: sharedText('site.email', site.email),
+    phone: sharedText('site.phone', site.phone),
+    city: sharedText('site.city', site.city),
+    links,
+    github: links.find((link) => link.platform === 'github')?.url,
+  }
+}
 
 export const getServicePrices = (): Record<ServiceSlug, number | null> => {
   const resolved = { ...servicePrices }

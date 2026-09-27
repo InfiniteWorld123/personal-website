@@ -140,6 +140,31 @@
   .cv-list-row { display: flex; align-items: center; gap: 6px; }
   .cv-list-row .dash-field { flex: 1; }
   .cv-list-row.is-new .dash-field { border-style: dashed; }
+  /* ── profile links (approved in the Profile links lab, 27 Sep 2026) ── */
+  .cv-links { display: flex; flex-direction: column; gap: 8px; }
+  .cv-link { display: grid; grid-template-columns: auto minmax(150px, 180px) minmax(0, 1fr) auto; gap: 6px; align-items: center; padding: 6px; border-radius: 10px; border: 1px solid transparent; }
+  .cv-link.is-new { border-color: var(--dash-line); border-style: dashed; }
+  .cv-link.is-hidden .cv-link-platform, .cv-link.is-hidden .cv-link-url { opacity: 0.55; }
+  .cv-link-move { display: flex; flex-direction: column; }
+  .cv-link-move .dash-btn { width: 24px; height: 17px; padding: 0; border-radius: 5px; }
+  .cv-link-platform { position: relative; }
+  .cv-link-platform > svg { position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--dash-ink); }
+  .cv-link-platform select { width: 100%; height: 36px; padding-inline: 34px 10px; cursor: pointer; }
+  .cv-link-url, .cv-link-name { height: 36px; padding-inline: 11px; min-width: 0; }
+  .cv-link-tools { display: flex; align-items: center; gap: 2px; }
+  .cv-link-name { grid-column: 3 / 4; }
+  .cv-link-error { grid-column: 2 / -1; }
+
+  /* Narrow: platform and its tools on one line, the address full width under them. */
+  @container cv (max-width: 620px) {
+    .cv-link { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .cv-link-move { grid-column: 1; grid-row: 1 / span 2; }
+    .cv-link-platform { grid-column: 2; grid-row: 1; }
+    .cv-link-tools { grid-column: 3; grid-row: 1; }
+    .cv-link-url { grid-column: 2 / -1; grid-row: 2; }
+    .cv-link-name, .cv-link-error { grid-column: 2 / -1; }
+  }
+
   .cv-num { width: 18px; font-size: 11px; color: var(--dash-quiet); text-align: end; font-variant-numeric: tabular-nums; flex: none; }
   .cv-legal { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: var(--dash-furniture); font-size: 12.5px; line-height: 1.6; color: var(--dash-quiet); }
   .cv-legal p { flex: 1; }
@@ -228,6 +253,7 @@
   .cvs-faq { border-top: 1px solid var(--s-border); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
   .cvs-legal h3 { font-size: 13.5px; font-weight: 650; margin-top: 4px; }
   .cvs-row { display: flex; gap: 14px; flex-wrap: wrap; color: var(--s-muted); font-size: 12px; }
+  .cvs-link { display: inline-flex; align-items: center; gap: 6px; }
   .cvs-serp { border: 1px solid var(--s-border); border-radius: 12px; padding: 12px; background: var(--s-card); font-family: Arial, sans-serif; display: flex; flex-direction: column; gap: 3px; }
   .cvs-serp-url { font-size: 11px; color: var(--s-muted); text-align: left; }
   .cvs-serp-title { font-size: 15px; color: #1a0dab; line-height: 1.3; }

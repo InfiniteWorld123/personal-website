@@ -122,16 +122,18 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
             </div>
 
             <div {...item(11)} className="mt-8 flex flex-wrap items-center gap-3">
-              <Button
-                asChild
-                variant="ghost"
-                size="icon"
-                className="btn-glow-icon rounded-full border border-border/60 bg-card text-foreground/70 hover:text-primary"
-              >
-                <a href={facts.github} target="_blank" rel="noreferrer" aria-label="GitHub">
-                  <Github />
-                </a>
-              </Button>
+              {facts.github ? (
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="btn-glow-icon rounded-full border border-border/60 bg-card text-foreground/70 hover:text-primary"
+                >
+                  <a href={facts.github} target="_blank" rel="noreferrer" aria-label="GitHub">
+                    <Github />
+                  </a>
+                </Button>
+              ) : null}
               <a
                 href={`mailto:${facts.email}`}
                 dir="ltr"

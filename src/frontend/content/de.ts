@@ -16,7 +16,7 @@ export const de: SiteContent = {
     footer: {
       tagline: 'Websites, Online-Shops und individuelle Software für kleine Unternehmen.',
       location: 'Erfurt, Deutschland',
-      email: 'E-Mail',
+      email: 'Kontakt',
       links: 'Seiten',
       builtWith: 'Diese Website und die Verwaltung dahinter sind selbst gebaut.',
       more: [

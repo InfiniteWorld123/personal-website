@@ -1,12 +1,19 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { AlertTriangle, ArrowDown, ArrowUp, Check, Clock, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Check, Clock, Eye, EyeOff, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import {
+  CONTENT_LIMITS,
   type ContentFieldState,
   type ContentLanguage,
+  type ContentLink,
   type ContentSlot,
   type ContentValue,
+  LINK_PLATFORMS,
+  LINK_PLATFORM_NAME,
+  type LinkPlatform,
   checkContentValue,
+  isTextList,
+  linkName,
   sameContentValue,
 } from '#/backend2/contracts/content.contract'
 import {
@@ -19,6 +26,7 @@ import {
 } from '#/frontend/features/content-v2/content-words'
 import { contentStore, isUnsettled, slotKey, useLocalEntry } from '#/frontend/features/content-v2/content-store'
 import { useContentHistory, useContentSaver, useMarkReviewed } from '#/frontend/features/content-v2/queries'
+import { SocialIcon } from '#/frontend/components/SocialIcon'
 import { cn } from '#/frontend/lib/utils'
 
 /**
@@ -51,14 +59,18 @@ const firstError = (errors: unknown): string | undefined => {
 }
 
 /** For a list: which line an error belongs to, from the contract's own issue path. */
-const errorLine = (field: ContentFieldState, value: string[]): number | undefined => {
+const errorLine = (field: ContentFieldState, value: ContentValue): number | undefined => {
   const checked = checkContentValue(field, value)
   if (checked.ok) return undefined
 
-  const match = checked.issues[0]?.field.match(/^value\.(\d+)$/u)
+  const match = checked.issues[0]?.field.match(/^value\.(\d+)(?:\.|$)/u)
 
   return match ? Number(match[1]) : undefined
 }
+
+/** A row nobody has typed into yet: an empty line, or a link without an address. */
+const isBlankRow = (row: string | ContentLink | undefined): boolean =>
+  row === undefined || (typeof row === 'string' ? row.trim() === '' : row.url.trim() === '')
 
 export function ContentField({ field, language, legalOpen, initialPanel = null }: Props) {
   const slot: ContentSlot = slotOf(field, language)
@@ -81,10 +93,10 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
     return isUnsettled(kept) && kept?.value !== undefined ? kept.value : live.value
   }
 
-  /** What would be sent: a list without its untouched new line. */
+  /** What would be sent: a list without its untouched new line or link. */
   const toSend = (value: ContentValue): ContentValue =>
-    Array.isArray(value) && fresh !== null && (value[fresh] ?? '').trim() === ''
-      ? value.filter((_, index) => index !== fresh)
+    Array.isArray(value) && fresh !== null && isBlankRow(value[fresh])
+      ? ((value as Array<string | ContentLink>).filter((_, index) => index !== fresh) as ContentValue)
       : value
 
   const form = useForm({
@@ -118,7 +130,7 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
         return
       }
 
-      if (fresh !== null && (value.value as string[])[fresh]?.trim() === '') {
+      if (fresh !== null && Array.isArray(value.value) && isBlankRow(value.value[fresh])) {
         // The empty new line stays on screen, outside what is saved.
       } else setFresh(null)
 
@@ -184,7 +196,8 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
           const value = item.state.value
           const inputId = `${domId}-input`
           const errorId = `${domId}-error`
-          const badLine = Array.isArray(value) && error ? errorLine(field, toSend(value) as string[]) : undefined
+          const badLine = Array.isArray(value) && error ? errorLine(field, toSend(value)) : undefined
+          const isLinks = field.kind === 'links'
           const direction = directionOf(slot === 'shared' ? 'en' : slot)
           const lang = slot === 'shared' ? 'en' : slot
           const unsettledLook = entry && ['dirty', 'failed', 'conflict'].includes(entry.status)
@@ -192,9 +205,13 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
           return (
             <>
               <div className="cv-fld-top">
-                <label className="cv-fld-label" id={`${domId}-label`} htmlFor={Array.isArray(value) ? `${inputId}-0` : inputId}>
-                  {label}
-                </label>
+                {isLinks ? (
+                  <span className="cv-fld-label" id={`${domId}-label`}>{label}</span>
+                ) : (
+                  <label className="cv-fld-label" id={`${domId}-label`} htmlFor={Array.isArray(value) ? `${inputId}-0` : inputId}>
+                    {label}
+                  </label>
+                )}
                 {edited ? <span className="cv-chip cv-tone-blue">Edited</span> : null}
                 {field.scope === 'seo' ? <span className="cv-chip cv-tone-grey">Google</span> : null}
                 {field.shared ? <span className="cv-chip cv-tone-grey">All languages</span> : null}
@@ -211,7 +228,48 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
                 </span>
               </div>
 
-              {Array.isArray(value) ? (
+              {isLinks ? (
+                <LinksInput
+                  value={value as ContentLink[]}
+                  max={field.maxEntries}
+                  inputId={inputId}
+                  labelId={`${domId}-label`}
+                  errorId={errorId}
+                  error={error}
+                  badLine={badLine}
+                  fresh={fresh}
+                  dirty={!!unsettledLook}
+                  onChange={(next) => change(next)}
+                  onAdd={() => {
+                    const links = value as ContentLink[]
+                    const used = new Set(links.map((link) => link.platform))
+                    const platform = LINK_PLATFORMS.find((option) => !used.has(option)) ?? 'website'
+                    setFresh(links.length)
+                    change([...links, { platform, url: '', label: '', hidden: false }])
+                    window.requestAnimationFrame(() => document.getElementById(`${inputId}-${links.length}-platform`)?.focus())
+                  }}
+                  onMove={(from, to) => {
+                    const next = [...(value as ContentLink[])]
+                    ;[next[from], next[to]] = [next[to], next[from]]
+                    if (fresh === from) setFresh(to)
+                    else if (fresh === to) setFresh(from)
+                    change(next)
+                    window.setTimeout(commit, 0)
+                  }}
+                  onToggle={(at) => {
+                    change((value as ContentLink[]).map((link, index) => (index === at ? { ...link, hidden: !link.hidden } : link)))
+                    window.setTimeout(commit, 0)
+                  }}
+                  onRemove={(at) => {
+                    const next = (value as ContentLink[]).filter((_, index) => index !== at)
+                    if (fresh === at) setFresh(null)
+                    else if (fresh !== null && fresh > at) setFresh(fresh - 1)
+                    change(next)
+                    window.setTimeout(commit, 0)
+                  }}
+                  onLeave={commit}
+                />
+              ) : isTextList(value) ? (
                 <ListInput
                   field={field}
                   value={value}
@@ -248,7 +306,7 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
                   }}
                   onLeave={commit}
                 />
-              ) : field.kind === 'longText' ? (
+              ) : typeof value !== 'string' ? null : field.kind === 'longText' ? (
                 <textarea
                   id={inputId}
                   className={cn('dash-field cv-input', unsettledLook && 'cv-dirty')}
@@ -285,7 +343,7 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
                 />
               )}
 
-              {error ? (
+              {error && !(isLinks && badLine !== undefined) ? (
                 <p id={errorId} className="cv-error" role="alert">
                   <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
                   {error}
@@ -295,7 +353,7 @@ export function ContentField({ field, language, legalOpen, initialPanel = null }
               <Problem entry={entry} slot={slot} onRetry={retry} onDiscard={discard} onKeepTheirs={discard} onSaveMine={retry} />
 
               <div className="cv-fld-foot">
-                <Status status={entry?.status} updatedAt={live.isOriginal ? null : live.updatedAt} fresh={fresh !== null} />
+                <Status status={entry?.status} updatedAt={live.isOriginal ? null : live.updatedAt} fresh={fresh !== null} links={isLinks} />
                 {!Array.isArray(value) && guidance > 0 ? (
                   <span className={cn('cv-count', value.length > guidance && 'is-over')}>
                     {value.length} / {guidance}
@@ -436,7 +494,164 @@ function ListInput(props: {
   )
 }
 
-function Status({ status, updatedAt, fresh }: { status?: string; updatedAt: string | null; fresh: boolean }) {
+/** Placeholders that show the shape of each platform's address. */
+const LINK_HINT: Record<LinkPlatform, string> = {
+  github: 'https://github.com/your-name',
+  linkedin: 'https://linkedin.com/in/your-name',
+  instagram: 'https://instagram.com/your-name',
+  x: 'https://x.com/your-name',
+  youtube: 'https://youtube.com/@your-channel',
+  whatsapp: 'https://wa.me/49…',
+  telegram: 'https://t.me/your-name',
+  website: 'https://example.com',
+}
+
+const PLATFORM_OPTION: Record<LinkPlatform, string> = { ...LINK_PLATFORM_NAME, x: 'X (Twitter)', website: 'Other website' }
+
+/**
+ * The profile links: one row per link, in the order the website shows them.
+ * The platform decides the icon, so the owner chooses a platform rather than
+ * uploading a picture. Leaving the list saves it; hiding, moving and removing
+ * save at once, like the lines of a list.
+ */
+function LinksInput(props: {
+  value: ContentLink[]
+  max: number
+  inputId: string
+  labelId: string
+  errorId: string
+  error: string | undefined
+  badLine: number | undefined
+  fresh: number | null
+  dirty: boolean
+  onChange: (value: ContentLink[]) => void
+  onAdd: () => void
+  onMove: (from: number, to: number) => void
+  onToggle: (at: number) => void
+  onRemove: (at: number) => void
+  onLeave: () => void
+}) {
+  const group = useRef<HTMLDivElement>(null)
+  const { value, fresh } = props
+  const edit = (at: number, patch: Partial<ContentLink>) =>
+    props.onChange(value.map((link, index) => (index === at ? { ...link, ...patch } : link)))
+
+  return (
+    <div
+      ref={group}
+      className="cv-links"
+      role="group"
+      aria-labelledby={props.labelId}
+      onBlur={(event) => {
+        // Moving between the rows of the list is not leaving it.
+        if (group.current?.contains(event.relatedTarget as Node | null)) return
+        props.onLeave()
+      }}
+    >
+      <p className="cv-quiet">Shown in the footer on every page and on the Stack page, in this order. Choose the platform and its icon comes with it.</p>
+      {value.length === 0 ? <p className="cv-quiet">No links. The footer shows your email alone.</p> : null}
+      {value.map((link, index) => {
+        const n = index + 1
+        const id = `${props.inputId}-${index}`
+        const invalid = props.error !== undefined && props.badLine === index
+
+        return (
+          <div key={index} className={cn('cv-link', link.hidden && 'is-hidden', fresh === index && 'is-new')}>
+            <div className="cv-link-move">
+              <button type="button" className="dash-btn dash-btn-ghost" aria-label={`Move link ${n} up`} disabled={index === 0} onClick={() => props.onMove(index, index - 1)}>
+                <ArrowUp className="size-3.5" aria-hidden="true" />
+              </button>
+              <button type="button" className="dash-btn dash-btn-ghost" aria-label={`Move link ${n} down`} disabled={index === value.length - 1} onClick={() => props.onMove(index, index + 1)}>
+                <ArrowDown className="size-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="cv-link-platform">
+              <SocialIcon platform={link.platform} className="size-4" />
+              <select
+                id={`${id}-platform`}
+                className="dash-field cv-input"
+                value={link.platform}
+                aria-label={`Platform of link ${n}`}
+                onChange={(event) => {
+                  const platform = event.target.value as LinkPlatform
+                  edit(index, { platform, label: platform === 'website' ? link.label : '' })
+                }}
+              >
+                {LINK_PLATFORMS.map((option) => (
+                  <option key={option} value={option}>{PLATFORM_OPTION[option]}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              id={id}
+              className={cn('dash-field cv-input cv-link-url', props.dirty && 'cv-dirty')}
+              value={link.url}
+              dir="ltr"
+              inputMode="url"
+              placeholder={LINK_HINT[link.platform]}
+              aria-label={`Address of link ${n}`}
+              aria-invalid={invalid ? true : undefined}
+              aria-describedby={invalid ? props.errorId : undefined}
+              onChange={(event) => edit(index, { url: event.target.value })}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }
+              }}
+            />
+            <div className="cv-link-tools">
+              {link.hidden ? <span className="cv-chip cv-tone-grey">Hidden</span> : null}
+              <button
+                type="button"
+                className="dash-btn dash-btn-ghost cv-icon"
+                aria-pressed={link.hidden}
+                aria-label={`${link.hidden ? 'Show' : 'Hide'} link ${n} on the website`}
+                title={link.hidden ? 'Hidden on the website — show it' : 'Shown on the website — hide it'}
+                onClick={() => props.onToggle(index)}
+              >
+                {link.hidden ? <EyeOff className="size-3.5" aria-hidden="true" /> : <Eye className="size-3.5" aria-hidden="true" />}
+              </button>
+              <button type="button" className="dash-btn dash-btn-ghost cv-icon" aria-label={`Remove link ${n}`} onClick={() => props.onRemove(index)}>
+                <Trash2 className="size-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            {link.platform === 'website' ? (
+              <input
+                id={`${id}-label`}
+                className="dash-field cv-input cv-link-name"
+                value={link.label}
+                maxLength={CONTENT_LIMITS.linkLabel}
+                placeholder={`Name on the website (optional) — otherwise ${linkName({ ...link, label: '' })}`}
+                aria-label={`Name of link ${n}`}
+                onChange={(event) => edit(index, { label: event.target.value })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    event.currentTarget.blur()
+                  }
+                }}
+              />
+            ) : null}
+            {invalid ? (
+              <p id={props.errorId} className="cv-error cv-link-error" role="alert">
+                <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+                {props.error}
+              </p>
+            ) : null}
+          </div>
+        )
+      })}
+      <div>
+        <button type="button" className="dash-btn dash-btn-ghost cv-sm" disabled={fresh !== null || value.length >= props.max} onClick={props.onAdd}>
+          <Plus className="size-3.5" aria-hidden="true" /> Add link
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Status({ status, updatedAt, fresh, links = false }: { status?: string; updatedAt: string | null; fresh: boolean; links?: boolean }) {
   if (status === 'saving') {
     return (
       <span className="cv-status is-saving" role="status">
@@ -459,7 +674,13 @@ function Status({ status, updatedAt, fresh }: { status?: string; updatedAt: stri
     return (
       <span className="cv-status is-dirty">
         <span className="cv-pip" aria-hidden="true" />
-        {fresh ? 'Type the new line — an empty line is not saved' : 'Not saved yet · saves when you leave the field'}
+        {fresh
+          ? links
+            ? 'Paste the new link — a row without an address is not saved'
+            : 'Type the new line — an empty line is not saved'
+          : links
+            ? 'Not saved yet · saves when you leave the list'
+            : 'Not saved yet · saves when you leave the field'}
       </span>
     )
   }

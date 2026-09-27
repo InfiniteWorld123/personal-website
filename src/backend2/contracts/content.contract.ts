@@ -29,8 +29,10 @@ export type ContentSlot = (typeof CONTENT_SLOTS)[number]
  * - `text` — one line: a heading, a label, a button.
  * - `longText` — a paragraph. Line breaks are kept.
  * - `list` — an ordered list of one-line entries.
+ * - `links` — the owner's profile links, in order: a platform, an address,
+ *   and whether it is shown. Only the shared `site.links` fact has it.
  */
-export type ContentKind = 'text' | 'longText' | 'list'
+export type ContentKind = 'text' | 'longText' | 'list' | 'links'
 
 /** What the field is for. `legal` is locked in the editor until unlocked on purpose. */
 export type ContentScope = 'copy' | 'seo' | 'legal' | 'fact'
@@ -38,7 +40,71 @@ export type ContentScope = 'copy' | 'seo' | 'legal' | 'fact'
 /** Extra checks for the shared facts. */
 export type ContentFormat = 'plain' | 'email' | 'url' | 'phone'
 
-export type ContentValue = string | string[]
+/**
+ * The platforms a profile link can be. The platform decides the icon and the
+ * name the website shows, so every icon comes from one drawn set; `website`
+ * is any other address, named by its own label or host.
+ */
+export const LINK_PLATFORMS = [
+  'github',
+  'linkedin',
+  'instagram',
+  'x',
+  'youtube',
+  'whatsapp',
+  'telegram',
+  'website',
+] as const
+export type LinkPlatform = (typeof LINK_PLATFORMS)[number]
+
+/** The name shown beside the icon when the link has no label of its own. */
+export const LINK_PLATFORM_NAME: Record<LinkPlatform, string> = {
+  github: 'GitHub',
+  linkedin: 'LinkedIn',
+  instagram: 'Instagram',
+  x: 'X',
+  youtube: 'YouTube',
+  whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  website: 'Website',
+}
+
+/**
+ * Where each platform's links live. A GitHub link that points somewhere else
+ * is almost always a paste into the wrong row, so it is refused.
+ */
+const LINK_HOSTS: Record<Exclude<LinkPlatform, 'website'>, readonly string[]> = {
+  github: ['github.com'],
+  linkedin: ['linkedin.com'],
+  instagram: ['instagram.com'],
+  x: ['x.com', 'twitter.com'],
+  youtube: ['youtube.com', 'youtu.be'],
+  whatsapp: ['wa.me', 'whatsapp.com'],
+  telegram: ['t.me', 'telegram.me'],
+}
+
+/** One profile link. `label` empty means the platform's own name. */
+export type ContentLink = {
+  platform: LinkPlatform
+  url: string
+  label: string
+  /** Kept in the list but not shown on the website. */
+  hidden: boolean
+}
+
+export type ContentValue = string | string[] | ContentLink[]
+
+/** A `list` value: lines of text. (An empty list reads as one too, harmlessly.) */
+export const isTextList = (value: ContentValue): value is string[] =>
+  Array.isArray(value) && value.every((entry) => typeof entry === 'string')
+
+/** Any value as one line of text: lines and link names joined. */
+export const contentAsText = (value: ContentValue, separator = ' · '): string =>
+  typeof value === 'string'
+    ? value
+    : isTextList(value)
+      ? value.join(separator)
+      : value.filter((link) => !link.hidden).map(linkName).join(separator)
 
 /**
  * The hard limits. A request over these is refused outright; the per-field
@@ -49,6 +115,8 @@ export const CONTENT_LIMITS = {
   longText: 6000,
   listEntry: 600,
   listEntries: 24,
+  links: 12,
+  linkLabel: 40,
 } as const
 
 /** One editable field, as the registry defines it and the editor receives it. */
@@ -93,6 +161,83 @@ const isHttpsUrl = (value: string): boolean => {
   }
 }
 
+/** `github.com`, `www.github.com` and `de.linkedin.com` all belong to their platform. */
+const onHost = (value: string, hosts: readonly string[]): boolean => {
+  const host = new URL(value).hostname.toLowerCase()
+
+  return hosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`))
+}
+
+/** What the website writes beside a link's icon. */
+export const linkName = (link: Pick<ContentLink, 'platform' | 'url' | 'label'>): string => {
+  if (link.label !== '') return link.label
+  if (link.platform !== 'website') return LINK_PLATFORM_NAME[link.platform]
+
+  try {
+    return new URL(link.url).hostname.replace(/^www\./u, '')
+  } catch {
+    return LINK_PLATFORM_NAME.website
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/** The `links` shape: every row checked, the first problem named by its path. */
+const checkLinks = (
+  field: ContentFieldDefinition,
+  raw: unknown,
+): { ok: true; value: ContentLink[] } | { ok: false; issues: ContentIssue[] } => {
+  const fail = (message: string, path = 'value') => ({ ok: false as const, issues: [{ field: path, message }] })
+
+  if (!Array.isArray(raw) || !raw.every(isRecord)) return fail('This field expects a list of links')
+
+  const links: ContentLink[] = []
+
+  for (const [index, row] of raw.entries()) {
+    const path = `value.${index}`
+
+    if (!(LINK_PLATFORMS as readonly unknown[]).includes(row.platform)) {
+      return fail('Choose a platform for this link', `${path}.platform`)
+    }
+    const platform = row.platform as LinkPlatform
+
+    if (typeof row.url !== 'string') return fail('Enter the link', `${path}.url`)
+    const url = tidy(row.url)
+
+    if (url === '') return fail('Enter the link', `${path}.url`)
+    if (url.length > CONTENT_LIMITS.text || CONTROL.test(url) || url.includes('\n') || !isHttpsUrl(url)) {
+      return fail('Enter a full link that starts with https://', `${path}.url`)
+    }
+    if (platform !== 'website' && !onHost(url, LINK_HOSTS[platform])) {
+      return fail(
+        `A ${LINK_PLATFORM_NAME[platform]} link starts with https://${LINK_HOSTS[platform][0]}/`,
+        `${path}.url`,
+      )
+    }
+
+    if (row.label !== undefined && typeof row.label !== 'string') return fail('The name must be text', `${path}.label`)
+    const label = tidy(row.label ?? '')
+
+    if (label.includes('\n') || CONTROL.test(label)) return fail('The name must be one line', `${path}.label`)
+    if (label.length > CONTENT_LIMITS.linkLabel) {
+      return fail(`A name can have at most ${CONTENT_LIMITS.linkLabel} characters`, `${path}.label`)
+    }
+
+    if (row.hidden !== undefined && typeof row.hidden !== 'boolean') return fail('Choose shown or hidden', `${path}.hidden`)
+
+    if (links.some((link) => link.url === url)) return fail('This link is already in the list', `${path}.url`)
+
+    links.push({ platform, url, label, hidden: row.hidden === true })
+  }
+
+  if (links.length < field.minEntries || links.length > field.maxEntries) {
+    return fail(`This list can have at most ${field.maxEntries} links`)
+  }
+
+  return { ok: true, value: links }
+}
+
 /** Line endings as the browser may send them, normalised; outer spaces removed. */
 const tidy = (value: string): string => value.replace(/\r\n?/gu, '\n').trim()
 
@@ -111,6 +256,8 @@ export const checkContentValue = (
     ok: false as const,
     issues: [{ field: path, message }],
   })
+
+  if (field.kind === 'links') return checkLinks(field, raw)
 
   if (field.kind === 'list') {
     if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== 'string')) {
@@ -184,9 +331,19 @@ export const checkContentValue = (
 export const slotMatchesField = (field: ContentFieldDefinition, slot: ContentSlot): boolean =>
   field.shared ? slot === 'shared' : slot !== 'shared'
 
+/**
+ * A value in one fixed spelling. PostgreSQL's `jsonb` hands a link back with
+ * its keys reordered, so two equal link lists can stringify differently.
+ */
+const canonical = (value: ContentValue): string =>
+  JSON.stringify(
+    typeof value === 'string' || isTextList(value)
+      ? value
+      : value.map((link) => [link.platform, link.url, link.label, link.hidden]),
+  )
+
 /** Two values are the same wording. Order matters in a list. */
-export const sameContentValue = (a: ContentValue, b: ContentValue): boolean =>
-  JSON.stringify(a) === JSON.stringify(b)
+export const sameContentValue = (a: ContentValue, b: ContentValue): boolean => canonical(a) === canonical(b)
 
 /* ------------------------------------------------------------ the requests */
 

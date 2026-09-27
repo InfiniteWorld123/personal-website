@@ -75,4 +75,28 @@ describe('published overrides', () => {
   it('shows no phone number until one is written', () => {
     expect(getSite().phone).toBe('')
   })
+
+  it('shows the release profile links until the owner saves a list', () => {
+    expect(getSite().links.map((link) => link.platform)).toEqual(['github', 'linkedin'])
+    expect(getSite().github).toBe('https://github.com/InfiniteWorld123')
+  })
+
+  it('shows the saved links in their order, leaves hidden ones out, and drops GitHub when it goes', () => {
+    applyContentOverrides({
+      ...emptyOverrides(),
+      shared: {
+        'site.links': [
+          { platform: 'instagram', url: 'https://instagram.com/a', label: '', hidden: false },
+          { platform: 'github', url: 'https://github.com/a', label: '', hidden: true },
+          { platform: 'linkedin', url: 'https://linkedin.com/in/a', label: '', hidden: false },
+        ],
+      },
+    })
+
+    expect(getSite().links.map((link) => link.platform)).toEqual(['instagram', 'linkedin'])
+    expect(getSite().github).toBeUndefined()
+
+    applyContentOverrides({ ...emptyOverrides(), shared: { 'site.links': [] } })
+    expect(getSite().links).toEqual([])
+  })
 })

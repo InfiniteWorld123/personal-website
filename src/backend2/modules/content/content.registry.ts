@@ -7,6 +7,7 @@ import {
   type ContentFormat,
   type ContentKind,
   type ContentLanguage,
+  type ContentLink,
   type ContentSlot,
   type ContentValue,
 } from '../../contracts/content.contract'
@@ -322,13 +323,15 @@ const FIXED_LENGTH: Record<string, number> = {
 }
 
 /** Facts about the owner, held once for all three languages. */
-const FACTS: ReadonlyArray<{ key: string; format: ContentFormat; optional: boolean }> = [
-  { key: 'site.email', format: 'email', optional: false },
+const FACTS: ReadonlyArray<{ key: string; kind: ContentKind; format: ContentFormat; optional: boolean }> = [
+  { key: 'site.email', kind: 'text', format: 'email', optional: false },
   // Empty until the owner fills it in; the site leaves it out while empty.
-  { key: 'site.phone', format: 'phone', optional: true },
-  { key: 'site.city', format: 'plain', optional: false },
-  { key: 'site.github', format: 'url', optional: false },
-  { key: 'site.linkedin', format: 'url', optional: false },
+  { key: 'site.phone', kind: 'text', format: 'phone', optional: true },
+  { key: 'site.city', kind: 'text', format: 'plain', optional: false },
+  // The profile links in the footer, the Stack page and Google's `sameAs`.
+  // Replaced `site.github` and `site.linkedin` (27 Sep 2026); rows stored under
+  // those two keys are no longer read.
+  { key: 'site.links', kind: 'links', format: 'url', optional: true },
 ]
 
 /** The editor's page order; `site` last because it is not a page. */
@@ -368,7 +371,7 @@ const guidanceFor = (key: string, kind: ContentKind): number => {
     ...(['de', 'en', 'ar'] as const).map((language) => {
       const value = readDefault(language, key)
       if (typeof value === 'string') return value.length
-      if (Array.isArray(value)) return Math.max(0, ...value.map((entry) => entry.length))
+      if (Array.isArray(value)) return Math.max(0, ...value.map((entry) => (typeof entry === 'string' ? entry.length : 0)))
       return 0
     }),
   )
@@ -414,18 +417,18 @@ const buildRegistry = (): ContentFieldDefinition[] => {
   })
 
   const facts = FACTS.map(
-    ({ key, format, optional }): ContentFieldDefinition => ({
+    ({ key, kind, format, optional }): ContentFieldDefinition => ({
       key,
       page: 'site',
       section: 'facts',
-      kind: 'text',
+      kind,
       scope: 'fact',
       format,
       shared: true,
       optional,
       guidance: 0,
       minEntries: 0,
-      maxEntries: 0,
+      maxEntries: kind === 'links' ? CONTENT_LIMITS.links : 0,
     }),
   )
 
@@ -448,6 +451,8 @@ export const slotsOf = (field: ContentFieldDefinition): ContentSlot[] =>
 export const originalValue = (field: ContentFieldDefinition, slot: ContentSlot): ContentValue => {
   if (field.shared) {
     const fact = (site as Record<string, unknown>)[field.key.slice('site.'.length)]
+
+    if (field.kind === 'links') return Array.isArray(fact) ? structuredClone(fact as ContentLink[]) : []
 
     return typeof fact === 'string' ? fact : ''
   }

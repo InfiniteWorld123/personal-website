@@ -1,3 +1,4 @@
+import type { ContentLink } from '#/backend2/contracts/content.contract'
 import type { ServiceSlug } from './types'
 
 /** Language-independent facts about the site and its owner. */
@@ -12,8 +13,15 @@ export const site = {
   phone: '',
   city: 'Erfurt',
   country: 'DE',
-  github: 'https://github.com/InfiniteWorld123',
-  linkedin: 'https://linkedin.com/in/yaman-warda',
+  /**
+   * The profile links, in the order the website shows them. The owner edits
+   * this list in the Dashboard (Content › Site facts); these are its release
+   * defaults.
+   */
+  links: [
+    { platform: 'github', url: 'https://github.com/InfiniteWorld123', label: '', hidden: false },
+    { platform: 'linkedin', url: 'https://linkedin.com/in/yaman-warda', label: '', hidden: false },
+  ] as ContentLink[],
   /** Transparent cutout of the studio portrait; shown in front of the blob. */
   heroPortrait: '/images/yaman-cutout.png',
   /**

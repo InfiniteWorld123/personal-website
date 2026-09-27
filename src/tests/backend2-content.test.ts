@@ -139,18 +139,63 @@ describe('the contract', () => {
 
   it('checks the shared facts as the links and addresses they are', () => {
     const email = registry.findContentField('site.email')!
-    const github = registry.findContentField('site.github')!
+    const links = registry.findContentField('site.links')!
     const phone = registry.findContentField('site.phone')!
+    const github = (url: string) => [{ platform: 'github', url, label: '', hidden: false }]
 
     expect(contract.checkContentValue(email, 'owner@example.de').ok).toBe(true)
     expect(contract.checkContentValue(email, 'not an address').ok).toBe(false)
-    expect(contract.checkContentValue(github, 'https://github.com/someone').ok).toBe(true)
-    expect(contract.checkContentValue(github, 'http://github.com/someone').ok).toBe(false)
-    expect(contract.checkContentValue(github, 'javascript:alert(1)').ok).toBe(false)
-    expect(contract.checkContentValue(github, 'https://user:pw@github.com').ok).toBe(false)
+    expect(contract.checkContentValue(links, github('https://github.com/someone')).ok).toBe(true)
+    expect(contract.checkContentValue(links, github('http://github.com/someone')).ok).toBe(false)
+    expect(contract.checkContentValue(links, github('javascript:alert(1)')).ok).toBe(false)
+    expect(contract.checkContentValue(links, github('https://user:pw@github.com')).ok).toBe(false)
     expect(contract.checkContentValue(phone, '')).toEqual({ ok: true, value: '' })
     expect(contract.checkContentValue(phone, '+49 361 123456').ok).toBe(true)
     expect(contract.checkContentValue(phone, 'call me').ok).toBe(false)
+  })
+
+  it('checks each profile link against its platform, and tidies what it keeps', () => {
+    const links = registry.findContentField('site.links')!
+    const check = (value: unknown) => contract.checkContentValue(links, value)
+    const path = (value: unknown) => {
+      const checked = check(value)
+      return checked.ok ? null : checked.issues[0].field
+    }
+
+    // Tidied: spaces trimmed, a missing label or hidden flag filled in.
+    expect(check([{ platform: 'linkedin', url: ' https://de.linkedin.com/in/someone ' }])).toEqual({
+      ok: true,
+      value: [{ platform: 'linkedin', url: 'https://de.linkedin.com/in/someone', label: '', hidden: false }],
+    })
+    // No links at all is allowed: the footer then shows the email alone.
+    expect(check([])).toEqual({ ok: true, value: [] })
+    expect(check([{ platform: 'website', url: 'https://example.org', label: 'Portfolio', hidden: true }]).ok).toBe(true)
+    expect(check([{ platform: 'x', url: 'https://twitter.com/someone' }]).ok).toBe(true)
+    expect(check([{ platform: 'whatsapp', url: 'https://wa.me/49361123456' }]).ok).toBe(true)
+
+    // A link pasted into the wrong platform's row.
+    const wrong = check([{ platform: 'github', url: 'https://linkedin.com/in/someone' }])
+    expect(wrong).toEqual({
+      ok: false,
+      issues: [{ field: 'value.0.url', message: 'A GitHub link starts with https://github.com/' }],
+    })
+    // A look-alike host is not the platform.
+    expect(path([{ platform: 'github', url: 'https://github.com.evil.example/x' }])).toBe('value.0.url')
+
+    expect(path([{ platform: 'myspace', url: 'https://myspace.com/x' }])).toBe('value.0.platform')
+    expect(path([{ platform: 'website', url: '' }])).toBe('value.0.url')
+    expect(path([{ platform: 'website', url: 'https://a.example', label: 'x'.repeat(41) }])).toBe('value.0.label')
+    expect(path([{ platform: 'website', url: 'https://a.example', hidden: 'yes' }])).toBe('value.0.hidden')
+    expect(path([{ platform: 'website', url: 'https://a.example' }, { platform: 'website', url: 'https://a.example' }])).toBe('value.1.url')
+    expect(path(Array.from({ length: 13 }, (_, i) => ({ platform: 'website', url: `https://a${i}.example` })))).toBe('value')
+    expect(path('https://github.com/someone')).toBe('value')
+    expect(path(['https://github.com/someone'])).toBe('value')
+  })
+
+  it('names a link by its label, its platform, or its address', () => {
+    expect(contract.linkName({ platform: 'github', url: 'https://github.com/a', label: '' })).toBe('GitHub')
+    expect(contract.linkName({ platform: 'github', url: 'https://github.com/a', label: 'Code' })).toBe('Code')
+    expect(contract.linkName({ platform: 'website', url: 'https://www.example.org/me', label: '' })).toBe('example.org')
   })
 
   it('pulls in nothing from the database, the network or another module', async () => {
@@ -202,7 +247,7 @@ describe('the release registry', () => {
 
   it('is a written list: a string added to the content tree is not editable by itself', () => {
     // Pinned. Changing it means somebody chose to change what is editable.
-    expect(registry.contentRegistry).toHaveLength(256)
+    expect(registry.contentRegistry).toHaveLength(255)
     expect(new Set(keys).size).toBe(keys.length)
   })
 
@@ -425,7 +470,7 @@ describe('saving a field', () => {
       [HEADLINE, 'de', ['a list'], 422, 'value'],
       [HEADLINE, 'de', 'x'.repeat(501), 422, 'value'],
       ['home.hero.typed[]', 'de', ['Websites', ''], 422, 'value.1'],
-      ['site.github', 'shared', 'github.com/no-scheme', 422, 'value'],
+      ['site.links', 'shared', [{ platform: 'github', url: 'github.com/no-scheme' }], 422, 'value.0.url'],
     ]
 
     for (const [key, language, value, status, path] of cases) {
@@ -522,6 +567,67 @@ describe('Original', () => {
   })
 })
 
+describe('the profile links', () => {
+  const LINKS = 'site.links'
+  const shipped = () => registry.originalValue(registry.findContentField(LINKS)!, 'shared')
+
+  it('start as the release list, and a saved list is what visitors read, in order', async () => {
+    expect((await publicCopy('en')).shared[LINKS]).toEqual(shipped())
+
+    const next = [
+      { platform: 'linkedin', url: 'https://linkedin.com/in/someone', label: '', hidden: false },
+      { platform: 'instagram', url: 'https://instagram.com/someone', label: '', hidden: true },
+      { platform: 'github', url: 'https://github.com/someone', label: '', hidden: false },
+    ]
+    const saved = await save(LINKS, 'shared', next, 0)
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200)
+    expect(saved.body.data.field.slots.shared).toMatchObject({ value: next, isOriginal: false, revision: 1 })
+
+    // The database reorders each link's keys; the same list again is still "no change".
+    const again = await save(LINKS, 'shared', next, 1)
+    expect(again.body.data.changed).toBe(false)
+
+    // One value for every language; hidden links travel with it, the site leaves them out.
+    for (const language of ['de', 'en', 'ar']) expect((await publicCopy(language)).shared[LINKS]).toEqual(next)
+  })
+
+  it('are refused per language, and a wrong row leaves the live list in place', async () => {
+    const perLanguage = await save(LINKS, 'de', [], 0)
+    expect(perLanguage.status).toBe(422)
+
+    const wrong = await save(LINKS, 'shared', [{ platform: 'github', url: 'https://example.org' }], 0)
+    expect(wrong.status).toBe(422)
+    expect(wrong.body.details.issues[0].field).toBe('value.0.url')
+    expect((await publicCopy('en')).shared[LINKS]).toEqual(shipped())
+  })
+
+  it('keep history, come back from it, and return to Original', async () => {
+    await save(LINKS, 'shared', [], 0)
+    expect((await publicCopy('en')).shared[LINKS]).toEqual([])
+
+    const history = await call('GET', `/owner/content/history?key=${encodeURIComponent(LINKS)}`)
+    expect(history.body.data.items[0]).toMatchObject({ action: 'edit', before: shipped(), after: [] })
+
+    const undone = await call('POST', `/owner/content/history/${history.body.data.items[0].id}/restore`, {
+      expectedRevision: 1,
+      side: 'before',
+    })
+    expect(undone.status, JSON.stringify(undone.body)).toBe(200)
+    expect((await publicCopy('en')).shared[LINKS]).toEqual(shipped())
+
+    await save(LINKS, 'shared', [{ platform: 'x', url: 'https://x.com/someone' }], 2)
+    const original = await call('POST', `${fieldPath(LINKS)}/restore-original`, { language: 'shared', expectedRevision: 3 })
+    expect(original.body.data.field.slots.shared).toMatchObject({ value: shipped(), isOriginal: true })
+  })
+
+  it('are refused from a stale editor', async () => {
+    await save(LINKS, 'shared', [], 0)
+    const stale = await save(LINKS, 'shared', [{ platform: 'x', url: 'https://x.com/someone' }], 0)
+    expect(stale.status).toBe(409)
+    expect(stale.body.details.current.value).toEqual([])
+  })
+})
+
 describe('history', () => {
   it('brings back either side of an earlier change, as a new live revision', async () => {
     await save(HEADLINE, 'de', 'Eins', 0)
@@ -578,7 +684,7 @@ describe('what a visitor receives', () => {
 
     expect(Object.keys(read).sort()).toEqual(['fields', 'language', 'shared'])
     expect(Object.keys(read.fields)).toHaveLength(registry.contentRegistry.filter((field) => !field.shared).length)
-    expect(Object.keys(read.shared).sort()).toEqual(['site.city', 'site.email', 'site.github', 'site.linkedin', 'site.phone'])
+    expect(Object.keys(read.shared).sort()).toEqual(['site.city', 'site.email', 'site.links', 'site.phone'])
 
     const text = JSON.stringify(read)
     for (const word of ['revision', 'needsReview', 'history', 'original', 'import', 'updatedAt']) {
