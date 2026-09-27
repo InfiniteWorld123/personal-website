@@ -1,5 +1,5 @@
 import { getContent, site } from '#/frontend/content'
-import { type Language, languages } from '#/frontend/i18n/language'
+import { type Language, defaultLanguage, languages } from '#/frontend/i18n/language'
 import { buildStructuredData, type StructuredArticle, type StructuredProject } from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
 
@@ -131,9 +131,9 @@ export function buildHead({
         hrefLang: alternate,
         href: pageUrl(alternate, path),
       })),
-      // x-default is the page for a visitor whose language we do not publish;
-      // English serves them better than German now that clients are worldwide.
-      { rel: 'alternate', hrefLang: 'x-default', href: pageUrl('en', path) },
+      // x-default is the page for a visitor whose language we do not publish,
+      // and the one `/` redirects to: German, the site's default language.
+      { rel: 'alternate', hrefLang: 'x-default', href: pageUrl(defaultLanguage, path) },
       // Feed discovery, on the blog pages only: one feed per language, so the
       // reader who subscribes from the Arabic archive gets Arabic articles.
       ...(path.startsWith('/blog')

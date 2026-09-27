@@ -18,7 +18,8 @@ import { cn } from '#/frontend/lib/utils'
  * The hero keeps the site's original character: a greeting, a huge uppercase
  * display line where the first word types itself in and out, and the
  * portrait in front of the morphing blue blob. The typed words name the
- * offer; the bold sentence under them is the positioning headline.
+ * offer; the bold sentence under them is the positioning headline and the
+ * page's only <h1>.
  *
  * The entrance is one sequence, not eight separate fades: the small lines
  * arrive first, the display line rises from behind its own edge, the portrait
@@ -53,7 +54,9 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
               {copy.prefix}
             </p>
 
-            <h1
+            {/* The typed words are the display line but not the page's topic, so
+                they are the <h2>; the positioning sentence below is the <h1>. */}
+            <h2
               className={cn(
                 'hero-display mt-3 text-display-xl font-black uppercase text-foreground',
                 isRtl && 'hero-display-ar',
@@ -84,11 +87,11 @@ export function HeroSection({ copy }: { copy: HomeCopy['hero'] }) {
                   </HeroLine>
                 </>
               )}
-            </h1>
+            </h2>
 
-            <p {...item(7)} className="mt-6 max-w-xl text-lg font-semibold leading-8 text-foreground sm:text-xl">
+            <h1 {...item(7)} className="mt-6 max-w-xl text-lg font-semibold leading-8 text-foreground sm:text-xl">
               {copy.headline}
-            </p>
+            </h1>
             <p {...item(8)} className="hero-copy mt-3 max-w-xl text-base leading-8 sm:text-[1.05rem]">
               {copy.sub}
             </p>

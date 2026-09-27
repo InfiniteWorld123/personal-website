@@ -5,6 +5,7 @@ import {
   languageFromAcceptLanguage,
   languageFromCountry,
   languageFromPathname,
+  preferredLanguage,
   withLanguage,
 } from '#/frontend/i18n/language'
 import { formatEuro } from '#/frontend/lib/format'
@@ -110,6 +111,19 @@ describe('language helpers', () => {
     expect(languageFromCountry('AE')).toBe('ar')
     expect(languageFromCountry('US')).toBeNull()
     expect(languageFromCountry(null)).toBeNull()
+  })
+
+  it('sends `/` to the remembered, requested or local language, and otherwise to German', () => {
+    const visit = (overrides: Partial<Parameters<typeof preferredLanguage>[0]>) =>
+      preferredLanguage({ remembered: null, acceptLanguage: null, country: null, ...overrides })
+
+    expect(visit({ remembered: 'ar', acceptLanguage: 'en-US', country: 'DE' })).toBe('ar')
+    expect(visit({ remembered: 'xx', acceptLanguage: 'en-US' })).toBe('en')
+    expect(visit({ acceptLanguage: 'fr', country: 'SY' })).toBe('ar')
+    // Googlebot: no language, a US address. Nothing matches, so German.
+    expect(visit({ country: 'US' })).toBe('de')
+    expect(visit({ acceptLanguage: 'fr-FR', country: 'FR' })).toBe('de')
+    expect(visit({})).toBe('de')
   })
 
   it('formats euro amounts the way each language writes them', () => {

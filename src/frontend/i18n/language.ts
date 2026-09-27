@@ -75,7 +75,7 @@ const ARABIC_SPEAKING = new Set([
 /**
  * Language for a visitor's country, used only when the browser sent no
  * language we publish. Returns null for the rest of the world so the caller
- * can fall back to English rather than guessing.
+ * can fall back to the default language rather than guessing.
  */
 export const languageFromCountry = (country: string | null | undefined): Language | null => {
   if (!country) return null
@@ -113,4 +113,25 @@ export const languageFromAcceptLanguage = (header: string | null | undefined): L
   }
 
   return null
+}
+
+/**
+ * Where `/` should send a visitor, most reliable signal first: the language
+ * they chose last time, then a language their browser actually asked for,
+ * then a guess from their country. When none of those matches — a crawler
+ * such as Googlebot usually sends no language at all — the answer is the
+ * default language, the same page `x-default` names.
+ */
+export const preferredLanguage = ({
+  remembered,
+  acceptLanguage,
+  country,
+}: {
+  remembered: string | null | undefined
+  acceptLanguage: string | null | undefined
+  country: string | null | undefined
+}): Language => {
+  if (isLanguage(remembered)) return remembered
+
+  return languageFromAcceptLanguage(acceptLanguage) ?? languageFromCountry(country) ?? defaultLanguage
 }

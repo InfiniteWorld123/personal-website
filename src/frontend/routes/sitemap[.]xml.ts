@@ -3,7 +3,7 @@ import { site } from '#/frontend/content/site'
 import { fetchPublishedPostSlugs } from '#/frontend/features/blog/server/published-posts'
 import { fetchPublishedServiceSlugs } from '#/frontend/features/services-public/server/published-services'
 import { fetchPublishedProjectSlugs } from '#/frontend/features/work/server/published-projects'
-import { languages } from '#/frontend/i18n/language'
+import { defaultLanguage, languages } from '#/frontend/i18n/language'
 import { publicPath } from '#/frontend/lib/seo'
 
 // `/booking` is the page the whole site points at, and it was the only public
@@ -22,7 +22,7 @@ const buildSitemap = (paths: string[]) => {
           (alternate) =>
             `<xhtml:link rel="alternate" hreflang="${alternate}" href="${escapeXml(site.url + publicPath(alternate, path))}"/>`,
         ),
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(site.url + publicPath('en', path))}"/>`,
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(site.url + publicPath(defaultLanguage, path))}"/>`,
       ].join('')
 
       return `<url><loc>${escapeXml(site.url + publicPath(language, path))}</loc>${alternates}</url>`

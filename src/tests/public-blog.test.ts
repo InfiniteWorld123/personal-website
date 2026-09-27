@@ -243,7 +243,7 @@ describe('the archive head', () => {
     links: [
       { rel: 'canonical', href: 'https://x.test/en/blog' },
       { rel: 'alternate', hrefLang: 'de', href: 'https://x.test/de/blog' },
-      { rel: 'alternate', hrefLang: 'x-default', href: 'https://x.test/en/blog' },
+      { rel: 'alternate', hrefLang: 'x-default', href: 'https://x.test/de/blog' },
       { rel: 'alternate', type: 'application/rss+xml', href: 'https://x.test/rss/en.xml' },
     ],
     scripts: [],
@@ -255,7 +255,7 @@ describe('the archive head', () => {
     expect(paged.links).toEqual([
       { rel: 'canonical', href: 'https://x.test/en/blog?page=2' },
       { rel: 'alternate', hrefLang: 'de', href: 'https://x.test/de/blog?page=2' },
-      { rel: 'alternate', hrefLang: 'x-default', href: 'https://x.test/en/blog?page=2' },
+      { rel: 'alternate', hrefLang: 'x-default', href: 'https://x.test/de/blog?page=2' },
       { rel: 'alternate', type: 'application/rss+xml', href: 'https://x.test/rss/en.xml' },
     ])
     expect(paged.meta[0]).toEqual({ property: 'og:url', content: 'https://x.test/en/blog?page=2' })
