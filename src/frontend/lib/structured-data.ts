@@ -60,13 +60,17 @@ const AREA_SERVED = [{ '@type': 'Country', name: 'Germany' }, 'Worldwide (remote
 
 const priceRange = () => {
   const prices = getServicePrices()
-  const amounts = serviceOrder.map((slug) => prices[slug])
+  const amounts = serviceOrder.map((slug) => prices[slug]).filter((amount) => amount !== null)
   return `€${Math.min(...amounts)}–€${Math.max(...amounts)}`
 }
 
-/** One `Offer` per published service, priced as a starting price, not a fixed one. */
+/**
+ * One `Offer` per published service, priced as a starting price, not a fixed
+ * one — and without a price where the price is given on request.
+ */
 const offers = (language: Language) => {
   const { items } = getContent(language).services
+  const prices = getServicePrices()
 
   return serviceOrder.map((slug) => ({
     '@type': 'Offer',
@@ -74,11 +78,15 @@ const offers = (language: Language) => {
     description: items[slug].short,
     url: pageUrl(language, '/services'),
     availability: 'https://schema.org/InStock',
-    priceSpecification: {
-      '@type': 'PriceSpecification',
-      minPrice: getServicePrices()[slug],
-      priceCurrency: 'EUR',
-    },
+    ...(prices[slug] === null
+      ? {}
+      : {
+          priceSpecification: {
+            '@type': 'PriceSpecification',
+            minPrice: prices[slug],
+            priceCurrency: 'EUR',
+          },
+        }),
     itemOffered: {
       '@type': 'Service',
       name: items[slug].name,

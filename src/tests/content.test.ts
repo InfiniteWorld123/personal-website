@@ -77,11 +77,11 @@ describe('site content', () => {
     }
   })
 
-  it('states the published starting prices from docs/services', () => {
-    expect(servicePrices).toEqual({ websites: 990, shopify: 2490, software: 2990 })
-    expect(content.de.services.items.websites.price).toBe('ab 990 €')
+  it('states the published starting prices: packages from 790 €, software on request', () => {
+    expect(servicePrices).toEqual({ websites: 790, shopify: 2490, software: null })
+    expect(content.de.services.items.websites.price).toBe('ab 790 €')
     expect(content.en.services.items.shopify.price).toBe('from €2,490')
-    expect(content.ar.services.items.software.price).toBe('من 2.990 €')
+    expect(content.ar.services.items.software.price).toBe('السعر عند الطلب')
   })
 })
 

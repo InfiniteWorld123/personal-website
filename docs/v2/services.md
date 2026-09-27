@@ -120,6 +120,15 @@ The owner approved the lab with every recommendation (`1A 2A 3A 4A 5A 6A`), and 
 
 The lab also lists the new public words the site needs in all three languages — "einmalig", "/ Monat", "Preis auf Anfrage", "Alle Leistungen", the empty and error sentences — for the owner to approve with the design. When no starred service is live, the homepage section is not shown at all; when the list fails to load, the homepage hides the section silently and `/services` shows the error sentence with a retry.
 
+### `/services` as packages — 27 Sep 2026, owner's request
+
+The owner asked for a simpler page built around the three website packages from `Websites-Pakete-und-Preise` (790 €, 1.390 €, 1.990 €), with the online shop and custom software underneath for visitors who did not find what they need. The PDFs themselves are unchanged; the page shows only the simple parts, and the owner explains setup fees, care plans and instalments when a client writes.
+
+- **The price mode decides the layout — no new field, no migration.** A **fixed price** makes a service a package card at the top (name, who it is for, price with "einmalig", "Enthalten" with the included lines, **Paket anfragen** to contact, **Details** to its page). **Starting from** and **on request** services follow under "Nicht das Richtige dabei?" with one price line each. Both groups keep the one manual order. The editor's price choices say this.
+- Custom software is **on request** (the owner: a complex product cannot carry an "ab" price); the online shop stays **ab 2.490 €**.
+- New page copy in `services.packages.*` and `services.others.*` (DE/EN/AR) is editable in Dashboard → Content. The shared rule "Die Preise auf dieser Seite sind Startpunkte" became "Ein klarer Preis", and the search description names the packages.
+- This replaces choice 3A's alternating sections on `/services`. The homepage and the service pages keep their approved design; a package's page says "Enthalten" instead of "Das kann dazugehören".
+
 ## Purpose and boundaries
 
 Manage the services Yaman Warda offers from `/dashboard/services`, and show selected published services on the public site. This is an owner-operated catalogue, not a SaaS marketplace, checkout, subscription billing system, booking system, or lead-management workflow. There is no fixed limit of three services and no predefined service categories. The owner may change the catalogue in a few months without rebuilding unrelated modules.

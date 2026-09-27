@@ -87,7 +87,7 @@ export const getSite = () => ({
   linkedin: sharedText('site.linkedin', site.linkedin),
 })
 
-export const getServicePrices = (): Record<ServiceSlug, number> => {
+export const getServicePrices = (): Record<ServiceSlug, number | null> => {
   const resolved = { ...servicePrices }
 
   for (const slug of Object.keys(resolved) as ServiceSlug[]) {

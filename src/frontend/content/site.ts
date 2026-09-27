@@ -40,8 +40,10 @@ export const site = {
  */
 export const serviceOrder: ServiceSlug[] = ['software', 'websites', 'shopify']
 
-export const servicePrices: Record<ServiceSlug, number> = {
-  websites: 990,
+export const servicePrices: Record<ServiceSlug, number | null> = {
+  // The cheapest website package (27 Sep 2026).
+  websites: 790,
   shopify: 2490,
-  software: 2990,
+  // Priced to the project: no starting price is published.
+  software: null,
 }

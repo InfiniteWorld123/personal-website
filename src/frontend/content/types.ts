@@ -140,6 +140,10 @@ export type ServicesCopy = {
     /** Sends the reader on to the FAQ, where the rest of the rules are. */
     faqLink: string
   }
+  /** The fixed-price services, drawn as package cards at the top. */
+  packages: { eyebrow: string; title: string; sub: string; note: string; cta: string; details: string }
+  /** Everything else, under the packages: "starting from" and "on request" services. */
+  others: { title: string; sub: string }
   cta: { title: string; body: string; button: string }
 }
 

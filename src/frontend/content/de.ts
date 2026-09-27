@@ -168,7 +168,7 @@ export const de: SiteContent = {
     meta: {
       title: 'Leistungen · Websites, Online-Shops, individuelle Software',
       description:
-        'Websites ab 990 €, Online-Shops ab 2.490 € und individuelle Software ab 2.990 €. Gemeinsam klären wir, was für dein Vorhaben der richtige erste Schritt ist.',
+        'Website-Pakete ab 790 €, Online-Shops ab 2.490 € und individuelle Software nach Absprache. Gemeinsam klären wir, was für dein Vorhaben der richtige erste Schritt ist.',
     },
     eyebrow: 'Leistungen',
     title: 'Die richtige digitale Lösung für dein Vorhaben.',
@@ -196,7 +196,7 @@ export const de: SiteContent = {
           'Unterstützung beim Sortieren deiner Inhalte und bei der Veröffentlichung.',
         ],
         priceTitle: 'Startpreis',
-        price: 'ab 990 €',
+        price: 'ab 790 €',
         priceNote:
           'Der Startpreis passt zu einem kleinen, klaren Website-Projekt. Seitenumfang, eigene Gestaltung, zusätzliche Sprachen und Funktionen ordnen wir gemeinsam ein, bevor du ein schriftliches Angebot bekommst.',
       },
@@ -244,7 +244,7 @@ export const de: SiteContent = {
           'eine technische Grundlage, die sich später gezielt weiterentwickeln lässt.',
         ],
         priceTitle: 'Startpreis',
-        price: 'ab 2.990 €',
+        price: 'Preis auf Anfrage',
         priceNote:
           'Der Startpreis steht für ein kleines, klar abgegrenztes Software-Projekt. Bei mehreren Rollen, Integrationen, Zahlungen oder einem komplexen Ablauf brauche ich zuerst Zeit, um den richtigen Einstieg zu klären. Danach erhältst du ein schriftliches Angebot für den vereinbarten Umfang.',
       },
@@ -257,8 +257,8 @@ export const de: SiteContent = {
           body: 'Bevor es losgeht, halten wir schriftlich fest, was die erste Version leisten soll — und was nicht.',
         },
         {
-          title: 'Ein Preis für den passenden Umfang',
-          body: 'Die Preise auf dieser Seite sind Startpunkte. Den endgültigen Preis nenne ich dir, nachdem ich dein Vorhaben verstanden und den Umfang geprüft habe.',
+          title: 'Ein klarer Preis',
+          body: 'Die Pakete haben feste Preise. Für Online-Shops und Software nenne ich dir den Preis, nachdem ich dein Vorhaben verstanden habe.',
         },
         {
           title: 'Deine Konten bleiben deine',
@@ -270,6 +270,18 @@ export const de: SiteContent = {
         },
       ],
       faqLink: 'Fragen zu Ablauf, Preisen und Übergabe',
+    },
+    packages: {
+      eyebrow: 'Website-Pakete',
+      title: 'Drei Pakete, feste Preise.',
+      sub: 'Für lokale Betriebe, die bei Google gefunden werden und mehr Anfragen bekommen wollen. Du wählst, was zu deinem Betrieb passt.',
+      note: 'Einmalige Preise. Einrichtung, Betreuung nach dem Launch und Ratenzahlung erkläre ich dir im kostenlosen Gespräch.',
+      cta: 'Paket anfragen',
+      details: 'Details',
+    },
+    others: {
+      title: 'Nicht das Richtige dabei?',
+      sub: 'Für einen Online-Shop oder eine eigene Software bekommst du ein Angebot, das zu deinem Vorhaben passt.',
     },
     cta: {
       title: 'Noch nicht sicher, was du brauchst?',

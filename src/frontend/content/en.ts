@@ -167,7 +167,7 @@ export const en: SiteContent = {
     meta: {
       title: 'Services · Websites, online stores, custom software',
       description:
-        'Websites from €990, online stores from €2,490, and custom software from €2,990. Together, we work out the right first step for your project.',
+        'Website packages from €790, online stores from €2,490, and custom software priced to your project. Together, we work out the right first step for your project.',
     },
     eyebrow: 'Services',
     title: 'The right digital solution for your project.',
@@ -195,7 +195,7 @@ export const en: SiteContent = {
           'support to organise your content and publish the site.',
         ],
         priceTitle: 'Starting price',
-        price: 'from €990',
+        price: 'from €790',
         priceNote:
           'The starting price fits a small, clearly defined website project. We will assess page scope, bespoke design, additional languages, and functionality together before you receive a written proposal.',
       },
@@ -243,7 +243,7 @@ export const en: SiteContent = {
           'a technical foundation that can be developed further deliberately later.',
         ],
         priceTitle: 'Starting price',
-        price: 'from €2,990',
+        price: 'Price on request',
         priceNote:
           'The starting price represents a small, clearly bounded software project. If several roles, integrations, payments, or a complex workflow are involved, I first need time to work out the right starting point. You will then receive a written proposal for the agreed scope.',
       },
@@ -256,8 +256,8 @@ export const en: SiteContent = {
           body: 'Before we begin, we put in writing what the first version should do — and what it should not.',
         },
         {
-          title: 'A price for the right scope',
-          body: 'The prices on this page are starting points. I will give you the final price after I understand your project and review the scope.',
+          title: 'A clear price',
+          body: 'The packages have fixed prices. For online stores and software, I give you the price once I understand your project.',
         },
         {
           title: 'Your accounts stay yours',
@@ -269,6 +269,18 @@ export const en: SiteContent = {
         },
       ],
       faqLink: 'Questions about process, pricing, and handover',
+    },
+    packages: {
+      eyebrow: 'Website packages',
+      title: 'Three packages, fixed prices.',
+      sub: 'For local businesses that want to be found on Google and get more enquiries. You choose what fits your business.',
+      note: 'One-time prices. I explain setup, care after launch and paying in instalments in a free call.',
+      cta: 'Ask about this package',
+      details: 'Details',
+    },
+    others: {
+      title: 'Not what you need?',
+      sub: 'For an online store or custom software, you get a proposal that fits your project.',
     },
     cta: {
       title: 'Not sure what you need yet?',

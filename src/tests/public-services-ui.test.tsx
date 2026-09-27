@@ -105,27 +105,115 @@ describe('the homepage services section', () => {
 })
 
 describe('the /services list', () => {
-  it('shows each service with its price line, what is included and "See details"', () => {
+  const fixed = (amountCents: number) =>
+    ({ mode: 'fixed', currency: 'EUR', amountCents, period: 'one_time', promotion: null }) as const
+
+  it('draws fixed-price services as package cards, and the rest under "Nicht das Richtige dabei?"', () => {
     render(
       <ServicesListV2
-        data={{ source: 'v2', status: 'ok', items: [card('websites'), card('care', {
-          price: { mode: 'fixed', currency: 'EUR', amountCents: 4_990, period: 'monthly', promotion: { amountCents: 3_990, label: 'Angebot' } },
-        })], total: 2 }}
+        data={{
+          source: 'v2',
+          status: 'ok',
+          items: [
+            card('shopify', { price: { mode: 'from', currency: 'EUR', amountCents: 249_000, period: 'one_time', promotion: null } }),
+            card('gefunden-werden', { price: fixed(79_000) }),
+            card('software', { price: { mode: 'quote' } }),
+            card('vertrauen-gewinnen', { price: fixed(139_000) }),
+          ],
+          total: 4,
+        }}
         page={1}
         language="de"
       />,
     )
 
-    // "einmalig" belongs to the service page only (choice 4A).
-    expect(screen.getByText(/ab/).textContent).toBe('ab 990 €')
-    expect(screen.queryByText(/einmalig/)).toBeNull()
+    const packages = document.getElementById('websites')!
+    const others = screen.getByRole('heading', { name: 'Nicht das Richtige dabei?' }).closest('section')!
+
+    // The packages keep the owner's order among themselves, before everything else.
+    expect([...packages.querySelectorAll('article')].map((node) => node.id)).toEqual([
+      'gefunden-werden',
+      'vertrauen-gewinnen',
+    ])
+    expect([...others.querySelectorAll('article')].map((node) => node.id)).toEqual(['shopify', 'software'])
+    expect(packages.compareDocumentPosition(others) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // A package: its price with "einmalig", what it contains, a way to ask and its page.
+    // Prices are written with a non-breaking space before the euro sign.
+    const spaced = (node: Element) => node.textContent!.replace(/\s/gu, ' ')
+    expect(spaced(packages)).toContain('790 €')
+    expect(packages.textContent).toContain('einmalig')
+    expect(screen.getAllByText('Enthalten')).toHaveLength(2)
+    expect(screen.getByText('gefunden-werden one')).toBeTruthy()
+    expect(screen.getAllByRole('link', { name: /Paket anfragen/ })[0]!.getAttribute('href')).toBe('/de/contact')
+    expect(screen.getByRole('link', { name: 'Details: Gefunden-werden' }).getAttribute('href')).toBe(
+      '/de/services/gefunden-werden',
+    )
+    expect(packages.textContent).toContain(getContent('de').services.packages.note)
+
+    // The rest: one price line each, no list of contents, and their pages.
+    expect(spaced(others)).toContain('ab 2.490 €')
+    expect(others.textContent).toContain('Preis auf Anfrage')
+    expect(others.textContent).not.toContain('software one')
+    expect(screen.getByRole('link', { name: /Details ansehen: Software/ }).getAttribute('href')).toBe(
+      '/de/services/software',
+    )
+  })
+
+  it('leaves out the packages section, and the heading under it, when no service has a fixed price', () => {
+    render(
+      <ServicesListV2 data={{ source: 'v2', status: 'ok', items: [card('shopify'), card('software')], total: 2 }} page={1} language="en" />,
+    )
+
+    expect(screen.queryByText('Three packages, fixed prices.')).toBeNull()
+    expect(screen.queryByText('Not what you need?')).toBeNull()
+    expect(document.getElementById('shopify')).toBeTruthy()
+  })
+
+  it('shows only the packages when every service has a fixed price, with the offer struck through', () => {
+    render(
+      <ServicesListV2
+        data={{
+          source: 'v2',
+          status: 'ok',
+          items: [
+            card('care', {
+              price: { mode: 'fixed', currency: 'EUR', amountCents: 4_990, period: 'monthly', promotion: { amountCents: 3_990, label: 'Angebot' } },
+            }),
+          ],
+          total: 1,
+        }}
+        page={1}
+        language="de"
+      />,
+    )
+
     expect(screen.getByText('Angebot')).toBeTruthy()
     expect(screen.getByText('/ Monat')).toBeTruthy()
-    expect(screen.getAllByText('Das kann dazugehören')).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: /Details ansehen/ })[1]!.getAttribute('href')).toBe('/de/services/care')
-    // The address doubles as the anchor the hero pills link to.
-    expect(document.getElementById('websites')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /Mehr Leistungen laden/ })).toBeNull()
+    expect(document.querySelector('del')!.textContent!.replace(/\s/gu, ' ')).toContain('49,90 €')
+    expect(screen.queryByText('Nicht das Richtige dabei?')).toBeNull()
+  })
+
+  it('moves the packages anchor aside when a service on screen owns "websites"', () => {
+    render(
+      <ServicesListV2
+        data={{ source: 'v2', status: 'ok', items: [card('websites'), card('start', { price: fixed(79_000) })], total: 2 }}
+        page={1}
+        language="en"
+      />,
+    )
+
+    expect(document.querySelectorAll('#websites')).toHaveLength(1)
+    expect(document.getElementById('website-pakete')).toBeTruthy()
+  })
+
+  it('writes the package section in Arabic', () => {
+    render(
+      <ServicesListV2 data={{ source: 'v2', status: 'ok', items: [card('start', { price: fixed(79_000) })], total: 1 }} page={1} language="ar" />,
+    )
+
+    expect(screen.getByText('يشمل')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /اسأل عن هذه الباقة/ }).getAttribute('href')).toBe('/ar/contact')
   })
 
   it('offers "Load more" while more exist, and asks for the next page', () => {

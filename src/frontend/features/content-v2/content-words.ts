@@ -63,6 +63,7 @@ const WORDS: Record<string, string> = {
   layers: 'Layer', value: 'Value', updated: 'Last updated', tagline: 'Tagline', location: 'Location',
   email: 'Email', builtWith: 'Built-with line', faqLink: 'FAQ link', emailLabel: 'Email label',
   locationLabel: 'Location label', languagesLabel: 'Languages label', languages: 'Languages',
+  packages: 'Website packages', others: 'Other services', note: 'Small note', details: 'Details link',
   all: 'All-link', phone: 'Phone number', city: 'City', github: 'GitHub link', linkedin: 'LinkedIn link',
 }
 

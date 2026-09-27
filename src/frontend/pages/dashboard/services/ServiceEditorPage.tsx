@@ -698,9 +698,9 @@ export function ServiceEditorPage() {
                     <legend className="mb-2 p-0 text-[12px] font-semibold">How is the price shown?</legend>
                     {(
                       [
-                        ['fixed', 'Fixed price', 'One exact amount'],
-                        ['from', 'Starting from', 'The lowest price, e.g. “ab 990 €”'],
-                        ['quote', 'On request', 'No number is shown'],
+                        ['fixed', 'Fixed price', 'A package card at the top of Services'],
+                        ['from', 'Starting from', '“ab 2.490 €”, listed under the packages'],
+                        ['quote', 'On request', 'No number, listed under the packages'],
                       ] as const
                     ).map(([mode, label, note]) => (
                       <label

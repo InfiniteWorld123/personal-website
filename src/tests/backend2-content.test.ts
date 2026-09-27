@@ -202,7 +202,7 @@ describe('the release registry', () => {
 
   it('is a written list: a string added to the content tree is not editable by itself', () => {
     // Pinned. Changing it means somebody chose to change what is editable.
-    expect(registry.contentRegistry).toHaveLength(248)
+    expect(registry.contentRegistry).toHaveLength(256)
     expect(new Set(keys).size).toBe(keys.length)
   })
 

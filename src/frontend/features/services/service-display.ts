@@ -23,6 +23,8 @@ export const PRICE_WORDS: Record<
     regular: string
     offer: string
     includes: string
+    /** A fixed-price package lists what it contains, not what it may contain. */
+    included: string
     cta: string
   }
 > = {
@@ -36,6 +38,7 @@ export const PRICE_WORDS: Record<
     regular: 'Normalpreis',
     offer: 'Angebotspreis',
     includes: 'Das kann dazugehören',
+    included: 'Enthalten',
     cta: 'Gespräch anfragen',
   },
   en: {
@@ -48,6 +51,7 @@ export const PRICE_WORDS: Record<
     regular: 'Regular price',
     offer: 'Offer price',
     includes: 'This can include',
+    included: 'Included',
     cta: 'Request a call',
   },
   ar: {
@@ -60,6 +64,7 @@ export const PRICE_WORDS: Record<
     regular: 'السعر العادي',
     offer: 'سعر العرض',
     includes: 'يمكن أن يشمل',
+    included: 'يشمل',
     cta: 'اطلب مكالمة',
   },
 }

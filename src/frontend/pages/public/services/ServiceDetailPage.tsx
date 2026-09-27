@@ -62,7 +62,9 @@ export function ServiceDetailPage({ service }: { service: PublicServiceDetail })
 
           <div className="flex min-w-0 flex-col gap-10 lg:col-start-1 lg:row-start-1">
             <div data-reveal className="flex flex-col gap-3">
-              <h2 className="text-base font-medium">{PRICE_WORDS[language].includes}</h2>
+              <h2 className="text-base font-medium">
+                {service.price?.mode === 'fixed' ? PRICE_WORDS[language].included : PRICE_WORDS[language].includes}
+              </h2>
               <ul className="hairline-y flex flex-col">
                 {service.included.map((item, index) => (
                   <li key={index} className="text-foreground/80 py-2.5 text-sm leading-relaxed">
