@@ -22,6 +22,7 @@ export const PAGE_NAME: Record<string, string> = {
   about: 'About',
   blog: 'Blog page',
   faq: 'FAQ',
+  industries: 'Webdesign Erfurt pages',
   contact: 'Contact',
   stack: 'Stack',
   legal: 'Legal',
@@ -38,6 +39,7 @@ export const PAGE_PATH: Record<string, string> = {
   about: '/about',
   blog: '/blog',
   faq: '/faq',
+  industries: '/webdesign-erfurt',
   contact: '/contact',
   stack: '/stack',
   legal: '/impressum',
@@ -74,7 +76,14 @@ const WORDS: Record<string, string> = {
   locationLabel: 'Location label', languagesLabel: 'Languages label', languages: 'Languages',
   packages: 'Website packages', others: 'Other services', note: 'Small note', details: 'Details link',
   all: 'All-link', phone: 'Phone number', city: 'City',
+  hub: 'Hub page', cafes: 'Cafés & restaurants', hairdressers: 'Hairdressers & barbershops',
+  practices: 'Practices & therapists', trades: 'Trades', card: 'Card on the hub', needs: 'What customers look for',
+  local: 'Why local', cardsTitle: 'Cards heading', cardLink: 'Card link', faqTitle: 'Questions heading',
+  servicesLink: 'Services link', industriesLink: 'Webdesign Erfurt link',
 }
+
+/** Words that mean something else on the industry pages than elsewhere. */
+const INDUSTRY_WORDS: Record<string, string> = { packages: 'Which package fits', faq: 'Question' }
 
 const word = (part: string) =>
   WORDS[part] ?? part.replace(/([A-Z])/g, ' $1').replace(/^./, (first) => first.toUpperCase())
@@ -82,10 +91,16 @@ const word = (part: string) =>
 export const fieldLabel = (field: Pick<ContentFieldDefinition, 'key' | 'section'>): string => {
   if (field.key === 'site.links') return 'Profile links'
 
-  const parts = field.key.replace(/\[\]$/u, '').split('.').slice(1)
+  const industryPage = field.key.startsWith('industries.pages.')
+  // `industries.pages.cafes.title`: the industry is the section heading already.
+  const parts = field.key.replace(/\[\]$/u, '').split('.').slice(industryPage ? 3 : 1)
   const out: string[] = []
 
   parts.forEach((part, index) => {
+    if (industryPage && part in INDUSTRY_WORDS) {
+      out.push(INDUSTRY_WORDS[part])
+      return
+    }
     if (/^\d+$/u.test(part) && out.length > 0) {
       out[out.length - 1] = `${out[out.length - 1]} ${Number(part) + 1}`
       return

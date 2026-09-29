@@ -1,6 +1,10 @@
+import { industriesDe } from './industries.de'
 import type { SiteContent } from './types'
 
 export const ar: SiteContent = {
+  // German until the owner translates it in the Dashboard; the pages stay noindex until then.
+  industries: structuredClone(industriesDe),
+
   shell: {
     nav: [
       { label: 'الخدمات', to: '/$lang/services' },
@@ -22,6 +26,7 @@ export const ar: SiteContent = {
       more: [
         { label: 'أسئلة شائعة', to: '/$lang/faq' },
         { label: 'التقنيات', to: '/$lang/stack' },
+        { label: 'تصميم مواقع في إرفورت', to: '/$lang/webdesign-erfurt' },
       ],
       legal: [
         { label: 'بيانات الناشر', to: '/$lang/impressum' },
@@ -268,6 +273,7 @@ export const ar: SiteContent = {
         },
       ],
       faqLink: 'أسئلة عن العملية والأسعار والتسليم',
+      industriesLink: 'تصميم مواقع لأعمال في إرفورت',
     },
     packages: {
       eyebrow: 'باقات المواقع',

@@ -139,6 +139,8 @@ export type ServicesCopy = {
     items: Array<{ title: string; body: string }>
     /** Sends the reader on to the FAQ, where the rest of the rules are. */
     faqLink: string
+    /** Link to the industry pages under `/webdesign-erfurt`. */
+    industriesLink: string
   }
   /** The fixed-price services, drawn as package cards at the top. */
   packages: { eyebrow: string; title: string; sub: string; note: string; cta: string; details: string }
@@ -319,8 +321,44 @@ export type LegalCopy = {
   updated: string
 }
 
+/** The four industries under `/webdesign-erfurt`, in the order the hub lists them. */
+export type IndustryId = 'cafes' | 'hairdressers' | 'practices' | 'trades'
+
+/** One industry landing page (`/webdesign-erfurt/<slug>`). */
+export type IndustryCopy = {
+  meta: PageMeta
+  /** How the hub card and the breadcrumb name this page. */
+  card: { title: string; body: string }
+  title: string
+  intro: string
+  /** What visitors in this industry look for, as a list. */
+  needs: { title: string; items: string[] }
+  /** Which package fits. */
+  packages: { title: string; body: string }
+  /** A third paragraph section; only some industries have one. */
+  local?: { title: string; body: string }
+  faq: Array<{ question: string; answer: string }>
+}
+
+export type IndustriesCopy = {
+  hub: {
+    meta: PageMeta
+    eyebrow: string
+    title: string
+    intro: string
+    cardsTitle: string
+    cardLink: string
+  }
+  /** Shared by the hub and every industry page. */
+  faqTitle: string
+  servicesLink: string
+  cta: { title: string; body: string; button: string }
+  pages: Record<IndustryId, IndustryCopy>
+}
+
 export type SiteContent = {
   shell: ShellCopy
+  industries: IndustriesCopy
   home: HomeCopy
   services: ServicesCopy
   about: AboutCopy

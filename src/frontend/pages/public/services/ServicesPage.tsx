@@ -63,15 +63,26 @@ export function SharedRules({
             </div>
           ))}
         </div>
-        <Link
-          data-reveal
-          to="/$lang/faq"
-          params={{ lang: language }}
-          className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-1.5 text-sm font-medium"
-        >
-          {copy.faqLink}
-          <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
-        </Link>
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <Link
+            data-reveal
+            to="/$lang/faq"
+            params={{ lang: language }}
+            className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-1.5 text-sm font-medium"
+          >
+            {copy.faqLink}
+            <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
+          </Link>
+          <Link
+            data-reveal
+            to="/$lang/webdesign-erfurt"
+            params={{ lang: language }}
+            className="text-primary hover:text-primary/80 inline-flex w-fit items-center gap-1.5 text-sm font-medium"
+          >
+            {copy.industriesLink}
+            <ArrowRight className="btn-arrow size-4 rtl:-scale-x-100" />
+          </Link>
+        </div>
       </Container>
     </Section>
   )

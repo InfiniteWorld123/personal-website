@@ -236,18 +236,20 @@ describe('the release registry', () => {
   })
 
   it('covers every approved page and keeps the page framing of the other modules', () => {
-    for (const page of ['home', 'services', 'work', 'about', 'blog', 'faq', 'contact', 'stack', 'legal', 'shell', 'notFound', 'site']) {
+    for (const page of ['home', 'services', 'industries', 'work', 'about', 'blog', 'faq', 'contact', 'stack', 'legal', 'shell', 'notFound', 'site']) {
       expect(keys.some((key) => key.split('.')[0] === page), page).toBe(true)
     }
 
-    for (const key of ['services.meta.title', 'services.intro', 'work.intro', 'blog.meta.description', 'legal.privacy.title']) {
+    for (const key of ['industries.hub.meta.title', 'industries.pages.cafes.faq.2.answer', 'services.meta.title', 'services.intro', 'work.intro', 'blog.meta.description', 'legal.privacy.title']) {
       expect(keys, key).toContain(key)
     }
   })
 
   it('is a written list: a string added to the content tree is not editable by itself', () => {
     // Pinned. Changing it means somebody chose to change what is editable.
-    expect(registry.contentRegistry).toHaveLength(255)
+    // 330 since 29 Sep 2026: the /webdesign-erfurt landing pages (74 fields)
+    // and the services page's link to them.
+    expect(registry.contentRegistry).toHaveLength(330)
     expect(new Set(keys).size).toBe(keys.length)
   })
 

@@ -1,6 +1,9 @@
+import { industriesDe } from './industries.de'
 import type { SiteContent } from './types'
 
 export const de: SiteContent = {
+  industries: industriesDe,
+
   shell: {
     nav: [
       { label: 'Leistungen', to: '/$lang/services' },
@@ -22,6 +25,7 @@ export const de: SiteContent = {
       more: [
         { label: 'FAQ', to: '/$lang/faq' },
         { label: 'Stack', to: '/$lang/stack' },
+        { label: 'Webdesign Erfurt', to: '/$lang/webdesign-erfurt' },
       ],
       legal: [
         { label: 'Impressum', to: '/$lang/impressum' },
@@ -270,6 +274,7 @@ export const de: SiteContent = {
         },
       ],
       faqLink: 'Fragen zu Ablauf, Preisen und Übergabe',
+      industriesLink: 'Webdesign für Betriebe in Erfurt',
     },
     packages: {
       eyebrow: 'Website-Pakete',

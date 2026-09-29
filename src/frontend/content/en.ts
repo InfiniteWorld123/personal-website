@@ -1,6 +1,10 @@
+import { industriesDe } from './industries.de'
 import type { SiteContent } from './types'
 
 export const en: SiteContent = {
+  // German until the owner translates it in the Dashboard; the pages stay noindex until then.
+  industries: structuredClone(industriesDe),
+
   shell: {
     nav: [
       { label: 'Services', to: '/$lang/services' },
@@ -22,6 +26,7 @@ export const en: SiteContent = {
       more: [
         { label: 'FAQ', to: '/$lang/faq' },
         { label: 'Stack', to: '/$lang/stack' },
+        { label: 'Webdesign Erfurt', to: '/$lang/webdesign-erfurt' },
       ],
       legal: [
         { label: 'Impressum', to: '/$lang/impressum' },
@@ -269,6 +274,7 @@ export const en: SiteContent = {
         },
       ],
       faqLink: 'Questions about process, pricing, and handover',
+      industriesLink: 'Web design for businesses in Erfurt',
     },
     packages: {
       eyebrow: 'Website packages',

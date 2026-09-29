@@ -1,6 +1,11 @@
 import { getContent, site } from '#/frontend/content'
 import { type Language, defaultLanguage, languages } from '#/frontend/i18n/language'
-import { buildStructuredData, type StructuredArticle, type StructuredProject } from './structured-data'
+import {
+  buildStructuredData,
+  type StructuredArticle,
+  type StructuredLanding,
+  type StructuredProject,
+} from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
 
 export { publicPath }
@@ -45,6 +50,14 @@ type HeadInput = {
   projects?: StructuredProject[]
   /** Set on a blog post, which is an article rather than a website page. */
   article?: StructuredArticle
+  /** Set on an industry landing page: its questions and the service it sells. */
+  landing?: StructuredLanding
+  /**
+   * The languages this page is published in, when not all of them are. Only
+   * these are named as `hreflang` alternates, and x-default points at the
+   * first; a translation still in progress is not announced to search engines.
+   */
+  alternates?: readonly Language[]
 }
 
 /**
@@ -80,6 +93,8 @@ export function buildHead({
   noIndex,
   projects,
   article,
+  landing,
+  alternates = languages,
 }: HeadInput) {
   const canonical = pageUrl(language, path)
   const card = absolute(image ?? socialCard(language))
@@ -126,14 +141,18 @@ export function buildHead({
     ],
     links: [
       { rel: 'canonical', href: canonical },
-      ...languages.map((alternate) => ({
+      ...alternates.map((alternate) => ({
         rel: 'alternate',
         hrefLang: alternate,
         href: pageUrl(alternate, path),
       })),
       // x-default is the page for a visitor whose language we do not publish,
       // and the one `/` redirects to: German, the site's default language.
-      { rel: 'alternate', hrefLang: 'x-default', href: pageUrl(defaultLanguage, path) },
+      {
+        rel: 'alternate',
+        hrefLang: 'x-default',
+        href: pageUrl(alternates.includes(defaultLanguage) ? defaultLanguage : (alternates[0] ?? defaultLanguage), path),
+      },
       // Feed discovery, on the blog pages only: one feed per language, so the
       // reader who subscribes from the Arabic archive gets Arabic articles.
       ...(path.startsWith('/blog')
@@ -160,6 +179,7 @@ export function buildHead({
             image: card,
             projects,
             article,
+            landing,
           }),
         ),
       },

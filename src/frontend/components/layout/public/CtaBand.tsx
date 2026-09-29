@@ -15,11 +15,14 @@ export function CtaBand({
   body,
   button,
   alt,
+  to = '/$lang/contact',
 }: {
   title: string
   body?: string
   button: string
   alt?: string
+  /** Where the primary action leads; the contact form unless a page books a call instead. */
+  to?: '/$lang/contact' | '/$lang/booking'
 }) {
   const { language } = useLanguage()
   const ref = useReveal<HTMLElement>()
@@ -43,7 +46,7 @@ export function CtaBand({
             size="lg"
             className="rounded-full bg-primary px-7 text-primary-foreground"
           >
-            <Link to="/$lang/contact" params={{ lang: language }}>
+            <Link to={to} params={{ lang: language }}>
               {button}
               <ArrowRight className="btn-arrow rtl:-scale-x-100" />
             </Link>

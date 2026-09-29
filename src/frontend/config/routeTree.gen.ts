@@ -37,6 +37,8 @@ import { Route as LangBookingIndexRouteImport } from './../routes/$lang.booking.
 import { Route as LangBookingSlugRouteImport } from './../routes/$lang.booking.$slug'
 import { Route as LangServicesIndexRouteImport } from './../routes/$lang.services.index'
 import { Route as LangServicesSlugRouteImport } from './../routes/$lang.services.$slug'
+import { Route as LangWebdesignErfurtIndexRouteImport } from './../routes/$lang.webdesign-erfurt.index'
+import { Route as LangWebdesignErfurtIndustryRouteImport } from './../routes/$lang.webdesign-erfurt.$industry'
 import { Route as LangWorkIndexRouteImport } from './../routes/$lang.work.index'
 import { Route as LangWorkSlugRouteImport } from './../routes/$lang.work.$slug'
 import { Route as ApiV2SplatRouteImport } from './../routes/api.v2.$'
@@ -216,6 +218,18 @@ const LangServicesSlugRoute = LangServicesSlugRouteImport.update({
   path: '/services/$slug',
   getParentRoute: () => LangRoute,
 } as any)
+const LangWebdesignErfurtIndexRoute =
+  LangWebdesignErfurtIndexRouteImport.update({
+    id: '/webdesign-erfurt/',
+    path: '/webdesign-erfurt/',
+    getParentRoute: () => LangRoute,
+  } as any)
+const LangWebdesignErfurtIndustryRoute =
+  LangWebdesignErfurtIndustryRouteImport.update({
+    id: '/webdesign-erfurt/$industry',
+    path: '/webdesign-erfurt/$industry',
+    getParentRoute: () => LangRoute,
+  } as any)
 const LangWorkIndexRoute = LangWorkIndexRouteImport.update({
   id: '/work/',
   path: '/work/',
@@ -448,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
+  '/$lang/webdesign-erfurt/$industry': typeof LangWebdesignErfurtIndustryRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
@@ -472,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/services/': typeof LangServicesIndexRoute
+  '/$lang/webdesign-erfurt/': typeof LangWebdesignErfurtIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
@@ -513,6 +529,7 @@ export interface FileRoutesByTo {
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
+  '/$lang/webdesign-erfurt/$industry': typeof LangWebdesignErfurtIndustryRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
@@ -537,6 +554,7 @@ export interface FileRoutesByTo {
   '/$lang/blog': typeof LangBlogIndexRoute
   '/$lang/booking': typeof LangBookingIndexRoute
   '/$lang/services': typeof LangServicesIndexRoute
+  '/$lang/webdesign-erfurt': typeof LangWebdesignErfurtIndexRoute
   '/$lang/work': typeof LangWorkIndexRoute
   '/dashboard/assistant': typeof DashboardAssistantIndexRoute
   '/dashboard/blog': typeof DashboardBlogIndexRoute
@@ -582,6 +600,7 @@ export interface FileRoutesById {
   '/$lang/blog/$slug': typeof LangBlogSlugRoute
   '/$lang/booking/$slug': typeof LangBookingSlugRoute
   '/$lang/services/$slug': typeof LangServicesSlugRoute
+  '/$lang/webdesign-erfurt/$industry': typeof LangWebdesignErfurtIndustryRoute
   '/$lang/work/$slug': typeof LangWorkSlugRoute
   '/api/v2/$': typeof ApiV2SplatRoute
   '/dashboard/assistant/settings': typeof DashboardAssistantSettingsRoute
@@ -606,6 +625,7 @@ export interface FileRoutesById {
   '/$lang/blog/': typeof LangBlogIndexRoute
   '/$lang/booking/': typeof LangBookingIndexRoute
   '/$lang/services/': typeof LangServicesIndexRoute
+  '/$lang/webdesign-erfurt/': typeof LangWebdesignErfurtIndexRoute
   '/$lang/work/': typeof LangWorkIndexRoute
   '/dashboard/assistant/': typeof DashboardAssistantIndexRoute
   '/dashboard/blog/': typeof DashboardBlogIndexRoute
@@ -652,6 +672,7 @@ export interface FileRouteTypes {
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
+    | '/$lang/webdesign-erfurt/$industry'
     | '/$lang/work/$slug'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
@@ -676,6 +697,7 @@ export interface FileRouteTypes {
     | '/$lang/blog/'
     | '/$lang/booking/'
     | '/$lang/services/'
+    | '/$lang/webdesign-erfurt/'
     | '/$lang/work/'
     | '/dashboard/assistant/'
     | '/dashboard/blog/'
@@ -717,6 +739,7 @@ export interface FileRouteTypes {
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
+    | '/$lang/webdesign-erfurt/$industry'
     | '/$lang/work/$slug'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
@@ -741,6 +764,7 @@ export interface FileRouteTypes {
     | '/$lang/blog'
     | '/$lang/booking'
     | '/$lang/services'
+    | '/$lang/webdesign-erfurt'
     | '/$lang/work'
     | '/dashboard/assistant'
     | '/dashboard/blog'
@@ -785,6 +809,7 @@ export interface FileRouteTypes {
     | '/$lang/blog/$slug'
     | '/$lang/booking/$slug'
     | '/$lang/services/$slug'
+    | '/$lang/webdesign-erfurt/$industry'
     | '/$lang/work/$slug'
     | '/api/v2/$'
     | '/dashboard/assistant/settings'
@@ -809,6 +834,7 @@ export interface FileRouteTypes {
     | '/$lang/blog/'
     | '/$lang/booking/'
     | '/$lang/services/'
+    | '/$lang/webdesign-erfurt/'
     | '/$lang/work/'
     | '/dashboard/assistant/'
     | '/dashboard/blog/'
@@ -1038,6 +1064,20 @@ declare module '@tanstack/react-router' {
       path: '/services/$slug'
       fullPath: '/$lang/services/$slug'
       preLoaderRoute: typeof LangServicesSlugRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/webdesign-erfurt/': {
+      id: '/$lang/webdesign-erfurt/'
+      path: '/webdesign-erfurt'
+      fullPath: '/$lang/webdesign-erfurt/'
+      preLoaderRoute: typeof LangWebdesignErfurtIndexRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/webdesign-erfurt/$industry': {
+      id: '/$lang/webdesign-erfurt/$industry'
+      path: '/webdesign-erfurt/$industry'
+      fullPath: '/$lang/webdesign-erfurt/$industry'
+      preLoaderRoute: typeof LangWebdesignErfurtIndustryRouteImport
       parentRoute: typeof LangRoute
     }
     '/$lang/work/': {
@@ -1320,10 +1360,12 @@ interface LangRouteChildren {
   LangBlogSlugRoute: typeof LangBlogSlugRoute
   LangBookingSlugRoute: typeof LangBookingSlugRoute
   LangServicesSlugRoute: typeof LangServicesSlugRoute
+  LangWebdesignErfurtIndustryRoute: typeof LangWebdesignErfurtIndustryRoute
   LangWorkSlugRoute: typeof LangWorkSlugRoute
   LangBlogIndexRoute: typeof LangBlogIndexRoute
   LangBookingIndexRoute: typeof LangBookingIndexRoute
   LangServicesIndexRoute: typeof LangServicesIndexRoute
+  LangWebdesignErfurtIndexRoute: typeof LangWebdesignErfurtIndexRoute
   LangWorkIndexRoute: typeof LangWorkIndexRoute
   LangBookingManageReferenceRoute: typeof LangBookingManageReferenceRoute
   LangBookingRoomReferenceRoute: typeof LangBookingRoomReferenceRoute
@@ -1340,10 +1382,12 @@ const LangRouteChildren: LangRouteChildren = {
   LangBlogSlugRoute: LangBlogSlugRoute,
   LangBookingSlugRoute: LangBookingSlugRoute,
   LangServicesSlugRoute: LangServicesSlugRoute,
+  LangWebdesignErfurtIndustryRoute: LangWebdesignErfurtIndustryRoute,
   LangWorkSlugRoute: LangWorkSlugRoute,
   LangBlogIndexRoute: LangBlogIndexRoute,
   LangBookingIndexRoute: LangBookingIndexRoute,
   LangServicesIndexRoute: LangServicesIndexRoute,
+  LangWebdesignErfurtIndexRoute: LangWebdesignErfurtIndexRoute,
   LangWorkIndexRoute: LangWorkIndexRoute,
   LangBookingManageReferenceRoute: LangBookingManageReferenceRoute,
   LangBookingRoomReferenceRoute: LangBookingRoomReferenceRoute,

@@ -32,6 +32,30 @@ export type StructuredArticle = {
 }
 
 /**
+ * What the graph needs to know about an industry landing page
+ * (`/webdesign-erfurt`, `/webdesign-erfurt/<slug>`).
+ */
+export type StructuredLanding = {
+  /** The section's name in the breadcrumb, e.g. "Webdesign Erfurt". */
+  section: string
+  /** The page's own name in the breadcrumb; absent on the hub. */
+  leaf?: string
+  /** The service the page sells. */
+  service: { name: string; description: string }
+  /** The questions shown on the page; empty on the hub. */
+  faq: Array<{ question: string; answer: string }>
+}
+
+/**
+ * The area a local landing page is about: the city and the state, not the
+ * whole country the business node states.
+ */
+const LOCAL_AREA = [
+  { '@type': 'City', name: 'Erfurt' },
+  { '@type': 'State', name: 'Thüringen' },
+]
+
+/**
  * JSON-LD for the public pages. Every page carries the same three stable
  * nodes — the person, the one-man business, and the website — plus a node
  * for the page itself. Google merges nodes by `@id`, so the identity is
@@ -181,7 +205,8 @@ const articleNode = (language: Language, path: string, article: StructuredArticl
   isPartOf: { '@id': WEBSITE },
 })
 
-const pageType = (path: string) => {
+const pageType = (path: string, landing: StructuredLanding | undefined) => {
+  if (landing) return landing.faq.length > 0 ? 'FAQPage' : 'CollectionPage'
   if (path === '/about') return 'AboutPage'
   if (path === '/contact') return 'ContactPage'
   if (path === '/work') return 'CollectionPage'
@@ -200,6 +225,7 @@ const breadcrumb = (
   title: string,
   projects: StructuredProject[],
   article: StructuredArticle | undefined,
+  landing: StructuredLanding | undefined,
 ) => {
   if (path === '/') return null
 
@@ -209,9 +235,12 @@ const breadcrumb = (
   // Pages outside the main nav have no label to borrow; the part of the
   // <title> before the separator is the page's own short name.
   const sectionLabel =
-    shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ?? title.split(' · ')[0]
+    landing?.section ??
+    shell.nav.find((item) => item.to === `/$lang${sectionPath}`)?.label ??
+    title.split(' · ')[0]
   // The leaf reads as the thing itself, not as the page's full <title>.
-  const leaf = article?.title ?? projects.find((project) => project.slug === slug)?.name ?? title
+  const leaf =
+    landing?.leaf ?? article?.title ?? projects.find((project) => project.slug === slug)?.name ?? title
 
   const trail = [
     { name: site.name, item: pageUrl(language, '/') },
@@ -246,8 +275,16 @@ const mainEntity = (
   projects: StructuredProject[],
   article: StructuredArticle | undefined,
   image: string,
+  landing: StructuredLanding | undefined,
 ) => {
   if (article) return articleNode(language, path, article, image)
+  if (landing && landing.faq.length > 0) {
+    return landing.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    }))
+  }
 
   if (path === '/about') return { '@id': PERSON }
   if (path === '/contact') return { '@id': BUSINESS }
@@ -288,7 +325,22 @@ type PageInput = {
   projects?: StructuredProject[]
   /** Set on a blog post, which is an article rather than a website page. */
   article?: StructuredArticle
+  /** Set on an industry landing page. */
+  landing?: StructuredLanding
 }
+
+/** The local service an industry landing page sells, provided by the business node. */
+const landingService = (canonical: string, landing: StructuredLanding) => ({
+  '@type': 'Service',
+  '@id': `${canonical}#service`,
+  name: landing.service.name,
+  description: landing.service.description,
+  serviceType: 'Webdesign',
+  url: canonical,
+  provider: { '@id': BUSINESS },
+  areaServed: LOCAL_AREA,
+  availableLanguage: spokenLanguages,
+})
 
 /** The `@graph` for one public page, ready to be serialised into a script tag. */
 export function buildStructuredData({
@@ -300,12 +352,13 @@ export function buildStructuredData({
   image,
   projects = [],
   article,
+  landing,
 }: PageInput) {
-  const entity = mainEntity(language, path, projects, article, image)
-  const trail = breadcrumb(language, path, title, projects, article)
+  const entity = mainEntity(language, path, projects, article, image, landing)
+  const trail = breadcrumb(language, path, title, projects, article, landing)
 
   const page = {
-    '@type': pageType(path),
+    '@type': pageType(path, landing),
     '@id': canonical,
     url: canonical,
     name: title,
@@ -324,6 +377,7 @@ export function buildStructuredData({
       ...siteNodes(language),
       page,
       ...(trail ? [{ ...trail, '@id': `${canonical}#breadcrumb` }] : []),
+      ...(landing ? [landingService(canonical, landing)] : []),
     ],
   }
 }
