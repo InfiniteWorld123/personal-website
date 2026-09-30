@@ -50,26 +50,34 @@ const smooth = (points: Array<[number, number]>): string =>
     })
     .join('')
 
-/** A visually hidden table of the same numbers, for screen readers. */
+/**
+ * A visually hidden table of the same numbers, for screen readers.
+ *
+ * `sr-only` sits on a wrapper, not on the table: a table ignores the 1px
+ * height, so a long one (the 168-hour week) stretched the scroll area and left
+ * a screen of empty space under the Overview.
+ */
 export function HiddenTable({ caption, head, rows }: { caption: string; head: [string, string]; rows: Array<[string, string]> }) {
   return (
-    <table className="sr-only">
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{head[0]}</th>
-          <th scope="col">{head[1]}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(([label, value]) => (
-          <tr key={label}>
-            <th scope="row">{label}</th>
-            <td>{value}</td>
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{head[0]}</th>
+            <th scope="col">{head[1]}</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(([label, value]) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
