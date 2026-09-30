@@ -263,6 +263,33 @@ describe('what the V2 schema accepts', () => {
     expect(tailOfIds('  <a@b>  ', 100)).toBe('<a@b>')
   })
 
+  it('carries the Reply-To address a form relay names, parsed from the real letter', async () => {
+    const raw = [
+      'From: Website Form <noreply@forms.example>',
+      'Reply-To: "Lena Fischer" <lena@example.com>',
+      'To: info@yamanwarda.de',
+      'Subject: New enquiry',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      'Please call me back.',
+      '',
+    ].join('\r\n')
+    const parsed = await PostalMime.parse(raw)
+    const letter = JSON.parse(buildPayload(message(), parsed).body)
+
+    expect(letter).toMatchObject({ from: 'noreply@forms.example', replyTo: 'lena@example.com' })
+  })
+
+  it('takes the first address of a Reply-To group, and sends none when there is none', () => {
+    const grouped = buildPayload(message(), {
+      replyTo: [{ name: 'Team', group: [{ name: '', address: '' }, { name: 'Lena', address: 'lena@example.com' }] }],
+    })
+
+    expect(JSON.parse(grouped.body).replyTo).toBe('lena@example.com')
+    expect(JSON.parse(buildPayload(message(), { from: { address: 'anna@example.com' } }).body).replyTo).toBe('')
+    expect(JSON.parse(buildPayload(message(), null).body).replyTo).toBe('')
+  })
+
   it('clamps the text, the HTML and an overlong Message-ID', () => {
     const { body } = buildPayload(message({ 'message-id': `<${'x'.repeat(2000)}@example.com>` }), {
       text: 't'.repeat(3_000_000),

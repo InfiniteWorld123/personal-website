@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { isEmailAddress } from './email-address.contract'
 import type { Page } from './pagination.contract'
 import {
   type RichTextDoc,
@@ -177,6 +178,10 @@ const Uuid = v.pipe(v.string(), v.uuid('That is not a valid id'))
 /**
  * One address. Deliberately plain: a display name, a list, or anything with a
  * comma is refused, because this mailbox writes to one person at a time.
+ *
+ * The same rule mail arriving is read with (`email-address.contract.ts`), so
+ * the owner can always answer an address the Inbox let in — an apostrophe, a
+ * `--` or umlauts in the domain included.
  */
 export const EmailAddressSchema = v.pipe(
   v.string('Enter an email address'),
@@ -184,8 +189,10 @@ export const EmailAddressSchema = v.pipe(
   v.toLowerCase(),
   v.minLength(1, 'Enter an email address'),
   v.maxLength(INBOX_LIMITS.email, 'That email address is too long'),
-  v.email('Enter one valid email address'),
-  v.check((value) => !/[,;<>\s]/u.test(value), 'Enter one address only'),
+  v.check(
+    (value) => value.length > INBOX_LIMITS.email || isEmailAddress(value),
+    (issue) => (/[,;\s]/u.test(String(issue.input)) ? 'Enter one address only' : 'Enter one valid email address'),
+  ),
 )
 
 export const SubjectSchema = v.pipe(
@@ -291,7 +298,12 @@ export const CreateDraftSchema = v.object({
   conversationId: v.optional(v.nullable(Uuid), null),
   toEmail: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(INBOX_LIMITS.email)), ''),
   subject: v.optional(SubjectSchema, ''),
-  language: v.optional(v.picklist(INBOX_LANGUAGES), 'en'),
+  /**
+   * Left out, a reply is written in the language the conversation was in —
+   * the page a Contact message was sent from, the language a visitor booked
+   * in — and a new message in English.
+   */
+  language: v.optional(v.picklist(INBOX_LANGUAGES)),
 })
 
 /**
@@ -363,6 +375,12 @@ export type InboundPayload = {
   to: string[]
   from: string
   fromName?: string
+  /**
+   * The letter's Reply-To address, when it has one. A form relay sends from
+   * `noreply@…` and names the person in Reply-To; that is who an answer is
+   * for. Optional: an older Worker does not send it.
+   */
+  replyTo?: string
   subject?: string
   text?: string
   html?: string

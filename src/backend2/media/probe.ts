@@ -10,8 +10,10 @@ import type { MediaKind } from '../contracts/media.contract'
  * declared type — the value stored in `v2_media_assets.content_type` is the one
  * decided here.
  *
- * Only the head of the file is needed: every signature below, and every image
- * dimension, lives in the first few kilobytes.
+ * The head of the file is enough for every signature below. Given the whole
+ * file — as the Inbox and the Contact form have it — the Office checks also
+ * read the directory a file keeps at its end, and a JPEG's frame header is
+ * found however much camera data comes first.
  */
 
 export type ProbeResult = {
@@ -45,6 +47,9 @@ const u32be = (bytes: Uint8Array, offset: number): number =>
   0
 
 const u16le = (bytes: Uint8Array, offset: number): number => bytes[offset]! | (bytes[offset + 1]! << 8)
+
+const u32le = (bytes: Uint8Array, offset: number): number =>
+  (bytes[offset]! | (bytes[offset + 1]! << 8) | (bytes[offset + 2]! << 16) | (bytes[offset + 3]! << 24)) >>> 0
 
 const u24le = (bytes: Uint8Array, offset: number): number =>
   bytes[offset]! | (bytes[offset + 1]! << 8) | (bytes[offset + 2]! << 16)
@@ -289,13 +294,59 @@ const doc = (contentType: string, extension: string): ProbeResult => ({
 })
 
 /**
- * What is inside the archive, read from the head rather than unzipped.
+ * The entry names of a whole ZIP, read from its central directory — the list
+ * every archive keeps at its end. Null when the bytes given do not reach it
+ * (a Media upload hands over only the head). Names only: nothing is unpacked.
+ */
+const zipEntryNames = (bytes: Uint8Array): string[] | null => {
+  // The end record is 22 bytes plus a comment of at most 64 KB.
+  const lowest = Math.max(0, bytes.length - 22 - 0xffff)
+
+  for (let end = bytes.length - 22; end >= lowest; end -= 1) {
+    if (u32le(bytes, end) !== 0x06054b50) continue
+
+    const count = u16le(bytes, end + 10)
+    const size = u32le(bytes, end + 12)
+    const start = u32le(bytes, end + 16)
+
+    if (start + size > end) continue
+
+    const names: string[] = []
+    let offset = start
+
+    for (let index = 0; index < count && offset + 46 <= end; index += 1) {
+      if (u32le(bytes, offset) !== 0x02014b50) return null
+
+      const nameLength = u16le(bytes, offset + 28)
+
+      names.push(ascii(bytes, offset + 46, nameLength))
+      offset += 46 + nameLength + u16le(bytes, offset + 30) + u16le(bytes, offset + 32)
+    }
+
+    return names
+  }
+
+  return null
+}
+
+const OOXML_FOLDERS = [
+  { folder: 'word/', contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', extension: 'docx' },
+  { folder: 'xl/', contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', extension: 'xlsx' },
+  { folder: 'ppt/', contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', extension: 'pptx' },
+] as const
+
+/**
+ * What is inside the archive, read rather than unzipped.
  *
  * A `.docx` is a ZIP whose entries start with `word/`; `.xlsx` uses `xl/` and
  * `.pptx` uses `ppt/`. OpenDocument is easier still — it stores an uncompressed
  * `mimetype` entry first, so its media type is literally sitting in the file's
  * first hundred bytes. Both facts are readable without a ZIP decoder, which is
  * the point: no decompression means no decompression bomb.
+ *
+ * Given the whole file, the central directory at its end decides: a Word file
+ * with pictures, or one written by LibreOffice, can list `[Content_Types].xml`
+ * or `word/` far beyond the head. Given only the head, the head decides.
  */
 const probeZipContainer = (bytes: Uint8Array): ProbeResult | null => {
   if (!ZIP_SIGNATURES.some((signature) => startsWith(bytes, signature))) return null
@@ -311,6 +362,14 @@ const probeZipContainer = (bytes: Uint8Array): ProbeResult | null => {
     if (family === 'text') return doc('application/vnd.oasis.opendocument.text', 'odt')
     if (family === 'spreadsheet') return doc('application/vnd.oasis.opendocument.spreadsheet', 'ods')
     if (family === 'presentation') return doc('application/vnd.oasis.opendocument.presentation', 'odp')
+  }
+
+  const names = zipEntryNames(bytes)
+
+  if (names?.includes('[Content_Types].xml')) {
+    const office = OOXML_FOLDERS.find(({ folder }) => names.some((name) => name.startsWith(folder)))
+
+    if (office) return doc(office.contentType, office.extension)
   }
 
   if (head.includes('[Content_Types].xml')) {
@@ -340,17 +399,94 @@ const probeZipContainer = (bytes: Uint8Array): ProbeResult | null => {
 const OLE2 = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
 
 /**
+ * The stream names in an OLE2 file's directory, found where the header says
+ * the directory is and followed along its chain of sectors.
+ *
+ * Word on a Mac writes the directory at the very end of the file, so a scan
+ * of the first kilobytes finds nothing there. Every step is bounded by the
+ * bytes given and by a step count, so a broken chain ends the walk rather
+ * than looping. Empty when the bytes do not reach the directory.
+ */
+const oleStreamNames = (bytes: Uint8Array): Set<string> => {
+  const names = new Set<string>()
+
+  if (bytes.length < 512) return names
+
+  const shift = u16le(bytes, 30)
+
+  // Version 3 files use 512-byte sectors, version 4 files 4096-byte ones.
+  if (shift !== 9 && shift !== 12) return names
+
+  const size = 1 << shift
+  const perSector = size / 4
+  const sectorOffset = (sector: number): number => (sector + 1) * size
+  const readable = (sector: number): boolean => sector < 0xfffffffa && sectorOffset(sector) + size <= bytes.length
+
+  // The FAT's own sectors: 109 named in the header, the rest in a DIFAT chain.
+  const fat: number[] = []
+
+  for (let index = 0; index < 109; index += 1) fat.push(u32le(bytes, 76 + index * 4))
+
+  for (let sector = u32le(bytes, 68), steps = 0; readable(sector) && steps < 1000; steps += 1) {
+    for (let index = 0; index < perSector - 1; index += 1) fat.push(u32le(bytes, sectorOffset(sector) + index * 4))
+
+    sector = u32le(bytes, sectorOffset(sector) + (perSector - 1) * 4)
+  }
+
+  const next = (sector: number): number => {
+    const fatSector = fat[Math.floor(sector / perSector)]
+
+    return fatSector !== undefined && readable(fatSector)
+      ? u32le(bytes, sectorOffset(fatSector) + (sector % perSector) * 4)
+      : 0xfffffffe
+  }
+
+  const limit = Math.ceil(bytes.length / size)
+
+  for (let sector = u32le(bytes, 48), steps = 0; readable(sector) && steps < limit; steps += 1) {
+    for (let entry = sectorOffset(sector); entry < sectorOffset(sector) + size; entry += 128) {
+      // The name's length in bytes, its terminating zero included.
+      const length = u16le(bytes, entry + 64)
+
+      if (length < 4 || length > 64 || length % 2 !== 0) continue
+
+      let name = ''
+
+      for (let offset = 0; offset < length - 2; offset += 2) name += String.fromCharCode(u16le(bytes, entry + offset))
+
+      names.add(name)
+    }
+
+    sector = next(sector)
+  }
+
+  return names
+}
+
+/**
  * `.doc`, `.xls` and `.ppt` share one signature, so the family is proved from
  * the bytes and the application is read from the stream names beside it.
  *
  * Those names are UTF-16, so `WordDocument` appears as `W\0o\0r\0d\0…`. The
- * directory usually sits in the first sectors; when it does not, the extension
- * decides — and only between these three, because the file has already been
- * proved to be an OLE2 compound document. That is the honest boundary: the
- * format is verified, the flavour is a hint.
+ * directory is read where the header says it is; when the bytes given do not
+ * reach it, the first sectors are searched; and when that finds nothing, the
+ * extension decides — and only between these three, because the file has
+ * already been proved to be an OLE2 compound document. That is the honest
+ * boundary: the format is verified, the flavour is a hint.
  */
 const probeOle2 = (bytes: Uint8Array, hint?: string): ProbeResult | null => {
   if (!startsWith(bytes, OLE2)) return null
+
+  // The directory itself, when the bytes reach it: exact stream names, wherever they sit.
+  const streams = oleStreamNames(bytes)
+
+  if (streams.has('WordDocument')) return doc('application/msword', 'doc')
+  if (streams.has('Workbook') || streams.has('Book')) return doc('application/vnd.ms-excel', 'xls')
+  if (streams.has('PowerPoint Document')) return doc('application/vnd.ms-powerpoint', 'ppt')
+
+  // A directory that was read whole and names none of them is no Office
+  // document, whatever its text or its name says.
+  if (streams.has('Root Entry')) return null
 
   // Strip the interleaved zero bytes so the stream names can be searched as ASCII.
   let wide = ''

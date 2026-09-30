@@ -496,7 +496,7 @@ export const en: SiteContent = {
       sending: 'Sending …',
       sent: {
         title: 'Thank you, the request is in.',
-        body: 'I will review your request and reply through the contact method you prefer.',
+        body: 'I will review your request and get back to you.',
       },
       error: 'That did not work. Please try again or email me directly.',
       errors: {

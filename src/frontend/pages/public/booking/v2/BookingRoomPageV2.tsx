@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Check, Mail, Phone, X } from 'lucide-react'
-import type { VideoPreflight } from '#/backend2/contracts/booking.contract'
+import type { VideoAccess, VideoPreflight } from '#/backend2/contracts/booking.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Button } from '#/frontend/components/ui/button'
 import { getSite } from '#/frontend/content'
@@ -12,6 +12,7 @@ import { errorCode, videoJoin, videoPreflight } from '#/frontend/features/bookin
 import { type BookingV2Copy, getBookingV2Copy } from '#/frontend/features/booking/v2/booking-v2-copy'
 import { zoneLabel } from '#/frontend/features/booking/v2/format'
 import { callCopy } from '#/frontend/features/call/call-copy'
+import type { CallExit } from '#/frontend/features/call/VideoCall'
 import { useMedia } from '#/frontend/features/call/use-media'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import { cn } from '#/frontend/lib/utils'
@@ -20,14 +21,34 @@ import { cn } from '#/frontend/lib/utils'
  * The visitor's video link, served by Backend2 (approved choice 5A).
  *
  * Before the start: a waiting room with a countdown and a camera and
- * microphone check, then the call opens by itself. The call screen itself
- * needs Cloudflare RealtimeKit, which is not switched on — so at the start
- * this page says so plainly and offers email and phone instead. It never
- * pretends to hold a call it cannot hold. Nothing is recorded or sent while
- * the camera preview runs; the preview stays in this browser.
+ * microphone check, then the call opens by itself. Where the video service is
+ * not switched on, the start says so plainly and offers email and phone
+ * instead — it never pretends to hold a call it cannot hold. Nothing is
+ * recorded or sent while the camera preview runs; the preview stays in this
+ * browser. After the call, whatever ended it decides the next screen: leaving
+ * offers to join again, the owner ending it says goodbye.
  */
 
-type Phase = 'waiting' | 'entering' | 'unavailable' | 'ended' | 'closed' | 'cancelled' | 'not_video' | 'invalid'
+type Phase =
+  | 'waiting'
+  | 'entering'
+  | 'call'
+  | 'left'
+  | 'elsewhere'
+  | 'lost'
+  | 'failed'
+  | 'unavailable'
+  | 'ended'
+  | 'closed'
+  | 'cancelled'
+  | 'not_video'
+  | 'invalid'
+
+/** The call screen and its SDK load only when a call opens. */
+const VideoCall = lazy(() => import('#/frontend/features/call/VideoCall').then((module) => ({ default: module.VideoCall })))
+
+/** Who the visitor meets — the first name the site signs with. */
+const HOST_NAME = 'Yaman'
 
 const phaseOf = (state: VideoPreflight['state']): Phase =>
   state === 'early' ? 'waiting' : state === 'open' ? 'entering' : state
@@ -43,6 +64,7 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
     staleTime: Number.POSITIVE_INFINITY,
   })
   const [phase, setPhase] = useState<Phase | null>(null)
+  const [access, setAccess] = useState<VideoAccess | null>(null)
   const joining = useRef(false)
   const refetchPreflight = preflight.refetch
 
@@ -59,9 +81,10 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
 
     joining.current = true
     videoJoin(reference, token)
-      // A seat was issued, but the screen that would hold the call waits for
-      // RealtimeKit. Saying so is the honest answer; a fake call is not.
-      .then(() => setPhase('unavailable'))
+      .then((issued) => {
+        setAccess(issued)
+        setPhase('call')
+      })
       .catch((error: unknown) => {
         const refused = errorCode(error)
 
@@ -80,11 +103,31 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
       })
   }, [current, reference, token, refetchPreflight])
 
+  const afterCall = (why: CallExit) => {
+    setAccess(null)
+
+    if (why === 'left') return setPhase('left')
+    if (why === 'failed' || why === 'lost') return setPhase(why)
+
+    // Removed: the owner ended the call, or this seat opened in another tab.
+    // The server knows which.
+    setPhase('entering')
+    joining.current = true
+    void refetchPreflight()
+      .then(({ data }) => setPhase(!data ? 'lost' : data.state === 'open' ? 'elsewhere' : phaseOf(data.state)))
+      .finally(() => {
+        joining.current = false
+      })
+  }
+
   return (
     <section className="py-section lg:py-section-lg">
       <Container>
         <div
-          className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 rounded-[1.9rem] border border-transparent bg-[#0b1020] px-5 py-12 text-center text-[#c9d3ec] sm:px-10 dark:border-white/10 dark:bg-[#111a2e]"
+          className={cn(
+            'mx-auto flex w-full max-w-4xl flex-col items-center gap-6 rounded-[1.9rem] border border-transparent bg-[#0b1020] text-center text-[#c9d3ec] dark:border-white/10 dark:bg-[#111a2e]',
+            current === 'call' ? 'p-2 sm:p-3' : 'px-5 py-12 sm:px-10',
+          )}
           aria-live="polite"
         >
           {current === null ? (
@@ -102,6 +145,37 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
             <WaitingRoom preflight={preflight.data} copy={copy} onStart={() => setPhase('entering')} />
           ) : current === 'entering' ? (
             <p className="m-0 text-sm">{copy.room.entering}</p>
+          ) : current === 'call' && access ? (
+            <div className="h-[min(78vh,44rem)] w-full text-start">
+              <Suspense fallback={<p className="m-0 text-center text-sm">{copy.room.entering}</p>}>
+                <VideoCall
+                  token={access.token}
+                  copy={callCopy[language]}
+                  role="guest"
+                  otherName={HOST_NAME}
+                  endsAt={access.endsAt}
+                  onExit={afterCall}
+                />
+              </Suspense>
+            </div>
+          ) : current === 'left' || current === 'elsewhere' || current === 'lost' || current === 'failed' ? (
+            <Message
+              title={
+                current === 'left'
+                  ? callCopy[language].left
+                  : current === 'elsewhere'
+                    ? callCopy[language].errors.otherTab
+                    : current === 'lost'
+                      ? callCopy[language].errors.lost
+                      : callCopy[language].errors.couldNotOpen
+              }
+              body={current === 'failed' ? callCopy[language].errors.blocked : ''}
+              contact={current === 'lost' || current === 'failed'}
+            >
+              <Button type="button" className="rounded-full" onClick={() => setPhase('entering')}>
+                {callCopy[language].rejoin}
+              </Button>
+            </Message>
           ) : current === 'unavailable' ? (
             <Message title={copy.room.unavailableTitle} body={copy.room.unavailableBody} contact />
           ) : current === 'ended' ? (

@@ -529,3 +529,51 @@ export const setConversation = async (id: string, conversationId: string): Promi
 export const setReminderState = async (id: string, state: 'failed' | 'sent'): Promise<void> => {
   await getDb().query('UPDATE v2_booking_appointments SET reminder_state = $2 WHERE id = $1', [id, state])
 }
+
+/** Gives back a claimed reminder that was not sent after all. A newer claim or reset is left alone. */
+export const releaseReminder = async (id: string, state: 'skipped' | 'cancelled'): Promise<void> => {
+  await getDb().query(
+    `UPDATE v2_booking_appointments SET reminder_state = $2, reminder_sent_at = NULL
+      WHERE id = $1 AND reminder_state = 'sent'`,
+    [id, state],
+  )
+}
+
+const VIDEO_COLUMNS = ['video_meeting_id', 'video_host_participant', 'video_guest_participant', 'video_ended_at'] as const
+
+export type VideoColumns = Partial<Pick<AppointmentRow, (typeof VIDEO_COLUMNS)[number]>>
+
+/**
+ * Writes the room's own columns without counting as an edit: a visitor
+ * joining the call must not turn the owner's next save into a conflict.
+ */
+export const setVideo = async (id: string, fields: VideoColumns): Promise<void> => {
+  const entries = VIDEO_COLUMNS.filter((column) => fields[column] !== undefined).map((column) => [column, fields[column]] as const)
+
+  if (entries.length === 0) return
+
+  await getDb().query(
+    `UPDATE v2_booking_appointments SET ${entries.map(([column], index) => `${column} = $${index + 2}`).join(', ')} WHERE id = $1`,
+    [id, ...entries.map(([, value]) => value)],
+  )
+}
+
+/** Public bookings made for one address since a moment, whatever became of them. */
+export const countPublicBookingsSince = async (email: string, since: Date): Promise<number> => {
+  const { rows } = await getDb().query<{ total: string }>(
+    `SELECT count(*) AS total FROM v2_booking_appointments
+      WHERE source = 'public' AND visitor_email = $1 AND created_at > $2`,
+    [email, since],
+  )
+
+  return toNumber(rows[0]?.total)
+}
+
+export const hasHistory = async (appointmentId: string, kind: string): Promise<boolean> => {
+  const { rows } = await getDb().query(
+    'SELECT 1 FROM v2_booking_history WHERE appointment_id = $1 AND kind = $2 LIMIT 1',
+    [appointmentId, kind],
+  )
+
+  return rows.length > 0
+}

@@ -58,6 +58,7 @@ vi.mock('#/frontend/features/call/use-media', () => ({
     stop: () => {},
   }),
 }))
+vi.mock('@cloudflare/realtimekit', async () => (await import('./helpers/fake-realtimekit')).fakeRealtimeKitModule())
 vi.mock('#/frontend/features/booking/v2/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('#/frontend/features/booking/v2/api')>()),
   fetchTypes: vi.fn(),
@@ -71,6 +72,7 @@ vi.mock('#/frontend/features/booking/v2/api', async (importOriginal) => ({
 }))
 
 const api = await import('#/frontend/features/booking/v2/api')
+const calls = await import('./helpers/fake-realtimekit')
 const { BookingFlowPageV2 } = await import('#/frontend/pages/public/booking/v2/BookingFlowPageV2')
 const { BookingManagePageV2 } = await import('#/frontend/pages/public/booking/v2/BookingManagePageV2')
 const { BookingRoomPageV2, countdown } = await import('#/frontend/pages/public/booking/v2/BookingRoomPageV2')
@@ -285,7 +287,7 @@ describe('booking', () => {
       phone: '',
       subject: 'website',
       budget: null,
-      website: '',
+      hp_x9: '',
     })
     expect(sent.submissionId).toMatch(/^[0-9a-f-]{36}$/u)
     expect(sent.timeZone).toBe(detectTimezone())
@@ -527,18 +529,66 @@ describe('the video room', () => {
     expect(api.videoJoin).toHaveBeenCalledTimes(1)
   })
 
-  it('never shows a call without a call screen, even when a seat is issued', async () => {
-    vi.mocked(api.videoPreflight).mockResolvedValue({
-      state: 'open',
-      startsAt: NOW.toISOString(),
-      endsAt: '2026-10-05T08:30:00.000Z',
-      joinClosesAt: '2026-10-05T09:30:00.000Z',
-      serverTime: NOW.toISOString(),
-    })
-    vi.mocked(api.videoJoin).mockResolvedValue({ token: 'fake', role: 'guest', startsAt: '', endsAt: '', joinClosesAt: '' })
+  const openRoom = {
+    state: 'open' as const,
+    startsAt: NOW.toISOString(),
+    endsAt: '2026-10-05T08:30:00.000Z',
+    joinClosesAt: '2026-10-05T09:30:00.000Z',
+    serverTime: NOW.toISOString(),
+  }
+  const seat = { token: 'seat-1', role: 'guest' as const, startsAt: NOW.toISOString(), endsAt: '2026-10-05T08:30:00.000Z', joinClosesAt: '' }
+
+  it('opens the call with the issued seat, and says goodbye when Yaman ends it', async () => {
+    calls.resetFakeCalls()
+    calls.installFakeMedia()
+    vi.mocked(api.videoPreflight).mockResolvedValue(openRoom)
+    vi.mocked(api.videoJoin).mockResolvedValue(seat)
     wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
 
-    await screen.findByText('The video call cannot open on this website yet')
+    await screen.findByText('Waiting for Yaman…')
+    expect(calls.lastFakeCall().token).toBe('seat-1')
+
+    vi.mocked(api.videoPreflight).mockResolvedValue({ ...openRoom, state: 'ended' })
+    act(() => calls.lastFakeCall().removed('kicked'))
+    await screen.findByText('The call has ended')
+  })
+
+  it('offers to join again after leaving, after a dropped line, and when the seat opened elsewhere', async () => {
+    calls.resetFakeCalls()
+    calls.installFakeMedia()
+    vi.mocked(api.videoPreflight).mockResolvedValue(openRoom)
+    vi.mocked(api.videoJoin).mockResolvedValue(seat)
+    wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
+
+    await screen.findByText('Waiting for Yaman…')
+    fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
+    await screen.findByText('You left the call.')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Join again' }))
+    await screen.findByText('Waiting for Yaman…')
+    expect(api.videoJoin).toHaveBeenCalledTimes(2)
+
+    act(() => calls.lastFakeCall().removed('disconnected'))
+    await screen.findByText('The connection to the call was lost.')
+    expect(screen.getByText(/Write an email/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Join again' }))
+    await screen.findByText('Waiting for Yaman…')
+    act(() => calls.lastFakeCall().removed('kicked'))
+    await screen.findByText('This call was opened in another tab or window.')
+  })
+
+  it('says so, with email and phone, when the call cannot open', async () => {
+    calls.resetFakeCalls()
+    calls.installFakeMedia()
+    calls.refuseNextFakeCall()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(api.videoPreflight).mockResolvedValue(openRoom)
+    vi.mocked(api.videoJoin).mockResolvedValue(seat)
+    wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
+
+    await screen.findByText('The call could not be opened.')
+    expect(screen.getByText(/Write an email/)).toBeTruthy()
   })
 
   it('says when the call has ended, and when the link is wrong', async () => {

@@ -1,4 +1,5 @@
 import {
+  INBOX_LANGUAGES,
   INBOX_LIMITS,
   type InboxDraft,
   type InboxLanguage,
@@ -61,8 +62,24 @@ export const listDrafts = async (input: { page: number; pageSize: number }): Pro
   return toPage({ items, page: input.page, pageSize: input.pageSize, total })
 }
 
-const replySubject = (subject: string): string =>
-  /^\s*(re|aw|antw)\s*:/iu.test(subject) || subject.trim() === '' ? subject : `Re: ${subject}`
+/**
+ * `Re: <subject>`, never longer than a subject may be: an arriving letter's
+ * subject can run to a thousand characters, and a reply draft the autosave
+ * refuses could never be saved or sent.
+ */
+export const replySubject = (subject: string): string => {
+  const reply = /^\s*(re|aw|antw)\s*:/iu.test(subject) || subject.trim() === '' ? subject : `Re: ${subject}`
+
+  if (reply.length <= INBOX_LIMITS.subject) return reply
+
+  const cut = reply.slice(0, INBOX_LIMITS.subject)
+
+  // Never half of a character written as two code units, such as an emoji.
+  return /[\ud800-\udbff]$/u.test(cut) ? cut.slice(0, -1) : cut
+}
+
+const isInboxLanguage = (value: string | null): value is InboxLanguage =>
+  value !== null && (INBOX_LANGUAGES as readonly string[]).includes(value)
 
 /**
  * A new draft, or — for a reply — the conversation's existing reply draft.
@@ -73,7 +90,8 @@ export const createDraft = async (input: {
   conversationId: string | null
   toEmail: string
   subject: string
-  language: InboxLanguage
+  /** Left out: a reply takes the conversation's language, a new message English. */
+  language?: InboxLanguage
 }): Promise<{ draft: InboxDraft; created: boolean }> => {
   const outcome = await withTransaction(async () => {
     if (!input.conversationId) {
@@ -81,7 +99,7 @@ export const createDraft = async (input: {
         conversationId: null,
         toEmail: input.toEmail,
         subject: input.subject,
-        language: input.language,
+        language: input.language ?? 'en',
       })
 
       return { id, created: true }
@@ -95,11 +113,14 @@ export const createDraft = async (input: {
 
     if (existing) return { id: existing.id, created: false }
 
+    // The language the visitor wrote or booked in, when the conversation knows it.
+    const spoken = input.language ? null : await repo.latestMessageLanguage(conversation.id)
+
     const id = await repo.insertDraft({
       conversationId: conversation.id,
       toEmail: conversation.counterpart_email,
       subject: replySubject(conversation.subject),
-      language: input.language,
+      language: input.language ?? (isInboxLanguage(spoken) ? spoken : 'en'),
     })
 
     return { id, created: true }

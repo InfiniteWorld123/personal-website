@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CONTACT_FILE_ACCEPT, CONTACT_LIMITS } from '#/backend2/contracts/contact.contract'
+import { CONTACT_FIELDS, CONTACT_FILE_ACCEPT, CONTACT_LIMITS, toAsciiDigits as serverDigits } from '#/backend2/contracts/contact.contract'
 
 /**
  * Public cutover step 6: the Contact form posts to Backend2 — without the two
@@ -39,7 +39,9 @@ vi.mock('#/frontend/features/booking/BookingAside', () => ({ BookingAside: () =>
 const { ContactPage } = await import('#/frontend/pages/public/contact/ContactPage')
 // The V2 form is its own chunk; the route loader fetches it before rendering, and so does this file.
 await (await import('#/frontend/features/contact/contact-v2-lazy')).contactFormV2.preload()
-const { CONTACT_V2_ACCEPT, CONTACT_V2_ENDPOINT, CONTACT_V2_LIMITS, fileProblem } = await import('#/frontend/features/contact/contact-v2')
+const { CONTACT_V2_ACCEPT, CONTACT_V2_ENDPOINT, CONTACT_V2_HONEYPOT, CONTACT_V2_LIMITS, fileProblem, toAsciiDigits } = await import(
+  '#/frontend/features/contact/contact-v2'
+)
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -77,6 +79,15 @@ describe('client rules equal the contract', () => {
   it('copies the limits and the accepted files exactly', () => {
     expect(CONTACT_V2_LIMITS).toEqual(CONTACT_LIMITS)
     expect(CONTACT_V2_ACCEPT).toBe(CONTACT_FILE_ACCEPT)
+    expect(CONTACT_V2_HONEYPOT).toBe(CONTACT_FIELDS.honeypot)
+  })
+
+  it('reads Arabic-Indic and Persian digits the way the server does', () => {
+    for (const phone of ['+٤٩ ١٧٠ ١٢٣٤٥٦٧', '۰۱۷۰ ۱۲۳۴۵۶۷', '+49 (0) 170-123']) {
+      expect(toAsciiDigits(phone)).toBe(serverDigits(phone))
+    }
+
+    expect(toAsciiDigits('+٤٩ ١٧٠ ١٢٣٤٥٦٧')).toBe('+49 170 1234567')
   })
 
   it('names a file that is too large or of a kind the form does not take', () => {
@@ -159,7 +170,8 @@ describe('the Backend2 form', () => {
     expect(body.get('company')).toBe('Bakery Ltd')
     expect(body.get('language')).toBe('en')
     expect(body.get('turnstileToken')).toMatch(/^turnstile-/u)
-    expect(body.get('website')).toBe('')
+    expect(body.get('hp_x9')).toBe('')
+    expect(body.has('website')).toBe(false)
     expect((body.get('attachment') as File).name).toBe('brief.pdf')
     expect(body.has('projectType')).toBe(false)
     expect(body.has('budget')).toBe(false)
@@ -247,6 +259,68 @@ describe('the Backend2 form', () => {
     expect(sentForm(0).get('message')).toBe('Typed before the script arrived.')
     act(() => root.unmount())
     container.remove()
+  })
+
+  it('hides its honeypot from people, keyboards and autofill', () => {
+    render(<ContactPage />)
+
+    const trap = document.querySelector<HTMLInputElement>('input[name="hp_x9"]')!
+
+    expect(trap.getAttribute('autocomplete')).toBe('off')
+    expect(trap.tabIndex).toBe(-1)
+    expect(trap.closest('[aria-hidden="true"]')).not.toBeNull()
+    expect(document.querySelector('input[name="website"]')).toBeNull()
+    // No label a browser would take for a web address.
+    expect(document.querySelector('label[for="contact-hp-x9"]')?.textContent).not.toMatch(/web|url|site/iu)
+  })
+
+  it.each([["o'brien@example.ie"], ['info@bäckerei-müller.de'], ['anna@my--agency.de']])(
+    'sends a message from %s, as the server accepts it',
+    async (email) => {
+      fetchMock.mockResolvedValue(received())
+      render(<ContactPage />)
+      fillValid()
+      type('Email', email)
+
+      await act(async () => submit())
+      await screen.findByRole('status')
+
+      expect(sentForm(0).get('email')).toBe(email)
+    },
+  )
+
+  it('asks for A–Z before the @ instead of sending what the server would refuse', async () => {
+    render(<ContactPage />)
+    fillValid()
+    type('Email', 'jürgen@example.de')
+
+    await act(async () => submit())
+
+    expect(await screen.findByText(/only the letters A–Z before the @/u)).toBeTruthy()
+    expect(document.getElementById('email')?.getAttribute('aria-invalid')).toBe('true')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('sends a phone number typed with Arabic digits as ASCII digits', async () => {
+    fetchMock.mockResolvedValue(received())
+    render(<ContactPage />)
+    fillValid()
+    type('Phone', '+٤٩ ١٧٠ ١٢٣٤٥٦٧')
+
+    await act(async () => submit())
+    await screen.findByRole('status')
+
+    expect(sentForm(0).get('phone')).toBe('+49 170 1234567')
+  })
+
+  it('promises only a reply, not a contact method the form no longer asks for', async () => {
+    fetchMock.mockResolvedValue(received())
+    render(<ContactPage />)
+    fillValid()
+
+    await act(async () => submit())
+
+    expect((await screen.findByRole('status')).textContent).toContain('I will review your request and get back to you.')
   })
 
   it('speaks the page language', async () => {

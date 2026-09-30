@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
@@ -16,6 +16,7 @@ import { cn } from '#/frontend/lib/utils'
 import { getBookingCopy } from '../booking-copy'
 import { type BookingReceipt, type BookingRequest, createBooking } from './api'
 import { getBookingV2Copy } from './booking-v2-copy'
+import { isSendableEmailAddress } from '#/backend2/contracts/email-address.contract'
 
 /**
  * The details asked once a time is chosen, posted to Backend2.
@@ -32,13 +33,14 @@ import { getBookingV2Copy } from './booking-v2-copy'
 /** The server's limits (`BOOKING_LIMITS`); a test keeps them equal. */
 export const BOOKING_FORM_LIMITS = { name: 200, email: 254, phone: 40, company: 200, note: 2_000 } as const
 
-const EMAIL_PATTERN = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/u
 const PHONE_PATTERN = /^[+()\d\s./-]{5,}$/u
 
 type FieldName = 'name' | 'email' | 'phone' | 'company' | 'subject' | 'budget' | 'note'
 const FIELDS: readonly FieldName[] = ['name', 'email', 'phone', 'company', 'subject', 'budget', 'note']
 
 export type BookingFormValues = Record<FieldName, string>
+
+export const EMPTY_BOOKING_FORM: BookingFormValues = { name: '', email: '', phone: '', company: '', subject: '', budget: '', note: '' }
 
 export type BookingFailure = 'taken' | 'too_soon'
 
@@ -48,6 +50,8 @@ export function BookingFormV2({
   startsAt,
   timeZone,
   submissionId,
+  initialValues,
+  onValuesChange,
   onBooked,
   onUnavailable,
   onBack,
@@ -57,6 +61,10 @@ export function BookingFormV2({
   startsAt: string
   timeZone: string
   submissionId: string
+  /** What the visitor already typed, when they come back from choosing another time. */
+  initialValues?: BookingFormValues
+  /** Every change, so the page can keep it while the form is off screen. */
+  onValuesChange?: (values: BookingFormValues) => void
   onBooked: (receipt: BookingReceipt, values: BookingFormValues) => void
   onUnavailable: (reason: BookingFailure) => void
   onBack: () => void
@@ -87,8 +95,11 @@ export function BookingFormV2({
     return copy.errTooLong
   }
 
+  // Read once: the form owns its values from here on.
+  const [startValues] = useState<BookingFormValues>(() => ({ ...EMPTY_BOOKING_FORM, ...initialValues }))
+
   const form = useForm({
-    defaultValues: { name: '', email: '', phone: '', company: '', subject: '', budget: '', note: '' } as BookingFormValues,
+    defaultValues: startValues,
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' }),
     validators: {
       onDynamic: ({ value }) => {
@@ -98,7 +109,8 @@ export function BookingFormV2({
         if (value.name.trim() === '') fields.name = copy.errName
         else if (value.name.trim().length > BOOKING_FORM_LIMITS.name) fields.name = copy.errTooLong
 
-        if (!EMAIL_PATTERN.test(value.email.trim()) || value.email.trim().length > BOOKING_FORM_LIMITS.email) {
+        // The server's own rule (`email-address.contract.ts`): what passes here is accepted there.
+        if (!isSendableEmailAddress(value.email.trim().toLowerCase()) || value.email.trim().length > BOOKING_FORM_LIMITS.email) {
           fields.email = copy.errEmail
         }
 
@@ -138,7 +150,7 @@ export function BookingFormV2({
         budget: value.budget || null,
         note: value.note.trim(),
         turnstileToken,
-        website: honeypot.current?.value ?? '',
+        hp_x9: honeypot.current?.value ?? '',
       }
 
       try {
@@ -181,6 +193,14 @@ export function BookingFormV2({
   })
 
   const submitting = useStore(form.store, (state) => state.isSubmitting) || sending
+  const values = useStore(form.store, (state) => state.values)
+  const reportValues = useRef(onValuesChange)
+
+  reportValues.current = onValuesChange
+
+  useEffect(() => {
+    reportValues.current?.(values)
+  }, [values])
 
   const errorFor = (name: FieldName, errors: unknown[]) =>
     (typeof errors[0] === 'string' ? errors[0] : undefined) ?? serverErrors[name]
@@ -302,8 +322,19 @@ export function BookingFormV2({
           negative inset widens the document, and in RTL the page then opens
           scrolled onto the empty strip. */}
       <div aria-hidden="true" className="sr-only">
-        <label htmlFor="booking-website">Website</label>
-        <input ref={honeypot} id="booking-website" name="website" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="booking-hp-x9">Leave empty</label>
+        <input
+          ref={honeypot}
+          id="booking-hp-x9"
+          name="hp_x9"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-bwignore=""
+          data-form-type="other"
+        />
       </div>
 
       <p className="text-foreground/58 m-0 text-xs leading-6">

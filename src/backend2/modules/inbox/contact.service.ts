@@ -10,13 +10,13 @@ import {
   type PublicContactInput,
   contactFileRules,
 } from '../../contracts/contact.contract'
-import { PROBE_BYTES } from '../../contracts/media.contract'
 import { getDb, withTransaction } from '../../db/client'
 import { readLimited } from '../../http/body'
 import {
   badRequest,
   fileTooLarge,
   isApiError,
+  rateLimited,
   storageUnavailable,
   unsupportedFileType,
   validationFailed,
@@ -49,6 +49,12 @@ import { newReplyToken } from './send.service'
 
 /* ------------------------------------------------------------------ limits */
 
+/**
+ * Per network, for abuse: counted once the human check has passed, so a
+ * visitor whose check failed has spent nothing. Per address: counted from the
+ * messages actually received, never from attempts — a stranger posting bad
+ * tokens with a client's address cannot lock that client out.
+ */
 export const CONTACT_RATE_LIMITS = {
   perSource: { limit: 5, windowSeconds: 60 * 60 },
   perEmail: { limit: 3, windowSeconds: 60 * 60 },
@@ -235,6 +241,11 @@ export type AcceptedContactFile = {
  * never pick a type — not an OLE2 flavour, not "plain text". An executable,
  * a web page, an SVG, a ZIP renamed `.pdf`: none of them match a signature on
  * the list, so all of them get the same answer.
+ *
+ * It reads the whole file, not only its head: the form holds all of it
+ * anyway (10 MB at most), and a real Word file from a Mac keeps its directory
+ * at the end, a Word file with pictures can list its parts at the end, and a
+ * phone photo's frame header can sit behind 64 KB of camera data.
  */
 export const checkContactFile = (file: ContactUpload): AcceptedContactFile => {
   const { bytes } = file
@@ -243,7 +254,7 @@ export const checkContactFile = (file: ContactUpload): AcceptedContactFile => {
     throw fileTooLarge('That file is larger than 10 MB', contactFileRules())
   }
 
-  const detected = probeMedia(bytes.subarray(0, PROBE_BYTES))?.contentType ?? probeHeif(bytes)
+  const detected = probeMedia(bytes)?.contentType ?? probeHeif(bytes)
   const rule = detected ? CONTACT_FILE_TYPES.find((type) => type.contentType === detected) : undefined
 
   if (!detected || !rule || carriesMacros(bytes, detected)) {
@@ -308,17 +319,14 @@ export const submitContact = async (options: {
   // Cheap refusals first: the file's type is known before any limit is spent.
   const file = options.file ? checkContactFile(options.file) : null
 
-  await enforceRateLimit({ scope: 'contact:create', identity: ip, rule: CONTACT_RATE_LIMITS.perSource })
-
   /*
    * A retry of a submission that already arrived — a double-click, or a
    * network timeout after the server had answered. Recognised before the
    * human check, because a Turnstile token is single-use: the retry's copy
    * would fail it, and the visitor would be told their message was lost.
+   * And before any limit, so a retry is never told "too many messages".
    */
   if (await alreadyRecorded(input.submissionId)) return
-
-  await enforceRateLimit({ scope: 'contact:create-email', identity: input.email, rule: CONTACT_RATE_LIMITS.perEmail })
 
   try {
     await verifyHuman(input.turnstileToken, ip)
@@ -331,6 +339,8 @@ export const submitContact = async (options: {
 
     throw error
   }
+
+  await enforceRateLimit({ scope: 'contact:create', identity: ip, rule: CONTACT_RATE_LIMITS.perSource })
 
   /*
    * The bytes first, outside the transaction, the same way inbound mail does
@@ -361,6 +371,19 @@ export const submitContact = async (options: {
       await getDb().query('SELECT pg_advisory_xact_lock(hashtext($1))', [dedupeKey])
 
       if (await repo.dedupeKeyExists(dedupeKey)) return false
+
+      // Per address, from what was received. Serialised per address, so two
+      // different messages sent at once cannot both slip under the limit.
+      await getDb().query('SELECT pg_advisory_xact_lock(hashtext($1))', [`contact-email:${input.email}`])
+
+      const recent = await repo.countRecentContacts({
+        email: input.email,
+        since: new Date(Date.now() - CONTACT_RATE_LIMITS.perEmail.windowSeconds * 1000),
+      })
+
+      if (recent >= CONTACT_RATE_LIMITS.perEmail.limit) {
+        throw rateLimited('Too many attempts. Wait a few minutes and try again')
+      }
 
       const now = new Date()
       const subject = contactSubject(input.name)

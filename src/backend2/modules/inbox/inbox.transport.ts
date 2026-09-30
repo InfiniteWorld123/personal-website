@@ -1,3 +1,4 @@
+import { hasAsciiLocalPart } from '../../contracts/email-address.contract'
 import { isProductionEnvironment } from '../../security/runtime-mode'
 
 /**
@@ -153,7 +154,10 @@ const resendTransport = (apiKey: string): InboxTransport => ({
             ? 'The email service is busy. Try again in a minute.'
             : response.status >= 500
               ? 'The email service had a problem. Try again.'
-              : 'The email service refused this email. Check the address and attachments.',
+              : // Mail from such an address arrives, but the service may not deliver to one.
+                !hasAsciiLocalPart(email.to)
+                ? 'The email service could not send to this address: it has letters outside A–Z before the @. Your text is kept — answer from your own mailbox instead.'
+                : 'The email service refused this email. Check the address and attachments.',
       }
     }
 

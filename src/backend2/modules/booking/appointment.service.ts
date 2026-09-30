@@ -9,6 +9,7 @@ import {
   METHOD_LABELS,
   OWNER_TIME_ZONE,
   SUBJECT_LABELS,
+  type Slot,
   type SlotsResult,
   type VisitorAppointment,
 } from '../../contracts/booking.contract'
@@ -28,6 +29,7 @@ import {
 } from '../../http/error'
 import { sendSystemEmail } from '../inbox/send.service'
 import { typeNameIn } from './booking.config.service'
+import { limitCreatePerEmail } from './booking.guard'
 import { bookingMail, type MailKind } from './booking.mail'
 import * as repo from './booking.repo'
 import { type HourRange, berlinDatesCovering, computeCandidates, isWithinHours } from './booking.slots'
@@ -167,6 +169,17 @@ const reminderFor = (start: Date, settings: repo.SettingsRow, now: Date) => {
   return due <= now ? { reminderDueAt: due, reminderState: 'skipped' as const } : { reminderDueAt: due, reminderState: 'pending' as const }
 }
 
+/**
+ * A new time gets a new room. The old one may have been ended — and an ended
+ * provider meeting cannot be joined again — so the next join makes a fresh one.
+ */
+const FRESH_ROOM = {
+  video_meeting_id: null,
+  video_host_participant: null,
+  video_guest_participant: null,
+  video_ended_at: null,
+} as const
+
 /* ------------------------------------------------------------------- slots */
 
 export const availableSlots = async (input: {
@@ -175,9 +188,12 @@ export const availableSlots = async (input: {
   from: string
   days: number
   timeZone: string
+  /** The manage page moving this appointment: its own time is not in the way. */
+  visitor?: { reference: string; token: string }
   now?: Date
 }): Promise<SlotsResult> => {
   const now = input.now ?? new Date()
+  const excludeId = input.visitor ? (await authoriseVisitor(input.visitor.reference, input.visitor.token)).id : undefined
   const type = await repo.findTypeBySlug(input.typeSlug)
 
   if (!type || !type.enabled || !type.methods.includes(input.method)) throw notFound('That appointment type is not offered')
@@ -187,37 +203,54 @@ export const availableSlots = async (input: {
   const start = zonedToInstant(input.from, 0, input.timeZone) ?? zonedToInstant(input.from, 60, input.timeZone)!
   const end = zonedToInstant(addDays(input.from, input.days), 0, input.timeZone) ?? addMinutes(start, input.days * 1440)
   const slotType = slotTypeOf(type)
+  const step = 14 * 1440
 
+  // Only the part inside the booking window can hold a slot: a stretch wholly
+  // before or after it is answered empty, without asking the database.
   const collect = async (from: Date, to: Date) => {
-    const dates = berlinDatesCovering(from, to)
+    const first = from > window.earliest ? from : window.earliest
+    const last = to < window.latest ? to : window.latest
+
+    if (first > last) return []
+
+    const dates = berlinDatesCovering(first, last)
     const calendar = await loadCalendar(dates[0]!, dates.at(-1)!)
-    const blocked = await repo.blockedBetween({ from: addMinutes(from, -1440), to: addMinutes(to, 1440) })
+    const blocked = await repo.blockedBetween({ from: addMinutes(first, -1440), to: addMinutes(last, 1440), excludeId })
 
     return computeCandidates({ dates, type: slotType, ...calendar, blocked, earliest: window.earliest, latest: window.latest })
       .filter((candidate) => candidate.start >= from && candidate.start < to)
   }
 
   const candidates = await collect(start, end)
+  const byDate = new Map<string, Slot[]>()
+
+  // Each start is read in the visitor's zone once; formatting is most of this request's CPU.
+  for (const candidate of candidates) {
+    const local = localParts(candidate.start, input.timeZone)
+    const slots = byDate.get(local.date) ?? []
+
+    slots.push({ startsAt: candidate.start.toISOString(), endsAt: candidate.end.toISOString(), localDate: local.date, localTime: local.time })
+    byDate.set(local.date, slots)
+  }
+
   const days = Array.from({ length: input.days }, (_, index) => addDays(input.from, index)).map((date) => ({
     date,
-    slots: candidates
-      .filter((candidate) => localParts(candidate.start, input.timeZone).date === date)
-      .map((candidate) => ({
-        startsAt: candidate.start.toISOString(),
-        endsAt: candidate.end.toISOString(),
-        localDate: date,
-        localTime: localParts(candidate.start, input.timeZone).time,
-      })),
+    slots: byDate.get(date) ?? [],
   }))
 
   let nextAvailableDate: string | null = null
 
   if (candidates.length === 0 && end < window.latest) {
-    // Looked for in bounded steps, so an empty fortnight costs a few queries at most.
-    for (let from = end; from < window.latest && !nextAvailableDate; from = addMinutes(from, 14 * 1440)) {
-      const next = (await collect(from, addMinutes(from, 14 * 1440)))[0]
+    // Looked for in fortnights from the later of this stretch's end and the
+    // window's start, so any `from` costs at most the window's fortnights.
+    let from = end > window.earliest ? end : window.earliest
+
+    for (let round = 0; round < Math.ceil(settings.window_days / 14) && from < window.latest && !nextAvailableDate; round += 1) {
+      const next = (await collect(from, addMinutes(from, step)))[0]
 
       if (next) nextAvailableDate = localParts(next.start, input.timeZone).date
+
+      from = addMinutes(from, step)
     }
   }
 
@@ -248,17 +281,35 @@ const factsFor = (row: repo.AppointmentRow): Record<string, string> => {
  * two emails for one appointment can never open two conversations. A failed
  * delivery is recorded — on the Inbox message, where Retry lives, and in the
  * history — and never undoes the appointment.
+ *
+ * A reminder or a new time is news only while the appointment is still ahead.
+ * Checked again under the lock, because it may have been cancelled or moved
+ * between the decision to write and this moment: that email is `skipped`.
  */
 export const emailVisitor = async (input: {
   appointmentId: string
   kind: MailKind
   reason?: string | null
   cancelledBy?: 'visitor' | 'owner'
-}): Promise<'accepted' | 'failed'> =>
+  now?: Date
+}): Promise<'accepted' | 'failed' | 'skipped'> =>
   withTransaction(async () => {
     const row = await repo.lockAppointment(input.appointmentId)
 
     if (!row) throw notFound('That appointment does not exist')
+
+    if (input.kind === 'reminder' || input.kind === 'rescheduled') {
+      const ahead = row.status === 'confirmed' && new Date(row.starts_at) > (input.now ?? new Date())
+
+      if (!ahead) {
+        if (input.kind === 'reminder') await repo.releaseReminder(row.id, row.status === 'cancelled' ? 'cancelled' : 'skipped')
+
+        return 'skipped'
+      }
+
+      // Claimed before a reschedule reset it: the new time keeps its own reminder.
+      if (input.kind === 'reminder' && row.reminder_state !== 'sent') return 'skipped'
+    }
 
     const settings = await repo.readSettings()
     const links = linksFor(row)
@@ -384,7 +435,9 @@ const visitorView = async (row: repo.AppointmentRow, now?: Date): Promise<Visito
   const view = toVisitor(row, await repo.readSettings(), now)
   const type = row.type_id ? await repo.findType(row.type_id) : null
 
-  return { ...view, typeSlug: type?.enabled ? type.slug : null }
+  // The slug lets the manage page ask for new times, which exist only while
+  // the type is on and still offers this way of meeting.
+  return { ...view, typeSlug: type?.enabled && type.methods.includes(row.method) ? type.slug : null }
 }
 
 /* --------------------------------------------------------- public booking */
@@ -406,6 +459,17 @@ const uniqueReference = async (): Promise<string> => {
 
   throw new Error('Could not allocate a booking reference')
 }
+
+/**
+ * For a repeated submit: whether the first one's confirmation was accepted,
+ * read from the history. The row lock waits out an email still being sent.
+ */
+const confirmationAccepted = (id: string): Promise<boolean> =>
+  withTransaction(async () => {
+    await repo.lockAppointment(id)
+
+    return repo.hasHistory(id, 'confirmation_sent')
+  })
 
 const receiptFor = async (row: repo.AppointmentRow, confirmationSent: boolean): Promise<BookingReceipt> => {
   const links = linksFor(row)
@@ -438,7 +502,7 @@ export const createPublicAppointment = async (
 ): Promise<BookingReceipt> => {
   const repeat = await repo.findBySubmission(input.submissionId)
 
-  if (repeat) return receiptFor(repeat, true)
+  if (repeat) return receiptFor(repeat, await confirmationAccepted(repeat.id))
 
   const type = await repo.findTypeBySlug(input.typeSlug)
 
@@ -463,6 +527,8 @@ export const createPublicAppointment = async (
     const raced = await repo.findBySubmission(input.submissionId)
 
     if (raced) return { id: raced.id, created: false }
+
+    await limitCreatePerEmail(input.email, now)
 
     if (!(await isOfferedStart({ start, slotType: slotTypeOf(type), window }))) throw slotUnavailable()
 
@@ -502,7 +568,7 @@ export const createPublicAppointment = async (
   })
 
   // Only the request that made the appointment sends its confirmation.
-  if (!outcome.created) return receiptFor((await repo.findAppointment(outcome.id))!, true)
+  if (!outcome.created) return receiptFor((await repo.findAppointment(outcome.id))!, await confirmationAccepted(outcome.id))
 
   const sent = await emailVisitor({ appointmentId: outcome.id, kind: 'confirmation' })
 
@@ -552,10 +618,13 @@ export const rescheduleByVisitor = async (
       .updateAppointment(row.id, {
         starts_at: start,
         ends_at: addMinutes(start, row.duration_minutes),
+        // Only offered starts get here, and those lie inside the hours.
+        outside_hours: false,
         reminder_due_at: reminder.reminderDueAt,
         reminder_state: reminder.reminderState,
         reminder_sent_at: null,
         visitor_timezone: input.timeZone,
+        ...FRESH_ROOM,
       })
       .catch(asSlotError)
 
@@ -740,14 +809,19 @@ export const sendInvitation = async (
     if (row.status !== 'confirmed' || new Date(row.ends_at) <= now) throw conflict('Only an upcoming appointment can be sent.')
     if (row.invitation_sent_at || row.source === 'public') return false
 
-    await repo.updateAppointment(row.id, { invitation_sent_at: now })
+    // Told only after the reminder's moment: that reminder would follow the invitation at once.
+    const late = row.reminder_state === 'pending' && row.reminder_due_at !== null && new Date(row.reminder_due_at) <= now
+
+    await repo.updateAppointment(row.id, { invitation_sent_at: now, ...(late ? { reminder_state: 'skipped' } : {}) })
 
     return true
   })
 
   if (!claimed) return { alreadySent: true, delivery: 'not_sent' }
 
-  return { alreadySent: false, delivery: await emailVisitor({ appointmentId: id, kind: 'invitation' }) }
+  const delivery = await emailVisitor({ appointmentId: id, kind: 'invitation' })
+
+  return { alreadySent: false, delivery: delivery === 'skipped' ? 'not_sent' : delivery }
 }
 
 const refuseStale = (row: repo.AppointmentRow, revision: number) => {
@@ -818,6 +892,7 @@ export const patchAppointment = async (
         reminder_due_at: reminder.reminderDueAt,
         reminder_state: reminder.reminderState,
         reminder_sent_at: null,
+        ...FRESH_ROOM,
       })
       rescheduled = true
     }
@@ -910,10 +985,10 @@ export const sendDueReminders = async (now: Date = new Date()): Promise<{ sent: 
     if (ids.length === 0) break
 
     for (const id of ids) {
-      const result = await emailVisitor({ appointmentId: id, kind: 'reminder' }).catch(() => 'failed' as const)
+      const result = await emailVisitor({ appointmentId: id, kind: 'reminder', now }).catch(() => 'failed' as const)
 
       if (result === 'accepted') sent += 1
-      else {
+      else if (result === 'failed') {
         failed += 1
         await repo.setReminderState(id, 'failed')
       }

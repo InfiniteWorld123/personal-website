@@ -50,7 +50,10 @@ function WeekView({ week, onOpen, onWeek }: { week: string; onOpen: (id: string)
   const availability = useAvailability()
   const today = berlinToday()
 
-  const items = appointments.data?.items ?? []
+  // A cancelled appointment frees its time, so it stays out of the week: drawn
+  // there it could cover the live one booked into the same time. The list
+  // under the week still shows it.
+  const items = useMemo(() => (appointments.data?.items ?? []).filter((item) => item.status !== 'cancelled'), [appointments.data])
 
   const rangesFor = (date: string) => {
     const exception = availability.data?.exceptions.find((item) => item.date === date)
@@ -142,7 +145,6 @@ function WeekView({ week, onOpen, onWeek }: { week: string; onOpen: (id: string)
                     const start = berlin(item.startsAt)
                     const end = berlin(item.endsAt)
                     const endMinute = end.date === start.date ? end.minute : 24 * 60
-                    const cancelled = item.status === 'cancelled'
 
                     return (
                       <button
@@ -151,11 +153,9 @@ function WeekView({ week, onOpen, onWeek }: { week: string; onOpen: (id: string)
                         onClick={() => onOpen(item.id)}
                         className={cn(
                           'absolute inset-x-1 z-10 overflow-hidden rounded-[7px] border-s-[3px] px-1.5 py-0.5 text-start text-[11px] leading-tight',
-                          cancelled
-                            ? 'border-[var(--dash-quiet)] bg-[var(--dash-chip)] text-[var(--dash-quiet)] line-through'
-                            : item.outsideHours
-                              ? 'border-[#8a5a00] bg-[#fff4dc] text-[#8a5a00]'
-                              : 'border-[var(--dash-brand)] bg-[var(--dash-blue-tint)] text-[var(--dash-blue-ink)]',
+                          item.outsideHours
+                            ? 'border-[#8a5a00] bg-[#fff4dc] text-[#8a5a00]'
+                            : 'border-[var(--dash-brand)] bg-[var(--dash-blue-tint)] text-[var(--dash-blue-ink)]',
                         )}
                         style={{ top: ((start.minute - firstHour * 60) / 60) * HOUR_PX + 1, height: Math.max(18, ((endMinute - start.minute) / 60) * HOUR_PX - 2) }}
                       >

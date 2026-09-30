@@ -72,6 +72,13 @@ export const fetchSlots = (input: {
   days: number
   timeZone: string
   language: BookingLanguage
+  /**
+   * Moving a booking: its reference, with the private credential, so its own
+   * time no longer hides the times around it. The credential goes in the
+   * header like every private call — never into the address.
+   */
+  reference?: string
+  token?: string
 }) => {
   const search = new URLSearchParams({
     method: input.method,
@@ -81,7 +88,11 @@ export const fetchSlots = (input: {
     language: input.language,
   })
 
-  return request<SlotsResult>(`/types/${encodeURIComponent(input.slug)}/slots?${search}`)
+  if (input.reference) search.set('reference', input.reference)
+
+  return request<SlotsResult>(`/types/${encodeURIComponent(input.slug)}/slots?${search}`, {
+    token: input.reference ? input.token : undefined,
+  })
 }
 
 export type BookingRequest = {
@@ -99,7 +110,7 @@ export type BookingRequest = {
   budget: string | null
   note: string
   turnstileToken: string
-  website: string
+  hp_x9: string
 }
 
 export type BookingReceipt = {

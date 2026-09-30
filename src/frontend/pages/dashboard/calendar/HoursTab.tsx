@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { Loader2, Plus, X } from 'lucide-react'
 import { type Availability, type BookingSettings, SETTINGS_BOUNDS } from '#/backend2/contracts/booking.contract'
 import { Panel, PanelHead } from '#/frontend/dashboard/primitives'
 import { DialogAlert } from '#/frontend/features/blog-v2/BlogDialog'
-import { berlinToday, minuteText, textMinute } from '#/frontend/features/booking-v2/berlin'
+import { berlinToday, isDateText, minuteText, textMinute } from '#/frontend/features/booking-v2/berlin'
 import { useAvailability, useBookingSettings, useSaveAvailability, useSaveSettings } from '#/frontend/features/booking-v2/queries'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { LoadFailure } from '../blog/blog-parts'
@@ -38,7 +38,10 @@ const toValues = (availability: Availability): HoursValues => ({
 })
 
 const rangeError = (ranges: Range[]): string | null => {
-  const minutes = ranges.map((range) => ({ start: textMinute(range.start), end: textMinute(range.end) })).sort((a, b) => a.start - b.start)
+  // An empty or half-typed time is asked for, never read as midnight.
+  if (ranges.some((range) => textMinute(range.start) === null || textMinute(range.end) === null)) return 'Enter a start and an end time'
+
+  const minutes = ranges.map((range) => ({ start: textMinute(range.start)!, end: textMinute(range.end)! })).sort((a, b) => a.start - b.start)
 
   if (minutes.some((range) => range.start >= range.end)) return 'Each range must end after it starts'
   if (minutes.some((range, index) => index > 0 && minutes[index - 1]!.end > range.start)) return 'Ranges on one day may not overlap'
@@ -46,18 +49,38 @@ const rangeError = (ranges: Range[]): string | null => {
   return null
 }
 
+/** Only ever called on ranges `rangeError` accepted. */
 const toMinutes = (ranges: Range[]) =>
-  ranges.map((range) => ({ startMinute: textMinute(range.start), endMinute: range.end === '23:59' ? 1440 : textMinute(range.end) }))
+  ranges.map((range) => ({ startMinute: textMinute(range.start)!, endMinute: range.end === '23:59' ? 1440 : textMinute(range.end)! }))
 
-function RangesEditor({ ranges, onChange, label }: { ranges: Range[]; onChange: (ranges: Range[]) => void; label: string }) {
+const focusFirstInvalid = (form: HTMLFormElement | null) =>
+  window.requestAnimationFrame(() => form?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
+
+function RangesEditor({
+  ranges,
+  onChange,
+  label,
+  errorId,
+}: {
+  ranges: Range[]
+  onChange: (ranges: Range[]) => void
+  label: string
+  /** The id of the error shown for these ranges, when there is one. */
+  errorId?: string
+}) {
+  // With an error, an empty time is the wrong one when there is one; otherwise the whole day is.
+  const blank = ranges.some((range) => textMinute(range.start) === null || textMinute(range.end) === null)
+  const invalid = (text: string) =>
+    errorId ? { 'aria-invalid': blank ? textMinute(text) === null : true, 'aria-describedby': errorId } : { 'aria-invalid': false }
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {ranges.length === 0 ? <span className="text-[12.5px] text-[var(--dash-quiet)]">Closed</span> : null}
       {ranges.map((range, index) => (
         <span key={index} className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--dash-line)] px-1.5 py-1">
-          <input type="time" step={900} aria-label={`${label}, range ${index + 1} start`} className="bg-transparent text-[12.5px]" value={range.start} onChange={(event) => onChange(ranges.map((item, i) => (i === index ? { ...item, start: event.target.value } : item)))} />
+          <input type="time" step={900} aria-label={`${label}, range ${index + 1} start`} className="bg-transparent text-[12.5px]" value={range.start} {...invalid(range.start)} onChange={(event) => onChange(ranges.map((item, i) => (i === index ? { ...item, start: event.target.value } : item)))} />
           –
-          <input type="time" step={900} aria-label={`${label}, range ${index + 1} end`} className="bg-transparent text-[12.5px]" value={range.end} onChange={(event) => onChange(ranges.map((item, i) => (i === index ? { ...item, end: event.target.value } : item)))} />
+          <input type="time" step={900} aria-label={`${label}, range ${index + 1} end`} className="bg-transparent text-[12.5px]" value={range.end} {...invalid(range.end)} onChange={(event) => onChange(ranges.map((item, i) => (i === index ? { ...item, end: event.target.value } : item)))} />
           <button type="button" className="rounded p-0.5 text-[var(--dash-quiet)] hover:text-[var(--dash-red-ink)]" aria-label={`Remove ${label} range ${index + 1}`} onClick={() => onChange(ranges.filter((_, i) => i !== index))}>
             <X className="size-3.5" aria-hidden="true" />
           </button>
@@ -73,6 +96,7 @@ function RangesEditor({ ranges, onChange, label }: { ranges: Range[]; onChange: 
 function HoursForm({ availability }: { availability: Availability }) {
   const save = useSaveAvailability()
   const [failure, setFailure] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const form = useForm({
     defaultValues: toValues(availability),
@@ -87,19 +111,18 @@ function HoursForm({ availability }: { availability: Availability }) {
           if (error) fields[`weekly[${index}]`] = error
         })
         value.exceptions.forEach((item, index) => {
-          if (!item.date) fields[`exceptions[${index}].date`] = 'Choose a date'
+          if (!isDateText(item.date)) fields[`exceptions[${index}].date`] = 'Choose a date'
+          // The second of two exceptions on one date is the one to change.
+          else if (value.exceptions.findIndex((other) => other.date === item.date) < index) fields[`exceptions[${index}].date`] = 'One exception per date'
           const error = item.closed ? null : rangeError(item.ranges)
 
           if (error) fields[`exceptions[${index}].ranges`] = error
         })
 
-        const dates = value.exceptions.map((item) => item.date)
-
-        if (new Set(dates).size !== dates.length) fields.exceptions = 'One exception per date'
-
         return Object.keys(fields).length ? { fields } : undefined
       },
     },
+    onSubmitInvalid: () => focusFirstInvalid(formRef.current),
     onSubmit: async ({ value }) => {
       setFailure(null)
 
@@ -117,6 +140,7 @@ function HoursForm({ availability }: { availability: Availability }) {
 
   return (
     <form
+      ref={formRef}
       noValidate
       className="flex flex-col gap-4 px-5 pb-5"
       onSubmit={(event) => {
@@ -131,7 +155,12 @@ function HoursForm({ availability }: { availability: Availability }) {
               <div className="grid gap-1.5 sm:grid-cols-[110px_minmax(0,1fr)] sm:items-center">
                 <span className="text-[13px] font-medium">{day}</span>
                 <div>
-                  <RangesEditor label={day} ranges={field.state.value} onChange={(ranges) => field.handleChange(ranges)} />
+                  <RangesEditor
+                    label={day}
+                    ranges={field.state.value}
+                    errorId={field.state.meta.errors.length > 0 ? `weekly-${index}-err` : undefined}
+                    onChange={(ranges) => field.handleChange(ranges)}
+                  />
                   <FieldError id={`weekly-${index}-err`} error={field.state.meta.errors[0]} />
                 </div>
               </div>
@@ -149,7 +178,10 @@ function HoursForm({ availability }: { availability: Availability }) {
               <div key={index} className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[var(--dash-line)] p-2.5">
                 <form.Field name={`exceptions[${index}].date`}>
                   {(dateField) => (
-                    <input type="date" min={berlinToday()} aria-label="Date" className="dash-field h-8 px-2 text-[12.5px]" value={dateField.state.value} aria-invalid={dateField.state.meta.errors.length > 0} onChange={(event) => dateField.handleChange(event.target.value)} />
+                    <span className="flex flex-col">
+                      <input type="date" min={berlinToday()} aria-label="Date" className="dash-field h-8 px-2 text-[12.5px]" value={dateField.state.value} aria-invalid={dateField.state.meta.errors.length > 0} aria-describedby={`exc-${index}-date-err`} onChange={(event) => dateField.handleChange(event.target.value)} />
+                      <FieldError id={`exc-${index}-date-err`} error={dateField.state.meta.errors[0]} />
+                    </span>
                   )}
                 </form.Field>
                 <form.Field name={`exceptions[${index}].closed`}>
@@ -165,7 +197,12 @@ function HoursForm({ availability }: { availability: Availability }) {
                       <form.Field name={`exceptions[${index}].ranges`}>
                         {(rangesField) => (
                           <span className="flex flex-col">
-                            <RangesEditor label={`Exception ${index + 1}`} ranges={rangesField.state.value} onChange={(ranges) => rangesField.handleChange(ranges)} />
+                            <RangesEditor
+                              label={`Exception ${index + 1}`}
+                              ranges={rangesField.state.value}
+                              errorId={rangesField.state.meta.errors.length > 0 ? `exc-${index}-err` : undefined}
+                              onChange={(ranges) => rangesField.handleChange(ranges)}
+                            />
                             <FieldError id={`exc-${index}-err`} error={rangesField.state.meta.errors[0]} />
                           </span>
                         )}
@@ -181,7 +218,6 @@ function HoursForm({ availability }: { availability: Availability }) {
                 <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" onClick={() => field.removeValue(index)}>Remove</button>
               </div>
             ))}
-            <FieldError id="exceptions-err" error={field.state.meta.errors[0]} />
             <button type="button" className="dash-btn dash-btn-quiet h-8 self-start text-[12px]" onClick={() => field.pushValue({ date: berlinToday(), closed: true, ranges: [], note: '' })}>
               <Plus className="size-3.5" aria-hidden="true" /> Add exception
             </button>
@@ -212,6 +248,7 @@ const CHOICES = {
 function LimitsForm({ settings }: { settings: BookingSettings }) {
   const save = useSaveSettings()
   const [failure, setFailure] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const form = useForm({
     defaultValues: {
@@ -234,6 +271,7 @@ function LimitsForm({ settings }: { settings: BookingSettings }) {
         return Object.keys(fields).length ? { fields } : undefined
       },
     },
+    onSubmitInvalid: () => focusFirstInvalid(formRef.current),
     onSubmit: async ({ value }) => {
       setFailure(null)
 
@@ -255,7 +293,7 @@ function LimitsForm({ settings }: { settings: BookingSettings }) {
         return (
           <label className="flex flex-col gap-1 text-[12px] text-[var(--dash-quiet)]">
             {label}
-            <select className="dash-field h-9 px-2 text-[13px] text-[var(--dash-ink)]" value={field.state.value} onChange={(event) => field.handleChange(Number(event.target.value))}>
+            <select className="dash-field h-9 px-2 text-[13px] text-[var(--dash-ink)]" value={field.state.value} aria-invalid={field.state.meta.errors.length > 0} aria-describedby={`${name}-err`} onChange={(event) => field.handleChange(Number(event.target.value))}>
               {known ? null : <option value={field.state.value}>Current: {field.state.value}</option>}
               {options.map(([value, text]) => (
                 <option key={value} value={value}>{text}</option>
@@ -270,6 +308,7 @@ function LimitsForm({ settings }: { settings: BookingSettings }) {
 
   return (
     <form
+      ref={formRef}
       noValidate
       className="flex flex-col gap-3 px-5 pb-5"
       onSubmit={(event) => {

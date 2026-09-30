@@ -48,10 +48,14 @@ export const publicBookingRoutes = new Elysia({ prefix: '/public/booking' })
   .get('/types/:slug/slots', async ({ params, query, request }) => {
     await limitSlots(requestIdentity(request))
 
-    const input = parseInput(SlotsQuerySchema, query)
+    const { reference, ...input } = parseInput(SlotsQuerySchema, query)
 
     return ownerJson({
-      data: await availableSlots({ typeSlug: String(params.slug).slice(0, 80), ...input }),
+      data: await availableSlots({
+        typeSlug: String(params.slug).slice(0, 80),
+        ...input,
+        visitor: reference === undefined ? undefined : credentials({ reference }, request),
+      }),
       message: 'Slots loaded',
     })
   })
@@ -61,12 +65,14 @@ export const publicBookingRoutes = new Elysia({ prefix: '/public/booking' })
     const ip = requestIdentity(request)
 
     // Filled in by a bot, never by a person. Refused like a failed check.
-    if (input.website.trim() !== '') throw verificationFailed()
+    if (input.hp_x9.trim() !== '') throw verificationFailed()
 
-    await limitCreate(ip, input.email)
+    // The person first: a failing token must not spend anyone's allowance.
+    // The per-address limit counts only bookings actually made (in the service).
     await verifyHuman(input.turnstileToken, ip)
+    await limitCreate(ip)
 
-    const { turnstileToken: _turnstile, website: _website, ...booking } = input
+    const { turnstileToken: _turnstile, hp_x9: _honeypot, ...booking } = input
 
     return ownerJson({
       data: await createPublicAppointment(booking),

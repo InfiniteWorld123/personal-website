@@ -34,7 +34,8 @@ const { runWithDb } = await import('#/backend2/db/client')
 const { useMediaStoreForTest } = await import('#/backend2/media/store')
 const { useInboxTransportForTest } = await import('#/backend2/modules/inbox/inbox.transport')
 const { useTurnstileForTest, verifyHuman } = await import('#/backend2/modules/booking/booking.guard')
-const { CONTACT_LIMITS } = await import('#/backend2/contracts/contact.contract')
+const { CONTACT_FIELDS, CONTACT_LIMITS } = await import('#/backend2/contracts/contact.contract')
+const { probeMedia } = await import('#/backend2/media/probe')
 
 type Json = Record<string, any>
 
@@ -42,16 +43,19 @@ const database = await createTestDatabase()
 const app = createAppForTest()
 let storage = createMemoryStore()
 let sent = 0
+let recipients: string[] = []
 
 beforeEach(async () => {
   await database.reset()
   storage = createMemoryStore()
   useMediaStoreForTest(storage.store)
   sent = 0
+  recipients = []
   useInboxTransportForTest({
     mode: 'fake',
-    send: async () => {
+    send: async (email) => {
       sent += 1
+      recipients.push(email.to)
 
       return { ok: true, provider: 'fake', providerMessageId: `p-${sent}` }
     },
@@ -176,6 +180,21 @@ const owner = async (path: string) => {
   )
 
   return { status: response.status, response, body: (response.headers.get('content-type') ?? '').includes('json') ? ((await response.json()) as Json) : {} }
+}
+
+const ownerCall = async (method: string, path: string, body?: unknown) => {
+  const response = await runWithDb(database.db, async () =>
+    app.fetch(
+      new Request(`http://localhost:3000/api/v2${path}`, {
+        method,
+        headers: body === undefined ? {} : { 'content-type': 'application/json', origin: 'http://localhost:3000' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      }),
+    ),
+  )
+  const text = await response.text()
+
+  return { status: response.status, body: text === '' ? {} : (JSON.parse(text) as Json) }
 }
 
 const conversations = async () =>
@@ -314,8 +333,10 @@ describe('a contact submission', () => {
   })
 
   it('answers a filled honeypot like a success and stores nothing', async () => {
+    expect(CONTACT_FIELDS.honeypot).toBe('hp_x9')
+
     const result = await post(
-      formOf({ website: 'https://spam.example', name: '', email: 'not-an-email' }, [
+      formOf({ hp_x9: 'https://spam.example', name: '', email: 'not-an-email' }, [
         { bytes: new Uint8Array([0x4d, 0x5a, 0, 0]), name: 'x.exe' },
       ]),
     )
@@ -324,6 +345,109 @@ describe('a contact submission', () => {
     expect(result.body.data).toEqual({ received: true })
     await expectNothingStored()
   })
+
+  it('keeps a real message whose old `website` field a browser autofilled', async () => {
+    const result = await submit({ website: 'https://lena-fischer.example' })
+
+    expect(result.status, JSON.stringify(result.body)).toBe(201)
+    expect(await conversations()).toHaveLength(1)
+    // The autofilled value is not part of the message.
+    expect(JSON.stringify(await messages())).not.toContain('lena-fischer.example')
+  })
+
+  it('stores a message, name and company holding U+0000 instead of failing it', async () => {
+    const result = await submit({
+      name: 'Lena\u0000 Fischer',
+      company: 'Bäckerei\u0000',
+      message: 'Hello,\u0000 I would like a new website.',
+    })
+
+    expect(result.status, JSON.stringify(result.body)).toBe(201)
+
+    const [message] = await messages()
+
+    expect(message.body_text).toBe('Hello, I would like a new website.\n\nCompany: Bäckerei')
+    expect(message.from_name).toBe('Lena Fischer')
+  })
+
+  it('reads a phone number typed in Arabic-Indic or Persian digits', async () => {
+    expect((await submit({ phone: '+٤٩ ١٧٠ ١٢٣٤٥٦٧' })).status).toBe(201)
+    expect((await messages())[0].body_text).toContain('Phone: +49 170 1234567')
+
+    await database.reset()
+
+    expect((await submit({ phone: '۰۱۷۰ ۱۲۳۴۵۶۷' })).status).toBe(201)
+    expect((await messages())[0].body_text).toContain('Phone: 0170 1234567')
+  })
+
+  it('answers the owner’s reply draft in the language of the page the message came from', async () => {
+    await submit({ language: 'ar' })
+
+    const [conversation] = await conversations()
+    const created = await ownerCall('POST', '/owner/inbox/drafts', { conversationId: conversation.id })
+
+    expect(created.status, JSON.stringify(created.body)).toBe(201)
+    expect(created.body.data.language).toBe('ar')
+
+    // The owner's own choice still wins.
+    await database.reset()
+    await submit({ language: 'de' })
+
+    const [second] = await conversations()
+    const chosen = await ownerCall('POST', '/owner/inbox/drafts', { conversationId: second.id, language: 'en' })
+
+    expect(chosen.body.data.language).toBe('en')
+  })
+})
+
+/* --------------------------------------------------------- email addresses */
+
+describe('email addresses', () => {
+  it.each([
+    ["an apostrophe", "o'brien@example.ie"],
+    ['umlauts in the domain', 'info@bäckerei-müller.de'],
+    ['a double hyphen in the domain', 'anna@my--agency.de'],
+    ['a punycode domain', 'info@xn--bckerei-mller-hcbc.de'],
+  ])('takes an address with %s — and the owner can answer it', async (_label, email) => {
+    const result = await submit({ email })
+
+    expect(result.status, JSON.stringify(result.body)).toBe(201)
+
+    const [conversation] = await conversations()
+
+    expect(conversation.counterpart_email).toBe(email)
+
+    const draft = (await ownerCall('POST', '/owner/inbox/drafts', { conversationId: conversation.id })).body.data
+    const saved = await ownerCall('PATCH', `/owner/inbox/drafts/${draft.id}`, {
+      revision: draft.revision,
+      bodyDoc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Thank you!' }] }] },
+    })
+    const reply = await ownerCall('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: saved.body.data.revision })
+
+    expect(reply.status, JSON.stringify(reply.body)).toBe(200)
+    // A domain with umlauts leaves in the form every mail server reads.
+    expect(recipients).toEqual([email === 'info@bäckerei-müller.de' ? 'info@xn--bckerei-mller-bfb28a.de' : email])
+  })
+
+  it('asks for A–Z before the @, where the email service could not answer', async () => {
+    const result = await submit({ email: 'jürgen@example.de' })
+
+    expect(result.status).toBe(422)
+    expect(result.body.details.issues).toEqual([
+      { field: 'email', message: 'Use only the letters A–Z, digits and . _ - + before the @' },
+    ])
+    await expectNothingStored()
+  })
+
+  it.each([['a@b.com, c@d.com'], ['Lena <lena@example.com>'], ['lena@localhost'], ['lena@1.2.3.4'], ['lena@exa mple.com']])(
+    'refuses %s with one issue',
+    async (email) => {
+      const result = await submit({ email })
+
+      expect(result.status).toBe(422)
+      expect(result.body.details.issues.map((issue: { field: string }) => issue.field)).toEqual(['email'])
+    },
+  )
 })
 
 /* -------------------------------------------------------------- validation */
@@ -386,6 +510,162 @@ describe('validation', () => {
   })
 })
 
+/* ------------------------------------------------------- real-shaped files */
+
+const utf16 = (text: string): number[] => [...text].flatMap((character) => [character.charCodeAt(0), 0])
+
+/**
+ * A `.doc` as Word on a Mac writes it: the OLE2 directory at the very end,
+ * well past the first 64 KB, and spread over two sectors — `WordDocument` is
+ * in the second. The first sectors hold only text, including the word
+ * "MacBook" in UTF-16, which a search of the head alone would take for an
+ * Excel "Book" stream.
+ */
+const macWordBytes = (stream = 'WordDocument', text = 'Notes written on my MacBook for the new website.'): Uint8Array => {
+  const sector = 512
+  const dataSectors = 200 // 100 KB before the directory
+  const fatSectors = [dataSectors, dataSectors + 1] // 128 entries each
+  const directory = [dataSectors + 2, dataSectors + 3]
+  const bytes = new Uint8Array((directory[1]! + 2) * sector)
+  const view = new DataView(bytes.buffer)
+  const at = (index: number) => (index + 1) * sector
+  const setFat = (index: number, value: number) =>
+    view.setUint32(at(fatSectors[Math.floor(index / 128)]!) + (index % 128) * 4, value, true)
+
+  bytes.set([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1], 0)
+  view.setUint16(24, 0x3e, true)
+  view.setUint16(26, 3, true)
+  view.setUint16(28, 0xfffe, true)
+  view.setUint16(30, 9, true) // 512-byte sectors
+  view.setUint16(32, 6, true)
+  view.setUint32(44, fatSectors.length, true)
+  view.setUint32(48, directory[0]!, true) // the first directory sector
+  view.setUint32(56, 4096, true)
+  view.setUint32(60, 0xfffffffe, true)
+  view.setUint32(68, 0xfffffffe, true) // no DIFAT chain
+  for (let index = 0; index < 109; index += 1) view.setUint32(76 + index * 4, fatSectors[index] ?? 0xffffffff, true)
+
+  // The document's text, as Word stores it: UTF-16.
+  bytes.set(utf16(text), at(3))
+
+  // The FAT: every data sector ends its own chain; the directory's two are linked.
+  for (let index = 0; index < 256; index += 1) setFat(index, 0xffffffff)
+  for (let index = 0; index < dataSectors; index += 1) setFat(index, 0xfffffffe)
+  for (const fat of fatSectors) setFat(fat, 0xfffffffd)
+  setFat(directory[0]!, directory[1]!)
+  setFat(directory[1]!, 0xfffffffe)
+
+  const entry = (offset: number, name: string, type: number) => {
+    bytes.set(utf16(name), offset)
+    view.setUint16(offset + 64, (name.length + 1) * 2, true)
+    bytes[offset + 66] = type
+  }
+
+  entry(at(directory[0]!), 'Root Entry', 5)
+  entry(at(directory[0]!) + 128, '1Table', 2)
+  entry(at(directory[0]!) + 256, '\u0005SummaryInformation', 2)
+  entry(at(directory[0]!) + 384, '\u0005DocumentSummaryInformation', 2)
+  entry(at(directory[1]!), stream, 2)
+
+  return bytes
+}
+
+/** A stored (uncompressed) ZIP, with its central directory at the end as every ZIP has. */
+const zipOf = (entries: Array<[string, Uint8Array]>): Uint8Array => {
+  const parts: Uint8Array[] = []
+  const central: Uint8Array[] = []
+  let offset = 0
+
+  for (const [name, data] of entries) {
+    const nameBytes = new TextEncoder().encode(name)
+    const local = new Uint8Array(30 + nameBytes.length)
+    const localView = new DataView(local.buffer)
+
+    localView.setUint32(0, 0x04034b50, true)
+    localView.setUint32(18, data.length, true)
+    localView.setUint32(22, data.length, true)
+    localView.setUint16(26, nameBytes.length, true)
+    local.set(nameBytes, 30)
+
+    const record = new Uint8Array(46 + nameBytes.length)
+    const recordView = new DataView(record.buffer)
+
+    recordView.setUint32(0, 0x02014b50, true)
+    recordView.setUint32(20, data.length, true)
+    recordView.setUint32(24, data.length, true)
+    recordView.setUint16(28, nameBytes.length, true)
+    recordView.setUint32(42, offset, true)
+    record.set(nameBytes, 46)
+
+    parts.push(local, data)
+    central.push(record)
+    offset += local.length + data.length
+  }
+
+  const centralSize = central.reduce((sum, record) => sum + record.length, 0)
+  const end = new Uint8Array(22)
+  const endView = new DataView(end.buffer)
+
+  endView.setUint32(0, 0x06054b50, true)
+  endView.setUint16(8, entries.length, true)
+  endView.setUint16(10, entries.length, true)
+  endView.setUint32(12, centralSize, true)
+  endView.setUint32(16, offset, true)
+
+  const all = [...parts, ...central, end]
+  const bytes = new Uint8Array(all.reduce((sum, part) => sum + part.length, 0))
+  let position = 0
+
+  for (const part of all) {
+    bytes.set(part, position)
+    position += part.length
+  }
+
+  return bytes
+}
+
+/**
+ * A `.docx` the way LibreOffice or a Word file with photos is laid out: a
+ * large picture first, and `[Content_Types].xml` as the last entry — nowhere
+ * near the first 8 KB.
+ */
+const lateOfficeBytes = (folder: 'word' | 'xl' = 'word', extra: Array<[string, Uint8Array]> = []): Uint8Array =>
+  zipOf([
+    [`${folder}/media/image1.png`, new Uint8Array(70 * 1024).fill(7)],
+    ['_rels/.rels', textBytes('<Relationships/>')],
+    [`${folder}/${folder === 'word' ? 'document' : 'workbook'}.xml`, textBytes('<document/>')],
+    ...extra,
+    ['[Content_Types].xml', textBytes('<Types/>')],
+  ])
+
+/** A phone photo: 85 KB of camera data (EXIF, a colour profile) before the frame header. */
+const phoneJpegBytes = (): Uint8Array => {
+  const segment = (marker: number, length: number) => {
+    const bytes = new Uint8Array(2 + length)
+
+    bytes[0] = 0xff
+    bytes[1] = marker
+    bytes[2] = length >> 8
+    bytes[3] = length & 0xff
+
+    return bytes
+  }
+  const sof = segment(0xc0, 17)
+
+  sof.set([0x08, 0x0f, 0xc0, 0x0b, 0xd0], 4) // 8-bit, 4032 x 3024
+
+  const pieces = [new Uint8Array([0xff, 0xd8]), segment(0xe1, 65_533), segment(0xe2, 20_000), sof, segment(0xda, 12), new Uint8Array([1, 2, 3, 0xff, 0xd9])]
+  const bytes = new Uint8Array(pieces.reduce((sum, piece) => sum + piece.length, 0))
+  let offset = 0
+
+  for (const piece of pieces) {
+    bytes.set(piece, offset)
+    offset += piece.length
+  }
+
+  return bytes
+}
+
 /* ------------------------------------------------------------------- files */
 
 describe('the attachment', () => {
@@ -428,6 +708,44 @@ describe('the attachment', () => {
     // Stored with no pending ledger entry left behind, and not in Media.
     expect((await database.db.query('SELECT * FROM v2_media_pending_objects')).rows).toHaveLength(0)
     expect((await database.db.query('SELECT * FROM v2_media_assets')).rows).toHaveLength(0)
+  })
+
+  it.each([
+    ['a Word file from a Mac, its directory at the end', 'Angebot.doc', macWordBytes(), 'application/msword'],
+    ['a Word file whose parts are listed at the end', 'Brief.docx', lateOfficeBytes('word'), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    ['an Excel file whose parts are listed at the end', 'Zahlen.xlsx', lateOfficeBytes('xl'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+    ['a phone photo with its frame header past 64 KB', 'IMG_2044.JPG', phoneJpegBytes(), 'image/jpeg'],
+  ])('keeps %s', async (_label, name, bytes, detected) => {
+    expect(bytes.byteLength).toBeGreaterThan(64 * 1024)
+
+    const result = await submit({}, [{ bytes, name }])
+
+    expect(result.status, JSON.stringify(result.body)).toBe(201)
+    expect((await attachments())[0]).toMatchObject({ file_name: name, detected_type: detected, status: 'stored' })
+  })
+
+  it('reads an OLE2 file by its directory, not by words in its text', async () => {
+    // "MacBook" in the text is not an Excel stream; the directory says Word.
+    expect(probeMedia(macWordBytes())?.contentType).toBe('application/msword')
+    expect(probeMedia(macWordBytes('Workbook'))?.contentType).toBe('application/vnd.ms-excel')
+    expect(probeMedia(macWordBytes('PowerPoint Document'))?.contentType).toBe('application/vnd.ms-powerpoint')
+    // A directory naming no Office stream is still refused.
+    expect((await submit({}, [{ bytes: macWordBytes('Contents'), name: 'odd.doc' }])).body.code).toBe('UNSUPPORTED_FILE_TYPE')
+  })
+
+  it('still refuses a macro-enabled Word file whose parts are listed at the end', async () => {
+    const result = await submit({}, [{ bytes: lateOfficeBytes('word', [['word/vbaProject.bin', textBytes('x')]]), name: 'brief.docx' }])
+
+    expect(result.body.code).toBe('UNSUPPORTED_FILE_TYPE')
+  })
+
+  it('leaves the Media library’s head-only reading as it was', () => {
+    const head = (bytes: Uint8Array) => bytes.subarray(0, 64 * 1024)
+
+    // Media reads only the head: the name still picks the OLE2 flavour there.
+    expect(probeMedia(head(macWordBytes('WordDocument', 'Angebot')), 'Angebot.doc')?.contentType).toBe('application/msword')
+    expect(probeMedia(head(macWordBytes('WordDocument', 'Angebot')))).toBeNull()
+    expect(probeMedia(head(lateOfficeBytes('word')))?.contentType).toBe('application/zip')
   })
 
   it('is downloadable by the owner and by nobody else', async () => {
@@ -552,6 +870,44 @@ describe('anti-abuse', () => {
 
     expect(limited.status).toBe(429)
     expect(await conversations()).toHaveLength(3)
+  })
+
+  it('does not lock out an address after failed human checks sent in its name', async () => {
+    useTurnstileForTest(async (token) => token === 'good')
+
+    for (let index = 0; index < 6; index += 1) {
+      const refused = await submit({ email: 'client@example.com', turnstileToken: 'bad' }, [], '198.51.100.60')
+
+      expect(refused.body.code).toBe('VERIFICATION_FAILED')
+    }
+
+    // The client, from the same network and from another, still gets through.
+    expect((await submit({ email: 'client@example.com', turnstileToken: 'good' }, [], '198.51.100.60')).status).toBe(201)
+    expect((await submit({ email: 'client@example.com', turnstileToken: 'good' }, [], '198.51.100.61')).status).toBe(201)
+  })
+
+  it('answers a retry of a message that arrived with success, even at the limit', async () => {
+    const last = crypto.randomUUID()
+
+    for (const submissionId of [crypto.randomUUID(), crypto.randomUUID(), last]) {
+      expect((await submit({ email: 'same@example.com', submissionId })).status).toBe(201)
+    }
+
+    // The limit is reached — and the retry of the third is still "received".
+    expect((await submit({ email: 'same@example.com' })).status).toBe(429)
+
+    const retry = await submit({ email: 'same@example.com', submissionId: last })
+
+    expect(retry.status).toBe(201)
+    expect(await conversations()).toHaveLength(3)
+  })
+
+  it('counts only received messages against an address, not refused files', async () => {
+    for (let index = 0; index < 4; index += 1) {
+      expect((await submit({ email: 'files@example.com' }, [{ bytes: textBytes('x'), name: 'x.txt' }], `198.51.100.${70 + index}`)).status).toBe(422)
+    }
+
+    expect((await submit({ email: 'files@example.com' }, [], '198.51.100.80')).status).toBe(201)
   })
 
   it('refuses a failed human check and stores nothing', async () => {

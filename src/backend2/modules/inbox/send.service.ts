@@ -1,3 +1,4 @@
+import { toSendableAddress } from '../../contracts/email-address.contract'
 import {
   EmailAddressSchema,
   INBOX_LIMITS,
@@ -16,6 +17,12 @@ import {
   validationFailed,
 } from '../../http/error'
 import { resolveMediaStore } from '../../media/store'
+import {
+  hasPrivateLinkNotes,
+  privateLinksFor,
+  redactPrivateLinks,
+  restorePrivateLinks,
+} from '../booking/booking.mail'
 import { openOwnerAsset, releaseReferences, replaceReferences } from '../media/media.service'
 import * as v from 'valibot'
 import { resolveAttachments } from './draft.service'
@@ -110,6 +117,24 @@ const loadMessage = async (id: string): Promise<InboxMessage> => {
   return toMessage(row, [])
 }
 
+/**
+ * A booking email as the visitor must receive it. The Inbox keeps it with
+ * its private links named rather than written out (`booking.mail.ts`), so a
+ * Retry derives them again from the appointment. Null when they cannot be:
+ * sending the email without them would be sending a broken one.
+ */
+const withPrivateLinks = async (
+  conversation: { origin: string; origin_ref: string | null },
+  text: string,
+): Promise<string | null> => {
+  if (!hasPrivateLinkNotes(text)) return text
+
+  const links =
+    conversation.origin === 'booking' && conversation.origin_ref ? await privateLinksFor(conversation.origin_ref) : null
+
+  return links ? restorePrivateLinks(text, links) : null
+}
+
 /* ------------------------------------------------------------------ deliver */
 
 /**
@@ -120,7 +145,11 @@ const loadMessage = async (id: string): Promise<InboxMessage> => {
  */
 export const deliverMessage = async (
   messageId: string,
-  options: { alreadyClaimed?: boolean } = {},
+  options: {
+    alreadyClaimed?: boolean
+    /** A system email's text as composed, private links included; the stored copy has them named. */
+    text?: string
+  } = {},
 ): Promise<InboxMessage> => {
   const message = await repo.findMessage(messageId)
 
@@ -186,9 +215,15 @@ export const deliverMessage = async (
   } else {
     // A message another module composed as plain text, such as a booking
     // confirmation.
-    text = message.body_text
+    const composed = options.text ?? (await withPrivateLinks(conversation, message.body_text))
+
+    if (composed === null) {
+      return fail(null, 'The appointment behind this email no longer exists, so its private link could not be added. Nothing was sent.')
+    }
+
+    text = composed
     html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5">${escapeHtml(
-      message.body_text,
+      text,
     ).replace(/\n/gu, '<br>')}</div>`
   }
 
@@ -200,7 +235,8 @@ export const deliverMessage = async (
 
   const result = await resolveInboxTransport().send({
     from: `${inboxFromName()} <${inboxFromAddress()}>`,
-    to: message.to_email,
+    // A domain with umlauts goes out in the `xn--` form every mail server reads.
+    to: toSendableAddress(message.to_email),
     replyTo: withReplyToken(inboxReplyAddress(), conversation.reply_token),
     subject: message.subject,
     html,
@@ -421,6 +457,13 @@ export const retryMessage = async (messageId: string): Promise<InboxMessage> => 
  * Called in-process only. Delivery failures are recorded on the message and
  * returned, not thrown: the caller's own record — the appointment — must not
  * be undone because an email bounced.
+ *
+ * Every email brings the conversation's subject and facts up to date — a
+ * booking moved to a new time says the new time in the list. Threading is
+ * untouched by that: it runs on the reply token and Message-IDs, and each
+ * email keeps its own subject.
+ *
+ * The stored copy never holds a booking's private link; the email does.
  */
 export const sendSystemEmail = async (input: {
   conversationId?: string | null
@@ -451,6 +494,15 @@ export const sendSystemEmail = async (input: {
       }))
     const previous = existing ? (await repo.latestMessages(existing.id, 1))[0] ?? null : null
     const thread = threadHeaders(previous)
+    const stored = redactPrivateLinks(input.text)
+
+    if (existing) {
+      await repo.updateConversationDetails({
+        id: existing.id,
+        subject: input.subject,
+        facts: input.facts ?? existing.facts,
+      })
+    }
 
     const messageId = await repo.insertMessage({
       conversationId: conversation.id,
@@ -460,7 +512,7 @@ export const sendSystemEmail = async (input: {
       toEmail: input.to,
       toName: input.toName,
       subject: input.subject,
-      bodyText: input.text,
+      bodyText: stored,
       messageIdHeader: newMessageIdHeader(),
       inReplyTo: thread.inReplyTo,
       referencesHeader: thread.references,
@@ -473,11 +525,14 @@ export const sendSystemEmail = async (input: {
       conversationId: conversation.id,
       direction: 'outgoing',
       occurredAt: now,
-      preview: previewOf(input.text),
+      preview: previewOf(stored),
     })
 
     return { conversationId: conversation.id, messageId }
   })
 
-  return { conversationId: recorded.conversationId, message: await deliverMessage(recorded.messageId) }
+  return {
+    conversationId: recorded.conversationId,
+    message: await deliverMessage(recorded.messageId, { text: input.text }),
+  }
 }

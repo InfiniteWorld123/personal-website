@@ -1,6 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import * as v from 'valibot'
+import { isEmailAddress } from '../../contracts/email-address.contract'
 import {
   INGRESS_HEADERS,
   INGRESS_MAX_BODY_BYTES,
@@ -81,6 +82,8 @@ const PayloadSchema = v.object({
   to: v.pipe(v.array(v.pipe(v.string(), v.maxLength(500))), v.maxLength(50)),
   from: v.pipe(v.string(), v.maxLength(500)),
   fromName: v.optional(v.pipe(v.string(), v.maxLength(500)), ''),
+  // Sent by the Worker since 30 Sep 2026; an older one leaves it out.
+  replyTo: v.optional(v.pipe(v.string(), v.maxLength(500)), ''),
   subject: v.optional(v.pipe(v.string(), v.maxLength(2000)), ''),
   text: v.optional(v.pipe(v.string(), v.maxLength(2_000_000)), ''),
   html: v.optional(v.string(), ''),
@@ -154,12 +157,41 @@ export const verifyIngress = async (request: Request, environment: Env = process
 
 /* ---------------------------------------------------------------- matching */
 
-/** `Name <a@b>` or `a@b` → the address, lower-cased; null when there is none. */
+/**
+ * `Name <a@b>` or `a@b` → the address, lower-cased; null when there is none.
+ *
+ * Read with the same rule the composer's Send checks (`isEmailAddress`), so
+ * every sender the Inbox takes can be answered from it.
+ */
 export const addressOf = (value: string): string | null => {
   const inside = value.match(/<([^<>\s]+@[^<>\s]+)>/u)?.[1] ?? value.trim()
   const address = inside.toLowerCase()
 
-  return /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/u.test(address) ? address : null
+  return isEmailAddress(address) ? address : null
+}
+
+/**
+ * The letter with every U+0000 taken out of its text. PostgreSQL cannot store
+ * that character, so one in a subject or body failed the whole letter — and
+ * the Worker's retries with it: the letter never reached the Inbox.
+ */
+const withoutNul = <T>(value: T): T => {
+  // eslint-disable-next-line no-control-regex
+  if (typeof value === 'string') return value.replace(/\u0000/gu, '') as T
+  if (Array.isArray(value)) return value.map(withoutNul) as T
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, withoutNul(item)])) as T
+  }
+
+  return value
+}
+
+/** Our own addresses: a Reply-To naming one of them is not someone to answer. */
+const isOwnAddress = (address: string): boolean => {
+  const domains = [inboxFromAddress(), inboxReplyAddress()].map((own) => own.toLowerCase().split('@')[1])
+
+  return domains.some((domain) => domain && address.endsWith(`@${domain}`))
 }
 
 /** `reply+<token>@domain` in any recipient → `<token>`. */
@@ -216,9 +248,17 @@ export type IngressOutcome =
  * sender's address nor the subject is ever enough — a letter that matches
  * nothing starts a new conversation rather than joining the wrong one.
  */
-export const recordInbound = async (payload: InboundPayload): Promise<IngressOutcome> => {
+export const recordInbound = async (letter: InboundPayload): Promise<IngressOutcome> => {
+  const payload = withoutNul(letter)
   const messageIdHeader = payload.messageId ? normaliseMessageId(payload.messageId) : null
   const fromAddress = addressOf(payload.from) ?? (payload.from.trim().slice(0, 254) || 'unknown-sender')
+  /*
+   * Who an answer is for. A form relay or a shop sends from `noreply@…` and
+   * names the person in Reply-To; answering the From would reach nobody. The
+   * From stays the message's sender, as the letter says.
+   */
+  const replyToAddress = payload.replyTo ? addressOf(payload.replyTo) : null
+  const counterpartAddress = replyToAddress && !isOwnAddress(replyToAddress) ? replyToAddress : fromAddress
   const toAddress = payload.to.map(addressOf).find(Boolean) ?? inboxFromAddress()
   const text = (payload.text ?? '').slice(0, 1_000_000)
   const html = (payload.html ?? '').slice(0, INGRESS_MAX_HTML_CHARACTERS)
@@ -311,7 +351,7 @@ export const recordInbound = async (payload: InboundPayload): Promise<IngressOut
 
       conversation ??= await repo.insertConversation({
         subject,
-        counterpartEmail: fromAddress,
+        counterpartEmail: counterpartAddress,
         counterpartName: (payload.fromName ?? '').trim().slice(0, 200),
         origin: 'incoming',
         replyToken: newReplyToken(),

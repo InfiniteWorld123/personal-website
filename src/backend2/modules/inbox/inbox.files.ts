@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
-import { ACCEPTED_CONTENT_TYPES, PROBE_BYTES } from '../../contracts/media.contract'
+import { ACCEPTED_CONTENT_TYPES } from '../../contracts/media.contract'
 import { INGRESS_MAX_FILE_BYTES } from '../../contracts/inbox.contract'
 import { probeMedia } from '../../media/probe'
 import type { MediaStore } from '../../media/store'
@@ -137,7 +137,9 @@ export const classifyIncomingFile = (file: {
     }
   }
 
-  const probe = probeMedia(bytes.subarray(0, PROBE_BYTES), fileName)
+  // The whole file, which the letter carries anyway: an Office file's
+  // directory and a photo's frame header can sit far past the first kilobytes.
+  const probe = probeMedia(bytes, fileName)
 
   return {
     status: 'accept',

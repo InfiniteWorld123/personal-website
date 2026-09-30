@@ -16,6 +16,12 @@ export type SlotRange = {
   days: SlotDay[]
   /** Whether anything may be free after `to` — decides the "next month" arrow. */
   moreAfter: boolean
+  /**
+   * The first day with a free time after `to`, when the server looked for one
+   * (it does when the last piece asked had nothing) — so a month that has
+   * nothing left can open the one that does.
+   */
+  nextAvailableDate: string | null
 }
 
 /** Days from `from` to `to` inclusive, asked in pieces the server accepts. */
@@ -46,20 +52,37 @@ export const v2SlotsQuery = (input: {
   to: string
   timeZone: string
   language: BookingLanguage
+  /** Moving a booking: its reference and private credential (see `fetchSlots`). */
+  reference?: string
+  token?: string
 }) =>
   queryOptions({
-    queryKey: ['booking-v2', 'slots', input.slug, input.method, input.from, input.to, input.timeZone],
+    // The reference changes the answer, so it is part of the key; the
+    // credential only proves it, and stays out of the cache.
+    queryKey: ['booking-v2', 'slots', input.slug, input.method, input.from, input.to, input.timeZone, input.reference ?? null],
     queryFn: async (): Promise<SlotRange> => {
       const results = await Promise.all(
         slotChunks(input.from, input.to).map((chunk) =>
-          fetchSlots({ ...chunk, slug: input.slug, method: input.method, timeZone: input.timeZone, language: input.language }),
+          fetchSlots({
+            ...chunk,
+            slug: input.slug,
+            method: input.method,
+            timeZone: input.timeZone,
+            language: input.language,
+            reference: input.reference,
+            token: input.token,
+          }),
         ),
       )
       const days = results.flatMap((result) => result.days)
       const last = results.at(-1)
       const lastHasSlots = (last?.days ?? []).some((day) => day.slots.length > 0)
 
-      return { days, moreAfter: lastHasSlots || Boolean(last?.nextAvailableDate) }
+      return {
+        days,
+        moreAfter: lastHasSlots || Boolean(last?.nextAvailableDate),
+        nextAvailableDate: last?.nextAvailableDate ?? null,
+      }
     },
     staleTime: 30_000,
   })

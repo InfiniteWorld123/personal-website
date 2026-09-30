@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryStore, createTestDatabase, pdfBytes, pngBytes } from './helpers/backend2-db'
 
 /**
@@ -26,7 +26,7 @@ const SECRET = 'test-only-inbox-ingress-secret-0123456789'
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
 const { useMediaStoreForTest } = await import('#/backend2/media/store')
-const { useInboxTransportForTest } = await import('#/backend2/modules/inbox/inbox.transport')
+const { resolveInboxTransport, useInboxTransportForTest } = await import('#/backend2/modules/inbox/inbox.transport')
 const { signIngress, replyTokenFrom, addressOf } = await import('#/backend2/modules/inbox/ingress.service')
 const { ownerInboxPaths } = await import('#/backend2/modules/inbox/inbox.owner.route')
 const { renderEmail, docToPlainText } = await import('#/backend2/modules/inbox/email-render')
@@ -629,6 +629,158 @@ describe('replies arriving', () => {
     const echo = await deliver(letter({ messageId: email.headers['Message-ID'] }))
 
     expect(echo.body.data.outcome).toBe('duplicate')
+  })
+})
+
+/* ------------------------------------------------- answering what arrived */
+
+describe('answering every letter that arrived', () => {
+  const reply = async (conversationId: string, text = 'Thank you!') => {
+    const created = await call('POST', '/owner/inbox/drafts', { conversationId })
+
+    expect(created.status, JSON.stringify(created.body)).toBe(201)
+
+    // The autosave sends the subject back, as the composer does.
+    const draft = await save(created.body.data, { bodyDoc: doc(text), subject: created.body.data.subject })
+
+    return { draft, result: await call('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: draft.revision }) }
+  }
+
+  it.each([
+    ["an apostrophe", "Sean <sean.o'neill@example.ie>", "sean.o'neill@example.ie"],
+    ['a punycode domain', 'info@xn--bckerei-mller-hcbc.de', 'info@xn--bckerei-mller-hcbc.de'],
+    ['a double hyphen in the domain', 'anna@my--agency.de', 'anna@my--agency.de'],
+    ['umlauts in the domain', 'Bäckerei <info@bäckerei-müller.de>', 'info@xn--bckerei-mller-bfb28a.de'],
+    ['letters outside A–Z before the @', 'Jürgen <jürgen@example.de>', 'jürgen@example.de'],
+  ])('replies to a sender with %s', async (_label, from, to) => {
+    await deliver(letter({ from }))
+
+    const [conversation] = (await list()).items
+    const { result } = await reply(conversation.id)
+
+    expect(result.status, JSON.stringify(result.body)).toBe(200)
+    expect(sent.map((email) => email.to)).toEqual([to])
+  })
+
+  it('reads a sender with the same rule a reply is checked with', () => {
+    expect(addressOf("Sean <Sean.O'Neill@Example.ie>")).toBe("sean.o'neill@example.ie")
+    expect(addressOf('info@bäckerei-müller.de')).toBe('info@bäckerei-müller.de')
+    expect(addressOf('Two <a@b.com, c@d.com>')).toBeNull()
+    expect(addressOf('nul@exa\u0000mple.com')).toBeNull()
+  })
+
+  it('stores a letter holding U+0000 instead of refusing it', async () => {
+    const result = await deliver(
+      letter({
+        from: 'Anna\u0000 <anna@example.com>',
+        fromName: 'Anna\u0000 Client',
+        subject: 'Offer\u0000 request',
+        text: 'Hello\u0000 there',
+        html: '<p>Hello\u0000 there</p>',
+        files: [{ filename: 'a\u0000.pdf', contentType: 'application/pdf\u0000', content: b64(pdfBytes()) }],
+      }),
+    )
+
+    expect(result.status, JSON.stringify(result.body)).toBe(200)
+    expect(result.body.data.outcome).toBe('recorded')
+
+    const [conversation] = (await list()).items
+    const [message] = (await open(conversation.id)).messages.items
+
+    expect(conversation).toMatchObject({ subject: 'Offer request', counterpartName: 'Anna Client', counterpartEmail: 'anna@example.com' })
+    expect(message.bodyText).toBe('Hello there')
+    expect(message.incomingAttachments[0]).toMatchObject({ fileName: 'a.pdf', status: 'stored' })
+    expect(JSON.stringify((await database.db.query('SELECT * FROM v2_inbox_attachments')).rows)).not.toContain('\\u0000')
+  })
+
+  it('answers a letter whose subject is longer than a reply subject may be', async () => {
+    await deliver(letter({ subject: `Question ${'x'.repeat(990)}` }))
+
+    const [conversation] = (await list()).items
+    const { draft, result } = await reply(conversation.id)
+
+    expect(draft.subject).toHaveLength(300)
+    expect(draft.subject.startsWith('Re: Question xxx')).toBe(true)
+    expect(result.status, JSON.stringify(result.body)).toBe(200)
+  })
+
+  it('never cuts a reply subject through a character', async () => {
+    const { replySubject } = await import('#/backend2/modules/inbox/draft.service')
+    const subject = replySubject(`${'x'.repeat(295)}😀😀`)
+
+    expect(subject.length).toBeLessThanOrEqual(300)
+    expect(subject.endsWith('x')).toBe(true)
+    expect(replySubject('Re: short')).toBe('Re: short')
+  })
+
+  it('answers the Reply-To of a letter sent through a form relay', async () => {
+    await deliver(
+      letter({
+        from: 'Website Form <noreply@forms.example>',
+        fromName: 'Website Form',
+        replyTo: 'Lena Fischer <lena@example.com>',
+      }),
+    )
+
+    const [conversation] = (await list()).items
+    const [message] = (await open(conversation.id)).messages.items
+
+    expect(conversation.counterpartEmail).toBe('lena@example.com')
+    // The letter still says who sent it.
+    expect(message.fromEmail).toBe('noreply@forms.example')
+
+    const { result } = await reply(conversation.id)
+
+    expect(result.status).toBe(200)
+    expect(sent.map((email) => email.to)).toEqual(['lena@example.com'])
+  })
+
+  it('ignores a Reply-To that names our own mailbox, or nothing', async () => {
+    await deliver(letter({ from: 'anna@example.com', replyTo: 'info@yamanwarda.de' }))
+    await deliver(letter({ from: 'bob@example.com', replyTo: 'not an address' }))
+    // An older Worker sends no Reply-To at all.
+    await deliver(letter({ from: 'carla@example.com' }))
+
+    const people = (await list()).items.map((item: Json) => item.counterpartEmail).sort()
+
+    expect(people).toEqual(['anna@example.com', 'bob@example.com', 'carla@example.com'])
+  })
+
+  it('starts a reply in English when the conversation has no language, and in the chosen one when asked', async () => {
+    await deliver(letter())
+
+    const [conversation] = (await list()).items
+
+    expect((await call('POST', '/owner/inbox/drafts', { conversationId: conversation.id })).body.data.language).toBe('en')
+
+    const fresh = await call('POST', '/owner/inbox/drafts', { toEmail: 'x@example.com', language: 'de' })
+
+    expect(fresh.body.data.language).toBe('de')
+    expect((await call('POST', '/owner/inbox/drafts', { toEmail: 'y@example.com' })).body.data.language).toBe('en')
+  })
+
+  it('says why the email service refused an address with letters outside A–Z', async () => {
+    useInboxTransportForTest(undefined)
+
+    const fetchMock = vi.fn(async () => new Response('{"message":"Invalid to"}', { status: 422 }))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const transport = resolveInboxTransport({ INBOX_SEND_MODE: 'live', RESEND_API_KEY: 're_test_only' })
+      const email = { from: 'a <info@yamanwarda.de>', replyTo: 'reply@yamanwarda.de', subject: 's', html: '', text: '', headers: {}, attachments: [], idempotencyKey: 'k' }
+
+      expect(await transport.send({ ...email, to: 'jürgen@example.de' })).toMatchObject({
+        ok: false,
+        reason: expect.stringMatching(/letters outside A–Z before the @/u),
+      })
+      expect(await transport.send({ ...email, to: 'lena@example.com' })).toMatchObject({
+        ok: false,
+        reason: 'The email service refused this email. Check the address and attachments.',
+      })
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

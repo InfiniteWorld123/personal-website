@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, CalendarCheck, CalendarClock, Check, Video } from 'lucide-react'
 import type { VisitorAppointment } from '#/backend2/contracts/booking.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
@@ -272,6 +272,8 @@ function MovePanel({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  // Once the visitor turns the month themselves, the page stops turning it.
+  const monthTurned = useRef(false)
   const slots = useQuery({
     ...v2SlotsQuery({
       slug: appointment.typeSlug ?? '',
@@ -280,6 +282,10 @@ function MovePanel({
       to: endOfMonth(month),
       timeZone: timezone,
       language,
+      // Its own time no longer hides the times around it; the time itself
+      // comes back in the list and is left out below.
+      reference: appointment.reference,
+      token,
     }),
     enabled: Boolean(appointment.typeSlug),
   })
@@ -289,6 +295,22 @@ function MovePanel({
     [days, appointment.startsAt],
   )
   const daySlots = (days.find((day) => day.date === selectedDay)?.slots ?? []).filter((slot) => slot.startsAt !== appointment.startsAt)
+
+  // Nothing left this month while a later month has times: open that month
+  // rather than say nothing is free.
+  const nextFree = slots.data?.nextAvailableDate ?? null
+
+  useEffect(() => {
+    if (monthTurned.current || !nextFree || availableDays.size > 0) return
+
+    const target = startOfMonth(nextFree)
+
+    if (target <= month) return
+
+    setMonth(target)
+    setSelectedDay(null)
+    setSelectedSlot(null)
+  }, [nextFree, availableDays, month])
 
   if (!appointment.typeSlug) {
     return (
@@ -313,7 +335,9 @@ function MovePanel({
     } catch (error) {
       const code = errorCode(error)
 
-      if (code === 'CHANGE_DEADLINE_PASSED') return onDeadline()
+      // Too late now, or no longer confirmed (cancelled meanwhile): the page
+      // reads the booking again and says which, as cancelling does.
+      if (code === 'CHANGE_DEADLINE_PASSED' || code === 'CONFLICT') return onDeadline()
 
       if (code === 'SLOT_UNAVAILABLE' || code === 'BOOKING_TOO_SOON' || code === 'BOOKING_TOO_FAR') {
         setProblem(code === 'SLOT_UNAVAILABLE' ? words.taken : words.tooSoon)
@@ -345,6 +369,7 @@ function MovePanel({
           availableDays={availableDays}
           selectedDay={selectedDay}
           onMonthChange={(next) => {
+            monthTurned.current = true
             setMonth(next)
             setSelectedDay(null)
             setSelectedSlot(null)

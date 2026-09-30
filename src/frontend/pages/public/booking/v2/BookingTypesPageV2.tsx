@@ -21,6 +21,7 @@ export function BookingTypesPageV2() {
   const { language } = useLanguage()
   const copy = getBookingCopy(language)
   const entry = getBookingEntryCopy(language)
+  const words = getBookingV2Copy(language)
   const types = useQuery(v2TypesQuery(language))
   const ref = useReveal<HTMLElement>()
 
@@ -50,7 +51,7 @@ export function BookingTypesPageV2() {
               </Button>
             </div>
           ) : types.data.length === 0 ? (
-            <p className="text-foreground/55 py-12 text-sm">{copy.calendar.noneThisMonth}</p>
+            <p className="text-foreground/55 py-12 text-sm">{words.noTypes}</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {types.data.map((type) => (

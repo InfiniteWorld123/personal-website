@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { hasAsciiLocalPart, isSendableEmailAddress } from './email-address.contract'
 
 /**
  * The public Contact form, V2 (`docs/v2/inbox.md`, "Public contact form
@@ -33,7 +34,14 @@ export const CONTACT_LIMITS = {
  */
 export const CONTACT_MAX_BODY_BYTES = 11 * 1024 * 1024
 
-/** The multipart field names. `website` is the honeypot, as on Booking. */
+/**
+ * The multipart field names.
+ *
+ * The honeypot has a name and label no browser or password manager fills in
+ * by itself. It was `website`, which Safari's and password managers'
+ * autofill can fill for a real visitor — whose message was then thrown away
+ * while they were shown "sent".
+ */
 export const CONTACT_FIELDS = {
   submissionId: 'submissionId',
   name: 'name',
@@ -43,7 +51,7 @@ export const CONTACT_FIELDS = {
   message: 'message',
   language: 'language',
   turnstileToken: 'turnstileToken',
-  honeypot: 'website',
+  honeypot: 'hp_x9',
   file: 'attachment',
 } as const
 
@@ -97,18 +105,45 @@ export const contactFileRules = () => ({
   extensions: CONTACT_FILE_ACCEPT,
 })
 
+/**
+ * PostgreSQL cannot store the character U+0000 in text: a message carrying
+ * one would fail to save, and the visitor would be told it was lost. It never
+ * belongs in what a person typed, so it is taken out.
+ */
+// eslint-disable-next-line no-control-regex
+const withoutNul = (value: string): string => value.replace(/\u0000/gu, '')
+
+/**
+ * Arabic-Indic (٠–٩) and Persian (۰–۹) digits as the ASCII digits they are, so
+ * a phone number typed on an Arabic keyboard is accepted as one.
+ */
+export const toAsciiDigits = (value: string): string =>
+  value.replace(/[\u0660-\u0669\u06f0-\u06f9]/gu, (digit) => String(digit.charCodeAt(0) & 0xf))
+
 /** One line: a newline or tab inside a name would reach a subject line. */
 const OneLine = v.pipe(
   v.string(),
-  v.transform((value) => value.replace(/\s+/gu, ' ')),
+  v.transform((value) => withoutNul(value).replace(/\s+/gu, ' ')),
   v.trim(),
 )
+
+/**
+ * The email field's one message, chosen for what is wrong: a list, letters
+ * outside A–Z before the `@` (the email service cannot deliver there, and
+ * `jürgen@` is usually a typo for `juergen@`), or anything else.
+ */
+const emailProblem = (value: string): string =>
+  /[,;\s]/u.test(value)
+    ? 'Enter one email address'
+    : value.includes('@') && !hasAsciiLocalPart(value)
+      ? 'Use only the letters A–Z, digits and . _ - + before the @'
+      : 'Enter a valid email address'
 
 export const PublicContactSchema = v.object({
   submissionId: v.pipe(v.string('Missing submission id'), v.uuid('That is not a valid submission id')),
   name: v.pipe(
     v.string('Enter your name'),
-    v.transform((value) => value.replace(/\s+/gu, ' ')),
+    v.transform((value) => withoutNul(value).replace(/\s+/gu, ' ')),
     v.trim(),
     v.minLength(1, 'Enter your name'),
     v.maxLength(CONTACT_LIMITS.name, `Keep your name under ${CONTACT_LIMITS.name} characters`),
@@ -119,12 +154,16 @@ export const PublicContactSchema = v.object({
     v.toLowerCase(),
     v.minLength(1, 'Enter your email address'),
     v.maxLength(CONTACT_LIMITS.email, 'That email address is too long'),
-    v.email('Enter a valid email address'),
-    v.check((value) => !/[,;<>\s]/u.test(value), 'Enter one email address'),
+    // The rule the browser applies too, and one the Inbox can answer.
+    v.check(
+      (value) => value.length > CONTACT_LIMITS.email || isSendableEmailAddress(value),
+      (issue) => emailProblem(String(issue.input)),
+    ),
   ),
   phone: v.optional(
     v.pipe(
       OneLine,
+      v.transform(toAsciiDigits),
       v.maxLength(CONTACT_LIMITS.phone, 'That phone number is too long'),
       v.check((value) => value === '' || /^[+()\d\s./-]{5,}$/u.test(value), 'Enter a valid phone number'),
     ),
@@ -137,7 +176,7 @@ export const PublicContactSchema = v.object({
   message: v.pipe(
     v.string('Write a message'),
     // Line endings normalised so the length counts what the visitor sees.
-    v.transform((value) => value.replace(/\r\n?/gu, '\n')),
+    v.transform((value) => withoutNul(value).replace(/\r\n?/gu, '\n')),
     v.trim(),
     v.minLength(CONTACT_LIMITS.messageMin, `Write at least ${CONTACT_LIMITS.messageMin} characters`),
     v.maxLength(CONTACT_LIMITS.message, `Keep the message under ${CONTACT_LIMITS.message} characters`),

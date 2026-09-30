@@ -13,7 +13,7 @@ import {
 } from '#/backend2/contracts/booking.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import { DialogAlert } from '#/frontend/features/blog-v2/BlogDialog'
-import { addDays, berlinInstant, berlinToday, isoWeekday, textMinute } from '#/frontend/features/booking-v2/berlin'
+import { addDays, berlinInstant, berlinToday, isDateText, isoWeekday, textMinute } from '#/frontend/features/booking-v2/berlin'
 import { useAvailability, useCreateAppointment, useTypes } from '#/frontend/features/booking-v2/queries'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { FieldError, LANGUAGE_NAMES, METHOD_WORDS } from './calendar-parts'
@@ -56,12 +56,17 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
     validators: {
       onDynamic: ({ value }) => {
         const fields: Record<string, string> = {}
-        const instant = berlinInstant(value.date, value.time)
 
         if (!value.typeId) fields.typeId = 'Choose a type'
-        if (!value.date) fields.date = 'Choose a day'
-        if (!instant) fields.time = 'That time does not exist on this day (the clocks change)'
-        else if (Date.parse(instant) <= Date.now()) fields.time = 'Choose a time in the future'
+        // An empty day or time is asked for, never read as midnight.
+        if (!isDateText(value.date)) fields.date = 'Choose a day'
+        if (textMinute(value.time) === null) fields.time = 'Choose a time'
+        else if (!fields.date) {
+          const instant = berlinInstant(value.date, value.time)
+
+          if (!instant) fields.time = 'That time does not exist on this day (the clocks change)'
+          else if (Date.parse(instant) <= Date.now()) fields.time = 'Choose a time in the future'
+        }
         if (value.name.trim() === '') fields.name = 'Enter a name'
         if (!v.safeParse(EmailSchema, value.email).success) fields.email = 'Enter a valid email address'
         if (value.method === 'phone' && value.phone.trim() === '') fields.phone = 'A phone call needs a phone number'
@@ -151,9 +156,10 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
   }, [onClose])
 
   const outsideHours = useMemo(() => {
-    if (!type || !availability.data || !values.date) return false
-
     const start = textMinute(values.time)
+
+    if (!type || !availability.data || !isDateText(values.date) || start === null) return false
+
     const end = start + type.durationMinutes
     const exception = availability.data.exceptions.find((item) => item.date === values.date)
     const ranges = exception ? exception.ranges : availability.data.weekly.filter((range) => range.weekday === isoWeekday(values.date))
@@ -234,7 +240,7 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
                 {(field) => (
                   <label className={label}>
                     Day
-                    <input type="date" className={input} value={field.state.value} aria-invalid={field.state.meta.errors.length > 0} onChange={(event) => field.handleChange(event.target.value)} />
+                    <input type="date" className={input} value={field.state.value} aria-invalid={field.state.meta.errors.length > 0} aria-describedby="m-date-err" onChange={(event) => field.handleChange(event.target.value)} />
                     <FieldError id="m-date-err" error={field.state.meta.errors[0]} />
                   </label>
                 )}

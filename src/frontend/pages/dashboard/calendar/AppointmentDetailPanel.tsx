@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { ArrowLeft, Loader2, Mail, Video } from 'lucide-react'
-import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail } from '#/backend2/contracts/booking.contract'
+import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail, type VideoAccess } from '#/backend2/contracts/booking.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import { Panel, StatusChip } from '#/frontend/dashboard/primitives'
 import { BlogDialog, DialogActions, DialogAlert, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
-import { berlin, berlinDateTime, berlinInstant } from '#/frontend/features/booking-v2/berlin'
+import { berlin, berlinDateTime, berlinInstant, isDateText, textMinute } from '#/frontend/features/booking-v2/berlin'
 import {
   useAppointment,
   useCancelAppointment,
@@ -19,6 +19,7 @@ import {
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { LoadFailure } from '../blog/blog-parts'
 import { AppointmentStatusChip, FieldError, LANGUAGE_NAMES, METHOD_WORDS } from './calendar-parts'
+import { OwnerVideoCall } from './OwnerVideoCall'
 
 /**
  * One appointment: who, when (in Berlin, and what the visitor sees), how,
@@ -51,30 +52,63 @@ const REMINDER_WORDS: Record<AppointmentDetail['reminderState'], string> = {
   cancelled: 'Cancelled with the appointment',
 }
 
+/** A manual appointment never sent gets no email for anything done to it. */
+const neverInvited = (appointment: AppointmentDetail) => appointment.source === 'manual' && !appointment.invitationSentAt
+
+const NEVER_INVITED_NOTE = 'No email was sent — they were never invited.'
+
+const unchanged = (instant: string, appointment: AppointmentDetail) => Date.parse(instant) === Date.parse(appointment.startsAt)
+
 function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; onClose: () => void }) {
   const patch = usePatchAppointment()
   const [failure, setFailure] = useState<string | null>(null)
   const current = berlin(appointment.startsAt)
+  const canEmail = !neverInvited(appointment)
 
   const form = useForm({
-    defaultValues: { date: current.date, time: current.time, notify: true },
+    defaultValues: { date: current.date, time: current.time, notify: canEmail },
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' }),
     validators: {
       onDynamic: ({ value }) => {
+        // An empty day or time is asked for, never read as midnight.
+        const fields: Record<string, string> = {}
+
+        if (!isDateText(value.date)) fields.date = 'Choose a day'
+        if (textMinute(value.time) === null) fields.time = 'Choose a time'
+        if (Object.keys(fields).length > 0) return { fields }
+
         const instant = berlinInstant(value.date, value.time)
 
         if (!instant) return { fields: { time: 'That time does not exist on this day (the clocks change)' } }
-        if (Date.parse(instant) <= Date.now()) return { fields: { time: 'Choose a time in the future' } }
+        if (Date.parse(instant) <= Date.now() && !unchanged(instant, appointment)) return { fields: { time: 'Choose a time in the future' } }
 
         return undefined
       },
     },
+    onSubmitInvalid: () =>
+      window.requestAnimationFrame(() => document.querySelector<HTMLElement>('#move-form [aria-invalid="true"]')?.focus()),
     onSubmit: async ({ value }) => {
       setFailure(null)
 
+      const startsAt = berlinInstant(value.date, value.time)!
+
+      // The same time is no move: nothing is saved and nobody is emailed.
+      if (unchanged(startsAt, appointment)) {
+        notify.success('Nothing changed.')
+        onClose()
+
+        return
+      }
+
       try {
-        await patch.mutateAsync({ id: appointment.id, revision: appointment.revision, startsAt: berlinInstant(value.date, value.time)!, notify: value.notify })
-        notify.success(value.notify ? `Moved. ${appointment.visitorName} has been emailed the new time.` : 'Moved. No email was sent.')
+        await patch.mutateAsync({ id: appointment.id, revision: appointment.revision, startsAt, notify: canEmail && value.notify })
+        notify.success(
+          !canEmail
+            ? `Moved. ${NEVER_INVITED_NOTE}`
+            : value.notify
+              ? `Moved. ${appointment.visitorName} has been emailed the new time.`
+              : 'Moved. No email was sent.',
+        )
         onClose()
       } catch (error) {
         setFailure(
@@ -90,6 +124,7 @@ function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; 
     <BlogDialog labelledBy="move-title" size="sm" onClose={onClose}>
       <DialogTitle id="move-title">Move to another time</DialogTitle>
       <form
+        id="move-form"
         noValidate
         className="flex flex-col gap-3"
         onSubmit={(event) => {
@@ -102,7 +137,8 @@ function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; 
             {(field) => (
               <label className="flex flex-col gap-1 text-[12px] text-[var(--dash-quiet)]">
                 Day
-                <input type="date" className="dash-field h-9 px-2.5 text-[13px]" value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+                <input type="date" className="dash-field h-9 px-2.5 text-[13px]" value={field.state.value} aria-invalid={field.state.meta.errors.length > 0} aria-describedby="move-date-err" onChange={(event) => field.handleChange(event.target.value)} />
+                <FieldError id="move-date-err" error={field.state.meta.errors[0]} />
               </label>
             )}
           </form.Field>
@@ -116,14 +152,16 @@ function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; 
             )}
           </form.Field>
         </div>
-        <form.Field name="notify">
-          {(field) => (
-            <label className="inline-flex items-center gap-2 text-[13px]">
-              <input type="checkbox" checked={field.state.value} onChange={(event) => field.handleChange(event.target.checked)} />
-              Email {appointment.visitorName} the new time
-            </label>
-          )}
-        </form.Field>
+        {canEmail ? (
+          <form.Field name="notify">
+            {(field) => (
+              <label className="inline-flex items-center gap-2 text-[13px]">
+                <input type="checkbox" checked={field.state.value} onChange={(event) => field.handleChange(event.target.checked)} />
+                Email {appointment.visitorName} the new time
+              </label>
+            )}
+          </form.Field>
+        ) : null}
         {failure ? <DialogAlert>{failure}</DialogAlert> : null}
         <DialogActions>
           <button type="button" className="dash-btn dash-btn-ghost" onClick={onClose}>Cancel</button>
@@ -144,20 +182,28 @@ function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; 
 function CancelDialog({ appointment, onClose }: { appointment: AppointmentDetail; onClose: () => void }) {
   const cancel = useCancelAppointment()
   const [failure, setFailure] = useState<string | null>(null)
+  const canEmail = !neverInvited(appointment)
 
   const form = useForm({
-    defaultValues: { reason: '', notify: true },
+    defaultValues: { reason: '', notify: canEmail },
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' }),
     validators: {
-      onDynamic: ({ value }) => (value.reason.trim() === '' ? { fields: { reason: 'Give a reason — it is sent to the visitor' } } : undefined),
+      onDynamic: ({ value }) =>
+        value.reason.trim() === '' ? { fields: { reason: canEmail ? 'Give a reason — it is sent to the visitor' : 'Give a reason' } } : undefined,
     },
     onSubmitInvalid: () => window.requestAnimationFrame(() => document.getElementById('cancel-reason')?.focus()),
     onSubmit: async ({ value }) => {
       setFailure(null)
 
       try {
-        await cancel.mutateAsync({ id: appointment.id, reason: value.reason.trim(), notify: value.notify })
-        notify.success(value.notify ? `Cancelled. ${appointment.visitorName} has been emailed.` : 'Cancelled. No email was sent.')
+        await cancel.mutateAsync({ id: appointment.id, reason: value.reason.trim(), notify: canEmail && value.notify })
+        notify.success(
+          !canEmail
+            ? `Cancelled. ${NEVER_INVITED_NOTE}`
+            : value.notify
+              ? `Cancelled. ${appointment.visitorName} has been emailed.`
+              : 'Cancelled. No email was sent.',
+        )
         onClose()
       } catch (error) {
         setFailure(messageFromError(error))
@@ -186,14 +232,16 @@ function CancelDialog({ appointment, onClose }: { appointment: AppointmentDetail
             </label>
           )}
         </form.Field>
-        <form.Field name="notify">
-          {(field) => (
-            <label className="inline-flex items-center gap-2 text-[13px]">
-              <input type="checkbox" checked={field.state.value} onChange={(event) => field.handleChange(event.target.checked)} />
-              Email {appointment.visitorName} the cancellation and reason
-            </label>
-          )}
-        </form.Field>
+        {canEmail ? (
+          <form.Field name="notify">
+            {(field) => (
+              <label className="inline-flex items-center gap-2 text-[13px]">
+                <input type="checkbox" checked={field.state.value} onChange={(event) => field.handleChange(event.target.checked)} />
+                Email {appointment.visitorName} the cancellation and reason
+              </label>
+            )}
+          </form.Field>
+        ) : null}
         {failure ? <DialogAlert>{failure}</DialogAlert> : null}
         <DialogActions>
           <button type="button" className="dash-btn dash-btn-ghost" onClick={onClose}>Keep it</button>
@@ -219,6 +267,7 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
   const end = useEndVideo()
   const [dialog, setDialog] = useState<'move' | 'cancel' | null>(null)
   const [videoNote, setVideoNote] = useState<string | null>(null)
+  const [call, setCall] = useState<VideoAccess | null>(null)
 
   if (appointment.isPending) {
     return (
@@ -304,14 +353,13 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
                   setVideoNote(null)
 
                   try {
-                    await join.mutateAsync(a.id)
-                    setVideoNote('Room access issued. The call screen connects once the video service is switched on — until then this is a test room.')
+                    setCall(await join.mutateAsync(a.id))
                   } catch (error) {
                     setVideoNote(messageFromError(error))
                   }
                 }}
               >
-                <Video className="size-4" aria-hidden="true" /> Join video call
+                {join.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Video className="size-4" aria-hidden="true" />} Join video call
               </button>
             ) : null}
             {a.method === 'video' && !a.videoEndedAt && started ? (
@@ -368,6 +416,17 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
         </ol>
       </Panel>
 
+      {call ? (
+        <OwnerVideoCall
+          access={call}
+          visitorName={a.visitorName}
+          rejoin={() => join.mutateAsync(a.id)}
+          onClose={() => {
+            setCall(null)
+            void appointment.refetch()
+          }}
+        />
+      ) : null}
       {dialog === 'move' ? <MoveDialog appointment={a} onClose={() => setDialog(null)} /> : null}
       {dialog === 'cancel' ? <CancelDialog appointment={a} onClose={() => setDialog(null)} /> : null}
     </div>

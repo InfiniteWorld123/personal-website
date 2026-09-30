@@ -496,7 +496,7 @@ export const de: SiteContent = {
       sending: 'Wird gesendet …',
       sent: {
         title: 'Danke, die Anfrage ist da.',
-        body: 'Ich prüfe dein Anliegen und melde mich über den Weg, den du bevorzugst.',
+        body: 'Ich prüfe dein Anliegen und melde mich bei dir.',
       },
       error: 'Das hat nicht geklappt. Bitte versuch es noch einmal oder schreib mir direkt per E-Mail.',
       errors: {

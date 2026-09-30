@@ -125,6 +125,48 @@ const COPY = {
   },
 } as const
 
+/* ------------------------------------------------------ the private links */
+
+/**
+ * The Inbox's own copy of a booking email never holds the private credential.
+ * `docs/v2/booking.md`: the credential is derived from a stored value with the
+ * server secret, "so a later email can repeat it but a copy of the database
+ * alone opens nothing" — a stored email with the link in it would undo that.
+ *
+ * The visitor's email carries the real links; the stored copy names them
+ * instead, and a Retry puts them back from the appointment
+ * (`privateLinksFor`), the same way the first email made them.
+ */
+export const PRIVATE_LINK_NOTES = {
+  manage: '[private manage link — only in the visitor’s copy]',
+  room: '[private video link — only in the visitor’s copy]',
+} as const
+
+/** `…/booking/manage/YW-XXXXXXXX#<credential>` and its `/room/` twin. */
+const PRIVATE_LINK = /https?:\/\/[^\s#]+\/booking\/(manage|room)\/[A-Za-z0-9-]+#[0-9a-f]{16,}/gu
+
+export const redactPrivateLinks = (text: string): string =>
+  text.replace(PRIVATE_LINK, (_link, kind: 'manage' | 'room') => PRIVATE_LINK_NOTES[kind])
+
+export const hasPrivateLinkNotes = (text: string): boolean =>
+  text.includes(PRIVATE_LINK_NOTES.manage) || text.includes(PRIVATE_LINK_NOTES.room)
+
+export const restorePrivateLinks = (text: string, links: { manageUrl: string; roomUrl: string }): string =>
+  text.replaceAll(PRIVATE_LINK_NOTES.manage, links.manageUrl).replaceAll(PRIVATE_LINK_NOTES.room, links.roomUrl)
+
+/**
+ * The appointment's links, derived again for a Retry. Loaded when called, not
+ * when this file is: the appointment service imports this file.
+ */
+export const privateLinksFor = async (appointmentId: string): Promise<{ manageUrl: string; roomUrl: string } | null> => {
+  const [{ linksFor }, repo] = await Promise.all([import('./appointment.service'), import('./booking.repo')])
+  const row = await repo.findAppointment(appointmentId)
+
+  return row ? linksFor(row) : null
+}
+
+/* ------------------------------------------------------------- the email */
+
 export const bookingMail = (input: MailInput & { changeLimitHours?: number }): { subject: string; text: string } => {
   const copy = COPY[input.language]
   const when = formatForEmail(input.startsAt, input.timeZone, input.language)

@@ -71,6 +71,11 @@ export type CallCopy = {
     incompleteLink: string
     couldNotOpen: string
   }
+  /** The planned end has passed; the call is never cut off for it. `{name}` is the host. */
+  overtime: { guest: string; host: string }
+  /** The browser holds back sound until the person presses something once. */
+  sound: { blocked: string; enable: string }
+  left: string
   leave: string
   rejoin: string
   /** Shown on the booking's own page while the room is open. */
@@ -80,7 +85,7 @@ export type CallCopy = {
 const de: CallCopy = {
   lobby: {
     title: 'Bereit für das Gespräch?',
-    subtitle: 'Prüfen Sie kurz Kamera und Mikrofon. Erst dann treten Sie bei.',
+    subtitle: 'Prüf kurz Kamera und Mikrofon. Erst dann trittst du bei.',
     camera: 'Kamera',
     microphone: 'Mikrofon',
     cameraOff: 'Kamera aus',
@@ -98,7 +103,7 @@ const de: CallCopy = {
     failed: 'Das Gespräch konnte nicht verbunden werden.',
   },
   waitingFor: 'Warten auf {name}…',
-  waitingSub: 'Sie sehen sich selbst, bis die andere Seite beitritt.',
+  waitingSub: 'Du siehst dich selbst, bis die andere Seite beitritt.',
   controls: {
     mute: 'Stummschalten',
     unmute: 'Stummschaltung aufheben',
@@ -118,28 +123,34 @@ const de: CallCopy = {
     send: 'Senden',
     empty: 'Noch keine Nachrichten.',
     notice: 'Nachrichten bleiben nur in diesem Gespräch und werden nicht gespeichert.',
-    you: 'Sie',
+    you: 'Du',
   },
-  people: { you: 'Sie', other: 'Die andere Person', sharing: 'teilt den Bildschirm' },
+  people: { you: 'Du', other: 'Die andere Person', sharing: 'teilt den Bildschirm' },
   errors: {
     denied:
-      'Ihr Browser blockiert Kamera und Mikrofon. Erlauben Sie beides für diese Seite — über das Schloss in der Adresszeile — und laden Sie neu.',
-    noDevice: 'Es wurde keine Kamera und kein Mikrofon gefunden. Schließen Sie eines an, oder nehmen Sie am Handy teil.',
-    inUse: 'Ein anderes Programm benutzt die Kamera bereits. Schließen Sie es und laden Sie neu.',
+      'Dein Browser blockiert Kamera und Mikrofon. Erlaube beides für diese Seite — über das Schloss in der Adresszeile — und lade neu.',
+    noDevice: 'Es wurde keine Kamera und kein Mikrofon gefunden. Schließ eines an, oder nimm am Handy teil.',
+    inUse: 'Ein anderes Programm benutzt die Kamera bereits. Schließ es und lade neu.',
     generic: 'Kamera und Mikrofon konnten nicht gestartet werden.',
     unreachable: 'Der Gesprächsdienst war nicht erreichbar.',
     otherTab: 'Dieses Gespräch wurde in einem anderen Tab oder Fenster geöffnet.',
     lost: 'Die Verbindung zum Gespräch ist abgebrochen.',
     blocked:
-      'Das Gespräch kam nicht durch — meist liegt das an einer Firewall. Versuchen Sie ein anderes Netz, oder ein Handy im Mobilfunk.',
-    incompleteLink: 'Dieser Link ist unvollständig. Öffnen Sie den Link aus Ihrer Bestätigungs-E-Mail.',
+      'Das Gespräch kam nicht durch — meist liegt das an einer Firewall. Versuch ein anderes Netz, oder ein Handy im Mobilfunk.',
+    incompleteLink: 'Dieser Link ist unvollständig. Öffne den Link aus deiner Bestätigungs-E-Mail.',
     couldNotOpen: 'Das Gespräch konnte nicht geöffnet werden.',
   },
+  overtime: {
+    guest: 'Die geplante Zeit ist vorbei. Das Gespräch bleibt offen, bis {name} es beendet.',
+    host: 'Die geplante Zeit ist vorbei. Das Gespräch bleibt offen, bis du es beendest.',
+  },
+  sound: { blocked: 'Dein Browser hält den Ton noch zurück.', enable: 'Ton einschalten' },
+  left: 'Du hast das Gespräch verlassen.',
   leave: 'Schließen',
   rejoin: 'Erneut beitreten',
   ready: {
-    heading: 'Ihr Gespräch ist bereit',
-    body: 'Der Raum ist offen. Sie brauchen nichts zu installieren — es läuft im Browser.',
+    heading: 'Dein Gespräch ist bereit',
+    body: 'Der Raum ist offen. Du brauchst nichts zu installieren — es läuft im Browser.',
   },
 }
 
@@ -201,6 +212,12 @@ const en: CallCopy = {
     incompleteLink: 'This link is incomplete. Open the one in your confirmation email.',
     couldNotOpen: 'The call could not be opened.',
   },
+  overtime: {
+    guest: 'The planned time is over. The call stays open until {name} ends it.',
+    host: 'The planned time is over. The call stays open until you end it.',
+  },
+  sound: { blocked: 'Your browser is holding back the sound.', enable: 'Turn on sound' },
+  left: 'You left the call.',
   leave: 'Close',
   rejoin: 'Join again',
   ready: {
@@ -267,6 +284,12 @@ const ar: CallCopy = {
     incompleteLink: 'هذا الرابط ناقص. افتح الرابط الموجود في بريد التأكيد.',
     couldNotOpen: 'تعذّر فتح المكالمة.',
   },
+  overtime: {
+    guest: 'انتهى الوقت المخطط. تبقى المكالمة مفتوحة حتى ينهيها {name}.',
+    host: 'انتهى الوقت المخطط. تبقى المكالمة مفتوحة حتى تنهيها أنت.',
+  },
+  sound: { blocked: 'متصفحك يوقف الصوت مؤقتاً.', enable: 'تشغيل الصوت' },
+  left: 'غادرت المكالمة.',
   leave: 'إغلاق',
   rejoin: 'ادخل من جديد',
   ready: {

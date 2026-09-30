@@ -89,14 +89,14 @@ const issue = async (id: string, role: 'host' | 'guest', name: string): Promise<
 
       if (!meetingId) {
         meetingId = (await provider.createMeeting({ title: `${row.type_name} · ${row.reference}` })).meetingId
-        await repo.updateAppointment(row.id, { video_meeting_id: meetingId })
+        await repo.setVideo(row.id, { video_meeting_id: meetingId })
       }
 
       const column = role === 'host' ? 'video_host_participant' : 'video_guest_participant'
       const existing = role === 'host' ? row.video_host_participant : row.video_guest_participant
       const issued = await provider.participantToken({ meetingId, participantId: existing, role, name })
 
-      if (!existing) await repo.updateAppointment(row.id, { [column]: issued.participantId })
+      if (!existing) await repo.setVideo(row.id, { [column]: issued.participantId })
 
       return asAccess(row, issued.token, role)
     } catch (error) {

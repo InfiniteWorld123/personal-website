@@ -3,7 +3,7 @@ import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { getGlobalStartContext } from '@tanstack/react-start'
 import { RouteError } from '#/frontend/components/feedback/RouteError'
-import { messageFromError, notify } from '#/frontend/lib/notify'
+import { toastMutationFailure } from './mutation-errors'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -26,7 +26,7 @@ export function getRouter() {
      * which is the whole failure this fixes.
      */
     mutationCache: new MutationCache({
-      onError: (error) => notify.error(messageFromError(error)),
+      onError: (error, _variables, _context, mutation) => toastMutationFailure(error, mutation),
     }),
   })
 

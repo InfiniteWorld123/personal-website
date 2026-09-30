@@ -35,10 +35,11 @@ declare global {
 const SCRIPT_ID = 'cloudflare-turnstile-script'
 const TEST_SITE_KEY = '1x00000000000000000000AA'
 
-const copy = {
+/** The site says "du" in German, here too. */
+export const TURNSTILE_COPY = {
   de: {
     loading: 'Sicherheitsprüfung wird geladen…',
-    ready: 'Bitte schließen Sie die Sicherheitsprüfung ab.',
+    ready: 'Bitte schließ die Sicherheitsprüfung ab.',
     verified: 'Sicherheitsprüfung abgeschlossen.',
     expired: 'Die Sicherheitsprüfung ist abgelaufen.',
     error: 'Die Sicherheitsprüfung wurde blockiert oder konnte nicht geladen werden.',
@@ -108,7 +109,7 @@ export function TurnstileWidget({
   const widgetIdRef = useRef<string | null>(null)
   const [state, setState] = useState<WidgetState>('loading')
   const [retryKey, setRetryKey] = useState(0)
-  const labels = copy[language]
+  const labels = TURNSTILE_COPY[language]
 
   callbackRef.current = onTokenChange
 

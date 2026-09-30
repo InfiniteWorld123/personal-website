@@ -40,11 +40,24 @@ export const fileProblem = (file: { name: string; size: number }): FileProblem |
   return null
 }
 
-export const EMAIL_PATTERN = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/u
 export const PHONE_PATTERN = /^[+()\d\s./-]{5,}$/u
+
+/**
+ * Arabic-Indic (٠–٩) and Persian (۰–۹) digits as ASCII digits — the
+ * contract's `toAsciiDigits`, which the server applies again.
+ */
+export const toAsciiDigits = (value: string): string =>
+  value.replace(/[\u0660-\u0669\u06f0-\u06f9]/gu, (digit) => String(digit.charCodeAt(0) & 0xf))
+
+/**
+ * The hidden field only a bot fills in — the contract's `CONTACT_FIELDS.honeypot`.
+ * A name and label no browser or password manager autofills.
+ */
+export const CONTACT_V2_HONEYPOT = 'hp_x9'
 
 export type ContactV2Words = {
   attachmentHint: string
+  emailLatin: string
   fileSize: string
   fileType: string
   messageShort: string
@@ -58,6 +71,7 @@ export type ContactV2Words = {
 const words: Record<Language, ContactV2Words> = {
   en: {
     attachmentHint: 'Optional: one PDF, image, video, or Word, Excel or PowerPoint file (up to 10 MB)',
+    emailLatin: 'Please use only the letters A–Z before the @ (for example ue instead of ü).',
     fileSize: 'That file is larger than 10 MB. A bigger video cannot be sent here — put a link to it in your message instead.',
     fileType: 'This kind of file cannot be sent. Choose a PDF, an image, a video, or a Word, Excel or PowerPoint file.',
     messageShort: 'Please write at least 10 characters.',
@@ -69,6 +83,7 @@ const words: Record<Language, ContactV2Words> = {
   },
   de: {
     attachmentHint: 'Optional: eine PDF, ein Bild, ein Video oder eine Word-, Excel- oder PowerPoint-Datei (bis 10 MB)',
+    emailLatin: 'Bitte nutze vor dem @ nur die Buchstaben A–Z (zum Beispiel ue statt ü).',
     fileSize: 'Die Datei ist größer als 10 MB. Ein größeres Video lässt sich hier nicht senden — schick stattdessen einen Link in deiner Nachricht.',
     fileType: 'Diese Art Datei kann nicht gesendet werden. Wähl eine PDF, ein Bild, ein Video oder eine Word-, Excel- oder PowerPoint-Datei.',
     messageShort: 'Bitte schreib mindestens 10 Zeichen.',
@@ -80,6 +95,7 @@ const words: Record<Language, ContactV2Words> = {
   },
   ar: {
     attachmentHint: 'اختياري: ملف PDF أو صورة أو فيديو أو ملف Word أو Excel أو PowerPoint (حتى 10 ميغابايت)',
+    emailLatin: 'استخدم الأحرف اللاتينية A–Z فقط قبل علامة @ من فضلك.',
     fileSize: 'حجم الملف أكبر من 10 ميغابايت. لا يمكن إرسال فيديو أكبر من هنا — ضع رابطاً إليه في رسالتك بدلاً من ذلك.',
     fileType: 'لا يمكن إرسال هذا النوع من الملفات. اختر ملف PDF أو صورة أو فيديو أو ملف Word أو Excel أو PowerPoint.',
     messageShort: 'اكتب 10 أحرف على الأقل من فضلك.',

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
 import { ArrowRight, Paperclip, X } from 'lucide-react'
+import { hasAsciiLocalPart, isEmailAddress, isSendableEmailAddress } from '#/backend2/contracts/email-address.contract'
 import { Button } from '#/frontend/components/ui/button'
 import { Input } from '#/frontend/components/ui/input'
 import { Label } from '#/frontend/components/ui/label'
@@ -14,11 +15,12 @@ import { CallInstead, Field } from './contact-parts'
 import {
   CONTACT_V2_ACCEPT,
   CONTACT_V2_ENDPOINT,
+  CONTACT_V2_HONEYPOT,
   CONTACT_V2_LIMITS,
-  EMAIL_PATTERN,
   PHONE_PATTERN,
   fileProblem,
   getContactV2Words,
+  toAsciiDigits,
 } from './contact-v2'
 
 /**
@@ -72,13 +74,15 @@ export function ContactFormV2({ copy, language }: { copy: ContactCopy['form']; l
       onDynamic: ({ value }) => {
         const fields: Partial<Record<FieldName, string>> = {}
         const message = value.message.trim()
-        const phone = value.phone.trim()
+        const phone = toAsciiDigits(value.phone.trim())
+        const email = value.email.trim().toLowerCase()
 
         if (value.name.trim() === '') fields.name = copy.errors.name
         else if (value.name.trim().length > CONTACT_V2_LIMITS.name) fields.name = words.tooLong
 
-        if (!EMAIL_PATTERN.test(value.email.trim()) || value.email.trim().length > CONTACT_V2_LIMITS.email) {
-          fields.email = copy.errors.email
+        // The server's own rule (`email-address.contract.ts`): what passes here is accepted there.
+        if (!isSendableEmailAddress(email) || email.length > CONTACT_V2_LIMITS.email) {
+          fields.email = isEmailAddress(email) && !hasAsciiLocalPart(email) ? words.emailLatin : copy.errors.email
         }
 
         if (phone !== '' && (!PHONE_PATTERN.test(phone) || phone.length > CONTACT_V2_LIMITS.phone)) fields.phone = words.phone
@@ -109,12 +113,13 @@ export function ContactFormV2({ copy, language }: { copy: ContactCopy['form']; l
       body.set('name', value.name.trim())
       body.set('email', value.email.trim())
       body.set('company', value.company.trim())
-      body.set('phone', value.phone.trim())
+      // An Arabic keyboard's digits, as the digits they are.
+      body.set('phone', toAsciiDigits(value.phone.trim()))
       body.set('message', value.message.trim())
       // The page the visitor wrote on decides the language the reply is written in.
       body.set('language', language)
       body.set('turnstileToken', turnstileToken)
-      body.set('website', honeypot.current?.value ?? '')
+      body.set(CONTACT_V2_HONEYPOT, honeypot.current?.value ?? '')
       if (value.attachment) body.set('attachment', value.attachment, value.attachment.name)
 
       try {
@@ -355,10 +360,24 @@ export function ContactFormV2({ copy, language }: { copy: ContactCopy['form']; l
 
       {/* Hidden by clipping, never by pushing it off the side: a large
           negative inset widens the document by that distance, and in RTL the
-          page then opens scrolled onto the empty strip and reads as blank. */}
+          page then opens scrolled onto the empty strip and reads as blank.
+          Named and labelled so that no browser or password manager fills it
+          in by itself — a real visitor's autofill here used to discard their
+          message while showing "sent". */}
       <div aria-hidden="true" className="sr-only">
-        <label htmlFor="contact-website">Website</label>
-        <input ref={honeypot} id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="contact-hp-x9">Leave empty</label>
+        <input
+          ref={honeypot}
+          id="contact-hp-x9"
+          name={CONTACT_V2_HONEYPOT}
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-bwignore=""
+          data-form-type="other"
+        />
       </div>
 
       <TurnstileWidget action="contact_submit" language={language} resetKey={turnstileResetKey} onTokenChange={setTurnstileToken} />

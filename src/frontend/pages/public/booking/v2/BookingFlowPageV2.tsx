@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, CalendarCheck } from 'lucide-react'
 import type { BookingMethod } from '#/backend2/contracts/booking.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
@@ -11,7 +11,12 @@ import { SlotPicker } from '#/frontend/features/booking/SlotPicker'
 import { getBookingCopy } from '#/frontend/features/booking/booking-copy'
 import { addMonths, dayIn, detectTimezone, endOfMonth, startOfMonth } from '#/frontend/features/booking/booking-time'
 import type { BookingReceipt } from '#/frontend/features/booking/v2/api'
-import { type BookingFailure, BookingFormV2 } from '#/frontend/features/booking/v2/BookingFormV2'
+import {
+  type BookingFailure,
+  BookingFormV2,
+  type BookingFormValues,
+  EMPTY_BOOKING_FORM,
+} from '#/frontend/features/booking/v2/BookingFormV2'
 import { BookingSuccess } from '#/frontend/features/booking/v2/BookingSuccess'
 import { getBookingV2Copy } from '#/frontend/features/booking/v2/booking-v2-copy'
 import { formatWhen, newSubmissionId } from '#/frontend/features/booking/v2/format'
@@ -39,7 +44,12 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
 
   const [timezone, setTimezone] = useState(detectTimezone)
   const today = useMemo(() => dayIn(new Date(), timezone), [timezone])
-  const invited = useMemo(() => (slot ? dayIn(new Date(slot), timezone) : null), [slot, timezone])
+  // A link to a time that has since passed opens on today's month, not an old one.
+  const invited = useMemo(() => {
+    const day = slot ? dayIn(new Date(slot), timezone) : null
+
+    return day !== null && day >= today ? day : null
+  }, [slot, timezone, today])
 
   const [method, setMethod] = useState<BookingMethod | null>(null)
   const [month, setMonth] = useState(() => startOfMonth(invited ?? today))
@@ -48,9 +58,15 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
   const [step, setStep] = useState<Step>('time')
   const [unavailable, setUnavailable] = useState<BookingFailure | null>(null)
   const [done, setDone] = useState<{ receipt: BookingReceipt; phone: string } | null>(null)
-  // One per form fill: a double press or a retry after a lost answer returns
-  // the same appointment, never a second one.
-  const [submissionId, setSubmissionId] = useState(newSubmissionId)
+  // What the visitor typed, kept here: the form leaves the page while they
+  // choose another time, and must come back filled in.
+  const [draft, setDraft] = useState<BookingFormValues>(EMPTY_BOOKING_FORM)
+  // One per time and way of meeting: a double press or a retry after a lost
+  // answer returns the same appointment, and a different choice never does.
+  const submissionIds = useRef(new Map<string, string>())
+  const [submissionId, setSubmissionId] = useState('')
+  // Once the visitor turns the month themselves, the page stops turning it.
+  const monthTurned = useRef(false)
 
   const chosenMethod: BookingMethod | null = type ? (method && type.methods.includes(method) ? method : type.defaultMethod) : null
 
@@ -65,9 +81,37 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
   const daySlots = days.find((day) => day.date === selectedDay)?.slots ?? []
 
   useEffect(() => {
-    if (!slots.isSuccess || !selectedSlot) return
+    // Only while choosing: on the details step the chosen time stays, and if
+    // it has gone meanwhile, the booking's own answer says so.
+    if (step !== 'time' || !slots.isSuccess || !selectedSlot) return
     if (!daySlots.some((offered) => offered.startsAt === selectedSlot)) setSelectedSlot(null)
-  }, [slots.isSuccess, selectedSlot, daySlots])
+  }, [step, slots.isSuccess, selectedSlot, daySlots])
+
+  // Nothing left this month — on its last day, say — while a later month has
+  // times: open that month rather than say nothing is free.
+  const nextFree = slots.data?.nextAvailableDate ?? null
+
+  useEffect(() => {
+    if (step !== 'time' || monthTurned.current || !nextFree || availableDays.size > 0) return
+
+    const target = startOfMonth(nextFree)
+
+    if (target <= month) return
+
+    setMonth(target)
+    setSelectedDay(null)
+    setSelectedSlot(null)
+  }, [step, nextFree, availableDays, month])
+
+  const toDetails = () => {
+    const key = `${chosenMethod}|${selectedSlot}`
+    const known = submissionIds.current.get(key)
+    const id = known ?? newSubmissionId()
+
+    if (!known) submissionIds.current.set(key, id)
+    setSubmissionId(id)
+    setStep('details')
+  }
 
   const refreshSlots = () => queryClient.invalidateQueries({ queryKey: ['booking-v2', 'slots'] })
 
@@ -123,11 +167,14 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
               startsAt={selectedSlot}
               timeZone={timezone}
               submissionId={submissionId}
+              initialValues={draft}
+              onValuesChange={setDraft}
               onBack={() => setStep('time')}
               onBooked={(receipt, values) => {
                 setDone({ receipt, phone: values.phone.trim() })
                 setStep('done')
-                setSubmissionId(newSubmissionId())
+                submissionIds.current.clear()
+                setDraft(EMPTY_BOOKING_FORM)
                 void refreshSlots()
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
@@ -148,6 +195,7 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
                 onChange={(next) => {
                   setMethod(next)
                   setUnavailable(null)
+                  monthTurned.current = false
                 }}
               />
             </div>
@@ -168,6 +216,7 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
                   availableDays={availableDays}
                   selectedDay={selectedDay}
                   onMonthChange={(next) => {
+                    monthTurned.current = true
                     setMonth(next)
                     setSelectedDay(null)
                     setSelectedSlot(null)
@@ -201,7 +250,7 @@ export function BookingFlowPageV2({ slug, slot }: { slug: string; slot?: string 
                     <SlotPicker day={selectedDay} slots={daySlots} timezone={timezone} selected={selectedSlot} onSelect={setSelectedSlot} />
 
                     {selectedSlot ? (
-                      <Button type="button" size="lg" className="w-fit rounded-full" onClick={() => setStep('details')}>
+                      <Button type="button" size="lg" className="w-fit rounded-full" onClick={toDetails}>
                         {copy.pick}
                       </Button>
                     ) : null}

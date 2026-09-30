@@ -43,9 +43,12 @@ export type IncomingMessage = {
   setReject(reason: string): void
 }
 
+type ParsedAddress = { name?: string; address?: string; group?: Array<{ name?: string; address?: string }> }
+
 /** The part of `postal-mime`'s result this file reads. */
 export type ParsedMail = {
   from?: { name?: string; address?: string }
+  replyTo?: ParsedAddress[]
   subject?: string
   text?: string
   html?: string
@@ -139,6 +142,12 @@ const clamp = (value: string | null | undefined, limit: number): string => (valu
 
 const configured = (value: string | undefined): value is string => Boolean(value?.trim())
 
+/** The first address a Reply-To names, looking inside a group if it is one. */
+const firstReplyTo = (parsed: ParsedMail | null): string =>
+  (parsed?.replyTo ?? [])
+    .flatMap((entry) => (entry.group ? entry.group : [entry]))
+    .find((entry) => entry.address?.trim())?.address?.trim() ?? ''
+
 /* ----------------------------------------------------------------- payload */
 
 /**
@@ -164,6 +173,9 @@ export const buildPayload = (
     // sends from a bounce address, and an answer to that goes nowhere.
     from: clamp(parsed?.from?.address || message.from, V2_LIMITS.address),
     fromName: clamp(parsed?.from?.name, V2_LIMITS.address),
+    // Who an answer is for, when it is not the sender: a form relay sends
+    // from `noreply@…` and puts the person here.
+    replyTo: clamp(firstReplyTo(parsed), V2_LIMITS.address),
     subject: clamp(parsed?.subject ?? header('subject'), V2_LIMITS.subject),
     text: clamp(parsed?.text, V2_LIMITS.text),
     html: clamp(parsed?.html, V2_LIMITS.html),

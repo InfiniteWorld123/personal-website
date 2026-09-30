@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { isSendableEmailAddress } from './email-address.contract'
 
 /**
  * The Booking contract, shared by Backend2, the Dashboard and the public
@@ -253,24 +254,50 @@ export const TimeZoneSchema = v.pipe(
   v.check(isValidTimeZone, 'That is not a time zone'),
 )
 
+/**
+ * The years a date may name. Far wider than any booking, and narrow enough
+ * that date arithmetic never leaves four-digit years (`9999-12-25` plus a
+ * week is not a date the time code can read).
+ */
+const YEAR_RANGE = { min: 2000, max: 2100 } as const
+
+/** A calendar date that exists: `2026-02-30` is refused, not rolled into March. */
+const isRealDate = (value: string): boolean => {
+  const parsed = Date.parse(`${value}T00:00:00Z`)
+
+  return !Number.isNaN(parsed) && new Date(parsed).toISOString().slice(0, 10) === value
+}
+
+const inYearRange = (value: string): boolean => {
+  const year = Number(value.slice(0, 4))
+
+  return year >= YEAR_RANGE.min && year <= YEAR_RANGE.max
+}
+
 const DateSchema = v.pipe(
   v.string(),
   v.regex(/^\d{4}-\d{2}-\d{2}$/u, 'Use a date like 2026-09-29'),
-  v.check((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), 'That date does not exist'),
+  v.check(isRealDate, 'That date does not exist'),
+  v.check(inYearRange, `Choose a date between ${YEAR_RANGE.min} and ${YEAR_RANGE.max}`),
 )
 
+/** ISO 8601 that `new Date()` can also read: `+02` without minutes passes the format check, not the parser. */
 const InstantSchema = v.pipe(
   v.string(),
   v.isoTimestamp('Use an ISO date and time'),
+  v.check((value) => !Number.isNaN(Date.parse(value)) && isRealDate(value.slice(0, 10)), 'Use an ISO date and time'),
+  v.check(inYearRange, `Choose a date between ${YEAR_RANGE.min} and ${YEAR_RANGE.max}`),
 )
 
 const Name = v.pipe(v.string('Enter your name'), v.trim(), v.minLength(1, 'Enter your name'), v.maxLength(BOOKING_LIMITS.name))
+// The shared rule (`email-address.contract.ts`): the form, the Contact form
+// and the Inbox agree on what an address is, so a reply can always go out.
 const Email = v.pipe(
   v.string('Enter your email address'),
   v.trim(),
   v.toLowerCase(),
   v.maxLength(BOOKING_LIMITS.email),
-  v.email('Enter a valid email address'),
+  v.check(isSendableEmailAddress, 'Enter a valid email address'),
 )
 const Phone = v.pipe(
   v.string(),
@@ -296,6 +323,12 @@ export const SlotsQuerySchema = v.object({
   days: CountFromQuery(7, 1, BOOKING_LIMITS.maxSlotDays),
   timeZone: v.optional(TimeZoneSchema, OWNER_TIME_ZONE),
   language: v.optional(v.picklist(BOOKING_LANGUAGES), 'en'),
+  /**
+   * Sent by the manage page when it moves an appointment, with the private
+   * credential in `MANAGE_TOKEN_HEADER`: that appointment's own time then no
+   * longer hides the times around it. Optional; the booking page omits it.
+   */
+  reference: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(20))),
 })
 
 export const PublicTypesQuerySchema = v.object({
@@ -326,8 +359,12 @@ export const PublicBookingSchema = v.pipe(
     language: v.picklist(BOOKING_LANGUAGES),
     ...VisitorFields,
     turnstileToken: v.optional(v.pipe(v.string(), v.maxLength(4096)), ''),
-    /** The honeypot: hidden from people, so anything in it came from a bot. */
-    website: v.optional(v.pipe(v.string(), v.maxLength(500)), ''),
+    /**
+     * The honeypot: hidden from people, so anything in it came from a bot.
+     * Named so no browser or password manager fills it in by itself — as
+     * `website` it invited autofill and refused a real visitor.
+     */
+    hp_x9: v.optional(v.pipe(v.string(), v.maxLength(500)), ''),
   }),
   v.forward(v.partialCheck([['method'], ['phone']], phoneWhenPhone, 'Enter a phone number for a phone call'), ['phone']),
 )

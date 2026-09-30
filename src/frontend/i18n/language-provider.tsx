@@ -52,7 +52,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = useCallback(
     (next: Language) => {
       rememberLanguage(next)
-      void navigate({ to: withLanguage(pathname, next), replace: true })
+      // The query and the fragment come along: a private booking link keeps
+      // its credential in the fragment (`…/manage/REF#credential`), and the
+      // replaced entry leaves no way back to it.
+      void navigate({ to: withLanguage(pathname, next), replace: true, search: true, hash: true })
     },
     [navigate, pathname],
   )

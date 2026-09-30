@@ -22,6 +22,8 @@ export type BookingV2Copy = {
   tooSoon: string
   nextFree: string
   typeMissing: string
+  /** The types page when no kind of appointment is offered at all. */
+  noTypes: string
   form: {
     phoneHint: string
     choose: string
@@ -127,6 +129,7 @@ const en: BookingV2Copy = {
   tooSoon: 'That time can no longer be booked. Please pick another — the list is up to date again.',
   nextFree: 'Next free day',
   typeMissing: 'This kind of appointment is not offered at the moment.',
+  noTypes: 'No appointments can be booked online at the moment.',
   form: {
     phoneHint: 'I will call you on this number.',
     choose: 'Choose…',
@@ -164,7 +167,7 @@ const en: BookingV2Copy = {
     way: 'How',
     deadline: (when) => `You can change or cancel online until ${when}.`,
     deadlinePassed: (hours) =>
-      `This appointment starts in less than ${hours} hours, so it can no longer be changed here. Just reply to your confirmation email.`,
+      `This appointment starts in less than ${hours === 1 ? '1 hour' : `${hours} hours`}, so it can no longer be changed here. Just reply to your confirmation email.`,
     move: 'Move to another time',
     cantMake: 'I cannot make it',
     cancelTitle: 'Cancel this booking',
@@ -241,6 +244,7 @@ const de: BookingV2Copy = {
   tooSoon: 'Diese Zeit kann nicht mehr gebucht werden. Bitte wähle eine andere — die Liste ist wieder aktuell.',
   nextFree: 'Nächster freier Tag',
   typeMissing: 'Diese Art Termin wird gerade nicht angeboten.',
+  noTypes: 'Gerade kann online kein Termin gebucht werden.',
   form: {
     phoneHint: 'Unter dieser Nummer rufe ich dich an.',
     choose: 'Bitte wählen…',
@@ -278,7 +282,7 @@ const de: BookingV2Copy = {
     way: 'Art',
     deadline: (when) => `Online ändern oder absagen kannst du bis ${when}.`,
     deadlinePassed: (hours) =>
-      `Der Termin beginnt in weniger als ${hours} Stunden und kann hier nicht mehr geändert werden. Antworte einfach auf deine Bestätigungs-E-Mail.`,
+      `Der Termin beginnt in weniger als ${hours === 1 ? 'einer Stunde' : `${hours} Stunden`} und kann hier nicht mehr geändert werden. Antworte einfach auf deine Bestätigungs-E-Mail.`,
     move: 'Auf eine andere Zeit verschieben',
     cantMake: 'Ich kann nicht',
     cancelTitle: 'Termin absagen',
@@ -342,6 +346,10 @@ const de: BookingV2Copy = {
   },
 }
 
+/** How Arabic says a number of hours: one `ساعة`, two `ساعتين`, 3–10 `ساعات`, 11 and more `ساعة`. */
+const arabicHours = (hours: number): string =>
+  hours === 1 ? 'ساعة' : hours === 2 ? 'ساعتين' : hours <= 10 ? `${hours} ساعات` : `${hours} ساعة`
+
 const ar: BookingV2Copy = {
   how: 'كيف تفضّل أن نلتقي؟',
   methods: { video: 'مكالمة فيديو', in_person: 'لقاء شخصي', phone: 'مكالمة هاتفية' },
@@ -355,6 +363,7 @@ const ar: BookingV2Copy = {
   tooSoon: 'لم يعد حجز هذا الوقت ممكناً. اختر وقتاً آخر من فضلك — القائمة محدّثة الآن.',
   nextFree: 'أقرب يوم متاح',
   typeMissing: 'هذا النوع من المواعيد غير متاح حالياً.',
+  noTypes: 'لا يمكن حجز أي موعد عبر الإنترنت حالياً.',
   form: {
     phoneHint: 'سأتصل بك على هذا الرقم.',
     choose: 'اختر…',
@@ -392,7 +401,7 @@ const ar: BookingV2Copy = {
     way: 'الطريقة',
     deadline: (when) => `يمكنك التغيير أو الإلغاء عبر الإنترنت حتى ${when}.`,
     deadlinePassed: (hours) =>
-      `يبدأ الموعد بعد أقل من ${hours} ساعة، لذا لم يعد تغييره ممكناً هنا. فقط رُدّ على رسالة التأكيد.`,
+      `يبدأ الموعد بعد أقل من ${arabicHours(hours)}، لذا لم يعد تغييره ممكناً هنا. فقط رُدّ على رسالة التأكيد.`,
     move: 'نقل الموعد إلى وقت آخر',
     cantMake: 'لا أستطيع الحضور',
     cancelTitle: 'إلغاء الحجز',

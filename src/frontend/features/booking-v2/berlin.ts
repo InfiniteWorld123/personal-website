@@ -22,22 +22,43 @@ export const berlinToday = (): string => berlin(new Date()).date
 /** The Monday of the week that holds this Berlin date. */
 export const mondayOf = (date: string): string => addDays(date, 1 - isoWeekday(date))
 
-/** `2026-10-07` + `14:30` in Berlin → an ISO instant, or null in the spring gap. */
+const DATE_TEXT = /^\d{4}-\d{2}-\d{2}$/u
+const TIME_TEXT = /^(\d{2}):(\d{2})$/u
+
+/** A complete `YYYY-MM-DD` — what a filled date input holds. */
+export const isDateText = (text: string): boolean => DATE_TEXT.test(text)
+
+/**
+ * `14:30` → 870; null for anything that is not a complete `HH:MM` on the
+ * clock. An empty or half-typed time input is never read as midnight.
+ */
+export const textMinute = (text: string): number | null => {
+  const match = TIME_TEXT.exec(text)
+
+  if (!match) return null
+
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+
+  return hours < 24 && minutes < 60 ? hours * 60 + minutes : null
+}
+
+/**
+ * `2026-10-07` + `14:30` in Berlin → an ISO instant; null in the spring gap
+ * and for a date or time that is not complete, so nothing is ever guessed.
+ */
 export const berlinInstant = (date: string, time: string): string | null => {
-  const [hours = 0, minutes = 0] = time.split(':').map(Number)
-  const instant = zonedToInstant(date, hours * 60 + minutes, OWNER_TIME_ZONE)
+  const minute = textMinute(time)
+
+  if (!isDateText(date) || minute === null) return null
+
+  const instant = zonedToInstant(date, minute, OWNER_TIME_ZONE)
 
   return instant ? instant.toISOString() : null
 }
 
 export const minuteText = (minute: number): string =>
   `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`
-
-export const textMinute = (text: string): number => {
-  const [hours = 0, minutes = 0] = text.split(':').map(Number)
-
-  return hours * 60 + minutes
-}
 
 export const dayHeading = (date: string): string =>
   new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })

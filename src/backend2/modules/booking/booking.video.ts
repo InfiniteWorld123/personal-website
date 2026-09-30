@@ -10,10 +10,9 @@ import { isProductionEnvironment } from '../../security/runtime-mode'
  *  - **fake**, the default off production: it issues opaque test tokens and
  *    records nothing. It proves the rules Backend2 enforces, not that a call
  *    works.
- *  - **realtimekit**, used only when `BOOKING_VIDEO_MODE=live` and its three
- *    server-only settings exist. It is written against Cloudflare's published
- *    REST API and has **never been run** against a real account: verify it
- *    before video is switched on.
+ *  - **realtimekit**, used only when `BOOKING_VIDEO_MODE=live`, the app id and
+ *    the API token exist (the account id falls back to `CF_ACCOUNT_ID`).
+ *    Written against Cloudflare's published REST API.
  *  - **unavailable**, in production without that opt-in: every join answers
  *    `PROVIDER_UNAVAILABLE` instead of pretending.
  *
@@ -66,19 +65,37 @@ const unavailableProvider: VideoProvider = {
   endMeeting: async () => {},
 }
 
+export type RealtimeKitConfig = {
+  accountId: string
+  appId: string
+  apiToken: string
+  hostPreset: string
+  guestPreset: string
+}
+
 /**
- * RealtimeKit over REST. Presets `booking_host` and `booking_guest` must exist
- * in the RealtimeKit app with recording, transcription, streaming and chat
- * persistence switched off — configured in Cloudflare, checked before video
- * is switched on.
+ * The presets an app gets when it is created in the Cloudflare dashboard.
+ * Recording, transcription and streaming never start by themselves: each
+ * meeting below is created with all of them off, and the call screen offers
+ * no button that starts one.
  */
-const realtimeKitProvider = (config: { accountId: string; appId: string; apiToken: string }): VideoProvider => {
+export const DEFAULT_HOST_PRESET = 'group_call_host'
+export const DEFAULT_GUEST_PRESET = 'group_call_participant'
+
+const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
+
+/**
+ * RealtimeKit over REST (`developers.cloudflare.com/api/resources/realtime_kit`).
+ * Every answer is checked: an id or token that is missing is a failure, never
+ * an empty string stored or handed to a browser.
+ */
+export const realtimeKitProvider = (config: RealtimeKitConfig, fetcher: typeof fetch = fetch): VideoProvider => {
   const base = `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/realtime/kit/${config.appId}`
   const call = async (path: string, init: RequestInit): Promise<any> => {
     let response: Response
 
     try {
-      response = await fetch(`${base}${path}`, {
+      response = await fetcher(`${base}${path}`, {
         ...init,
         headers: { authorization: `Bearer ${config.apiToken}`, 'content-type': 'application/json' },
         signal: AbortSignal.timeout(15_000),
@@ -87,13 +104,16 @@ const realtimeKitProvider = (config: { accountId: string; appId: string; apiToke
       throw new VideoUnavailableError('The video service could not be reached')
     }
 
-    if (!response.ok) {
-      console.error('Backend2 video provider refused', { status: response.status })
+    const body = await response.json().catch(() => null)
+
+    if (!response.ok || body?.success === false) {
+      // The status only: the provider's answer can echo a participant's name.
+      console.error('Backend2 video provider refused', { status: response.status, path: path.split('/')[1] })
 
       throw new VideoUnavailableError('The video service refused the request')
     }
 
-    return response.json().catch(() => ({}))
+    return body
   }
 
   return {
@@ -101,45 +121,81 @@ const realtimeKitProvider = (config: { accountId: string; appId: string; apiToke
     createMeeting: async (input) => {
       const body = await call('/meetings', {
         method: 'POST',
-        body: JSON.stringify({ title: input.title, record_on_start: false, persist_chat: false }),
+        body: JSON.stringify({
+          title: input.title,
+          record_on_start: false,
+          live_stream_on_start: false,
+          persist_chat: false,
+          transcribe_on_end: false,
+          summarize_on_end: false,
+        }),
       })
+      const meetingId = text(body?.data?.id)
 
-      return { meetingId: String(body?.data?.id ?? '') }
+      if (!meetingId) throw new VideoUnavailableError('The video service returned no meeting')
+
+      return { meetingId }
     },
     participantToken: async (input) => {
       if (input.participantId) {
         const body = await call(`/meetings/${input.meetingId}/participants/${input.participantId}/token`, { method: 'POST' })
+        const token = text(body?.data?.token)
 
-        return { participantId: input.participantId, token: String(body?.data?.token ?? '') }
+        if (!token) throw new VideoUnavailableError('The video service returned no token')
+
+        return { participantId: input.participantId, token }
       }
 
       const body = await call(`/meetings/${input.meetingId}/participants`, {
         method: 'POST',
         body: JSON.stringify({
           name: input.name,
-          preset_name: input.role === 'host' ? 'booking_host' : 'booking_guest',
+          preset_name: input.role === 'host' ? config.hostPreset : config.guestPreset,
           custom_participant_id: `${input.role}-${input.meetingId}`,
         }),
       })
+      const participantId = text(body?.data?.id)
+      const token = text(body?.data?.token)
 
-      return { participantId: String(body?.data?.id ?? ''), token: String(body?.data?.token ?? '') }
+      if (!participantId || !token) throw new VideoUnavailableError('The video service returned no participant')
+
+      return { participantId, token }
     },
     endMeeting: async (meetingId) => {
+      // Out of the running call first — INACTIVE alone only stops new joins.
+      // No live session answers 404, which is fine: there is nobody to remove.
+      await call(`/meetings/${meetingId}/active-session/kick`, {
+        method: 'POST',
+        body: JSON.stringify({ custom_participant_ids: [`host-${meetingId}`, `guest-${meetingId}`] }),
+      }).catch(() => {})
       await call(`/meetings/${meetingId}`, { method: 'PATCH', body: JSON.stringify({ status: 'INACTIVE' }) })
     },
+  }
+}
+
+/** The live settings, or null when video is not switched on here. */
+export const realtimeKitConfig = (environment: Env): RealtimeKitConfig | null => {
+  const accountId = text(environment.REALTIMEKIT_ACCOUNT_ID) || text(environment.CF_ACCOUNT_ID)
+  const appId = text(environment.REALTIMEKIT_APP_ID)
+  const apiToken = text(environment.REALTIMEKIT_API_TOKEN)
+
+  if (text(environment.BOOKING_VIDEO_MODE) !== 'live' || !accountId || !appId || !apiToken) return null
+
+  return {
+    accountId,
+    appId,
+    apiToken,
+    hostPreset: text(environment.REALTIMEKIT_HOST_PRESET) || DEFAULT_HOST_PRESET,
+    guestPreset: text(environment.REALTIMEKIT_GUEST_PRESET) || DEFAULT_GUEST_PRESET,
   }
 }
 
 export const resolveVideoProvider = (environment: Env = process.env): VideoProvider => {
   if (override) return override
 
-  const accountId = environment.REALTIMEKIT_ACCOUNT_ID?.trim()
-  const appId = environment.REALTIMEKIT_APP_ID?.trim()
-  const apiToken = environment.REALTIMEKIT_API_TOKEN?.trim()
+  const config = realtimeKitConfig(environment)
 
-  if (environment.BOOKING_VIDEO_MODE?.trim() === 'live' && accountId && appId && apiToken) {
-    return realtimeKitProvider({ accountId, appId, apiToken })
-  }
+  if (config) return realtimeKitProvider(config)
 
   return isProductionEnvironment(environment) ? unavailableProvider : fakeProvider
 }

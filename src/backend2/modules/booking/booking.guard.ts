@@ -1,6 +1,7 @@
 import { enforceRateLimit } from '../../auth/rate-limit'
-import { internalError, verificationFailed } from '../../http/error'
+import { internalError, rateLimited, verificationFailed } from '../../http/error'
 import { isProductionEnvironment } from '../../security/runtime-mode'
+import * as repo from './booking.repo'
 
 /**
  * Anti-abuse for the public booking routes.
@@ -9,7 +10,8 @@ import { isProductionEnvironment } from '../../security/runtime-mode'
  * separately approved replacement." The live form uses Turnstile, so the V2
  * route verifies it too wherever `TURNSTILE_SECRET_KEY` is set — and in
  * production refuses to run without it rather than quietly dropping the check.
- * Rate limits come on top, in the shared database table Auth already uses.
+ * Rate limits come on top: per network in the shared database table Auth
+ * already uses, per address counted from the bookings actually made.
  */
 
 type Env = Record<string, string | undefined>
@@ -64,9 +66,21 @@ export const BOOKING_RATE_LIMITS = {
   slotsPerSource: { limit: 240, windowSeconds: 10 * 60 },
 } as const
 
-export const limitCreate = async (ip: string, email: string): Promise<void> => {
-  await enforceRateLimit({ scope: 'booking:create', identity: ip, rule: BOOKING_RATE_LIMITS.createPerSource })
-  await enforceRateLimit({ scope: 'booking:create-email', identity: email, rule: BOOKING_RATE_LIMITS.createPerEmail })
+/** Per network, checked after the human check so a failing token spends nothing. */
+export const limitCreate = (ip: string): Promise<void> =>
+  enforceRateLimit({ scope: 'booking:create', identity: ip, rule: BOOKING_RATE_LIMITS.createPerSource })
+
+/**
+ * Per address, counted from the appointments themselves: only a booking that
+ * was made counts. A failed check or a time just taken costs the address
+ * nothing, so nobody can lock someone else's address out with bad tokens.
+ * Called under the calendar lock, so two submits cannot both slip under it.
+ */
+export const limitCreatePerEmail = async (email: string, now: Date): Promise<void> => {
+  const rule = BOOKING_RATE_LIMITS.createPerEmail
+  const made = await repo.countPublicBookingsSince(email, new Date(now.getTime() - rule.windowSeconds * 1000))
+
+  if (made >= rule.limit) throw rateLimited('Too many attempts. Wait a few minutes and try again')
 }
 
 export const limitManage = (ip: string): Promise<void> =>

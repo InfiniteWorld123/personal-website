@@ -28,6 +28,7 @@ const { ownerCalendarPaths } = await import('#/backend2/modules/booking/booking.
 const time = await import('#/backend2/modules/booking/booking.time')
 const { computeCandidates, isWithinHours } = await import('#/backend2/modules/booking/booking.slots')
 const appointments = await import('#/backend2/modules/booking/appointment.service')
+const repo = await import('#/backend2/modules/booking/booking.repo')
 const video = await import('#/backend2/modules/booking/video.service')
 
 type Json = Record<string, any>
@@ -299,6 +300,87 @@ describe('types, settings and slots', () => {
     expect(result.body.data.nextAvailableDate).toBe(time.addDays(dayAfterTomorrow(), 5))
   })
 
+  it('answers a stretch far before or after the booking window with a handful of queries', async () => {
+    await setup()
+
+    let queries = 0
+    const counted = {
+      query: (text: string, values?: unknown[]) => {
+        queries += 1
+
+        return database.db.query(text, values)
+      },
+    }
+    const slots = (from: string) => {
+      queries = 0
+
+      return runWithDb(counted, () =>
+        appointments.availableSlots({ typeSlug: 'intro', method: 'video', from, days: 14, timeZone: 'Europe/Berlin' }),
+      )
+    }
+    const today = time.localParts(new Date(), 'Europe/Berlin').date
+
+    // Before: a fortnight at a time from the year 2000 — thousands of queries.
+    const past = await slots('2000-01-01')
+
+    expect(past.days.every((day) => day.slots.length === 0)).toBe(true)
+    expect([time.addDays(today, 1), time.addDays(today, 2)]).toContain(past.nextAvailableDate)
+    expect(queries).toBeLessThanOrEqual(5)
+
+    const beyond = await slots(time.addDays(today, 200))
+
+    expect(beyond.days.every((day) => day.slots.length === 0)).toBe(true)
+    expect(beyond.nextAvailableDate).toBeNull()
+    expect(queries).toBeLessThanOrEqual(2)
+
+    // Nothing free anywhere: the search stops at the window's end (60 days, five fortnights).
+    await call('PUT', '/owner/calendar/availability', { weekly: [], exceptions: [] })
+
+    expect((await slots('2000-01-01')).nextAvailableDate).toBeNull()
+    expect(queries).toBeLessThanOrEqual(2 + 5 * 3)
+  })
+
+  it('files each start under its own local day, however far the zone is from Berlin', async () => {
+    await setup()
+
+    for (const timeZone of ['Pacific/Kiritimati', 'Pacific/Pago_Pago']) {
+      const result = await call(
+        'GET',
+        `/public/booking/types/intro/slots?method=video&from=${dayAfterTomorrow()}&days=3&timeZone=${encodeURIComponent(timeZone)}`,
+      )
+      const all = result.body.data.days.flatMap((day: Json) => day.slots.map((slot: Json) => ({ day: day.date, ...slot })))
+
+      expect(all.length).toBeGreaterThan(100)
+
+      for (const slot of all) {
+        const local = time.localParts(new Date(slot.startsAt), timeZone)
+
+        expect([slot.localDate, slot.localTime]).toEqual([slot.day, local.time])
+        expect(local.date).toBe(slot.day)
+      }
+
+      expect(all.map((slot: Json) => slot.startsAt)).toEqual([...all.map((slot: Json) => slot.startsAt)].sort())
+    }
+  })
+
+  it('refuses dates and times it cannot read with 422, never a 500', async () => {
+    await setup()
+
+    const slotsFrom = (from: string) => call('GET', `/public/booking/types/intro/slots?method=video&from=${from}&days=7`)
+
+    for (const from of ['9999-12-25', '2026-02-30', '1970-01-01']) expect((await slotsFrom(from)).status, from).toBe(422)
+
+    for (const startsAt of ['2026-10-03T10:00:00+02', '2026-02-30T10:00:00Z', '9999-12-31T10:00:00Z']) {
+      expect((await book({ startsAt })).status, startsAt).toBe(422)
+      expect((await call('GET', `/owner/calendar/appointments?from=${encodeURIComponent(startsAt)}`)).status, startsAt).toBe(422)
+    }
+
+    // A full offset is as good as `Z`.
+    const slot = await firstSlot()
+
+    expect((await book({ startsAt: slot.startsAt.replace(/\.000Z$/u, '+00:00') })).status).toBe(201)
+  })
+
   it('keeps settings inside their bounds', async () => {
     expect((await call('PUT', '/owner/calendar/settings', { minNoticeMinutes: 0, windowDays: 400, changeLimitHours: 12, reminderMinutes: 60 })).status).toBe(422)
 
@@ -358,7 +440,62 @@ describe('booking from the website', () => {
 
     expect(second.status).toBe(201)
     expect(second.body.data.appointment.reference).toBe(first.body.data.appointment.reference)
+    expect(second.body.data.confirmationSent).toBe(true)
     expect(sent).toHaveLength(1)
+  })
+
+  it('tells a repeated submission the truth about a confirmation that failed', async () => {
+    await setup()
+    failSends = true
+
+    const slot = await firstSlot()
+    const submissionId = crypto.randomUUID()
+    const first = await book({ startsAt: slot.startsAt, submissionId })
+    const second = await book({ startsAt: slot.startsAt, submissionId })
+
+    expect(first.body.data.confirmationSent).toBe(false)
+    expect(second.body.data.appointment.reference).toBe(first.body.data.appointment.reference)
+    expect(second.body.data.confirmationSent).toBe(false)
+  })
+
+  it('lets neither failing human checks nor a time just taken spend anyone’s allowance', async () => {
+    await setup()
+
+    const slots = (await call('GET', `/public/booking/types/intro/slots?method=video&from=${dayAfterTomorrow()}&days=1`)).body.data.days[0].slots
+
+    // Someone else's address, a dozen bad tokens: more than either limit allows.
+    useTurnstileForTest(async () => false)
+
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      expect((await book({ startsAt: slots[10].startsAt, email: 'victim@example.com' })).body.code).toBe('VERIFICATION_FAILED')
+    }
+
+    useTurnstileForTest(undefined)
+    expect((await book({ startsAt: slots[10].startsAt, email: 'victim@example.com' })).status).toBe(201)
+
+    // A visitor who keeps pressing Book on a time just taken is not locked out.
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      expect((await book({ startsAt: slots[10].startsAt, email: 'late@example.com' })).body.code).toBe('SLOT_UNAVAILABLE')
+    }
+
+    expect((await book({ startsAt: slots[11].startsAt, email: 'late@example.com' })).status).toBe(201)
+  })
+
+  it('allows five bookings a day per address and ten submits an hour per network', async () => {
+    await setup()
+
+    const slots = (await call('GET', `/public/booking/types/intro/slots?method=video&from=${dayAfterTomorrow()}&days=1`)).body.data.days[0].slots
+
+    for (const slot of slots.slice(10, 15)) expect((await book({ startsAt: slot.startsAt, email: 'keen@example.com' })).status).toBe(201)
+
+    expect((await book({ startsAt: slots[15].startsAt, email: 'keen@example.com' })).body.code).toBe('RATE_LIMITED')
+
+    // Six submits so far from this network; four more are fine, the eleventh is not.
+    for (const [index, slot] of slots.slice(16, 20).entries()) {
+      expect((await book({ startsAt: slot.startsAt, email: `other${index}@example.com` })).status).toBe(201)
+    }
+
+    expect((await book({ startsAt: slots[20].startsAt, email: 'last@example.com' })).body.code).toBe('RATE_LIMITED')
   })
 
   it('never double-books, and the database refuses an overlap on its own', async () => {
@@ -420,11 +557,33 @@ describe('booking from the website', () => {
 
     const slot = await firstSlot()
 
-    expect((await book({ startsAt: slot.startsAt, website: 'http://spam' })).body.code).toBe('VERIFICATION_FAILED')
+    expect((await book({ startsAt: slot.startsAt, hp_x9: 'http://spam' })).body.code).toBe('VERIFICATION_FAILED')
 
     useTurnstileForTest(async () => false)
     expect((await book({ startsAt: slot.startsAt })).body.code).toBe('VERIFICATION_FAILED')
     expect(sent).toHaveLength(0)
+  })
+
+  it('ignores the old `website` field a browser may still fill in, and books', async () => {
+    await setup()
+
+    const slot = await firstSlot()
+
+    expect((await book({ startsAt: slot.startsAt, website: 'https://my-shop.example' })).status).toBe(201)
+  })
+
+  it('books real people with unusual addresses and writes to them, like the Contact form and the Inbox', async () => {
+    await setup()
+
+    for (const email of ["sean.o'neill@example.ie", 'anna@my--agency.de', 'info@bäckerei-müller.de']) {
+      const slot = await firstSlot()
+      const booked = await book({ startsAt: slot.startsAt, email })
+
+      expect(booked.status, `${email}: ${JSON.stringify(booked.body)}`).toBe(201)
+    }
+
+    expect(sent.map((mail) => mail.to)).toContain('info@xn--bckerei-mller-bfb28a.de')
+    expect((await book({ startsAt: (await firstSlot()).startsAt, email: 'jürgen@example.de' })).body.code).toBe('VALIDATION_ERROR')
   })
 
   it('keeps the booking when the confirmation email fails, and says so', async () => {
@@ -482,6 +641,78 @@ describe('the visitor’s private link', () => {
     expect(sent.map((email) => email.subject.split(':')[0])).toEqual(['Termin bestätigt', 'Termin verschoben'])
     expect(new Set(sent.map((email) => email.replyTo)).size).toBe(1)
     expect((await call('GET', '/owner/inbox/conversations?view=sent')).body.data.total).toBe(1)
+  })
+
+  it('lets the manage page offer times that overlap the appointment being moved', async () => {
+    await makeType({ durationMinutes: 60 })
+    await openAllWeek()
+
+    const day = dayAfterTomorrow()
+    const slot = await firstSlot('video', day)
+    const booked = await book({ startsAt: slot.startsAt })
+    const reference = booked.body.data.appointment.reference as string
+    const token = tokenOf(booked.body.data.manageUrl)
+    const halfHourLater = new Date(Date.parse(slot.startsAt) + 30 * 60_000).toISOString()
+    const path = `/public/booking/types/intro/slots?method=video&from=${day}&days=1`
+    const starts = (result: { body: Json }) => result.body.data.days[0].slots.map((s: Json) => s.startsAt)
+
+    expect(starts(await call('GET', path))).not.toContain(halfHourLater)
+    expect(starts(await call('GET', `${path}&reference=${reference}`, undefined, asVisitor(token)))).toEqual(
+      expect.arrayContaining([slot.startsAt, halfHourLater]),
+    )
+
+    const wrong = await call('GET', `${path}&reference=${reference}`, undefined, asVisitor('wrong'))
+
+    expect(wrong.status).toBe(404)
+    expect(wrong.body.code).toBe('BOOKING_LINK_INVALID')
+
+    const moved = await call('POST', `/public/booking/appointments/${reference}/reschedule`, { startsAt: halfHourLater }, asVisitor(token))
+
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200)
+    expect(moved.body.data.startsAt).toBe(halfHourLater)
+  })
+
+  it('clears the outside-hours mark when the visitor moves into the hours', async () => {
+    await makeType()
+    await call('PUT', '/owner/calendar/availability', {
+      weekly: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, startMinute: 540, endMinute: 1020 })),
+      exceptions: [],
+    })
+
+    const type = (await call('GET', '/owner/calendar/types')).body.data.items[0]
+    const created = await call('POST', '/owner/calendar/appointments', {
+      typeId: type.id,
+      method: 'video',
+      startsAt: time.zonedToInstant(dayAfterTomorrow(), 22 * 60, 'Europe/Berlin')!.toISOString(),
+      language: 'en',
+      name: 'Late',
+      email: 'late@example.com',
+      sendInvitation: true,
+    })
+
+    expect(created.body.data.outsideHours).toBe(true)
+
+    const link = sent[0]!.text.match(/manage\/(YW-[A-Z0-9]{8})#([0-9a-f]{64})/u)!
+    const target = (await firstSlot()).startsAt
+    const moved = await call('POST', `/public/booking/appointments/${link[1]}/reschedule`, { startsAt: target }, asVisitor(link[2]!))
+
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200)
+    expect((await call('GET', `/owner/calendar/appointments/${created.body.data.id}`)).body.data).toMatchObject({
+      startsAt: target,
+      outsideHours: false,
+    })
+  })
+
+  it('offers no new times once the type stops offering the booked way of meeting', async () => {
+    const { reference, token } = await booked()
+    const view = () => call('GET', `/public/booking/appointments/${reference}`, undefined, asVisitor(token))
+
+    expect((await view()).body.data.typeSlug).toBe('intro')
+
+    const type = (await call('GET', '/owner/calendar/types')).body.data.items[0]
+
+    expect((await call('PATCH', `/owner/calendar/types/${type.id}`, { methods: ['phone'] })).status).toBe(200)
+    expect((await view()).body.data.typeSlug).toBeNull()
   })
 
   it('cancels with a reason; Other needs words', async () => {
@@ -599,6 +830,27 @@ describe('the owner’s appointments', () => {
     expect(sent[0]!.text).toContain('نتفق على مكان اللقاء')
   })
 
+  it('skips the reminder of an invitation sent after the reminder’s moment', async () => {
+    await setup()
+
+    const type = (await call('GET', '/owner/calendar/types')).body.data.items[0]
+    const save = (startsAt: Date, email: string) =>
+      call('POST', '/owner/calendar/appointments', { typeId: type.id, method: 'video', startsAt: startsAt.toISOString(), language: 'en', name: 'Invited', email })
+    const late = (await save(new Date(Date.now() + 3 * 86_400_000), 'late@example.com')).body.data
+    const onTime = (await save(new Date(Date.now() + 4 * 86_400_000), 'ontime@example.com')).body.data
+    const afterDue = new Date(Date.parse(late.reminderDueAt) + 3_600_000)
+
+    expect(late.reminderState).toBe('pending')
+
+    await inDb(() => appointments.sendInvitation(late.id, afterDue))
+    await inDb(() => appointments.sendInvitation(onTime.id, afterDue))
+
+    expect((await call('GET', `/owner/calendar/appointments/${late.id}`)).body.data.reminderState).toBe('skipped')
+    expect((await call('GET', `/owner/calendar/appointments/${onTime.id}`)).body.data.reminderState).toBe('pending')
+    expect(await inDb(() => appointments.sendDueReminders(afterDue))).toEqual({ sent: 0, failed: 0 })
+    expect(sent.map((email) => email.subject.split(':')[0])).toEqual(['Invitation to an appointment', 'Invitation to an appointment'])
+  })
+
   it('reschedules with a revision check and tells the visitor', async () => {
     await setup()
 
@@ -699,6 +951,45 @@ describe('reminders', () => {
     expect(sent[0]!.subject).toMatch(/^Reminder of your appointment/u)
   })
 
+  it('drops a claimed reminder when the appointment was cancelled or moved before it went', async () => {
+    await setup()
+
+    const slots = (await call('GET', `/public/booking/types/intro/slots?method=video&from=${dayAfterTomorrow()}&days=1`)).body.data.days[0].slots
+    const first = await book({ startsAt: slots[10].startsAt })
+    const second = await book({ startsAt: slots[20].startsAt, email: 'two@example.com' })
+    const [cancelled, moved] = (await call('GET', '/owner/calendar/appointments')).body.data.items as Json[]
+    // Both reminders are due, neither appointment has started.
+    const due = new Date(Date.parse(first.body.data.appointment.startsAt) - 3_600_000)
+    const detail = async (id: string) => (await call('GET', `/owner/calendar/appointments/${id}`)).body.data
+
+    // A run claims both reminders; before it sends them, one is cancelled and the other moved.
+    expect((await inDb(() => repo.claimDueReminders(due, 25))).sort()).toEqual([cancelled!.id, moved!.id].sort())
+
+    await call('POST', `/public/booking/appointments/${first.body.data.appointment.reference}/cancel`, { reason: 'time_conflict' }, {
+      headers: { 'x-booking-token': tokenOf(first.body.data.manageUrl) },
+    })
+
+    const target = (await firstSlot('video', time.addDays(dayAfterTomorrow(), 3))).startsAt
+
+    await call('POST', `/public/booking/appointments/${second.body.data.appointment.reference}/reschedule`, { startsAt: target }, {
+      headers: { 'x-booking-token': tokenOf(second.body.data.manageUrl) },
+    })
+    sent = []
+
+    expect(await inDb(() => appointments.emailVisitor({ appointmentId: cancelled!.id, kind: 'reminder', now: due }))).toBe('skipped')
+    expect(await inDb(() => appointments.emailVisitor({ appointmentId: moved!.id, kind: 'reminder', now: due }))).toBe('skipped')
+    expect(await inDb(() => appointments.emailVisitor({ appointmentId: cancelled!.id, kind: 'rescheduled', now: due }))).toBe('skipped')
+    expect(sent).toHaveLength(0)
+    expect(await detail(cancelled!.id)).toMatchObject({ status: 'cancelled', reminderState: 'cancelled', reminderSentAt: null })
+
+    // The moved one keeps the reminder for its new time, and gets exactly that one.
+    const next = await detail(moved!.id)
+
+    expect(next).toMatchObject({ reminderState: 'pending', reminderSentAt: null })
+    expect(await inDb(() => appointments.sendDueReminders(new Date(Date.parse(next.reminderDueAt) + 60_000)))).toEqual({ sent: 1, failed: 0 })
+    expect(sent).toHaveLength(1)
+  })
+
   it('moves unsent reminders when the owner changes the timing', async () => {
     await setup()
     await book({ startsAt: (await firstSlot()).startsAt })
@@ -767,6 +1058,56 @@ describe('the video room', () => {
     await inDb(() => video.ownerEnd(id, during))
     await expect(inDb(() => video.visitorJoin({ reference, token }, during))).rejects.toMatchObject({ code: 'VIDEO_CLOSED' })
     await expect(inDb(() => video.ownerJoin(id, during))).rejects.toMatchObject({ code: 'VIDEO_CLOSED' })
+  })
+
+  it('gives a moved appointment a fresh room, even after the owner ended the old one', async () => {
+    const { reference, token, id, startsAt } = await booked()
+    const room = async () =>
+      (
+        await database.db.query(
+          'SELECT video_meeting_id, video_host_participant, video_guest_participant, video_ended_at FROM v2_booking_appointments WHERE id = $1',
+          [id],
+        )
+      ).rows[0]
+
+    await inDb(() => video.ownerJoin(id, new Date(startsAt.getTime() + 1000)))
+    await inDb(() => video.ownerEnd(id, new Date(startsAt.getTime() + 60_000)))
+
+    // The owner moves it: the ended room is gone and the next join opens a new one.
+    const revision = (await call('GET', `/owner/calendar/appointments/${id}`)).body.data.revision
+    const ownerTarget = new Date(startsAt.getTime() + 3 * 3_600_000)
+
+    expect((await call('PATCH', `/owner/calendar/appointments/${id}`, { revision, startsAt: ownerTarget.toISOString() })).status).toBe(200)
+    expect(await room()).toEqual({ video_meeting_id: null, video_host_participant: null, video_guest_participant: null, video_ended_at: null })
+    expect((await inDb(() => video.visitorJoin({ reference, token }, new Date(ownerTarget.getTime() + 1000)))).role).toBe('guest')
+    expect(meetings).toBe(2)
+
+    // The visitor moves it after that room ended too: the same again.
+    await inDb(() => video.ownerEnd(id, new Date(ownerTarget.getTime() + 60_000)))
+
+    const visitorTarget = (await firstSlot('video', time.addDays(dayAfterTomorrow(), 2))).startsAt
+    const moved = await call('POST', `/public/booking/appointments/${reference}/reschedule`, { startsAt: visitorTarget }, {
+      headers: { 'x-booking-token': token },
+    })
+
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200)
+    expect((await room()).video_ended_at).toBeNull()
+    expect((await inDb(() => video.ownerJoin(id, new Date(Date.parse(visitorTarget) + 1000)))).role).toBe('host')
+    expect(meetings).toBe(3)
+  })
+
+  it('does not turn the owner’s next save into a conflict when someone joins', async () => {
+    const { reference, token, id, startsAt } = await booked()
+    const opened = (await call('GET', `/owner/calendar/appointments/${id}`)).body.data
+    const atStart = new Date(startsAt.getTime() + 1000)
+
+    await inDb(() => video.visitorJoin({ reference, token }, atStart))
+    await inDb(() => video.ownerJoin(id, atStart))
+
+    const saved = await call('PATCH', `/owner/calendar/appointments/${id}`, { revision: opened.revision, note: 'Bring the brief' })
+
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200)
+    expect(saved.body.data.note).toBe('Bring the brief')
   })
 
   it('refuses video for a phone appointment and reports an unavailable provider', async () => {

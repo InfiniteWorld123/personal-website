@@ -347,6 +347,48 @@ export const updateConversationFlags = async (input: {
   )
 }
 
+/**
+ * What a module that owns a conversation says it is about now — a booking
+ * moved to a new time. Threading does not depend on either: it runs on the
+ * reply token and Message-IDs.
+ */
+export const updateConversationDetails = async (input: {
+  id: string
+  subject: string
+  facts: Record<string, string>
+}): Promise<void> => {
+  await getDb().query(
+    `UPDATE v2_inbox_conversations
+        SET subject = $2, facts = $3::jsonb, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1`,
+    [input.id, input.subject, JSON.stringify(input.facts)],
+  )
+}
+
+/** Contact messages received from one address since a moment, for its limit. */
+export const countRecentContacts = async (input: { email: string; since: Date }): Promise<number> => {
+  const { rows } = await getDb().query<{ count: string | number }>(
+    `SELECT count(*) AS count FROM v2_inbox_conversations
+      WHERE origin = 'contact' AND counterpart_email = $1 AND created_at > $2`,
+    [input.email, input.since],
+  )
+
+  return Number(rows[0]?.count ?? 0)
+}
+
+/** The language of the newest message that has one — what a reply defaults to. */
+export const latestMessageLanguage = async (conversationId: string): Promise<string | null> => {
+  const { rows } = await getDb().query<{ language: string }>(
+    `SELECT language FROM v2_inbox_messages
+      WHERE conversation_id = $1 AND language IS NOT NULL
+      ORDER BY occurred_at DESC, id DESC
+      LIMIT 1`,
+    [conversationId],
+  )
+
+  return rows[0]?.language ?? null
+}
+
 export const deleteConversationRow = async (id: string): Promise<void> => {
   await getDb().query('DELETE FROM v2_inbox_conversations WHERE id = $1', [id])
 }
