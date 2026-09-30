@@ -44,13 +44,20 @@ export const normalizeError = (error: unknown): Normalized => {
   if (isApiError(error)) {
     const appError = error as ApiError
     const isServerFault = appError.status >= HttpStatus.INTERNAL_SERVER_ERROR
+    /*
+     * A 503 is a deliberate "this service is off or unreachable" with a
+     * written sentence ("The video service is not available right now").
+     * Its message is shown; its details, which can carry a provider's own
+     * words, are not.
+     */
+    const isUnavailable = appError.status === HttpStatus.SERVICE_UNAVAILABLE
 
     if (isServerFault) console.error('Backend2 error', appError.message)
 
     return {
       status: appError.status,
       body: responseFailure({
-        message: isServerFault ? 'An unexpected error occurred' : appError.message,
+        message: isServerFault && !isUnavailable ? 'An unexpected error occurred' : appError.message,
         code: appError.code,
         details: isServerFault ? undefined : appError.details,
       }),
