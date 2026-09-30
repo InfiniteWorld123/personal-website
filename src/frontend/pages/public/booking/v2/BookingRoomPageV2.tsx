@@ -1,57 +1,31 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Check, Mail, Phone, Video, X } from 'lucide-react'
-import type { VideoAccess, VideoPreflight } from '#/backend2/contracts/booking.contract'
+import { Mail, Phone, Video } from 'lucide-react'
+import type { VideoPreflight } from '#/backend2/contracts/booking.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Button } from '#/frontend/components/ui/button'
 import { getSite } from '#/frontend/content'
 import { dayIn, detectTimezone, formatDay, formatTime } from '#/frontend/features/booking/booking-time'
-import { errorCode, videoJoin, videoPreflight } from '#/frontend/features/booking/v2/api'
+import { errorCode, videoPreflight } from '#/frontend/features/booking/v2/api'
 import { type BookingV2Copy, getBookingV2Copy } from '#/frontend/features/booking/v2/booking-v2-copy'
 import { zoneLabel } from '#/frontend/features/booking/v2/format'
-import { callCopy } from '#/frontend/features/call/call-copy'
-import type { CallExit } from '#/frontend/features/call/VideoCall'
-import { useMedia } from '#/frontend/features/call/use-media'
 import { useLanguage } from '#/frontend/i18n/language-provider'
-import { cn } from '#/frontend/lib/utils'
 
 /**
  * The visitor's video link, served by Backend2 (approved choice 5A).
  *
- * Before the start: a waiting room with a countdown and a camera and
- * microphone check, then the call opens by itself. Where the video service is
- * not switched on, the start says so plainly and offers email and phone
- * instead — it never pretends to hold a call it cannot hold. Nothing is
- * recorded or sent while the camera preview runs; the preview stays in this
- * browser. After the call, whatever ended it decides the next screen: leaving
- * offers to join again, the owner ending it says goodbye.
+ * Video appointments meet in the owner's fixed Google Meet room: before and
+ * during the appointment the page shows the time, a countdown on the day and
+ * the way into Meet. Without a Meet room set, it says plainly that the call
+ * cannot open here and offers email and phone instead. The in-site call was
+ * removed on 1 Oct 2026 (`docs/v2/booking.md`, "Future: our own video system").
  */
 
-type Phase =
-  | 'waiting'
-  | 'entering'
-  | 'call'
-  | 'left'
-  | 'elsewhere'
-  | 'lost'
-  | 'failed'
-  | 'unavailable'
-  | 'ended'
-  | 'closed'
-  | 'cancelled'
-  | 'not_video'
-  | 'invalid'
+type Phase = 'room' | 'ended' | 'closed' | 'cancelled' | 'not_video' | 'invalid'
 
-/** The call screen and its SDK load only when a call opens. */
-const VideoCall = lazy(() => import('#/frontend/features/call/VideoCall').then((module) => ({ default: module.VideoCall })))
-
-/** Who the visitor meets — the first name the site signs with. */
-const HOST_NAME = 'Yaman'
-
-const phaseOf = (state: VideoPreflight['state']): Phase =>
-  state === 'early' ? 'waiting' : state === 'open' ? 'entering' : state
+const phaseOf = (state: VideoPreflight['state']): Phase => (state === 'early' || state === 'open' ? 'room' : state)
 
 export function BookingRoomPageV2({ reference, token }: { reference: string; token: string }) {
   const { language } = useLanguage()
@@ -63,10 +37,6 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   })
-  const [phase, setPhase] = useState<Phase | null>(null)
-  const [access, setAccess] = useState<VideoAccess | null>(null)
-  const joining = useRef(false)
-  const refetchPreflight = preflight.refetch
 
   const code = errorCode(preflight.error)
   const current: Phase | null =
@@ -74,61 +44,15 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
       ? 'invalid'
       : code === 'NOT_VIDEO'
         ? 'not_video'
-        : (phase ?? (preflight.data ? phaseOf(preflight.data.state) : null))
-
-  useEffect(() => {
-    // A fixed Google Meet room needs no seat from this site.
-    if (current !== 'entering' || joining.current || preflight.data?.meetLink) return
-
-    joining.current = true
-    videoJoin(reference, token)
-      .then((issued) => {
-        setAccess(issued)
-        setPhase('call')
-      })
-      .catch((error: unknown) => {
-        const refused = errorCode(error)
-
-        // Still early by the server's clock: wait again from a fresh reading of it.
-        if (refused === 'VIDEO_NOT_OPEN') {
-          setPhase(null)
-          void refetchPreflight()
-
-          return
-        }
-
-        setPhase(refused === 'VIDEO_CLOSED' ? 'closed' : 'unavailable')
-      })
-      .finally(() => {
-        joining.current = false
-      })
-  }, [current, reference, token, refetchPreflight, preflight.data?.meetLink])
-
-  const afterCall = (why: CallExit) => {
-    setAccess(null)
-
-    if (why === 'left') return setPhase('left')
-    if (why === 'failed' || why === 'lost') return setPhase(why)
-
-    // Removed: the owner ended the call, or this seat opened in another tab.
-    // The server knows which.
-    setPhase('entering')
-    joining.current = true
-    void refetchPreflight()
-      .then(({ data }) => setPhase(!data ? 'lost' : data.state === 'open' ? 'elsewhere' : phaseOf(data.state)))
-      .finally(() => {
-        joining.current = false
-      })
-  }
+        : preflight.data
+          ? phaseOf(preflight.data.state)
+          : null
 
   return (
     <section className="py-section lg:py-section-lg">
       <Container>
         <div
-          className={cn(
-            'mx-auto flex w-full max-w-4xl flex-col items-center gap-6 rounded-[1.9rem] border border-transparent bg-[#0b1020] text-center text-[#c9d3ec] dark:border-white/10 dark:bg-[#111a2e]',
-            current === 'call' ? 'p-2 sm:p-3' : 'px-5 py-12 sm:px-10',
-          )}
+          className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 rounded-[1.9rem] border border-transparent bg-[#0b1020] px-5 py-12 text-center text-[#c9d3ec] sm:px-10 dark:border-white/10 dark:bg-[#111a2e]"
           aria-live="polite"
         >
           {current === null ? (
@@ -140,46 +64,11 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
                 </Button>
               </>
             ) : (
-              <p className="m-0 text-sm">{callCopy[language].lobby.checking}</p>
+              <p className="m-0 text-sm">{copy.room.checking}</p>
             )
-          ) : (current === 'waiting' || current === 'entering') && preflight.data?.meetLink ? (
+          ) : current === 'room' && preflight.data?.meetLink ? (
             <MeetRoom preflight={preflight.data} link={preflight.data.meetLink} copy={copy} />
-          ) : current === 'waiting' && preflight.data ? (
-            <WaitingRoom preflight={preflight.data} copy={copy} onStart={() => setPhase('entering')} />
-          ) : current === 'entering' ? (
-            <p className="m-0 text-sm">{copy.room.entering}</p>
-          ) : current === 'call' && access ? (
-            <div className="h-[min(78vh,44rem)] w-full text-start">
-              <Suspense fallback={<p className="m-0 text-center text-sm">{copy.room.entering}</p>}>
-                <VideoCall
-                  token={access.token}
-                  copy={callCopy[language]}
-                  role="guest"
-                  otherName={HOST_NAME}
-                  endsAt={access.endsAt}
-                  onExit={afterCall}
-                />
-              </Suspense>
-            </div>
-          ) : current === 'left' || current === 'elsewhere' || current === 'lost' || current === 'failed' ? (
-            <Message
-              title={
-                current === 'left'
-                  ? callCopy[language].left
-                  : current === 'elsewhere'
-                    ? callCopy[language].errors.otherTab
-                    : current === 'lost'
-                      ? callCopy[language].errors.lost
-                      : callCopy[language].errors.couldNotOpen
-              }
-              body={current === 'failed' ? callCopy[language].errors.blocked : ''}
-              contact={current === 'lost' || current === 'failed'}
-            >
-              <Button type="button" className="rounded-full" onClick={() => setPhase('entering')}>
-                {callCopy[language].rejoin}
-              </Button>
-            </Message>
-          ) : current === 'unavailable' ? (
+          ) : current === 'room' ? (
             <Message title={copy.room.unavailableTitle} body={copy.room.unavailableBody} contact />
           ) : current === 'ended' ? (
             <Message title={copy.room.ended} body={copy.room.endedBody} />
@@ -254,84 +143,6 @@ function ContactOptions() {
 }
 
 /**
- * The countdown runs on the server's clock, not the visitor's: a laptop five
- * minutes wrong would otherwise open the room early or leave them waiting.
- */
-function WaitingRoom({ preflight, copy, onStart }: { preflight: VideoPreflight; copy: BookingV2Copy; onStart: () => void }) {
-  const { language } = useLanguage()
-  const [timezone] = useState(detectTimezone)
-  const [offset] = useState(() => Date.parse(preflight.serverTime) - Date.now())
-  const [remaining, setRemaining] = useState(() => Date.parse(preflight.startsAt) - (Date.now() + offset))
-  const media = useMedia(callCopy[language])
-  const video = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    const tick = () => {
-      const left = Date.parse(preflight.startsAt) - (Date.now() + offset)
-
-      setRemaining(left)
-      if (left <= 0) onStart()
-    }
-    const timer = window.setInterval(tick, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [preflight.startsAt, offset, onStart])
-
-  useEffect(() => {
-    if (video.current) video.current.srcObject = media.stream
-
-    return () => {
-      if (video.current) video.current.srcObject = null
-    }
-  }, [media.stream])
-
-  const blocked = media.status === 'failed'
-  const hasVideo = (media.stream?.getVideoTracks().length ?? 0) > 0
-  const hasAudio = (media.stream?.getAudioTracks().length ?? 0) > 0
-
-  return (
-    <>
-      <h1 className="font-heading m-0 text-2xl font-semibold text-[#edf3ff] sm:text-3xl">{blocked ? copy.room.permTitle : copy.room.early}</h1>
-      <p className="m-0 text-sm">
-        {copy.room.startsAt}{' '}
-        <b className="text-[#edf3ff]">{formatTime(preflight.startsAt, timezone, language)}</b> ·{' '}
-        {formatDay(dayIn(new Date(preflight.startsAt), timezone), language)} ({zoneLabel(timezone)})
-      </p>
-      {/* A countdown only on the day: "3 days" is not news a clock can tell. */}
-      {remaining < 86_400_000 ? (
-        <p className="font-heading tabular m-0 text-4xl font-semibold text-[#edf3ff]" aria-label={`${copy.room.countdown} ${countdown(remaining)}`}>
-          <span aria-hidden="true">{countdown(remaining)}</span>
-        </p>
-      ) : null}
-
-      <div className="relative aspect-video w-full max-w-xl overflow-hidden rounded-[1.4rem] bg-[#172036]">
-        <video ref={video} autoPlay playsInline muted className={cn('h-full w-full scale-x-[-1] object-cover', hasVideo ? '' : 'invisible')} />
-      </div>
-
-      {blocked ? (
-        <>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Check_ ok={false} label={copy.room.camBlocked} />
-            <Check_ ok={false} label={copy.room.micBlocked} />
-          </div>
-          <p className="m-0 max-w-[56ch] text-sm leading-7">{copy.room.permBody}</p>
-          <ContactOptions />
-        </>
-      ) : media.status === 'starting' ? (
-        <p className="m-0 text-sm">{copy.room.checking}</p>
-      ) : (
-        <div className="flex flex-wrap justify-center gap-2">
-          <Check_ ok={hasVideo} label={copy.room.camOk} />
-          <Check_ ok={hasAudio} label={copy.room.micOk} />
-        </div>
-      )}
-
-      <p className="m-0 max-w-[52ch] text-sm leading-7">{copy.room.autoEnter}</p>
-    </>
-  )
-}
-
-/**
  * The call runs in the owner's fixed Google Meet room: the time, a countdown
  * on the day, and the way in. Meet asks the owner to admit the visitor.
  */
@@ -368,22 +179,6 @@ function MeetRoom({ preflight, link, copy }: { preflight: VideoPreflight; link: 
         </a>
       </Button>
     </>
-  )
-}
-
-function Check_({ ok, label }: { ok: boolean; label: string }) {
-  const Icon = ok ? Check : X
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
-        ok ? 'bg-emerald-400/15 text-emerald-300' : 'bg-red-400/15 text-red-300',
-      )}
-    >
-      <Icon aria-hidden="true" className="size-3.5" />
-      {label}
-    </span>
   )
 }
 

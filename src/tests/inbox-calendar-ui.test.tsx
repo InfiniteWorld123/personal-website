@@ -58,8 +58,6 @@ const bookingApi = {
   patchAppointment: vi.fn(),
   sendInvitation: vi.fn(),
   setOutcome: vi.fn(),
-  joinVideo: vi.fn(),
-  endVideo: vi.fn(),
   listAppointments: vi.fn(),
   listTypes: vi.fn(),
   createAppointment: vi.fn(),
@@ -73,7 +71,6 @@ const bookingApi = {
 }
 
 vi.mock('#/frontend/features/booking-v2/api', () => bookingApi)
-vi.mock('@cloudflare/realtimekit', async () => (await import('./helpers/fake-realtimekit')).fakeRealtimeKitModule())
 
 const { ConversationPane } = await import('#/frontend/pages/dashboard/inbox/ConversationPane')
 const { AppointmentDetailPanel } = await import('#/frontend/pages/dashboard/calendar/AppointmentDetailPanel')
@@ -286,29 +283,6 @@ describe('an appointment', () => {
     await waitFor(() => expect(bookingApi.cancelAppointment).toHaveBeenCalledWith('a1', { id: 'a1', reason: 'I am ill', notify: true }))
   })
 
-  it('opens the call over the Dashboard with the owner’s seat, and Leave closes it', async () => {
-    const calls = await import('./helpers/fake-realtimekit')
-
-    calls.resetFakeCalls()
-    calls.installFakeMedia()
-    bookingApi.readAppointment.mockResolvedValue(appointment())
-    bookingApi.joinVideo.mockResolvedValue({ token: 'host-seat', role: 'host', startsAt: '2099-10-06T08:00:00Z', endsAt: '2099-10-06T08:30:00Z', joinClosesAt: '' })
-
-    wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
-
-    fireEvent.click(await screen.findByRole('button', { name: /Join video call/u }))
-
-    const room = await screen.findByRole('dialog', { name: /Video call with/u })
-
-    await screen.findByText(/Waiting for /u, undefined, { timeout: 5000 })
-    expect(calls.lastFakeCall().token).toBe('host-seat')
-    expect(room).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: /Video call with/u })).toBeNull())
-    expect(calls.lastFakeCall().left).toBe(true)
-  })
-
   it('opens the fixed Google Meet room directly, with no End call', async () => {
     bookingApi.readAppointment.mockResolvedValue(appointment({ meetLink: 'https://meet.google.com/pfj-yvde-wyu', startsAt: '2020-01-01T08:00:00Z' }))
 
@@ -319,22 +293,17 @@ describe('an appointment', () => {
     expect(meet.getAttribute('href')).toBe('https://meet.google.com/pfj-yvde-wyu')
     expect(screen.queryByRole('button', { name: /Join video call/u })).toBeNull()
     expect(screen.queryByRole('button', { name: 'End call' })).toBeNull()
-    expect(bookingApi.joinVideo).not.toHaveBeenCalled()
   })
 
-  it('says why the call cannot open instead of opening an empty room', async () => {
-    const { ApiRequestError } = await import('#/frontend/api/response')
-
-    bookingApi.readAppointment.mockResolvedValue(appointment())
-    bookingApi.joinVideo.mockRejectedValue(
-      new ApiRequestError({ message: 'The video service is not available right now.', code: 'PROVIDER_UNAVAILABLE', status: 503 }),
-    )
+  it('shows no video button when there is no Meet room', async () => {
+    bookingApi.readAppointment.mockResolvedValue(appointment({ startsAt: '2020-01-01T08:00:00Z' }))
 
     wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
 
-    fireEvent.click(await screen.findByRole('button', { name: /Join video call/u }))
-    expect(await screen.findByText('The video service is not available right now.')).toBeTruthy()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    await screen.findByRole('button', { name: 'Move…' })
+    expect(screen.queryByRole('link', { name: /Google Meet/u })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Join video call/u })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'End call' })).toBeNull()
   })
 })
 

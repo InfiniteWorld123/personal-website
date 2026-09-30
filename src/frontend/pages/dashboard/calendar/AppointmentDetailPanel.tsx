@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { ArrowLeft, Loader2, Mail, Video } from 'lucide-react'
-import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail, type VideoAccess } from '#/backend2/contracts/booking.contract'
+import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail } from '#/backend2/contracts/booking.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import { Panel, StatusChip } from '#/frontend/dashboard/primitives'
 import { BlogDialog, DialogActions, DialogAlert, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
@@ -10,8 +10,6 @@ import { berlin, berlinDateTime, berlinInstant, isDateText, textMinute } from '#
 import {
   useAppointment,
   useCancelAppointment,
-  useEndVideo,
-  useJoinVideo,
   usePatchAppointment,
   useSendInvitation,
   useSetOutcome,
@@ -19,7 +17,6 @@ import {
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { LoadFailure } from '../blog/blog-parts'
 import { AppointmentStatusChip, FieldError, LANGUAGE_NAMES, METHOD_WORDS } from './calendar-parts'
-import { OwnerVideoCall } from './OwnerVideoCall'
 
 /**
  * One appointment: who, when (in Berlin, and what the visitor sees), how,
@@ -263,11 +260,7 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
   const appointment = useAppointment(id)
   const invite = useSendInvitation()
   const outcome = useSetOutcome()
-  const join = useJoinVideo()
-  const end = useEndVideo()
   const [dialog, setDialog] = useState<'move' | 'cancel' | null>(null)
-  const [videoNote, setVideoNote] = useState<string | null>(null)
-  const [call, setCall] = useState<VideoAccess | null>(null)
 
   if (appointment.isPending) {
     return (
@@ -349,28 +342,6 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
               <a href={a.meetLink} target="_blank" rel="noopener noreferrer" className="dash-btn dash-btn-primary h-9">
                 <Video className="size-4" aria-hidden="true" /> Join on Google Meet
               </a>
-            ) : a.method === 'video' && !a.videoEndedAt ? (
-              <button
-                type="button"
-                className="dash-btn dash-btn-primary h-9"
-                disabled={join.isPending}
-                onClick={async () => {
-                  setVideoNote(null)
-
-                  try {
-                    setCall(await join.mutateAsync(a.id))
-                  } catch (error) {
-                    setVideoNote(messageFromError(error))
-                  }
-                }}
-              >
-                {join.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Video className="size-4" aria-hidden="true" />} Join video call
-              </button>
-            ) : null}
-            {a.method === 'video' && !a.meetLink && !a.videoEndedAt && started ? (
-              <button type="button" className="dash-btn dash-btn-quiet h-9" onClick={() => void run(() => end.mutateAsync(a.id), 'Call ended. Nobody can join it again.')}>
-                End call
-              </button>
             ) : null}
             <button type="button" className="dash-btn dash-btn-quiet h-9" onClick={() => setDialog('move')}>Move…</button>
             <button type="button" className="dash-btn dash-btn-ghost h-9 text-[var(--dash-red-ink)]" onClick={() => setDialog('cancel')}>Cancel…</button>
@@ -387,7 +358,6 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
             </button>
           </div>
         ) : null}
-        {videoNote ? <p role="status" className="rounded-[9px] bg-[var(--dash-blue-tint)] px-3 py-2 text-[12.5px] text-[var(--dash-blue-ink)]">{videoNote}</p> : null}
         {a.source === 'manual' && !visitorTold && confirmed ? (
           <p className="text-[12px] text-[var(--dash-quiet)]">Not sent yet: {a.visitorName} has not been told about this appointment, and gets no reminder or change emails until you send the invitation.</p>
         ) : null}
@@ -421,17 +391,6 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
         </ol>
       </Panel>
 
-      {call ? (
-        <OwnerVideoCall
-          access={call}
-          visitorName={a.visitorName}
-          rejoin={() => join.mutateAsync(a.id)}
-          onClose={() => {
-            setCall(null)
-            void appointment.refetch()
-          }}
-        />
-      ) : null}
       {dialog === 'move' ? <MoveDialog appointment={a} onClose={() => setDialog(null)} /> : null}
       {dialog === 'cancel' ? <CancelDialog appointment={a} onClose={() => setDialog(null)} /> : null}
     </div>

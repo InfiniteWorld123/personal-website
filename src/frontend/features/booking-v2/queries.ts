@@ -8,8 +8,6 @@ import {
   createAppointment,
   createType,
   deleteType,
-  endVideo,
-  joinVideo,
   listAppointments,
   listTypes,
   patchAppointment,
@@ -59,12 +57,11 @@ export const useBookingSettings = () => useQuery({ queryKey: calendarKeys.settin
 
 export const useAvailability = () => useQuery({ queryKey: calendarKeys.availability(), queryFn: readAvailability, retry })
 
-const useCalendarMutation = <TInput, TResult>(fn: (input: TInput) => Promise<TResult>, meta?: { toast: false }) => {
+const useCalendarMutation = <TInput, TResult>(fn: (input: TInput) => Promise<TResult>) => {
   const client = useQueryClient()
 
   return useMutation({
     mutationFn: fn,
-    meta,
     // An email may have gone into the Inbox too.
     onSettled: () =>
       Promise.all([
@@ -86,9 +83,6 @@ export const useCancelAppointment = () =>
   useCalendarMutation((input: { id: string; reason: string; notify: boolean }) => cancelAppointment(input.id, input))
 export const useSetOutcome = () =>
   useCalendarMutation((input: { id: string; status: 'completed' | 'no_show' }) => setOutcome(input.id, input.status))
-// The call screen says why it could not open; a "Not saved" toast would be wrong.
-export const useJoinVideo = () => useCalendarMutation(joinVideo, { toast: false })
-export const useEndVideo = () => useCalendarMutation(endVideo)
 export const useCreateType = () => useCalendarMutation((input: TypeInput) => createType(input))
 export const usePatchType = () =>
   useCalendarMutation((input: { id: string } & Partial<TypeInput>) => {

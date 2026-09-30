@@ -4,7 +4,6 @@ import type {
   CancelReason,
   PublicBookingType,
   SlotsResult,
-  VideoAccess,
   VideoPreflight,
   VisitorAppointment,
 } from '#/backend2/contracts/booking.contract'
@@ -15,7 +14,7 @@ import { ApiRequestError } from '#/frontend/api/response'
  *
  * Plain `fetch`, like every V2 client. Refusals keep their `code` —
  * `SLOT_UNAVAILABLE`, `CHANGE_DEADLINE_PASSED`, `BOOKING_LINK_INVALID`,
- * `PROVIDER_UNAVAILABLE` — because each one needs its own sentence. Only types
+ * `NOT_VIDEO` — because each one needs its own sentence. Only types
  * come from the contract, so its validation schemas stay out of the page.
  *
  * The private credential travels in a header, never in the address: the
@@ -133,9 +132,6 @@ export const cancelAppointment = (reference: string, token: string, input: { rea
 
 export const videoPreflight = (reference: string, token: string) =>
   post<VideoPreflight>(`/appointments/${encodeURIComponent(reference)}/video/preflight`, {}, token)
-
-export const videoJoin = (reference: string, token: string) =>
-  post<VideoAccess>(`/appointments/${encodeURIComponent(reference)}/video/join`, {}, token)
 
 /** The error code a refusal carried, or null for anything else. */
 export const errorCode = (error: unknown): string | null =>

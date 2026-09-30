@@ -7,7 +7,6 @@ import type {
   BookingSettings,
   BookingType,
   TypeTexts,
-  VideoAccess,
 } from '#/backend2/contracts/booking.contract'
 import type { Page } from '#/backend2/contracts/pagination.contract'
 import { ApiRequestError } from '#/frontend/api/response'
@@ -15,8 +14,8 @@ import { csrfToken } from '#/frontend/features/auth-v2/api'
 
 /**
  * The Dashboard's side of the Backend2 Calendar. Plain `fetch`, like every V2
- * client; refusals keep their `code` — `SLOT_UNAVAILABLE`, `TYPE_IN_USE`,
- * `VIDEO_NOT_OPEN` — so the screens can say what happened.
+ * client; refusals keep their `code` — `SLOT_UNAVAILABLE`, `TYPE_IN_USE` — so the
+ * screens can say what happened.
  */
 
 const OWNER = '/api/v2/owner/calendar'
@@ -115,10 +114,6 @@ export const cancelAppointment = (id: string, input: { reason: string; notify: b
 
 export const setOutcome = (id: string, status: 'completed' | 'no_show') =>
   send<AppointmentDetail>('POST', `${OWNER}/appointments/${id}/status`, { status })
-
-export const joinVideo = (id: string) => send<VideoAccess>('POST', `${OWNER}/appointments/${id}/video/join`)
-
-export const endVideo = (id: string) => send<{ endedAt: string }>('POST', `${OWNER}/appointments/${id}/video/end`)
 
 export const listTypes = (page: number, pageSize = 25) => request<Page<BookingType>>(`${OWNER}/types${toSearch({ page, pageSize })}`)
 

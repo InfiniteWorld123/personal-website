@@ -7,8 +7,8 @@ import { createTestDatabase } from './helpers/backend2-db'
  * What is under test: the calendar never double-books, the clock change is
  * handled rather than hoped about, every appointment has exactly one Inbox
  * conversation, a visitor's private link opens only their own appointment,
- * emails and reminders go once, and the video room opens exactly when the
- * rules say. Email and video are faked; nothing leaves the process.
+ * emails and reminders go once, and the call page says where the video
+ * appointment stands. Email is faked; nothing leaves the process.
  */
 process.env.DATABASE_URL_V2 = 'postgres://v2.invalid/v2'
 process.env.BACKEND2_OWNER_API = 'local'
@@ -22,7 +22,6 @@ delete process.env.INBOX_SEND_MODE
 const { createAppForTest } = await import('#/backend2/app')
 const { runWithDb } = await import('#/backend2/db/client')
 const { useInboxTransportForTest } = await import('#/backend2/modules/inbox/inbox.transport')
-const { useVideoProviderForTest, VideoUnavailableError } = await import('#/backend2/modules/booking/booking.video')
 const { useTurnstileForTest } = await import('#/backend2/modules/booking/booking.guard')
 const { ownerCalendarPaths } = await import('#/backend2/modules/booking/booking.owner.route')
 const time = await import('#/backend2/modules/booking/booking.time')
@@ -38,15 +37,11 @@ const app = createAppForTest()
 
 let sent: Array<{ to: string; subject: string; text: string; replyTo: string }> = []
 let failSends = false
-let participants = 0
-let meetings = 0
 
 beforeEach(async () => {
   await database.reset()
   sent = []
   failSends = false
-  participants = 0
-  meetings = 0
   useInboxTransportForTest({
     mode: 'fake',
     send: async (email) => {
@@ -57,22 +52,11 @@ beforeEach(async () => {
       return { ok: true, provider: 'fake', providerMessageId: `p-${sent.length}` }
     },
   })
-  useVideoProviderForTest({
-    name: 'fake',
-    createMeeting: async () => ({ meetingId: `m-${(meetings += 1)}` }),
-    participantToken: async (input) => {
-      if (!input.participantId) participants += 1
-
-      return { participantId: input.participantId ?? `p-${input.role}`, token: `t-${crypto.randomUUID()}` }
-    },
-    endMeeting: async () => {},
-  })
   useTurnstileForTest(undefined)
 })
 
 afterEach(() => {
   useInboxTransportForTest(undefined)
-  useVideoProviderForTest(undefined)
   useTurnstileForTest(undefined)
   delete process.env.BACKEND2_OWNER_AUTH
 })
@@ -1032,75 +1016,47 @@ describe('the video room', () => {
     }
   })
 
-  it('lets the visitor test early, but gives no token before the start', async () => {
-    const { reference, token } = await booked()
+  it('tells the call page where the appointment stands: early, open until an hour after the end, then closed', async () => {
+    const { reference, token, startsAt } = await booked()
     const pre = await call('POST', `/public/booking/appointments/${reference}/video/preflight`, {}, { headers: { 'x-booking-token': token } })
 
+    expect(pre.status).toBe(200)
     expect(pre.body.data.state).toBe('early')
     expect(pre.body.data.token).toBeUndefined()
+    expect(pre.body.data.meetLink).toBeNull()
 
-    const early = await call('POST', `/public/booking/appointments/${reference}/video/join`, {}, { headers: { 'x-booking-token': token } })
+    const at = (minutes: number) => inDb(() => video.visitorPreflight({ reference, token }, new Date(startsAt.getTime() + minutes * 60_000)))
 
-    expect(early.body.code).toBe('VIDEO_NOT_OPEN')
-    expect(meetings).toBe(0)
+    expect((await at(1)).state).toBe('open')
+    expect((await at(45)).state).toBe('open')
+    expect((await at(95)).state).toBe('closed')
   })
 
-  it('opens at the start with two seats only, and closes an hour after the end', async () => {
-    const { reference, token, id, startsAt } = await booked()
-    const atStart = new Date(startsAt.getTime() + 1000)
+  it('says cancelled for a cancelled appointment, and ended for an older room the owner closed', async () => {
+    const { reference, token, id } = await booked()
 
-    const guest = await inDb(() => video.visitorJoin({ reference, token }, atStart))
-    const again = await inDb(() => video.visitorJoin({ reference, token }, atStart))
-    const host = await inDb(() => video.ownerJoin(id, atStart))
+    await database.db.query('UPDATE v2_booking_appointments SET video_ended_at = now() WHERE id = $1', [id])
+    expect((await inDb(() => video.visitorPreflight({ reference, token }))).state).toBe('ended')
 
-    expect(guest.role).toBe('guest')
-    expect(host.role).toBe('host')
-    expect(again.token).not.toBe(guest.token)
-    expect(meetings).toBe(1)
-    expect(participants).toBe(2)
-
-    const overtime = new Date(startsAt.getTime() + 45 * 60_000)
-
-    expect((await inDb(() => video.visitorPreflight({ reference, token }, overtime))).state).toBe('open')
-
-    const tooLate = new Date(startsAt.getTime() + 95 * 60_000)
-
-    await expect(inDb(() => video.visitorJoin({ reference, token }, tooLate))).rejects.toMatchObject({ code: 'VIDEO_CLOSED' })
+    expect((await call('POST', `/owner/calendar/appointments/${id}/cancel`, { reason: 'Ill', notify: false })).status).toBe(200)
+    expect((await inDb(() => video.visitorPreflight({ reference, token }))).state).toBe('cancelled')
   })
 
-  it('lets the owner end the room, after which nobody joins', async () => {
+  it('clears an older ended room when the appointment is moved', async () => {
     const { reference, token, id, startsAt } = await booked()
-    const during = new Date(startsAt.getTime() + 60_000)
+    const ended = async () =>
+      (await database.db.query('SELECT video_ended_at FROM v2_booking_appointments WHERE id = $1', [id])).rows[0].video_ended_at
+    const endRoom = () => database.db.query('UPDATE v2_booking_appointments SET video_ended_at = now() WHERE id = $1', [id])
 
-    await inDb(() => video.ownerEnd(id, during))
-    await expect(inDb(() => video.visitorJoin({ reference, token }, during))).rejects.toMatchObject({ code: 'VIDEO_CLOSED' })
-    await expect(inDb(() => video.ownerJoin(id, during))).rejects.toMatchObject({ code: 'VIDEO_CLOSED' })
-  })
+    await endRoom()
 
-  it('gives a moved appointment a fresh room, even after the owner ended the old one', async () => {
-    const { reference, token, id, startsAt } = await booked()
-    const room = async () =>
-      (
-        await database.db.query(
-          'SELECT video_meeting_id, video_host_participant, video_guest_participant, video_ended_at FROM v2_booking_appointments WHERE id = $1',
-          [id],
-        )
-      ).rows[0]
-
-    await inDb(() => video.ownerJoin(id, new Date(startsAt.getTime() + 1000)))
-    await inDb(() => video.ownerEnd(id, new Date(startsAt.getTime() + 60_000)))
-
-    // The owner moves it: the ended room is gone and the next join opens a new one.
     const revision = (await call('GET', `/owner/calendar/appointments/${id}`)).body.data.revision
     const ownerTarget = new Date(startsAt.getTime() + 3 * 3_600_000)
 
     expect((await call('PATCH', `/owner/calendar/appointments/${id}`, { revision, startsAt: ownerTarget.toISOString() })).status).toBe(200)
-    expect(await room()).toEqual({ video_meeting_id: null, video_host_participant: null, video_guest_participant: null, video_ended_at: null })
-    expect((await inDb(() => video.visitorJoin({ reference, token }, new Date(ownerTarget.getTime() + 1000)))).role).toBe('guest')
-    expect(meetings).toBe(2)
+    expect(await ended()).toBeNull()
 
-    // The visitor moves it after that room ended too: the same again.
-    await inDb(() => video.ownerEnd(id, new Date(ownerTarget.getTime() + 60_000)))
+    await endRoom()
 
     const visitorTarget = (await firstSlot('video', time.addDays(dayAfterTomorrow(), 2))).startsAt
     const moved = await call('POST', `/public/booking/appointments/${reference}/reschedule`, { startsAt: visitorTarget }, {
@@ -1108,49 +1064,24 @@ describe('the video room', () => {
     })
 
     expect(moved.status, JSON.stringify(moved.body)).toBe(200)
-    expect((await room()).video_ended_at).toBeNull()
-    expect((await inDb(() => video.ownerJoin(id, new Date(Date.parse(visitorTarget) + 1000)))).role).toBe('host')
-    expect(meetings).toBe(3)
+    expect(await ended()).toBeNull()
+    expect((await inDb(() => video.visitorPreflight({ reference, token }))).state).toBe('early')
   })
 
-  it('does not turn the owner’s next save into a conflict when someone joins', async () => {
-    const { reference, token, id, startsAt } = await booked()
-    const opened = (await call('GET', `/owner/calendar/appointments/${id}`)).body.data
-    const atStart = new Date(startsAt.getTime() + 1000)
-
-    await inDb(() => video.visitorJoin({ reference, token }, atStart))
-    await inDb(() => video.ownerJoin(id, atStart))
-
-    const saved = await call('PATCH', `/owner/calendar/appointments/${id}`, { revision: opened.revision, note: 'Bring the brief' })
-
-    expect(saved.status, JSON.stringify(saved.body)).toBe(200)
-    expect(saved.body.data.note).toBe('Bring the brief')
-  })
-
-  it('refuses video for a phone appointment and reports an unavailable provider', async () => {
+  it('refuses the call page for a phone appointment', async () => {
     const phone = await booked('phone')
 
-    await expect(inDb(() => video.visitorJoin({ reference: phone.reference, token: phone.token }, new Date()))).rejects.toMatchObject({
+    await expect(inDb(() => video.visitorPreflight({ reference: phone.reference, token: phone.token }))).rejects.toMatchObject({
       code: 'NOT_VIDEO',
     })
+  })
 
-    await database.reset()
+  it('no longer offers in-site call seats to the visitor or the owner', async () => {
+    const { reference, token, id } = await booked()
+    const headers = { 'x-booking-token': token }
 
-    const { reference, token, startsAt } = await booked()
-
-    useVideoProviderForTest({
-      name: 'unavailable',
-      createMeeting: async () => {
-        throw new VideoUnavailableError('off')
-      },
-      participantToken: async () => {
-        throw new VideoUnavailableError('off')
-      },
-      endMeeting: async () => {},
-    })
-
-    await expect(inDb(() => video.visitorJoin({ reference, token }, new Date(startsAt.getTime() + 1000)))).rejects.toMatchObject({
-      code: 'PROVIDER_UNAVAILABLE',
-    })
+    expect((await call('POST', `/public/booking/appointments/${reference}/video/join`, {}, { headers })).status).toBe(404)
+    expect((await call('POST', `/owner/calendar/appointments/${id}/video/join`, {})).status).toBe(404)
+    expect((await call('POST', `/owner/calendar/appointments/${id}/video/end`, {})).status).toBe(404)
   })
 })

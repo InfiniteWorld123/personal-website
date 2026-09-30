@@ -55,7 +55,8 @@ export type ApiErrorCode =
   /*
    * Booking (`docs/v2/booking.md`): "safe stable errors for ... unavailable/
    * overlapping slot, too-early/far request, cancellation deadline, invalid
-   * private credential, non-video request, provider unavailable".
+   * private credential, non-video request". The video-join errors went with
+   * the in-site call on 1 Oct 2026.
    */
   | 'SLOT_UNAVAILABLE'
   | 'BOOKING_TOO_SOON'
@@ -63,9 +64,6 @@ export type ApiErrorCode =
   | 'CHANGE_DEADLINE_PASSED'
   | 'BOOKING_LINK_INVALID'
   | 'NOT_VIDEO'
-  | 'VIDEO_NOT_OPEN'
-  | 'VIDEO_CLOSED'
-  | 'PROVIDER_UNAVAILABLE'
   | 'TYPE_IN_USE'
   | 'VERIFICATION_FAILED'
   /*
@@ -425,20 +423,6 @@ export const bookingLinkInvalid = make(
 )
 
 export const notVideo = make(HttpStatus.CONFLICT, 'NOT_VIDEO', 'This appointment is not a video call.')
-
-export const videoNotOpen = make(
-  HttpStatus.CONFLICT,
-  'VIDEO_NOT_OPEN',
-  'The call has not started yet.',
-)
-
-export const videoClosed = make(HttpStatus.CONFLICT, 'VIDEO_CLOSED', 'This call is over.')
-
-export const providerUnavailable = make(
-  HttpStatus.SERVICE_UNAVAILABLE,
-  'PROVIDER_UNAVAILABLE',
-  'The video service is not available right now.',
-)
 
 /** A type with upcoming appointments. `details` count them. */
 export const typeInUse = make(

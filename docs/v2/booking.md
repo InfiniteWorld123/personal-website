@@ -1,6 +1,6 @@
 # Booking and video calls V2 — product, backend, and frontend specification
 
-Status: **Backend2 and the Dashboard Calendar built and verified locally on 23 Sep 2026; the Design Lab was approved the same day (`1A`–`7A`), including the five visitor cancellation reasons. The public booking, manage and room pages went live at the cutover (24 Sep 2026). On 30 Sep 2026 the video call screen was built on RealtimeKit (see "Video calls — 30 Sep 2026" below) and an audit's booking fixes landed.** The delivery record below is the current state; everything after it is the planning record the backend was built from. It does not authorise deployment, live email/video setup, legacy removal, a commit, or a push. Read `foundation.md` and `inbox.md` for V2 boundaries and Inbox correspondence. Legacy booking/call code is evidence, not an automatic V2 requirement.
+Status: **Backend2 and the Dashboard Calendar built and verified locally on 23 Sep 2026; the Design Lab was approved the same day (`1A`–`7A`), including the five visitor cancellation reasons. The public booking, manage and room pages went live at the cutover (24 Sep 2026). On 30 Sep 2026 an audit's booking fixes landed and video appointments moved to a fixed Google Meet room; on 1 Oct 2026 the in-site video call (RealtimeKit) was removed on the owner's decision and kept only as a future plan (see "Video calls" and "Future: our own video system" below).** The delivery record below is the current state; everything after it is the planning record the backend was built from. It does not authorise deployment, live email/video setup, legacy removal, a commit, or a push. Read `foundation.md` and `inbox.md` for V2 boundaries and Inbox correspondence. Legacy booking/call code is evidence, not an automatic V2 requirement.
 
 ## What is built — Backend2, 23 Sep 2026
 
@@ -15,7 +15,7 @@ Verified with `src/tests/backend2-booking.test.ts` (32 tests against a real in-p
 - **Inbox.** Every email for an appointment — confirmation, invitation, reschedule, cancellation, reminder — goes through the Inbox into **one** conversation per appointment (origin `booking`, facts: appointment, method, reference, and the optional subject, budget, company, and phone for a phone call). The appointment row is locked while that conversation is found or made. A failed email never undoes the appointment: it is kept in the Inbox with Retry and written into the appointment's history.
 - **Manual appointments**: any future time for the owner, marked `outsideHours` when outside the week's hours, never overlapping. **Save only** sends nothing and opens no conversation; **Send invitation** sends once however often it is pressed. A manual appointment the visitor was never told about gets no reminder and no change emails.
 - **Reminders**: one per appointment, `bun run db2:booking:send-reminders`, each claimed before it is sent so parallel runs send it once. A booking made after its reminder moment skips it. Changing the reminder timing moves every future reminder not yet sent.
-- **Video** sits behind an adapter. The fake one runs locally; the RealtimeKit one is used with `BOOKING_VIDEO_MODE=live`, `REALTIMEKIT_APP_ID` and the secret `REALTIMEKIT_API_TOKEN` (the account falls back to `CF_ACCOUNT_ID`; presets default to the dashboard's `group_call_host` / `group_call_participant`); in production without them, joining answers `PROVIDER_UNAVAILABLE`, and that sentence reaches the screen (a 503's message is no longer hidden). One meeting per appointment, two identities only (a second tab gets the same seat back). The visitor's link shows a waiting screen any time and a token only from the start; nobody new joins an hour after the end or after the owner ends the room; the owner may enter 15 minutes early.
+- **Video** appointments meet in the owner's fixed Google Meet room (see "Google Meet for now" below). Backend2 keeps only the visitor's call-page state (`POST …/video/preflight`: early, open until an hour after the end, closed, cancelled, and ended for an older room the owner closed) and the Meet link; it issues no call seats. The in-site call was removed on 1 Oct 2026.
 
 ### Defaults chosen where the plan left a number open
 
@@ -27,7 +27,6 @@ These are Dashboard settings or code constants, not assumptions about the busine
 | Start times | every 30 minutes from the start of each block of hours, per type (5–240) |
 | Existing appointments when settings change | keep their time; only unsent reminders follow a new reminder timing |
 | Visitor cancellation reasons | "The time no longer works for me", "I no longer need the appointment", "I found another solution", "I booked by mistake", "Other" (typed) — wording to approve in the Design Lab |
-| Owner entry to the video room | from 15 minutes before the start |
 | Deleting a type with upcoming appointments | refused; switch it off instead |
 
 ### Design Lab — approved 23 Sep 2026 (`1A 2A 3A 4A 5A 6A 7A`)
@@ -36,25 +35,31 @@ These are Dashboard settings or code constants, not assumptions about the busine
 
 ### Dashboard Calendar — built 23 Sep 2026
 
-`/dashboard/calendar`, as approved: the week in Berlin time (closed hours shaded, appointments placed by time, outside-hours ones marked) with the upcoming list under it — search, status / type / way filters, "Include past", pages of 25 — and **Types** and **Hours & limits** as tabs. An appointment shows Berlin time and, where different, the visitor's own; how; contact details; subject and budget; the reminder state; a link to its Inbox conversation; its history. Actions: Join video call (opens the call over the whole Dashboard), End call (removes both people and closes the room), Move (overlap refused and explained), Cancel (a reason is required and sent), Send invitation for a manual appointment not yet sent, Completed / No show once it has started. **New appointment** opens a side panel with Save only / Save & send invitation and the outside-hours warning. Types need all three names before they can be offered; a type with upcoming appointments cannot be deleted. Hours are edited per day with exceptions; limits are chosen from bounded lists. All forms use TanStack Form, check-on-submit then on change.
+`/dashboard/calendar`, as approved: the week in Berlin time (closed hours shaded, appointments placed by time, outside-hours ones marked) with the upcoming list under it — search, status / type / way filters, "Include past", pages of 25 — and **Types** and **Hours & limits** as tabs. An appointment shows Berlin time and, where different, the visitor's own; how; contact details; subject and budget; the reminder state; a link to its Inbox conversation; its history. Actions: Join on Google Meet for a video appointment when the Meet room is set (nothing for video otherwise), Move (overlap refused and explained), Cancel (a reason is required and sent), Send invitation for a manual appointment not yet sent, Completed / No show once it has started. **New appointment** opens a side panel with Save only / Save & send invitation and the outside-hours warning. Types need all three names before they can be offered; a type with upcoming appointments cannot be deleted. Hours are edited per day with exceptions; limits are chosen from bounded lists. All forms use TanStack Form, check-on-submit then on change.
 
 Verified in a browser against a throwaway database: the week, the detail, a move refused for overlap then accepted with history and email, a new appointment's validation and outside-hours warning, hours with an overlap refused then saved, and the refused type delete. `src/tests/inbox-calendar-ui.test.tsx` covers the appointment screen.
 
-### Video calls — 30 Sep 2026
+### Video calls — built 30 Sep 2026, removed 1 Oct 2026
 
-The call screen from the approved lab ("the call"), shared by the visitor's room page and the owner's Dashboard overlay (`src/frontend/features/call/VideoCall.tsx`), on RealtimeKit's core SDK, loaded only when a call opens and left out of the server build. Two tiles (own camera mirrored, the other person's), a waiting tile until the other arrives, the other voice played through one audio element with a "Turn on sound" button when the browser holds sound back, mute, camera, screen sharing where the browser can share, chat that is never stored (`persist_chat` off), Leave, and the over-time banner. Meetings are created with recording, streaming, stored chat, transcripts and summaries off. A move gives the appointment a fresh room; a join does not bump the appointment's revision. After a call the visitor's page offers "Join again" (left, dropped, or the seat opened in another tab) or says goodbye (the owner ended it). Tests: `backend2-booking-video-provider.test.ts`, `video-call.test.tsx`, the room cases in `public-booking.test.tsx` and `inbox-calendar-ui.test.tsx`.
+An in-site call screen (RealtimeKit core SDK, two tiles, mute, camera, screen sharing, unstored chat, over-time banner, "Join again") with a visitor room page, a Dashboard overlay, owner Join / End call and visitor seat routes was built and then **removed on the owner's decision (1 Oct 2026)**: video appointments meet in the fixed Google Meet room only. The database columns `video_meeting_id`, `video_host_participant`, `video_guest_participant` and `video_ended_at` stay untouched (no migration); nothing writes them now except a move clearing them. The whole in-site version can be restored from Git commit `9821e04` (the call, adapter, routes and tests) and `bb09d05` (the switch to Google Meet) — see the plan below.
 
 ### Google Meet for now — 30 Sep 2026 (owner's choice)
 
-The owner chose a fixed Google Meet room over RealtimeKit for now: `BOOKING_MEET_LINK` in `wrangler.jsonc` (`https://meet.google.com/pfj-yvde-wyu`, created on the business account `yamanwarda06@gmail.com`). With it set, a video booking's confirmation, reminder and change emails carry the Meet link; the visitor's call page shows the time, a countdown on the day and "Open Google Meet"; the Dashboard's appointment shows "Join on Google Meet" and no End call. The owner admits the visitor in Meet. The booking form says video runs on Google Meet. Only a real `https://meet.google.com/xxx-xxxx-xxx` address is accepted; unset, the site falls back to the RealtimeKit path below.
+The owner chose a fixed Google Meet room over RealtimeKit for now: `BOOKING_MEET_LINK` in `wrangler.jsonc` (`https://meet.google.com/pfj-yvde-wyu`, created on the business account `yamanwarda06@gmail.com`). With it set, a video booking's confirmation, reminder and change emails carry the Meet link; the visitor's call page shows the time, a countdown on the day and "Open Google Meet"; the Dashboard's appointment shows "Join on Google Meet" and no End call. The owner admits the visitor in Meet. The booking form says video runs on Google Meet. Only a real `https://meet.google.com/xxx-xxxx-xxx` address is accepted; unset, the call page says the video call cannot open on this website and offers email and phone, and the Dashboard shows no video button. Tests: `backend2-booking-meet.test.ts`, the video-room cases in `backend2-booking.test.ts`, `public-booking.test.tsx` and `inbox-calendar-ui.test.tsx`.
 
 ### Future: our own video system (planned, not scheduled)
 
-The owner wants the call back inside the website later. What already exists and stays in the code, switched off: the RealtimeKit adapter and the call screen above, with their tests. To switch it on: a RealtimeKit app (created 30 Sep 2026: `yamanwarda`, App ID `f64d468e-0632-44fc-8b52-755ea2183956`) and an API token with **Realtime Admin** on the owner's account — the owner pastes it himself into `wrangler secret put REALTIMEKIT_API_TOKEN` (the first attempt failed only because the copy did not catch the token); then `REALTIMEKIT_APP_ID` and `BOOKING_VIDEO_MODE=live` in `wrangler.jsonc`, remove `BOOKING_MEET_LINK`, restore the "right here on the website" booking copy, and run the two-browser call test (headless Chrome with fake camera, owner overlay + visitor page, both see and hear each other, chat, End call) before any visitor uses it. Cost at the published rate: about $0.002 per person per minute (~$0.12 for a 30-minute call). Open questions for that step: should the room close automatically some hours after the end (a cron job setting the meeting INACTIVE), and whether the owner wants recording ever (currently off everywhere).
+The owner wants the call back inside the website later. Nothing of it is in the code now. To bring it back:
+
+1. **Restore from Git.** Commit `9821e04` holds the working version: `src/backend2/modules/booking/booking.video.ts` (fake / unavailable / RealtimeKit adapters), the join/end parts of `video.service.ts`, the owner routes `POST /api/v2/owner/calendar/appointments/:id/video/join` and `/video/end`, the visitor route `POST /api/v2/public/booking/appointments/:reference/video/join`, `repo.setVideo`, the error codes `VIDEO_NOT_OPEN` / `VIDEO_CLOSED` / `PROVIDER_UNAVAILABLE`, `src/frontend/features/call/` (call screen, camera test, copy), `OwnerVideoCall.tsx`, the room page's waiting/seat/call phases, the Dashboard's Join video call / End call, the `@cloudflare/realtimekit` dependency, the `.env.example` block, and their tests (`backend2-booking-video-provider.test.ts`, `video-call.test.tsx`, `helpers/fake-realtimekit.ts`, the room cases). Commit `bb09d05` shows how the Meet path sits beside it. The database columns are still there, so no migration is needed.
+2. **Cloudflare.** The RealtimeKit app already exists (created 30 Sep 2026: `yamanwarda`, App ID `f64d468e-0632-44fc-8b52-755ea2183956`). It needs an API token with **Realtime Admin** on the owner's account; the owner pastes it himself into `wrangler secret put REALTIMEKIT_API_TOKEN` (the first attempt failed only because the copy did not catch the token). Then `REALTIMEKIT_APP_ID` and `BOOKING_VIDEO_MODE=live` in `wrangler.jsonc`, remove `BOOKING_MEET_LINK`, and restore the "right here on the website" booking copy.
+3. **Two-browser test before any visitor uses it:** headless Chrome with a fake camera, owner overlay plus visitor page — both see and hear each other, chat works, End call removes both.
+
+Cost at the published rate: about $0.002 per person per minute (~$0.12 for a 30-minute call). Open questions for that step: should the room close automatically some hours after the end (a cron job setting the meeting INACTIVE), and whether the owner wants recording ever (it was off everywhere).
 
 ### Before live use (not now)
 
-Apply `0010` to Neon; set `INBOX_SEND_MODE=live` with the Inbox checks; a Cloudflare Cron Trigger for the reminder command; RealtimeKit account, the `booking_host` / `booking_guest` presets with recording, transcription, export and chat persistence off, `BOOKING_VIDEO_MODE=live` and its three server-only settings; a real safe test booking and call; privacy copy review.
+Apply `0010` to Neon; set `INBOX_SEND_MODE=live` with the Inbox checks; a Cloudflare Cron Trigger for the reminder command; a real safe test booking; privacy copy review. (An in-site call would add the steps in the plan above.)
 
 ## Owner communication — mandatory
 
@@ -67,6 +72,8 @@ internal detail, and ask small batches of material questions while saying how
 many remain. The complete rule is in `AGENTS.md`.
 
 ## Agreed product direction
+
+> 1 Oct 2026: the in-site video room below (RealtimeKit) is no longer current — video appointments meet in the owner's fixed Google Meet room, and the in-site room is the future plan above. The rest of this planning record stands.
 
 - One owner manages the appointment calendar. Visitors can book from the public website without an account. The owner can create different free appointment types and configure each duration.
 - The visitor chooses an in-person meeting, a video meeting, or an ordinary phone call. Video is the default selection; the owner personally prefers an in-person meeting when practical. A phone appointment is a normal telephone call placed manually by the owner, not a paid telephony integration and not merely the website video room with the camera off.
@@ -101,6 +108,8 @@ many remain. The complete rule is in `AGENTS.md`.
 
 ## Video-room security and behavior
 
+Planning record for the future in-site room; not current since 1 Oct 2026.
+
 - One confirmed Video appointment maps to one private RealtimeKit meeting with exactly two roles: owner/host and visitor. Backend2 enforces both the appointment state/method/time and the two-person limit before issuing access.
 - Camera, microphone, screen share, and temporary in-call text chat are enabled. Recording, transcription, streaming export, and stored chat are disabled. Appointment data stays saved; call media/chat content does not.
 - The preflight page lets the visitor test their camera/microphone early, but they wait until the appointment start. At the start, Backend2 issues scoped visitor access and the visitor enters automatically. Owner entrance from Dashboard is independent; no owner admission is required.
@@ -111,7 +120,7 @@ many remain. The complete rule is in `AGENTS.md`.
 
 `/dashboard/calendar` is English-only initially. It offers a bounded date-range calendar and a paginated/searchable appointment list, with deterministic order and type/method/status/date filters. It covers loading, empty, error, not-found, unauthorized, and forbidden states.
 
-Appointment details show private contact fields, method, note, optional subject/budget, linked Inbox conversation, message/reminder delivery state, and history of scheduling/status changes. The owner can create, save, invite, reschedule, cancel, complete, mark no-show, and join/end video when relevant.
+Appointment details show private contact fields, method, note, optional subject/budget, linked Inbox conversation, message/reminder delivery state, and history of scheduling/status changes. The owner can create, save, invite, reschedule, cancel, complete, mark no-show, and open the Google Meet room for a video appointment.
 
 | Method | Route | Purpose |
 | --- | --- | --- |
@@ -121,23 +130,20 @@ Appointment details show private contact fields, method, note, optional subject/
 | GET | `/api/v2/public/booking/appointments/:reference` | Private visitor management projection |
 | POST | `/api/v2/public/booking/appointments/:reference/reschedule` | Visitor reschedule within policy |
 | POST | `/api/v2/public/booking/appointments/:reference/cancel` | Visitor cancellation with reason |
-| POST | `/api/v2/public/booking/appointments/:reference/video/preflight` | Private preflight state, no media token early |
-| POST | `/api/v2/public/booking/appointments/:reference/video/join` | Scheduled visitor video access |
+| POST | `/api/v2/public/booking/appointments/:reference/video/preflight` | Private call-page state and the Meet link |
 | GET | `/api/v2/owner/calendar/appointments` | Paginated/filterable list or bounded calendar range |
 | POST | `/api/v2/owner/calendar/appointments` | Manual Save only or Save & send creation |
 | GET/PATCH | `/api/v2/owner/calendar/appointments/:id` | Detail and owner edit/reschedule |
 | POST | `/api/v2/owner/calendar/appointments/:id/send-invitation` | Idempotent delayed invitation |
 | POST | `/api/v2/owner/calendar/appointments/:id/cancel` | Owner cancellation with reason |
 | POST | `/api/v2/owner/calendar/appointments/:id/status` | Completed or no-show |
-| POST | `/api/v2/owner/calendar/appointments/:id/video/join` | Owner video access |
-| POST | `/api/v2/owner/calendar/appointments/:id/video/end` | Owner ends video room |
 | GET/POST/PATCH/DELETE | `/api/v2/owner/calendar/types` | Paginated type management |
 | GET/PUT | `/api/v2/owner/calendar/settings` | Business settings |
 | GET/PUT | `/api/v2/owner/calendar/availability` | Weekly hours and exceptions |
 
 Exact shared contracts must use safe stable errors for invalid form/timezone,
 unavailable/overlapping slot, too-early/far request, cancellation deadline,
-invalid private credential, non-video request, provider unavailable, duplicate
+invalid private credential, non-video request, duplicate
 submit, message/reminder failure, missing resource, and owner forbidden access.
 
 ## Privacy, security, and reliability

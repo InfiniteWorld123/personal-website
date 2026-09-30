@@ -171,8 +171,9 @@ const reminderFor = (start: Date, settings: repo.SettingsRow, now: Date) => {
 }
 
 /**
- * A new time gets a new room. The old one may have been ended — and an ended
- * provider meeting cannot be joined again — so the next join makes a fresh one.
+ * A new time clears the old in-site room's columns. Nothing writes them since
+ * the in-site call was removed (1 Oct 2026), but an older appointment whose
+ * room was ended must not show "ended" again after it is moved.
  */
 const FRESH_ROOM = {
   video_meeting_id: null,

@@ -86,20 +86,11 @@ export type BookingV2Copy = {
   }
   status: Record<AppointmentStatus, string>
   room: {
-    early: string
     startsAt: string
     countdown: string
-    autoEnter: string
     checking: string
-    camOk: string
-    micOk: string
-    camBlocked: string
-    micBlocked: string
     invalid: string
     bookAgain: string
-    permTitle: string
-    permBody: string
-    entering: string
     unavailableTitle: string
     unavailableBody: string
     ended: string
@@ -203,21 +194,11 @@ const en: BookingV2Copy = {
   },
   status: { confirmed: 'Confirmed', completed: 'Held', cancelled: 'Cancelled', no_show: 'No show' },
   room: {
-    early: 'You are early',
     startsAt: 'Your call starts at',
     countdown: 'Starts in',
-    autoEnter: 'The call opens by itself at the start. You can test your camera and microphone meanwhile.',
     checking: 'Checking your camera and microphone…',
-    camOk: 'Camera works',
-    micOk: 'Microphone works',
-    camBlocked: 'Camera',
-    micBlocked: 'Microphone',
     invalid: 'This link is not valid.',
     bookAgain: 'Book a new time',
-    permTitle: 'Your camera or microphone is blocked',
-    permBody:
-      'Allow access in your browser settings and reload. If it still does not work, reply to your confirmation email or call me — we will find another way.',
-    entering: 'Entering the call…',
     unavailableTitle: 'The video call cannot open on this website yet',
     unavailableBody:
       'The video service for these calls is not switched on yet. Your appointment is still on — reply to your confirmation email or get in touch below, and we will hold it another way.',
@@ -321,21 +302,11 @@ const de: BookingV2Copy = {
   },
   status: { confirmed: 'Bestätigt', completed: 'Stattgefunden', cancelled: 'Abgesagt', no_show: 'Nicht erschienen' },
   room: {
-    early: 'Du bist früh dran',
     startsAt: 'Dein Gespräch beginnt um',
     countdown: 'Beginnt in',
-    autoEnter: 'Zum Start öffnet sich das Gespräch von selbst. Bis dahin kannst du Kamera und Mikrofon testen.',
     checking: 'Kamera und Mikrofon werden geprüft…',
-    camOk: 'Kamera funktioniert',
-    micOk: 'Mikrofon funktioniert',
-    camBlocked: 'Kamera',
-    micBlocked: 'Mikrofon',
     invalid: 'Dieser Link ist nicht gültig.',
     bookAgain: 'Neuen Termin buchen',
-    permTitle: 'Kamera oder Mikrofon sind blockiert',
-    permBody:
-      'Erlaube den Zugriff in den Browser-Einstellungen und lade neu. Wenn es dann nicht klappt, antworte auf deine Bestätigung oder ruf mich an — wir finden einen anderen Weg.',
-    entering: 'Gespräch wird geöffnet…',
     unavailableTitle: 'Der Videocall kann auf dieser Website noch nicht starten',
     unavailableBody:
       'Der Videodienst für diese Gespräche ist noch nicht eingeschaltet. Dein Termin bleibt bestehen — antworte auf deine Bestätigung oder melde dich unten, dann führen wir ihn auf anderem Weg.',
@@ -443,21 +414,11 @@ const ar: BookingV2Copy = {
   },
   status: { confirmed: 'مؤكّد', completed: 'تم', cancelled: 'ملغى', no_show: 'لم يحضر' },
   room: {
-    early: 'وصلت مبكراً',
     startsAt: 'تبدأ مكالمتك الساعة',
     countdown: 'تبدأ بعد',
-    autoEnter: 'تُفتح المكالمة تلقائياً عند بدايتها. يمكنك تجربة الكاميرا والميكروفون حتى ذلك الحين.',
     checking: 'جارٍ فحص الكاميرا والميكروفون…',
-    camOk: 'الكاميرا تعمل',
-    micOk: 'الميكروفون يعمل',
-    camBlocked: 'الكاميرا',
-    micBlocked: 'الميكروفون',
     invalid: 'هذا الرابط غير صالح.',
     bookAgain: 'احجز وقتاً جديداً',
-    permTitle: 'الكاميرا أو الميكروفون محظوران',
-    permBody:
-      'اسمح بالوصول من إعدادات المتصفح ثم أعد تحميل الصفحة. وإن لم ينجح ذلك، رُدّ على رسالة التأكيد أو اتصل بي — سنجد طريقة أخرى.',
-    entering: 'جارٍ فتح المكالمة…',
     unavailableTitle: 'لا يمكن فتح مكالمة الفيديو على هذا الموقع بعد',
     unavailableBody:
       'خدمة الفيديو لهذه المكالمات لم تُفعَّل بعد. موعدك ما زال قائماً — رُدّ على رسالة التأكيد أو تواصل معي أدناه، وسنجريه بطريقة أخرى.',

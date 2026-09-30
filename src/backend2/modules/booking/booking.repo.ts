@@ -539,25 +539,6 @@ export const releaseReminder = async (id: string, state: 'skipped' | 'cancelled'
   )
 }
 
-const VIDEO_COLUMNS = ['video_meeting_id', 'video_host_participant', 'video_guest_participant', 'video_ended_at'] as const
-
-export type VideoColumns = Partial<Pick<AppointmentRow, (typeof VIDEO_COLUMNS)[number]>>
-
-/**
- * Writes the room's own columns without counting as an edit: a visitor
- * joining the call must not turn the owner's next save into a conflict.
- */
-export const setVideo = async (id: string, fields: VideoColumns): Promise<void> => {
-  const entries = VIDEO_COLUMNS.filter((column) => fields[column] !== undefined).map((column) => [column, fields[column]] as const)
-
-  if (entries.length === 0) return
-
-  await getDb().query(
-    `UPDATE v2_booking_appointments SET ${entries.map(([column], index) => `${column} = $${index + 2}`).join(', ')} WHERE id = $1`,
-    [id, ...entries.map(([, value]) => value)],
-  )
-}
-
 /** Public bookings made for one address since a moment, whatever became of them. */
 export const countPublicBookingsSince = async (email: string, since: Date): Promise<number> => {
   const { rows } = await getDb().query<{ total: string }>(

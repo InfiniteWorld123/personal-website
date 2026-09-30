@@ -90,7 +90,8 @@
 
     // Video appointments meet in the owner's fixed Google Meet room (chosen
     // 30 Sep 2026): the emails, the visitor's call page and the Dashboard
-    // point there. RealtimeKit (BOOKING_VIDEO_MODE) stays off for now.
+    // point there. The in-site call was removed on 1 Oct 2026; its return is a
+    // plan in docs/v2/booking.md ("Future: our own video system").
     "BOOKING_MEET_LINK": "https://meet.google.com/pfj-yvde-wyu",
 
     // Cookieless Cloudflare Web Analytics. The beacon token is public (it is

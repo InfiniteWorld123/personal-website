@@ -37,7 +37,6 @@ import {
   putAvailability,
   putSettings,
 } from './booking.config.service'
-import { ownerEnd, ownerJoin } from './video.service'
 
 /**
  * The owner's calendar, over HTTP. Thin, behind `ownerGuard`, `no-store`.
@@ -92,14 +91,6 @@ export const ownerCalendarRoutes = new Elysia({ prefix: '/calendar' })
     return ownerJson({ data: await setOutcome(parseInput(Id, params.id), status), message: 'Status saved' })
   })
 
-  .post('/appointments/:id/video/join', async ({ params }) =>
-    ownerJson({ data: await ownerJoin(parseInput(Id, params.id)), message: 'Joined' }),
-  )
-
-  .post('/appointments/:id/video/end', async ({ params }) =>
-    ownerJson({ data: await ownerEnd(parseInput(Id, params.id)), message: 'Call ended' }),
-  )
-
   .get('/types', async ({ query }) =>
     ownerJson({ data: await listTypes(parseInput(TypeListQuerySchema, query)), message: 'Types loaded' }),
   )
@@ -153,8 +144,6 @@ export const ownerCalendarPaths = [
   { method: 'POST', path: `/api/v2/owner/calendar/appointments/${SAMPLE}/send-invitation` },
   { method: 'POST', path: `/api/v2/owner/calendar/appointments/${SAMPLE}/cancel` },
   { method: 'POST', path: `/api/v2/owner/calendar/appointments/${SAMPLE}/status` },
-  { method: 'POST', path: `/api/v2/owner/calendar/appointments/${SAMPLE}/video/join` },
-  { method: 'POST', path: `/api/v2/owner/calendar/appointments/${SAMPLE}/video/end` },
   { method: 'GET', path: '/api/v2/owner/calendar/types' },
   { method: 'POST', path: '/api/v2/owner/calendar/types' },
   { method: 'GET', path: `/api/v2/owner/calendar/types/${SAMPLE}` },

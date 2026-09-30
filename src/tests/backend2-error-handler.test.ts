@@ -1,16 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
-import { internalError, providerUnavailable, stripeUnavailable } from '#/backend2/http/error'
+import { internalError, stripeUnavailable } from '#/backend2/http/error'
 import { normalizeError } from '#/backend2/http/error-handler'
 
 describe('normalizeError', () => {
   it('shows a 503 its written sentence, never its details', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const video = normalizeError(providerUnavailable())
     const stripe = normalizeError(stripeUnavailable('Stripe could not be reached.', { stripeMessage: 'secret words' }))
 
-    expect(video.status).toBe(503)
-    expect(video.body).toMatchObject({ message: 'The video service is not available right now.', code: 'PROVIDER_UNAVAILABLE' })
+    expect(stripe.status).toBe(503)
     expect(stripe.body).toMatchObject({ message: 'Stripe could not be reached.', code: 'STRIPE_UNAVAILABLE' })
     expect(JSON.stringify(stripe.body)).not.toContain('secret words')
   })

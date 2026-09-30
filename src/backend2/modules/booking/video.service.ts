@@ -1,27 +1,20 @@
-import {
-  OWNER_EARLY_JOIN_MINUTES,
-  VIDEO_JOIN_GRACE_MINUTES,
-  type VideoAccess,
-  type VideoPreflight,
-} from '../../contracts/booking.contract'
-import { withTransaction } from '../../db/client'
-import { conflict, notFound, notVideo, providerUnavailable, videoClosed, videoNotOpen } from '../../http/error'
+import { VIDEO_JOIN_GRACE_MINUTES, type VideoPreflight } from '../../contracts/booking.contract'
+import { notVideo } from '../../http/error'
 import { authoriseVisitor } from './appointment.service'
-import * as repo from './booking.repo'
+import type * as repo from './booking.repo'
 import { addMinutes } from './booking.time'
-import { VideoUnavailableError, fixedMeetingLink, resolveVideoProvider } from './booking.video'
+import { fixedMeetingLink } from './booking.video'
 
 /**
- * Who may enter the room, and when. Backend2 decides; the provider only
- * carries the media.
+ * The visitor's call page. Video appointments meet in the owner's fixed
+ * Google Meet room (`BOOKING_MEET_LINK`); this only tells the page where the
+ * appointment stands and where the room is. The in-site video call
+ * was removed on 1 Oct 2026 — see "Future: our own video system" in
+ * `docs/v2/booking.md`.
  *
- *  - One confirmed Video appointment, one meeting, two identities: the owner
- *    and the visitor. A second visitor tab gets the same visitor identity back,
- *    never a third seat.
- *  - The visitor may open their link any time to test camera and microphone,
- *    but receives a media token only from the scheduled start.
- *  - Nobody new may join after the scheduled end plus one hour, or after the
- *    owner ended the room. A call already running is never cut off.
+ *  - `early` before the start, `open` from the start until one hour after
+ *    the end, `closed` after that or once it is no longer confirmed.
+ *  - `ended` for older appointments whose in-site room the owner closed.
  */
 
 const timing = (row: repo.AppointmentRow) => {
@@ -42,19 +35,7 @@ const stateOf = (row: repo.AppointmentRow, now: Date): VideoPreflight['state'] =
   return 'open'
 }
 
-const asAccess = (row: repo.AppointmentRow, token: string, role: 'host' | 'guest'): VideoAccess => {
-  const { startsAt, endsAt, joinClosesAt } = timing(row)
-
-  return {
-    token,
-    role,
-    startsAt: startsAt.toISOString(),
-    endsAt: endsAt.toISOString(),
-    joinClosesAt: joinClosesAt.toISOString(),
-  }
-}
-
-/** The waiting screen's facts. No token, ever. */
+/** The call page's facts. */
 export const visitorPreflight = async (
   input: { reference: string; token: string },
   now: Date = new Date(),
@@ -73,87 +54,4 @@ export const visitorPreflight = async (
     serverTime: now.toISOString(),
     meetLink: fixedMeetingLink(),
   }
-}
-
-/**
- * Issues one participant's token, creating the meeting and the participant
- * the first time. Runs under the appointment's row lock, so two tabs pressing
- * Join together cannot create two meetings or a third seat.
- */
-const issue = async (id: string, role: 'host' | 'guest', name: string): Promise<VideoAccess> =>
-  withTransaction(async () => {
-    const row = (await repo.lockAppointment(id))!
-    const provider = resolveVideoProvider()
-
-    try {
-      let meetingId = row.video_meeting_id
-
-      if (!meetingId) {
-        meetingId = (await provider.createMeeting({ title: `${row.type_name} · ${row.reference}` })).meetingId
-        await repo.setVideo(row.id, { video_meeting_id: meetingId })
-      }
-
-      const column = role === 'host' ? 'video_host_participant' : 'video_guest_participant'
-      const existing = role === 'host' ? row.video_host_participant : row.video_guest_participant
-      const issued = await provider.participantToken({ meetingId, participantId: existing, role, name })
-
-      if (!existing) await repo.setVideo(row.id, { [column]: issued.participantId })
-
-      return asAccess(row, issued.token, role)
-    } catch (error) {
-      if (error instanceof VideoUnavailableError) throw providerUnavailable()
-
-      throw error
-    }
-  })
-
-export const visitorJoin = async (input: { reference: string; token: string }, now: Date = new Date()): Promise<VideoAccess> => {
-  const row = await authoriseVisitor(input.reference, input.token)
-
-  if (row.method !== 'video') throw notVideo()
-
-  const state = stateOf(row, now)
-
-  if (state === 'early') throw videoNotOpen(undefined, { startsAt: new Date(row.starts_at).toISOString() })
-  if (state !== 'open') throw videoClosed()
-
-  return issue(row.id, 'guest', row.visitor_name)
-}
-
-export const ownerJoin = async (id: string, now: Date = new Date()): Promise<VideoAccess> => {
-  const row = await repo.findAppointment(id)
-
-  if (!row) throw notFound('That appointment does not exist')
-  if (row.method !== 'video') throw notVideo()
-
-  const { startsAt, joinClosesAt } = timing(row)
-
-  if (row.status !== 'confirmed' || row.video_ended_at || now > joinClosesAt) throw videoClosed()
-  if (now < addMinutes(startsAt, -OWNER_EARLY_JOIN_MINUTES)) {
-    throw videoNotOpen(`The room opens ${OWNER_EARLY_JOIN_MINUTES} minutes before the start.`, {
-      startsAt: startsAt.toISOString(),
-    })
-  }
-
-  return issue(row.id, 'host', 'Yaman Warda')
-}
-
-/** The owner closes the room. Nobody can join it again. */
-export const ownerEnd = async (id: string, now: Date = new Date()): Promise<{ endedAt: string }> => {
-  const meetingId = await withTransaction(async () => {
-    const row = await repo.lockAppointment(id)
-
-    if (!row) throw notFound('That appointment does not exist')
-    if (row.method !== 'video') throw notVideo()
-    if (row.video_ended_at) throw conflict('This call has already ended.')
-
-    await repo.updateAppointment(row.id, { video_ended_at: now })
-    await repo.addHistory({ appointmentId: row.id, actor: 'owner', kind: 'video_ended', details: {} })
-
-    return row.video_meeting_id
-  })
-
-  if (meetingId) await resolveVideoProvider().endMeeting(meetingId).catch(() => {})
-
-  return { endedAt: now.toISOString() }
 }

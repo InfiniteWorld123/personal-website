@@ -23,7 +23,7 @@ import {
 } from './appointment.service'
 import { publicTypes } from './booking.config.service'
 import { limitCreate, limitManage, limitSlots, verifyHuman } from './booking.guard'
-import { visitorJoin, visitorPreflight } from './video.service'
+import { visitorPreflight } from './video.service'
 
 /**
  * The visitor's booking API. No account; the private manage credential is
@@ -119,8 +119,3 @@ export const publicBookingRoutes = new Elysia({ prefix: '/public/booking' })
     return ownerJson({ data: await visitorPreflight(credentials(params, request)), message: 'Preflight' })
   })
 
-  .post('/appointments/:reference/video/join', async ({ params, request }) => {
-    await limitManage(requestIdentity(request))
-
-    return ownerJson({ data: await visitorJoin(credentials(params, request)), message: 'Joined' })
-  })

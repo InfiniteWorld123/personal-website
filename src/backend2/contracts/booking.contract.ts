@@ -91,10 +91,8 @@ export const SETTINGS_BOUNDS = {
   reminderMinutes: { min: 60, max: 20_160 },
 } as const
 
-/** Fresh joins stop this long after the scheduled end, even mid-call. */
+/** The call page counts a video appointment as over this long after its scheduled end. */
 export const VIDEO_JOIN_GRACE_MINUTES = 60
-/** How early the owner may open the room. The visitor waits for the start. */
-export const OWNER_EARLY_JOIN_MINUTES = 15
 
 /* ------------------------------------------------------------------ shapes */
 
@@ -218,22 +216,13 @@ export type VisitorAppointment = {
   changeDeadline: string
 }
 
-export type VideoAccess = {
-  token: string
-  role: 'host' | 'guest'
-  startsAt: string
-  endsAt: string
-  /** After this, nobody new may join; a call already running continues. */
-  joinClosesAt: string
-}
-
 export type VideoPreflight = {
   state: 'early' | 'open' | 'closed' | 'ended' | 'cancelled'
   startsAt: string
   endsAt: string
   joinClosesAt: string
   serverTime: string
-  /** The fixed Google Meet room, when video runs there instead of on this site. */
+  /** The owner's fixed Google Meet room, when one is set. */
   meetLink: string | null
 }
 

@@ -29,8 +29,6 @@ const bookingApi = {
   patchAppointment: vi.fn(),
   sendInvitation: vi.fn(),
   setOutcome: vi.fn(),
-  joinVideo: vi.fn(),
-  endVideo: vi.fn(),
   listAppointments: vi.fn(),
   listTypes: vi.fn(),
   createAppointment: vi.fn(),
@@ -44,7 +42,6 @@ const bookingApi = {
 }
 
 vi.mock('#/frontend/features/booking-v2/api', () => bookingApi)
-vi.mock('@cloudflare/realtimekit', async () => (await import('./helpers/fake-realtimekit')).fakeRealtimeKitModule())
 
 const { AppointmentDetailPanel } = await import('#/frontend/pages/dashboard/calendar/AppointmentDetailPanel')
 const { ManualAppointmentDrawer } = await import('#/frontend/pages/dashboard/calendar/ManualAppointmentDrawer')
