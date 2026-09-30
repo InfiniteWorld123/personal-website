@@ -111,6 +111,7 @@ const appointment = (over: Partial<AppointmentDetail> = {}): AppointmentDetail =
   reminderDueAt: '2099-10-05T08:00:00Z',
   reminderSentAt: null,
   videoEndedAt: null,
+  meetLink: null,
   revision: 1,
   history: [{ at: '2026-09-23T10:00:00Z', actor: 'visitor', kind: 'created', details: {} }],
   ...over,

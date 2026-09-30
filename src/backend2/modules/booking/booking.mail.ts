@@ -1,5 +1,6 @@
 import type { BookingLanguage, BookingMethod } from '../../contracts/booking.contract'
 import { formatForEmail } from './booking.time'
+import { fixedMeetingLink } from './booking.video'
 
 /**
  * The visitor's emails, in the language they booked in — or, for a manual
@@ -52,6 +53,7 @@ const COPY = {
     ref: 'Referenz',
     methods: { video: 'Videocall', in_person: 'Persönliches Treffen', phone: 'Telefonat' },
     video: (url: string) => `Zum Videocall: ${url}\nDu kannst den Link vorher öffnen, um Kamera und Mikrofon zu testen.`,
+    meet: (url: string) => `Zum Videocall auf Google Meet: ${url}\nÖffne den Link zur Terminzeit — ich lasse dich dann herein.`,
     inPerson: 'Den Treffpunkt stimmen wir per E-Mail ab — antworte einfach auf diese Nachricht.',
     phone: (phone: string | null) => `Ich rufe dich unter ${phone ?? 'deiner Nummer'} an.`,
     manage: (url: string) => `Termin ändern oder absagen (bis 12 Stunden vorher): ${url}`,
@@ -83,6 +85,7 @@ const COPY = {
     ref: 'Reference',
     methods: { video: 'Video call', in_person: 'In person', phone: 'Phone call' },
     video: (url: string) => `Join the video call: ${url}\nYou can open the link early to test your camera and microphone.`,
+    meet: (url: string) => `Join the video call on Google Meet: ${url}\nOpen the link at the appointment time — I will let you in.`,
     inPerson: 'We agree on the place by email — just reply to this message.',
     phone: (phone: string | null) => `I will call you on ${phone ?? 'your number'}.`,
     manage: (url: string) => `Change or cancel (until 12 hours before): ${url}`,
@@ -114,6 +117,7 @@ const COPY = {
     ref: 'الرقم المرجعي',
     methods: { video: 'مكالمة فيديو', in_person: 'لقاء شخصي', phone: 'مكالمة هاتفية' },
     video: (url: string) => `للانضمام إلى مكالمة الفيديو: ${url}\nيمكنك فتح الرابط مبكرًا لتجربة الكاميرا والميكروفون.`,
+    meet: (url: string) => `للانضمام إلى مكالمة الفيديو على Google Meet: ${url}\nافتح الرابط في وقت الموعد، وسأُدخلك إلى المكالمة.`,
     inPerson: 'نتفق على مكان اللقاء عبر البريد الإلكتروني — فقط رُدّ على هذه الرسالة.',
     phone: (phone: string | null) => `سأتصل بك على الرقم ${phone ?? 'الذي أدخلته'}.`,
     manage: (url: string) => `لتغيير الموعد أو إلغائه (حتى 12 ساعة قبله): ${url}`,
@@ -167,14 +171,24 @@ export const privateLinksFor = async (appointmentId: string): Promise<{ manageUr
 
 /* ------------------------------------------------------------- the email */
 
-export const bookingMail = (input: MailInput & { changeLimitHours?: number }): { subject: string; text: string } => {
+export const bookingMail = (
+  input: MailInput & { changeLimitHours?: number },
+  // The fixed Google Meet room, when video meets there instead of on this site.
+  meetLink: string | null = fixedMeetingLink(),
+): { subject: string; text: string } => {
   const copy = COPY[input.language]
   const when = formatForEmail(input.startsAt, input.timeZone, input.language)
   const cancelled = input.kind === 'cancelled'
   const manage = copy.manage(input.manageUrl).replace('12', String(input.changeLimitHours ?? 12))
 
   const how =
-    input.method === 'video' ? copy.video(input.roomUrl) : input.method === 'in_person' ? copy.inPerson : copy.phone(input.phone)
+    input.method === 'video'
+      ? meetLink
+        ? copy.meet(meetLink)
+        : copy.video(input.roomUrl)
+      : input.method === 'in_person'
+        ? copy.inPerson
+        : copy.phone(input.phone)
 
   const lines = [
     `${copy.hello(input.visitorName)}`,

@@ -113,6 +113,10 @@ export type BookingV2Copy = {
     callMe: string
     failed: string
     retry: string
+    /** The call runs in the owner's fixed Google Meet room. */
+    meetTitle: string
+    meetBody: string
+    meetOpen: string
   }
 }
 
@@ -120,7 +124,7 @@ const en: BookingV2Copy = {
   how: 'How would you like to meet?',
   methods: { video: 'Video call', in_person: 'In person', phone: 'Phone call' },
   methodNotes: {
-    video: 'Right here on the website, nothing to install.',
+    video: 'On Google Meet — your link comes with the confirmation.',
     in_person: 'We agree on the place by email.',
     phone: 'I call you on the number you give.',
   },
@@ -193,7 +197,7 @@ const en: BookingV2Copy = {
     confirmMove: 'Confirm new time',
     typeGone: 'This kind of appointment is not offered online at the moment. Reply to your confirmation email and we will find a new time.',
     videoTitle: 'Your video call',
-    videoBody: 'Open the call page from here. You can open it early to test your camera and microphone.',
+    videoBody: 'Your Google Meet link is in your confirmation email and on the call page.',
     openRoom: 'Open the call page',
     failed: 'That did not work. Please try again.',
   },
@@ -228,6 +232,9 @@ const en: BookingV2Copy = {
     callMe: 'Call',
     failed: 'The call page could not be loaded right now.',
     retry: 'Try again',
+    meetTitle: 'Your video call on Google Meet',
+    meetBody: 'Open Google Meet at the appointment time — I will let you in. On a phone, Meet may ask you to open its app.',
+    meetOpen: 'Open Google Meet',
   },
 }
 
@@ -235,7 +242,7 @@ const de: BookingV2Copy = {
   how: 'Wie möchtest du dich treffen?',
   methods: { video: 'Videocall', in_person: 'Persönlich', phone: 'Telefonat' },
   methodNotes: {
-    video: 'Direkt hier auf der Website, nichts zu installieren.',
+    video: 'Über Google Meet — den Link bekommst du mit der Bestätigung.',
     in_person: 'Den Ort stimmen wir per E-Mail ab.',
     phone: 'Ich rufe dich unter deiner Nummer an.',
   },
@@ -308,7 +315,7 @@ const de: BookingV2Copy = {
     confirmMove: 'Neue Zeit bestätigen',
     typeGone: 'Diese Art Termin wird gerade nicht online angeboten. Antworte auf deine Bestätigung, dann finden wir eine neue Zeit.',
     videoTitle: 'Dein Videocall',
-    videoBody: 'Öffne die Gesprächsseite von hier. Du kannst sie vorher öffnen, um Kamera und Mikrofon zu testen.',
+    videoBody: 'Dein Google-Meet-Link steht in deiner Bestätigung und auf der Gesprächsseite.',
     openRoom: 'Gesprächsseite öffnen',
     failed: 'Das hat nicht geklappt. Bitte versuch es noch einmal.',
   },
@@ -343,6 +350,9 @@ const de: BookingV2Copy = {
     callMe: 'Anrufen',
     failed: 'Die Gesprächsseite konnte gerade nicht geladen werden.',
     retry: 'Nochmal versuchen',
+    meetTitle: 'Dein Videocall auf Google Meet',
+    meetBody: 'Öffne Google Meet zur Terminzeit — ich lasse dich dann herein. Am Handy fragt Meet eventuell nach seiner App.',
+    meetOpen: 'Google Meet öffnen',
   },
 }
 
@@ -354,7 +364,7 @@ const ar: BookingV2Copy = {
   how: 'كيف تفضّل أن نلتقي؟',
   methods: { video: 'مكالمة فيديو', in_person: 'لقاء شخصي', phone: 'مكالمة هاتفية' },
   methodNotes: {
-    video: 'هنا على الموقع مباشرة، دون تثبيت أي شيء.',
+    video: 'عبر Google Meet — يصلك الرابط مع رسالة التأكيد.',
     in_person: 'نتفق على المكان عبر البريد الإلكتروني.',
     phone: 'أتصل بك على الرقم الذي تكتبه.',
   },
@@ -427,7 +437,7 @@ const ar: BookingV2Copy = {
     confirmMove: 'تأكيد الوقت الجديد',
     typeGone: 'هذا النوع من المواعيد غير متاح عبر الإنترنت حالياً. رُدّ على رسالة التأكيد وسنجد وقتاً جديداً.',
     videoTitle: 'مكالمة الفيديو',
-    videoBody: 'افتح صفحة المكالمة من هنا. يمكنك فتحها مبكراً لتجربة الكاميرا والميكروفون.',
+    videoBody: 'رابط Google Meet موجود في رسالة التأكيد وفي صفحة المكالمة.',
     openRoom: 'افتح صفحة المكالمة',
     failed: 'لم ينجح ذلك. حاول مرة أخرى من فضلك.',
   },
@@ -462,6 +472,9 @@ const ar: BookingV2Copy = {
     callMe: 'اتصل',
     failed: 'تعذّر تحميل صفحة المكالمة الآن.',
     retry: 'حاول مرة أخرى',
+    meetTitle: 'مكالمة الفيديو على Google Meet',
+    meetBody: 'افتح Google Meet في وقت الموعد، وسأُدخلك إلى المكالمة. على الهاتف قد يطلب منك Meet فتح تطبيقه.',
+    meetOpen: 'افتح Google Meet',
   },
 }
 

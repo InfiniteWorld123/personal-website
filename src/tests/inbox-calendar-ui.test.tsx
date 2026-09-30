@@ -250,6 +250,7 @@ const appointment = (over: Partial<AppointmentDetail> = {}): AppointmentDetail =
   reminderDueAt: '2099-10-05T08:00:00Z',
   reminderSentAt: null,
   videoEndedAt: null,
+  meetLink: null,
   revision: 1,
   history: [{ at: '2026-09-23T10:00:00Z', actor: 'visitor', kind: 'created', details: {} }],
   ...over,
@@ -306,6 +307,19 @@ describe('an appointment', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Leave' }))
     await waitFor(() => expect(screen.queryByRole('dialog', { name: /Video call with/u })).toBeNull())
     expect(calls.lastFakeCall().left).toBe(true)
+  })
+
+  it('opens the fixed Google Meet room directly, with no End call', async () => {
+    bookingApi.readAppointment.mockResolvedValue(appointment({ meetLink: 'https://meet.google.com/pfj-yvde-wyu', startsAt: '2020-01-01T08:00:00Z' }))
+
+    wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
+
+    const meet = await screen.findByRole('link', { name: /Join on Google Meet/u })
+
+    expect(meet.getAttribute('href')).toBe('https://meet.google.com/pfj-yvde-wyu')
+    expect(screen.queryByRole('button', { name: /Join video call/u })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'End call' })).toBeNull()
+    expect(bookingApi.joinVideo).not.toHaveBeenCalled()
   })
 
   it('says why the call cannot open instead of opening an empty room', async () => {

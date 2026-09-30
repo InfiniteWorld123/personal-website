@@ -9,7 +9,7 @@ import { conflict, notFound, notVideo, providerUnavailable, videoClosed, videoNo
 import { authoriseVisitor } from './appointment.service'
 import * as repo from './booking.repo'
 import { addMinutes } from './booking.time'
-import { VideoUnavailableError, resolveVideoProvider } from './booking.video'
+import { VideoUnavailableError, fixedMeetingLink, resolveVideoProvider } from './booking.video'
 
 /**
  * Who may enter the room, and when. Backend2 decides; the provider only
@@ -71,6 +71,7 @@ export const visitorPreflight = async (
     endsAt: endsAt.toISOString(),
     joinClosesAt: joinClosesAt.toISOString(),
     serverTime: now.toISOString(),
+    meetLink: fixedMeetingLink(),
   }
 }
 

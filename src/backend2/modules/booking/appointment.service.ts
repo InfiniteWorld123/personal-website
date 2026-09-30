@@ -34,6 +34,7 @@ import { bookingMail, type MailKind } from './booking.mail'
 import * as repo from './booking.repo'
 import { type HourRange, berlinDatesCovering, computeCandidates, isWithinHours } from './booking.slots'
 import { addDays, addMinutes, localParts, zonedToInstant, formatForEmail } from './booking.time'
+import { fixedMeetingLink } from './booking.video'
 
 /**
  * Appointments: booking, changing, cancelling, and the emails that go with
@@ -404,6 +405,7 @@ const toDetail = async (row: repo.AppointmentRow): Promise<AppointmentDetail> =>
   reminderDueAt: iso(row.reminder_due_at),
   reminderSentAt: iso(row.reminder_sent_at),
   videoEndedAt: iso(row.video_ended_at),
+  meetLink: row.method === 'video' ? fixedMeetingLink() : null,
   revision: row.revision,
   history: (await repo.listHistory(row.id)).map((entry) => ({
     at: new Date(entry.at).toISOString(),

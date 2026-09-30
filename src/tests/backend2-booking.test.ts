@@ -1015,6 +1015,23 @@ describe('the video room', () => {
     return { reference, token: tokenOf(result.body.data.manageUrl), id, startsAt: new Date(result.body.data.appointment.startsAt) }
   }
 
+  it('points the email, the call page and the Dashboard at the fixed Google Meet room when one is set', async () => {
+    process.env.BOOKING_MEET_LINK = 'https://meet.google.com/pfj-yvde-wyu'
+
+    try {
+      const { reference, token, id } = await booked()
+      const pre = await call('POST', `/public/booking/appointments/${reference}/video/preflight`, {}, { headers: { 'x-booking-token': token } })
+      const detail = await call('GET', `/owner/calendar/appointments/${id}`)
+
+      expect(pre.body.data.meetLink).toBe('https://meet.google.com/pfj-yvde-wyu')
+      expect(detail.body.data.meetLink).toBe('https://meet.google.com/pfj-yvde-wyu')
+      expect(sent.at(-1)!.text).toContain('https://meet.google.com/pfj-yvde-wyu')
+      expect(sent.at(-1)!.text).not.toContain('/booking/room/')
+    } finally {
+      delete process.env.BOOKING_MEET_LINK
+    }
+  })
+
   it('lets the visitor test early, but gives no token before the start', async () => {
     const { reference, token } = await booked()
     const pre = await call('POST', `/public/booking/appointments/${reference}/video/preflight`, {}, { headers: { 'x-booking-token': token } })

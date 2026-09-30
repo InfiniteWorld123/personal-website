@@ -487,6 +487,7 @@ describe('the video room', () => {
       endsAt: '2026-10-05T08:42:40.000Z',
       joinClosesAt: '2026-10-05T09:42:40.000Z',
       serverTime: NOW.toISOString(),
+      meetLink: null,
     })
     wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
 
@@ -505,6 +506,7 @@ describe('the video room', () => {
       endsAt: '2026-10-05T08:42:40.000Z',
       joinClosesAt: '2026-10-05T09:42:40.000Z',
       serverTime: NOW.toISOString(),
+      meetLink: null,
     })
     wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
 
@@ -520,6 +522,7 @@ describe('the video room', () => {
       endsAt: '2026-10-05T08:30:00.000Z',
       joinClosesAt: '2026-10-05T09:30:00.000Z',
       serverTime: NOW.toISOString(),
+      meetLink: null,
     })
     vi.mocked(api.videoJoin).mockRejectedValue(refused('PROVIDER_UNAVAILABLE', 503))
     wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
@@ -535,6 +538,7 @@ describe('the video room', () => {
     endsAt: '2026-10-05T08:30:00.000Z',
     joinClosesAt: '2026-10-05T09:30:00.000Z',
     serverTime: NOW.toISOString(),
+      meetLink: null,
   }
   const seat = { token: 'seat-1', role: 'guest' as const, startsAt: NOW.toISOString(), endsAt: '2026-10-05T08:30:00.000Z', joinClosesAt: '' }
 
@@ -591,8 +595,20 @@ describe('the video room', () => {
     expect(screen.getByText(/Write an email/)).toBeTruthy()
   })
 
+  it('sends the visitor to the fixed Google Meet room, without asking this site for a seat', async () => {
+    vi.mocked(api.videoPreflight).mockResolvedValue({ ...openRoom, meetLink: 'https://meet.google.com/pfj-yvde-wyu' })
+    wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
+
+    const open = await screen.findByRole('link', { name: /Open Google Meet/u })
+
+    expect(open.getAttribute('href')).toBe('https://meet.google.com/pfj-yvde-wyu')
+    expect(open.getAttribute('target')).toBe('_blank')
+    expect(screen.getByText('Your video call on Google Meet')).toBeTruthy()
+    expect(api.videoJoin).not.toHaveBeenCalled()
+  })
+
   it('says when the call has ended, and when the link is wrong', async () => {
-    vi.mocked(api.videoPreflight).mockResolvedValueOnce({ state: 'ended', startsAt: '', endsAt: '', joinClosesAt: '', serverTime: '' })
+    vi.mocked(api.videoPreflight).mockResolvedValueOnce({ state: 'ended', startsAt: '', endsAt: '', joinClosesAt: '', serverTime: '', meetLink: null })
     wrap(<BookingRoomPageV2 reference="YW-7K3QM9PX" token="secret" />)
     await screen.findByText('The call has ended')
     cleanup()

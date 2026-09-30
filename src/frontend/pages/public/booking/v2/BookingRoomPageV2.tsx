@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Check, Mail, Phone, X } from 'lucide-react'
+import { Check, Mail, Phone, Video, X } from 'lucide-react'
 import type { VideoAccess, VideoPreflight } from '#/backend2/contracts/booking.contract'
 import { Container } from '#/frontend/components/layout/public/Container'
 import { Button } from '#/frontend/components/ui/button'
@@ -77,7 +77,8 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
         : (phase ?? (preflight.data ? phaseOf(preflight.data.state) : null))
 
   useEffect(() => {
-    if (current !== 'entering' || joining.current) return
+    // A fixed Google Meet room needs no seat from this site.
+    if (current !== 'entering' || joining.current || preflight.data?.meetLink) return
 
     joining.current = true
     videoJoin(reference, token)
@@ -101,7 +102,7 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
       .finally(() => {
         joining.current = false
       })
-  }, [current, reference, token, refetchPreflight])
+  }, [current, reference, token, refetchPreflight, preflight.data?.meetLink])
 
   const afterCall = (why: CallExit) => {
     setAccess(null)
@@ -141,6 +142,8 @@ export function BookingRoomPageV2({ reference, token }: { reference: string; tok
             ) : (
               <p className="m-0 text-sm">{callCopy[language].lobby.checking}</p>
             )
+          ) : (current === 'waiting' || current === 'entering') && preflight.data?.meetLink ? (
+            <MeetRoom preflight={preflight.data} link={preflight.data.meetLink} copy={copy} />
           ) : current === 'waiting' && preflight.data ? (
             <WaitingRoom preflight={preflight.data} copy={copy} onStart={() => setPhase('entering')} />
           ) : current === 'entering' ? (
@@ -324,6 +327,46 @@ function WaitingRoom({ preflight, copy, onStart }: { preflight: VideoPreflight; 
       )}
 
       <p className="m-0 max-w-[52ch] text-sm leading-7">{copy.room.autoEnter}</p>
+    </>
+  )
+}
+
+/**
+ * The call runs in the owner's fixed Google Meet room: the time, a countdown
+ * on the day, and the way in. Meet asks the owner to admit the visitor.
+ */
+function MeetRoom({ preflight, link, copy }: { preflight: VideoPreflight; link: string; copy: BookingV2Copy }) {
+  const { language } = useLanguage()
+  const [timezone] = useState(detectTimezone)
+  const [offset] = useState(() => Date.parse(preflight.serverTime) - Date.now())
+  const [remaining, setRemaining] = useState(() => Date.parse(preflight.startsAt) - (Date.now() + offset))
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setRemaining(Date.parse(preflight.startsAt) - (Date.now() + offset)), 1000)
+
+    return () => window.clearInterval(timer)
+  }, [preflight.startsAt, offset])
+
+  return (
+    <>
+      <h1 className="font-heading m-0 text-2xl font-semibold text-[#edf3ff] sm:text-3xl">{copy.room.meetTitle}</h1>
+      <p className="m-0 text-sm">
+        {copy.room.startsAt}{' '}
+        <b className="text-[#edf3ff]">{formatTime(preflight.startsAt, timezone, language)}</b> ·{' '}
+        {formatDay(dayIn(new Date(preflight.startsAt), timezone), language)} ({zoneLabel(timezone)})
+      </p>
+      {remaining > 0 && remaining < 86_400_000 ? (
+        <p className="font-heading tabular m-0 text-4xl font-semibold text-[#edf3ff]" aria-label={`${copy.room.countdown} ${countdown(remaining)}`}>
+          <span aria-hidden="true">{countdown(remaining)}</span>
+        </p>
+      ) : null}
+      <p className="m-0 max-w-[52ch] text-sm leading-7">{copy.room.meetBody}</p>
+      <Button asChild size="lg" className="rounded-full">
+        <a href={link} target="_blank" rel="noopener noreferrer">
+          <Video aria-hidden="true" className="size-4" />
+          {copy.room.meetOpen}
+        </a>
+      </Button>
     </>
   )
 }

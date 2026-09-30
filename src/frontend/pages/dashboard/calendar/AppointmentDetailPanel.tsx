@@ -344,7 +344,12 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
 
         {confirmed ? (
           <div className="flex flex-wrap gap-1.5">
-            {a.method === 'video' && !a.videoEndedAt ? (
+            {a.method === 'video' && a.meetLink ? (
+              // The fixed Google Meet room: you admit the visitor there.
+              <a href={a.meetLink} target="_blank" rel="noopener noreferrer" className="dash-btn dash-btn-primary h-9">
+                <Video className="size-4" aria-hidden="true" /> Join on Google Meet
+              </a>
+            ) : a.method === 'video' && !a.videoEndedAt ? (
               <button
                 type="button"
                 className="dash-btn dash-btn-primary h-9"
@@ -362,7 +367,7 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
                 {join.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Video className="size-4" aria-hidden="true" />} Join video call
               </button>
             ) : null}
-            {a.method === 'video' && !a.videoEndedAt && started ? (
+            {a.method === 'video' && !a.meetLink && !a.videoEndedAt && started ? (
               <button type="button" className="dash-btn dash-btn-quiet h-9" onClick={() => void run(() => end.mutateAsync(a.id), 'Call ended. Nobody can join it again.')}>
                 End call
               </button>

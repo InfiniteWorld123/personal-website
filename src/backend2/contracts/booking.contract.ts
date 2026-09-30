@@ -196,6 +196,8 @@ export type AppointmentDetail = AppointmentSummary & {
   reminderDueAt: string | null
   reminderSentAt: string | null
   videoEndedAt: string | null
+  /** The fixed Google Meet room for a video appointment, when one is set. */
+  meetLink: string | null
   revision: number
   history: AppointmentHistoryEntry[]
 }
@@ -231,6 +233,8 @@ export type VideoPreflight = {
   endsAt: string
   joinClosesAt: string
   serverTime: string
+  /** The fixed Google Meet room, when video runs there instead of on this site. */
+  meetLink: string | null
 }
 
 /* ----------------------------------------------------------------- schemas */
