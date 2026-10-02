@@ -471,7 +471,9 @@
   [data-dashboard] .dash-email-content .tiptap {
     min-height: 160px;
     padding: 12px 14px;
-    outline: none;
+    /* Public styles have an unlayered :focus-visible rule. Override only
+       this inner outline; the field wrapper keeps its visible focus ring. */
+    outline: none !important;
   }
 
   [data-dashboard] .dash-email-editor:has(.tiptap:focus-visible) {
