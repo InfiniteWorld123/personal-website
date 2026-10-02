@@ -41,6 +41,7 @@ let storage = createMemoryStore()
 
 let sent: Sent[] = []
 let failNext = 0
+let uncertainNext = false
 
 beforeEach(async () => {
   await database.reset()
@@ -48,17 +49,17 @@ beforeEach(async () => {
   useMediaStoreForTest(storage.store)
   sent = []
   failNext = 0
+  uncertainNext = false
   process.env.INBOX_INGRESS_SECRET = SECRET
   useInboxTransportForTest({
     mode: 'fake',
     send: async (email) => {
       if (failNext > 0) {
         failNext -= 1
-        // A provider that timed out: it may have taken the email. The key is
-        // recorded so the test can check the retry reuses it.
+        // The key is recorded so the test can check the retry reuses it.
         sent.push({ ...summarise(email), subject: `FAILED:${email.subject}` })
 
-        return { ok: false, provider: 'fake', reason: 'The email service did not answer in time.' }
+        return { ok: false, provider: 'fake', uncertain: uncertainNext, reason: 'The email service did not answer in time.' }
       }
 
       sent.push(summarise(email))
@@ -455,11 +456,74 @@ describe('composing and sending', () => {
     const { messageId } = failed.body.details
 
     await database.db.query(
-      `UPDATE v2_inbox_messages SET delivery_status = 'sending', last_attempt_at = now() WHERE id = $1`,
+      `UPDATE v2_inbox_messages SET delivery_status = 'sending', failure_reason = NULL, last_attempt_at = now() WHERE id = $1`,
       [messageId],
     )
 
     expect((await call('POST', `/owner/inbox/messages/${messageId}/retry`)).status).toBe(409)
+  })
+
+  it('keeps a timeout as an unknown outcome, with the same key on a protected retry', async () => {
+    let draft = await newDraft()
+    draft = await save(draft, { bodyDoc: doc('Do not lose this text') })
+    failNext = 1
+    uncertainNext = true
+
+    const result = await call('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: draft.revision })
+    expect(result.body.code).toBe('SEND_FAILED')
+    const { conversationId, messageId } = result.body.details
+    const detail = await open(conversationId)
+    expect(detail.messages.items[0]).toMatchObject({
+      bodyText: 'Do not lose this text', delivery: { status: 'unknown', canRetry: true },
+    })
+    expect((await list('?view=sent')).items[0].hasFailedSend).toBe(true)
+
+    expect((await call('POST', `/owner/inbox/messages/${messageId}/retry`)).body.data.delivery.status).toBe('accepted')
+    expect(sent.map((email) => email.idempotencyKey)).toEqual([messageId, messageId])
+  })
+
+  it('exposes an interrupted send after two minutes and lets the owner recover it', async () => {
+    let draft = await newDraft()
+    draft = await save(draft, { bodyDoc: doc('Interrupted send') })
+    failNext = 1
+    const result = await call('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: draft.revision })
+    const { conversationId, messageId } = result.body.details
+    await database.db.query(`UPDATE v2_inbox_messages SET delivery_status = 'sending', failure_reason = NULL, last_attempt_at = now() - interval '3 minutes' WHERE id = $1`, [messageId])
+
+    expect((await open(conversationId)).messages.items[0].delivery).toMatchObject({ status: 'unknown', canRetry: true })
+    expect((await list('?view=sent')).items[0].hasFailedSend).toBe(true)
+    expect((await call('POST', `/owner/inbox/messages/${messageId}/retry`)).status).toBe(200)
+    expect(sent.map((email) => email.idempotencyKey)).toEqual([messageId, messageId])
+  })
+
+  it.each(['failed', 'sending'])('blocks a late %s retry even if a recent attempt reset last_attempt_at', async (status) => {
+    let draft = await newDraft()
+    draft = await save(draft, { bodyDoc: doc('Still kept after a day') })
+    failNext = 1
+    const result = await call('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: draft.revision })
+    const { conversationId, messageId } = result.body.details
+    await database.db.query(`UPDATE v2_inbox_messages SET delivery_status = $2, created_at = now() - interval '25 hours', last_attempt_at = now() - interval '3 minutes' WHERE id = $1`, [messageId, status])
+
+    const message = (await open(conversationId)).messages.items[0]
+    expect(message.bodyText).toBe('Still kept after a day')
+    expect(message.delivery).toMatchObject({ canRetry: false, retryUnavailableReason: expect.stringMatching(/safe retry period has ended/u) })
+    const refused = await call('POST', `/owner/inbox/messages/${messageId}/retry`)
+    expect(refused.status).toBe(409)
+    expect(refused.body.message).toMatch(/safe retry period has ended/u)
+    expect(sent).toHaveLength(1)
+  })
+
+  it('refuses a retry at the safe-window boundary, before the provider key expires', async () => {
+    const { canRetry, SAFE_RETRY_MS } = await import('#/backend2/modules/inbox/inbox.mapper')
+    let draft = await newDraft()
+    draft = await save(draft, { bodyDoc: doc('Boundary') })
+    failNext = 1
+    const result = await call('POST', `/owner/inbox/drafts/${draft.id}/send`, { revision: draft.revision })
+    const { rows } = await database.db.query('SELECT * FROM v2_inbox_messages WHERE id = $1', [result.body.details.messageId])
+    const row = rows[0] as import('#/backend2/modules/inbox/inbox.repo').MessageRow
+    const first = new Date(row.created_at).getTime()
+    expect(canRetry(row, new Date(first + SAFE_RETRY_MS - 1))).toBe(true)
+    expect(canRetry(row, new Date(first + SAFE_RETRY_MS))).toBe(false)
   })
 
   it('replies inside the conversation with threading headers and a quote', async () => {

@@ -28,15 +28,15 @@ export type OutgoingEmail = {
   attachments: Array<{ filename: string; contentType: string; content: Uint8Array }>
   /**
    * The same key on every attempt for the same message. Resend answers a
-   * repeat within 24 hours with the first result instead of sending again, so
-   * a retry after a timeout cannot deliver the email twice.
+   * repeat within 24 hours with the first result instead of sending again.
+   * The service refuses retries outside that window.
    */
   idempotencyKey: string
 }
 
 export type TransportResult =
   | { ok: true; provider: 'resend' | 'fake'; providerMessageId: string }
-  | { ok: false; provider: 'resend' | 'fake' | null; reason: string }
+  | { ok: false; provider: 'resend' | 'fake' | null; reason: string; uncertain?: boolean }
 
 export type InboxTransport = {
   mode: 'live' | 'fake'
@@ -136,9 +136,10 @@ const resendTransport = (apiKey: string): InboxTransport => ({
       return {
         ok: false,
         provider: 'resend',
+        uncertain: true,
         reason: timedOut
-          ? 'The email service did not answer in time. It may or may not have been sent — retrying is safe and will not send it twice.'
-          : 'The email service could not be reached. Nothing was confirmed as sent.',
+          ? 'The email service did not answer in time. It may have accepted the email.'
+          : 'The connection to the email service was interrupted. The sending result is unknown.',
       }
     }
 
@@ -149,6 +150,7 @@ const resendTransport = (apiKey: string): InboxTransport => ({
       return {
         ok: false,
         provider: 'resend',
+        uncertain: response.status >= 500 || response.status === 409,
         reason:
           response.status === 429
             ? 'The email service is busy. Try again in a minute.'
@@ -161,12 +163,17 @@ const resendTransport = (apiKey: string): InboxTransport => ({
       }
     }
 
-    const body = (await response.json().catch(() => ({}))) as { id?: unknown }
+    const body: unknown = await response.json().catch(() => null)
+    const confirmationId = body && typeof body === 'object' && 'id' in body ? body.id : null
+
+    if (typeof confirmationId !== 'string' || confirmationId.trim() === '') {
+      return { ok: false, provider: 'resend', uncertain: true, reason: 'The email service answered without a confirmation ID. It may have accepted the email.' }
+    }
 
     return {
       ok: true,
       provider: 'resend',
-      providerMessageId: typeof body.id === 'string' ? body.id : '',
+      providerMessageId: confirmationId,
     }
   },
 })

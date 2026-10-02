@@ -17,7 +17,7 @@ import { ApiRequestError } from '#/frontend/api/response'
 import { BlogDialog, ConfirmDialog, DialogActions, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
 import { EmailEditor, textToParagraphs } from '#/frontend/features/inbox-v2/EmailEditor'
 import { readDraft, saveDraft, sendDraft } from '#/frontend/features/inbox-v2/api'
-import { inboxKeys, useDiscardDraft, useInboxSettings, useRefreshInbox, useSnippets } from '#/frontend/features/inbox-v2/queries'
+import { inboxKeys, useDiscardDraft, useInboxSettings, useRefreshInbox, useRememberDraft, useSnippets } from '#/frontend/features/inbox-v2/queries'
 import { MediaPicker } from '#/frontend/features/media/MediaPicker'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { cn } from '#/frontend/lib/utils'
@@ -78,7 +78,7 @@ export function Composer({
   onSent: (conversationId: string) => void
   full?: boolean
 }) {
-  const draft = useQuery({ queryKey: [...inboxKeys.all, 'draft', draftId], queryFn: () => readDraft(draftId), retry: false, staleTime: Infinity })
+  const draft = useQuery({ queryKey: inboxKeys.draft(draftId), queryFn: () => readDraft(draftId), retry: false, staleTime: Infinity, gcTime: 0 })
 
   if (draft.isPending) {
     return (
@@ -133,6 +133,7 @@ function ComposerForm({
   full: boolean
 }) {
   const refresh = useRefreshInbox()
+  const rememberDraft = useRememberDraft()
   const discard = useDiscardDraft()
   const settings = useInboxSettings()
   const snippets = useSnippets(1, 25)
@@ -228,7 +229,9 @@ function ComposerForm({
   const saveNow = useCallback(async (): Promise<boolean> => {
     window.clearTimeout(timer.current)
 
-    if (inFlight.current) await inFlight.current
+    while (inFlight.current) {
+      if (!(await inFlight.current)) return false
+    }
 
     const current = currentValues()
     const text = JSON.stringify(current)
@@ -253,9 +256,13 @@ function ComposerForm({
         revision.current = next.revision
         saved.current = text
         savedAttachments.current = idsText
-        localDraft.clear(draftSnapshot.id)
+        rememberDraft(next)
+        const unchanged = JSON.stringify(currentValues()) === text &&
+          JSON.stringify(attachmentsRef.current.map((file) => file.assetId)) === idsText
+        // An earlier request must not erase text typed while it was saving.
+        if (unchanged) localDraft.clear(draftSnapshot.id)
         setSavedAt(new Date())
-        setSaveState(JSON.stringify(currentValues()) === text ? 'saved' : 'idle')
+        setSaveState(unchanged ? 'saved' : 'idle')
 
         return true
       } catch (error) {
@@ -278,7 +285,7 @@ function ComposerForm({
 
     return run
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form, mode])
+  }, [form, mode, rememberDraft])
 
   // Every change schedules a save; the local copy is written at once.
   useEffect(() => {
@@ -311,7 +318,9 @@ function ComposerForm({
       saved.current = snapshot()
       await refresh()
       notify.success(
-        result.message.delivery?.provider === 'fake'
+        result.message.delivery?.status !== 'accepted'
+          ? 'The message is recorded. Check its sending status in the conversation.'
+          : result.message.delivery?.provider === 'fake'
           ? 'Recorded as sent — this is a local test, nothing left the computer'
           : 'Sent · accepted by the email service',
       )
@@ -322,7 +331,7 @@ function ComposerForm({
 
         localDraft.clear(draft.id)
         await refresh()
-        notify.error(`Not sent. ${error.message} It is kept in the conversation with Retry.`)
+        notify.error(`${error.message} Your message is kept in the conversation; check its sending status there.`)
 
         if (conversationId) onSent(conversationId)
 
@@ -344,6 +353,7 @@ function ComposerForm({
     if (!conflict) return
 
     revision.current = conflict.revision
+    rememberDraft(conflict)
 
     if (choice === 'theirs') {
       form.reset(formOf(valuesOf(conflict)))
@@ -353,6 +363,8 @@ function ComposerForm({
       setAttachments(conflict.attachments)
       saved.current = JSON.stringify(valuesOf(conflict))
       savedAttachments.current = JSON.stringify(conflict.attachments.map((file) => file.assetId))
+      localDraft.clear(draft.id)
+      setSavedAt(new Date(conflict.updatedAt))
       setSaveState('saved')
     } else {
       saved.current = ''
@@ -406,6 +418,8 @@ function ComposerForm({
   const rtl = values.language === 'ar'
   const sendBlocked = saveState === 'saving' || saveState === 'failed' || saveState === 'conflict' || submitting
   const signature = settings.data?.signatures[values.language] ?? ''
+  const dirty = JSON.stringify(values) !== saved.current ||
+    JSON.stringify(attachments.map((file) => file.assetId)) !== savedAttachments.current
 
   const statusText =
     saveState === 'saving'
@@ -414,10 +428,10 @@ function ComposerForm({
         ? "Couldn't save. Your text is still here."
         : saveState === 'conflict'
           ? 'Changed in another window'
-          : savedAt
-            ? `Saved ${savedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
-            : recovered.current
-              ? 'Restored unsaved text from this browser'
+          : dirty
+            ? recovered.current ? 'Restored unsaved text from this browser' : 'Unsaved changes'
+            : savedAt
+              ? `Saved ${savedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
               : 'Draft'
 
   return (
@@ -432,7 +446,7 @@ function ComposerForm({
     >
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold">{mode === 'reply' ? `Reply to ${counterpart?.name || counterpart?.email}` : 'New message'}</h2>
-        <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2 text-[12px]" onClick={() => void saveNow().then(onClose)} aria-label="Close and keep the draft">
+        <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2 text-[12px]" onClick={() => void saveNow().then((ok) => { if (ok) onClose() })} aria-label="Close and keep the draft">
           <X className="size-4" aria-hidden="true" />
         </button>
       </div>
@@ -555,7 +569,7 @@ function ComposerForm({
           return (
             <div className="flex flex-col gap-1">
               <EmailEditor
-                value={initial.bodyDoc}
+                value={doc}
                 onChange={(next) => {
                   docRef.current = next
                   setDoc(next)

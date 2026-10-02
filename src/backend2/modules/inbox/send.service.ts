@@ -27,7 +27,7 @@ import { openOwnerAsset, releaseReferences, replaceReferences } from '../media/m
 import * as v from 'valibot'
 import { resolveAttachments } from './draft.service'
 import { previewOf, renderEmail } from './email-render'
-import { canRetry, toDraft, toMessage } from './inbox.mapper'
+import { canRetry, retryUnavailableReason, toDraft, toMessage } from './inbox.mapper'
 import * as repo from './inbox.repo'
 import {
   type OutgoingEmail,
@@ -161,8 +161,10 @@ export const deliverMessage = async (
 
   if (!options.alreadyClaimed) await repo.markSendAttempt(message.id)
 
-  const fail = async (provider: 'resend' | 'fake' | null, reason: string) => {
-    await repo.recordDelivery({ id: message.id, status: 'failed', provider, failureReason: reason })
+  const fail = async (provider: 'resend' | 'fake' | null, reason: string, uncertain = false) => {
+    // Keep the existing DB enum: sending + a reason means an unconfirmed
+    // outcome, distinct from an active request and exposed as `unknown`.
+    await repo.recordDelivery({ id: message.id, status: uncertain ? 'sending' : 'failed', provider, failureReason: reason })
 
     return loadMessage(message.id)
   }
@@ -246,7 +248,7 @@ export const deliverMessage = async (
     idempotencyKey: message.id,
   })
 
-  if (!result.ok) return fail(result.provider, result.reason)
+  if (!result.ok) return fail(result.provider, result.reason, result.uncertain)
 
   await repo.recordDelivery({
     id: message.id,
@@ -404,7 +406,7 @@ export const sendDraft = async (input: {
 
   const message = await deliverMessage(recorded.messageId)
 
-  if (message.delivery?.status === 'failed') {
+  if (message.delivery?.status === 'failed' || message.delivery?.status === 'unknown') {
     throw sendFailed(message.delivery.failureReason ?? undefined, {
       conversationId: recorded.conversationId,
       messageId: message.id,
@@ -416,8 +418,7 @@ export const sendDraft = async (input: {
 
 /**
  * Tries a failed — or visibly stuck — message again, with the same
- * idempotency key, so a provider that did take it the first time does not
- * send it twice.
+ * idempotency key, only while the provider retains that key.
  */
 export const retryMessage = async (messageId: string): Promise<InboxMessage> => {
   await withTransaction(async () => {
@@ -425,7 +426,7 @@ export const retryMessage = async (messageId: string): Promise<InboxMessage> => 
 
     if (!row || row.direction !== 'outgoing') throw notFound('That message does not exist')
     if (row.delivery_status === 'accepted') return
-    if (!canRetry(row)) throw conflict('This email is being sent right now.')
+    if (!canRetry(row)) throw conflict(retryUnavailableReason(row) ?? 'This email cannot be retried.')
 
     // Claimed inside the lock, so a second Retry sees `sending` and stops.
     await repo.markSendAttempt(row.id)
@@ -437,7 +438,7 @@ export const retryMessage = async (messageId: string): Promise<InboxMessage> => 
 
   const message = await deliverMessage(messageId, { alreadyClaimed: true })
 
-  if (message.delivery?.status === 'failed') {
+  if (message.delivery?.status === 'failed' || message.delivery?.status === 'unknown') {
     const conversationId = current?.conversation_id
 
     throw sendFailed(message.delivery.failureReason ?? undefined, { conversationId, messageId })

@@ -5,7 +5,7 @@ import type { ConversationSummary } from '#/backend2/contracts/inbox.contract'
 import { PageHead, StatusChip } from '#/frontend/dashboard/primitives'
 import { BlogDialog, DialogActions, DialogAlert, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
 import { createDraft } from '#/frontend/features/inbox-v2/api'
-import { useConversations, useDrafts, useEmptyTrash, useInboxCounts } from '#/frontend/features/inbox-v2/queries'
+import { useConversations, useDrafts, useEmptyTrash, useInboxCounts, useRememberDraft } from '#/frontend/features/inbox-v2/queries'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { cn } from '#/frontend/lib/utils'
 import type { InboxSearch } from '#/frontend/routes/dashboard.inbox'
@@ -69,7 +69,7 @@ function Row({ item, active, sent, onOpen }: { item: ConversationSummary; active
         </span>
         {item.hasFailedSend || item.hasDraft || item.origin === 'booking' || item.messageCount > 1 ? (
           <span className="col-span-2 mt-1 flex flex-wrap gap-1">
-            {item.hasFailedSend ? <StatusChip tone="red" className="h-[18px] px-1.5 text-[10.5px]">Not sent</StatusChip> : null}
+            {item.hasFailedSend ? <StatusChip tone="red" className="h-[18px] px-1.5 text-[10.5px]">Needs attention</StatusChip> : null}
             {item.hasDraft ? <StatusChip tone="outline" className="h-[18px] px-1.5 text-[10.5px]">Draft</StatusChip> : null}
             {item.origin === 'booking' ? <StatusChip tone="blue" className="h-[18px] px-1.5 text-[10.5px]">Booking</StatusChip> : null}
             {item.messageCount > 1 ? <StatusChip tone="grey" className="h-[18px] px-1.5 text-[10.5px]">{item.messageCount} messages</StatusChip> : null}
@@ -145,6 +145,7 @@ export function InboxPage() {
   const [query, setQuery] = useState(search.q ?? '')
   const [emptying, setEmptying] = useState(false)
   const [creating, setCreating] = useState(false)
+  const rememberDraft = useRememberDraft()
 
   const go = (patch: Partial<InboxSearch>, replace = false) =>
     void navigate({ search: (previous: InboxSearch) => ({ ...previous, ...patch }), replace })
@@ -173,6 +174,7 @@ export function InboxPage() {
 
     try {
       const draft = await createDraft({})
+      rememberDraft(draft)
 
       go({ draft: draft.id, c: undefined })
     } catch (error) {
@@ -365,7 +367,7 @@ export function InboxPage() {
         description="info@yamanwarda.de — every email to it, one conversation per first email."
         actions={
           <>
-            <button type="button" className="dash-btn dash-btn-ghost" onClick={() => go({ settings: true })}>
+            <button type="button" className="dash-btn dash-btn-ghost" aria-label="Signatures & replies" onClick={() => go({ settings: true })}>
               <Settings2 className="size-4" aria-hidden="true" /> <span className="hidden sm:inline">Signatures &amp; replies</span>
             </button>
             <button type="button" className="dash-btn dash-btn-primary" onClick={() => void startNew()} disabled={creating}>

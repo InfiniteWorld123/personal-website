@@ -1,5 +1,6 @@
+import { useCallback } from 'react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ConversationDetail, InboxLanguage } from '#/backend2/contracts/inbox.contract'
+import type { ConversationDetail, InboxDraft, InboxLanguage } from '#/backend2/contracts/inbox.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import {
   type ConversationsQuery,
@@ -35,6 +36,7 @@ export const inboxKeys = {
   list: (query: ConversationsQuery) => [...inboxKeys.all, 'list', query] as const,
   conversation: (id: string) => [...inboxKeys.all, 'conversation', id] as const,
   drafts: (page: number) => [...inboxKeys.all, 'drafts', page] as const,
+  draft: (id: string) => [...inboxKeys.all, 'draft', id] as const,
   settings: () => [...inboxKeys.all, 'settings'] as const,
   snippets: (page: number, pageSize: number) => [...inboxKeys.all, 'snippets', page, pageSize] as const,
 }
@@ -78,6 +80,11 @@ export const useConversation = (id: string | null) =>
     getNextPageParam: (last) => (last.messages.hasMore ? last.messages.page + 1 : undefined),
     enabled: id !== null,
     retry,
+    // An interrupted request becomes recoverable after two minutes. Keep
+    // checking while it is pending, then stop once its outcome is visible.
+    refetchInterval: (query) => query.state.data?.pages.some((page) =>
+      page.messages.items.some((message) => message.delivery?.status === 'sending'),
+    ) ? 5_000 : false,
   })
 
 export const useDrafts = (page: number, enabled = true) =>
@@ -104,6 +111,19 @@ export const useRefreshInbox = () => {
   const client = useQueryClient()
 
   return () => client.invalidateQueries({ queryKey: inboxKeys.all })
+}
+
+/** Publish the exact saved revision without resetting the open form. */
+export const useRememberDraft = () => {
+  const client = useQueryClient()
+
+  return useCallback((draft: InboxDraft) => {
+    client.setQueryData(inboxKeys.draft(draft.id), draft)
+    void client.invalidateQueries({
+      queryKey: inboxKeys.all,
+      predicate: (query) => ['drafts', 'counts', 'list'].includes(String(query.queryKey[2])),
+    })
+  }, [client])
 }
 
 const useInboxMutation = <TInput, TResult>(fn: (input: TInput) => Promise<TResult>) => {

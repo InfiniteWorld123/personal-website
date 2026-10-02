@@ -466,6 +466,19 @@
     outline-offset: 2px;
   }
 
+  /* The editable surface fills the email field; focus surrounds the field
+     rather than drawing a second rectangle around its first line. */
+  [data-dashboard] .dash-email-content .tiptap {
+    min-height: 160px;
+    padding: 12px 14px;
+    outline: none;
+  }
+
+  [data-dashboard] .dash-email-editor:has(.tiptap:focus-visible) {
+    outline: 2px solid var(--dash-blue);
+    outline-offset: 2px;
+  }
+
   /* ── Form controls ────────────────────────────────────────────
      One class for every input, select and textarea on this surface. Stated
      here rather than as utilities beside each field because the border and

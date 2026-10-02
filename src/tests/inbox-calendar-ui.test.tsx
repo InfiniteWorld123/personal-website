@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import type { ConversationDetail } from '#/backend2/contracts/inbox.contract'
@@ -185,7 +185,7 @@ describe('a conversation', () => {
 
     wrap(<ConversationPane id="c1" backLabel="Inbox" onGone={() => {}} onOpenConversation={() => {}} />)
 
-    expect(await screen.findByText(/Retrying is safe/u)).toBeTruthy()
+    expect(await screen.findByText(/24-hour protection period/u)).toBeTruthy()
     expect(inboxApi.saveAttachmentToMedia).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -193,6 +193,50 @@ describe('a conversation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Save to Media/u }))
     await waitFor(() => expect(inboxApi.saveAttachmentToMedia.mock.calls[0]?.[0]).toBe('f1'))
+  })
+
+  it('offers Retry for an interrupted send without claiming it was not sent', async () => {
+    const detail = conversation({ isRead: true })
+    detail.messages.items[0].delivery = { status: 'unknown', provider: 'resend', failureReason: null, attempts: 1, canRetry: true }
+    inboxApi.readConversation.mockResolvedValue(detail)
+    inboxApi.retryMessage.mockResolvedValue({ delivery: { status: 'accepted', provider: 'resend' } })
+    wrap(<ConversationPane id="c1" backLabel="Inbox" onGone={() => {}} onOpenConversation={() => {}} />)
+
+    expect(await screen.findByText('Sending result unknown.')).toBeTruthy()
+    expect(screen.queryByText('Not sent.')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await waitFor(() => expect(inboxApi.retryMessage.mock.calls[0]?.[0]).toBe('m2'))
+  })
+
+  it('keeps the text but explains why an expired unknown send cannot be retried', async () => {
+    const detail = conversation({ isRead: true })
+    detail.messages.items[0].delivery = { status: 'unknown', provider: 'resend', failureReason: null, attempts: 2, canRetry: false, retryUnavailableReason: 'The safe retry period has ended. Check the email service before composing another email; the original may have been sent.' }
+    inboxApi.readConversation.mockResolvedValue(detail)
+    wrap(<ConversationPane id="c1" backLabel="Inbox" onGone={() => {}} onOpenConversation={() => {}} />)
+
+    expect(await screen.findByText(/safe retry period has ended/u)).toBeTruthy()
+    expect(screen.getByText('Here is the offer')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+  })
+
+  it('refreshes an active send until its interrupted outcome is visible, then stops polling', async () => {
+    const active = conversation({ isRead: true })
+    active.messages.items[0].delivery = { status: 'sending', provider: null, failureReason: null, attempts: 1, canRetry: false }
+    const interrupted = structuredClone(active)
+    interrupted.messages.items[0].delivery = { status: 'unknown', provider: 'resend', failureReason: null, attempts: 1, canRetry: true }
+    inboxApi.readConversation.mockResolvedValueOnce(active).mockResolvedValue(interrupted)
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    try {
+      wrap(<ConversationPane id="c1" backLabel="Inbox" onGone={() => {}} onOpenConversation={() => {}} />)
+      expect(await screen.findByText('Sending…')).toBeTruthy()
+      await act(async () => { await vi.advanceTimersByTimeAsync(5000) })
+      expect(await screen.findByText('Sending result unknown.')).toBeTruthy()
+      await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+      expect(inboxApi.readConversation).toHaveBeenCalledTimes(2)
+    } finally {
+      cleanup()
+      vi.useRealTimers()
+    }
   })
 
   it('offers Restore and Delete forever in Trash, and no reply box', async () => {

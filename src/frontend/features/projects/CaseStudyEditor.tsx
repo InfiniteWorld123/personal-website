@@ -97,12 +97,12 @@ export function ToolbarButton({
       aria-label={label}
       aria-pressed={active ?? false}
       disabled={disabled}
-      // `onMouseDown`, not `onClick`: the default would move focus out of the
-      // document first, and a command with no selection does nothing.
+      // Preserve the document selection on a mouse press; click also covers
+      // Enter/Space activation and runs the command exactly once.
       onMouseDown={(event) => {
         event.preventDefault()
-        onClick()
       }}
+      onClick={onClick}
       className={cn(
         'inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[12px] font-semibold text-[var(--dash-quiet)] hover:bg-[var(--dash-hover)] hover:text-[var(--dash-ink)] disabled:opacity-40',
         active && 'bg-[var(--dash-blue-tint)] text-[var(--dash-blue-ink)]',

@@ -24,6 +24,7 @@ import {
   usePatchConversation,
   useRestoreConversation,
   useRetryMessage,
+  useRememberDraft,
   useSaveToMedia,
   useTrashConversation,
 } from '#/frontend/features/inbox-v2/queries'
@@ -173,11 +174,15 @@ function MessageCard({ message, counterpartName }: { message: InboxMessage; coun
       ) : null}
 
       {message.delivery ? (
-        message.delivery.status === 'failed' ? (
+        message.delivery.status === 'failed' || message.delivery.status === 'unknown' ? (
           <div role="status" className="flex flex-wrap items-center gap-2 rounded-[9px] bg-[var(--dash-red-tint)] px-3 py-2 text-[12.5px] text-[var(--dash-red-ink)]">
             <AlertTriangle className="size-4" aria-hidden="true" />
             <span>
-              <b>Not sent.</b> {message.delivery.failureReason} Your text and attachments are kept. Retrying is safe — it cannot send this email twice.
+              <b>{message.delivery.status === 'unknown' ? 'Sending result unknown.' : 'Send attempt failed.'}</b>{' '}
+              {message.delivery.failureReason ?? 'The request was interrupted before its result was recorded.'} Your text and attachments are kept.{' '}
+              {message.delivery.canRetry
+                ? 'Retry is available within the email service’s 24-hour protection period.'
+                : message.delivery.retryUnavailableReason}
             </span>
             {message.delivery.canRetry ? (
               <button
@@ -186,8 +191,12 @@ function MessageCard({ message, counterpartName }: { message: InboxMessage; coun
                 disabled={retry.isPending}
                 onClick={async () => {
                   try {
-                    await retry.mutateAsync(message.id)
-                    notify.success('Sent · accepted by the email service')
+                    const result = await retry.mutateAsync(message.id)
+                    if (result.delivery?.status === 'accepted') {
+                      notify.success(result.delivery.provider === 'fake'
+                        ? 'Recorded as sent · local test, nothing left the computer'
+                        : 'Sent · accepted by the email service')
+                    }
                   } catch (error) {
                     notify.error(messageFromError(error))
                   }
@@ -228,6 +237,7 @@ export function ConversationPane({
   onOpenConversation: (id: string) => void
 }) {
   const detail = useConversation(id)
+  const rememberDraft = useRememberDraft()
   const patch = usePatchConversation()
   const trash = useTrashConversation()
   const restore = useRestoreConversation()
@@ -309,6 +319,7 @@ export function ConversationPane({
 
     try {
       const draft = await createDraft({ conversationId: conversation.id })
+      rememberDraft(draft)
 
       setReplyDraft(draft.id)
     } catch (error) {

@@ -4,6 +4,43 @@ Status: **Built on 23 Sep 2026 — Backend2 and the Dashboard screens, verified 
 
 ## What is built — Backend2, 23 Sep 2026
 
+### Reliability fixes approved 2 Oct 2026
+
+The owner requested implementation, testing, GitHub publication and Cloudflare
+deployment of the Inbox review findings. This is a bounded repair of the current
+mailbox; bulk management and an Outlook-style redesign are separate future scope.
+
+- Draft saves publish the returned revision to the query cache and refresh the
+  paginated draft list/counts. Closed drafts are read fresh when reopened. Closing
+  after a failed save keeps the editor and local recovery text visible. A completed
+  older autosave does not clear text typed while it was in flight.
+- Formatting buttons preserve the mouse selection and also activate through
+  keyboard clicks. Email content fills its field, with one focus outline around
+  the field. The mobile settings icon retains an accessible name.
+- The email link button uses the existing Dashboard dialog style and TanStack
+  Form validation instead of native prompt/alert. It preserves the selection,
+  supports display text and HTTPS defaults for bare domains, and rejects unsafe
+  protocols and relative paths. Errors appear after submit and while correcting.
+- Sending distinguishes confirmed acceptance, failed attempts, active requests,
+  and **unknown outcomes**. Network timeouts/errors, provider 5xx/409 and successful
+  responses without a confirmation ID are unknown. Existing DB `sending` rows with
+  a failure reason or an attempt older than two minutes expose API status `unknown`;
+  no database migration is needed. The list shows “Needs attention”.
+- Retry reuses the message ID and is allowed only for **23 hours 55 minutes from
+  immutable message creation**, before the first provider call. The five-minute
+  margin fits inside [Resend's documented 24-hour retention](https://resend.com/docs/dashboard/emails/idempotency-keys).
+  Last-attempt time never extends that window. Expired attempts keep their content,
+  disable Retry on the server and screen, and explain that the owner must check the
+  provider before composing another email. Accepted messages cannot send again.
+- Conversations poll every five seconds while an active `sending` message exists,
+  then stop once the result or interrupted state becomes visible.
+
+Verification covers the API using a throwaway PostgreSQL and fake provider calls,
+mocked provider HTTP outcomes, draft save/close/reopen and offline recovery, keyboard
+button activation, link validation, and unknown/expired delivery UI. Actual sending
+and external recipient delivery require a separately identified test recipient;
+this repair does not prove a real email round trip.
+
 Verified with `src/tests/backend2-inbox.test.ts` (44 tests against a real in-process PostgreSQL) and a runtime check over a real `pg` socket to a throwaway database. Nothing was sent by email, nothing touched the owner's Neon database, and no routing or Worker changed.
 
 - **Migration `0009_inbox.sql`** (0008 was taken by Clients). Tables: conversations, messages, incoming attachments, drafts, signatures, ready replies. It also adds `inbox` to the Media references module list — a later migration that restates that list must keep it. **Not applied to Neon**; that is a cloud change and waits for the owner's yes.

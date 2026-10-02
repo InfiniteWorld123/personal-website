@@ -23,6 +23,22 @@ const iso = (value: Date | string): string => new Date(value).toISOString()
 /** A message still marked sending this long after its attempt was interrupted. */
 export const STUCK_SENDING_MS = 2 * 60 * 1000
 
+// Resend retains keys for 24 hours. Start from the immutable message creation
+// time (before the first request), leaving a margin for clock/request delays.
+export const SAFE_RETRY_MS = (24 * 60 - 5) * 60 * 1000
+export const RETRY_EXPIRED_REASON = 'The safe retry period has ended. Check the email service before composing another email; the original may have been sent.'
+
+const isStuck = (row: MessageRow, now: Date): boolean =>
+  now.getTime() - new Date(row.last_attempt_at ?? row.created_at).getTime() > STUCK_SENDING_MS
+
+export const retryUnavailableReason = (row: MessageRow, now: Date = new Date()): string | null => {
+  if (row.direction !== 'outgoing' || row.delivery_status === 'accepted') return null
+  if (now.getTime() - new Date(row.created_at).getTime() >= SAFE_RETRY_MS) return RETRY_EXPIRED_REASON
+  if (row.delivery_status === 'sending' && !row.failure_reason && !isStuck(row, now)) return 'This email is being sent right now.'
+
+  return null
+}
+
 export const toSummary = (row: ConversationListRow): ConversationSummary => ({
   id: row.id,
   subject: row.subject,
@@ -63,9 +79,10 @@ export const toIncomingAttachment = (row: AttachmentRow): IncomingAttachment => 
 
 export const canRetry = (row: MessageRow, now: Date = new Date()): boolean =>
   row.direction === 'outgoing' &&
+  retryUnavailableReason(row, now) === null &&
   (row.delivery_status === 'failed' ||
     (row.delivery_status === 'sending' &&
-      (!row.last_attempt_at || now.getTime() - new Date(row.last_attempt_at).getTime() > STUCK_SENDING_MS)))
+      (Boolean(row.failure_reason) || isStuck(row, now))))
 
 export const toMessage = (row: MessageRow, attachments: AttachmentRow[]): InboxMessage => ({
   id: row.id,
@@ -82,11 +99,14 @@ export const toMessage = (row: MessageRow, attachments: AttachmentRow[]): InboxM
   delivery:
     row.direction === 'outgoing' && row.delivery_status
       ? {
-          status: row.delivery_status,
+          status: row.delivery_status === 'sending' && (row.failure_reason || isStuck(row, new Date()))
+            ? 'unknown'
+            : row.delivery_status,
           provider: row.delivery_provider,
           failureReason: row.failure_reason,
           attempts: row.send_attempts,
           canRetry: canRetry(row),
+          retryUnavailableReason: retryUnavailableReason(row),
         }
       : null,
   incomingAttachments: attachments.map(toIncomingAttachment),

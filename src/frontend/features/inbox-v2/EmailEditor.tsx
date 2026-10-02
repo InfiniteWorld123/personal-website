@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { EditorContent, type Editor, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
@@ -13,10 +13,11 @@ import {
   Undo2,
   Unlink,
 } from 'lucide-react'
-import { type RichTextDoc, isSafeHref } from '#/backend2/contracts/rich-text.contract'
+import { type RichTextDoc } from '#/backend2/contracts/rich-text.contract'
 import { RICH_TEXT_CONTENT_CLASS, ToolbarButton } from '#/frontend/features/projects/CaseStudyEditor'
 import { normalizeDoc } from '#/frontend/features/projects/case-study-document'
 import { cn } from '#/frontend/lib/utils'
+import { EmailLinkDialog } from './EmailLinkDialog'
 
 /**
  * The email body: the same editor as a case study, cut down to what an email
@@ -57,6 +58,7 @@ export function EmailEditor({
   invalid?: boolean
   describedBy?: string
 }) {
+  const [link, setLink] = useState<{ from: number; to: number; text: string; href: string } | null>(null)
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -98,37 +100,21 @@ export function EmailEditor({
     else element.removeAttribute('aria-describedby')
   }, [editor, invalid, describedBy])
 
-  const setLink = () => {
+  const openLink = () => {
     if (!editor) return
-
-    const current = (editor.getAttributes('link').href as string | undefined) ?? ''
-    const entered = window.prompt('Address for this link', current)
-
-    if (entered === null) return
-
-    if (entered.trim() === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-
-      return
-    }
-
-    if (!isSafeHref(entered) || entered.trim().startsWith('/')) {
-      window.alert('A link in an email must start with http://, https:// or mailto:.')
-
-      return
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: entered.trim() }).run()
+    editor.commands.extendMarkRange('link')
+    const { from, to } = editor.state.selection
+    setLink({ from, to, text: editor.state.doc.textBetween(from, to, ' '), href: (editor.getAttributes('link').href as string | undefined) ?? '' })
   }
 
   return (
-    <div className={cn('overflow-hidden rounded-[10px] border bg-[var(--dash-input)]', invalid ? 'border-[var(--dash-red)]' : 'border-[var(--dash-line)]')}>
+    <div className={cn('dash-email-editor overflow-hidden rounded-[10px] border bg-[var(--dash-input)]', invalid ? 'border-[var(--dash-red)]' : 'border-[var(--dash-line)]')}>
       {editor ? (
         <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 border-b border-[var(--dash-line)] p-1">
           <ToolbarButton label="Bold" icon={<Bold className="size-4" />} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
           <ToolbarButton label="Italic" icon={<Italic className="size-4" />} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} />
           <ToolbarButton label="Underline" icon={<UnderlineIcon className="size-4" />} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} />
-          <ToolbarButton label="Link" icon={<LinkIcon className="size-4" />} active={editor.isActive('link')} onClick={setLink} />
+          <ToolbarButton label="Link" icon={<LinkIcon className="size-4" />} active={editor.isActive('link')} onClick={openLink} />
           <ToolbarButton label="Remove link" icon={<Unlink className="size-4" />} disabled={!editor.isActive('link')} onClick={() => editor.chain().focus().unsetLink().run()} />
           <span className="mx-1 h-5 w-px bg-[var(--dash-line)]" aria-hidden="true" />
           <ToolbarButton label="Bulleted list" icon={<List className="size-4" />} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} />
@@ -140,7 +126,13 @@ export function EmailEditor({
           </span>
         </div>
       ) : null}
-      <EditorContent editor={editor} dir={rtl ? 'rtl' : 'auto'} className={cn(RICH_TEXT_CONTENT_CLASS, 'min-h-40')} />
+      <EditorContent editor={editor} dir={rtl ? 'rtl' : 'auto'} className={cn(RICH_TEXT_CONTENT_CLASS, 'dash-email-content min-h-0 p-0')} />
+      {link && editor ? (
+        <EmailLinkDialog text={link.text} href={link.href} onClose={() => setLink(null)} onApply={(value) => {
+          editor.chain().focus().setTextSelection({ from: link.from, to: link.to }).insertContent({ type: 'text', text: value.text, marks: [{ type: 'link', attrs: { href: value.href } }] }).run()
+          setLink(null)
+        }} />
+      ) : null}
     </div>
   )
 }

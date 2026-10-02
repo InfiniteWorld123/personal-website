@@ -50,7 +50,7 @@ export const INBOX_LIMITS = {
 
 /* ------------------------------------------------------------------- shapes */
 
-export type DeliveryStatus = 'sending' | 'accepted' | 'failed'
+export type DeliveryStatus = 'sending' | 'accepted' | 'failed' | 'unknown'
 
 export type ConversationSummary = {
   id: string
@@ -116,8 +116,9 @@ export type InboxMessage = {
     provider: 'resend' | 'fake' | null
     failureReason: string | null
     attempts: number
-    /** Retrying is safe: the provider is given the same idempotency key. */
+    /** Only within the provider's bounded idempotency window. */
     canRetry: boolean
+    retryUnavailableReason?: string | null
   } | null
   incomingAttachments: IncomingAttachment[]
   outgoingAttachments: OutgoingAttachment[]

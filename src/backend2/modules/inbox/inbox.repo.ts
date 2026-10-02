@@ -113,7 +113,13 @@ const toNumber = (value: unknown): number => Number(value ?? 0)
 const LIST_FLAGS = `
   EXISTS (
     SELECT 1 FROM v2_inbox_messages m
-     WHERE m.conversation_id = c.id AND m.direction = 'outgoing' AND m.delivery_status = 'failed'
+     WHERE m.conversation_id = c.id AND m.direction = 'outgoing' AND (
+       m.delivery_status = 'failed' OR
+       (m.delivery_status = 'sending' AND (
+         m.failure_reason IS NOT NULL OR
+         COALESCE(m.last_attempt_at, m.created_at) < CURRENT_TIMESTAMP - INTERVAL '2 minutes'
+       ))
+     )
   ) AS has_failed_send,
   EXISTS (SELECT 1 FROM v2_inbox_drafts d WHERE d.conversation_id = c.id) AS has_draft`
 
@@ -549,7 +555,7 @@ export const markSendAttempt = async (id: string): Promise<void> => {
 
 export const recordDelivery = async (input: {
   id: string
-  status: 'accepted' | 'failed'
+  status: 'accepted' | 'failed' | 'sending'
   provider: 'resend' | 'fake' | null
   providerMessageId?: string | null
   failureReason?: string | null
