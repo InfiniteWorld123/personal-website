@@ -148,6 +148,8 @@ function ComposerForm({
   const [sendFailure, setSendFailure] = useState<string | null>(null)
   const [askBlankSubject, setAskBlankSubject] = useState(false)
   const [askDiscard, setAskDiscard] = useState(false)
+  const [sending, setSending] = useState(false)
+  const sendInFlight = useRef(false)
   const [picking, setPicking] = useState(false)
   const [menu, setMenu] = useState<'signature' | 'snippets' | null>(null)
   const editor = useRef<Editor | null>(null)
@@ -220,7 +222,8 @@ function ComposerForm({
 
     return { toEmail: state.toEmail, subject: state.subject, language: state.language, bodyDoc: docRef.current }
   }
-  const submitting = useStore(form.store, (state) => state.isSubmitting)
+  const formSubmitting = useStore(form.store, (state) => state.isSubmitting)
+  const submitting = formSubmitting || sending
 
   /* --------------------------------------------------------------- saving */
 
@@ -309,6 +312,9 @@ function ComposerForm({
   /* -------------------------------------------------------------- sending */
 
   const doSend = async (confirmBlankSubject: boolean) => {
+    if (sendInFlight.current) return
+    sendInFlight.current = true
+    setSending(true)
     setAskBlankSubject(false)
 
     try {
@@ -346,6 +352,9 @@ function ComposerForm({
       }
 
       setSendFailure(messageFromError(error))
+    } finally {
+      sendInFlight.current = false
+      setSending(false)
     }
   }
 
@@ -444,6 +453,7 @@ function ComposerForm({
         void form.handleSubmit()
       }}
     >
+      <fieldset disabled={submitting} className="contents">
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold">{mode === 'reply' ? `Reply to ${counterpart?.name || counterpart?.email}` : 'New message'}</h2>
         <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2 text-[12px]" onClick={() => void saveNow().then((ok) => { if (ok) onClose() })} aria-label="Close and keep the draft">
@@ -569,6 +579,7 @@ function ComposerForm({
           return (
             <div className="flex flex-col gap-1">
               <EmailEditor
+                disabled={submitting}
                 value={doc}
                 onChange={(next) => {
                   docRef.current = next
@@ -626,7 +637,7 @@ function ComposerForm({
           <Paperclip className="size-3.5" aria-hidden="true" /> Add from Media
         </button>
         <span role="status" className={cn('inline-flex items-center gap-1.5 text-[12px]', saveState === 'failed' ? 'font-semibold text-[var(--dash-red-ink)]' : 'text-[var(--dash-quiet)]')}>
-          {saveState === 'saving' ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : saveState === 'saved' ? <Check className="size-3.5" aria-hidden="true" /> : null}
+          {saveState === 'saving' ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : saveState === 'saved' && !dirty ? <Check className="size-3.5" aria-hidden="true" /> : null}
           {statusText}
           {saveState === 'failed' ? (
             <button type="button" className="dash-btn dash-btn-quiet h-7 text-[11.5px]" onClick={() => void saveNow()}>Retry</button>
@@ -683,6 +694,7 @@ function ComposerForm({
           <p>The text and the list of attachments are deleted. Files stay in Media.</p>
         </ConfirmDialog>
       ) : null}
+      </fieldset>
     </form>
   )
 }

@@ -230,6 +230,42 @@ export const lockConversation = async (id: string): Promise<ConversationRow | nu
   return rows[0] ?? null
 }
 
+/** A deterministic lock order prevents overlapping selections from deadlocking. */
+export const lockConversations = async (ids: string[]): Promise<ConversationRow[]> => {
+  const { rows } = await getDb().query<ConversationRow>(
+    'SELECT * FROM v2_inbox_conversations WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE',
+    [ids],
+  )
+
+  return rows
+}
+
+/** One bounded UPDATE; retain each conversation's own pre-Trash folder. */
+export const bulkConversationFlags = async (input: {
+  ids: string[]
+  isRead?: boolean
+  isStarred?: boolean
+  folder?: InboxFolder
+  restore?: boolean
+}): Promise<void> => {
+  await getDb().query(
+    `UPDATE v2_inbox_conversations SET
+       is_read = COALESCE($2::boolean, is_read),
+       is_starred = COALESCE($3::boolean, is_starred),
+       folder = CASE WHEN $5 AND folder = 'trash' THEN COALESCE(trashed_from, 'inbox')
+                     ELSE COALESCE($4::text, folder) END,
+       trashed_from = CASE WHEN $5 AND folder = 'trash' THEN NULL
+                           WHEN $4 = 'trash' AND folder <> 'trash' THEN folder
+                           ELSE trashed_from END,
+       trashed_at = CASE WHEN $5 AND folder = 'trash' THEN NULL
+                         WHEN $4 = 'trash' AND folder <> 'trash' THEN CURRENT_TIMESTAMP
+                         ELSE trashed_at END,
+       updated_at = CURRENT_TIMESTAMP
+     WHERE id = ANY($1::uuid[])`,
+    [input.ids, input.isRead ?? null, input.isStarred ?? null, input.folder ?? null, input.restore ?? false],
+  )
+}
+
 export const findConversationByToken = async (token: string): Promise<ConversationRow | null> => {
   const { rows } = await getDb().query<ConversationRow>(
     'SELECT * FROM v2_inbox_conversations WHERE reply_token = $1 FOR UPDATE',

@@ -1,4 +1,6 @@
 import type {
+  BulkConversationInput,
+  BulkConversationResult,
   ConversationDetail,
   ConversationSummary,
   InboxCounts,
@@ -81,13 +83,16 @@ export type ConversationsQuery = {
   pageSize?: number
 }
 
-export const listConversations = (query: ConversationsQuery) =>
-  request<Page<ConversationSummary>>(`${OWNER}/conversations${toSearch({ ...query, pageSize: query.pageSize ?? 25 })}`)
+export const listConversations = (query: ConversationsQuery, signal?: AbortSignal) =>
+  request<Page<ConversationSummary>>(`${OWNER}/conversations${toSearch({ ...query, pageSize: query.pageSize ?? 25 })}`, { signal })
 
 export const readCounts = () => request<InboxCounts>(`${OWNER}/counts`)
 
-export const readConversation = (id: string, page: number) =>
-  request<ConversationDetail>(`${OWNER}/conversations/${id}${toSearch({ page, pageSize: 20 })}`)
+export const readConversation = (id: string, page: number, signal?: AbortSignal) =>
+  request<ConversationDetail>(`${OWNER}/conversations/${id}${toSearch({ page, pageSize: 20 })}`, { signal })
+
+export const bulkConversations = (input: BulkConversationInput) =>
+  send<BulkConversationResult>('POST', `${OWNER}/conversations/bulk`, input)
 
 export const patchConversation = (id: string, patch: { isRead?: boolean; isStarred?: boolean; archived?: boolean }) =>
   send<ConversationSummary>('PATCH', `${OWNER}/conversations/${id}`, patch)

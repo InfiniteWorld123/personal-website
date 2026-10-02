@@ -222,6 +222,114 @@ describe('the owner fence', () => {
 
 /* ----------------------------------------------------------------- ingress */
 
+describe('bulk conversation management', () => {
+  const bulk = (ids: string[], action: string) => call('POST', '/owner/inbox/conversations/bulk', { conversationIds: ids, action })
+  const pair = async () => {
+    await deliver(letter({ subject: 'First selected' }))
+    await deliver(letter({ subject: 'Second selected' }))
+    await deliver(letter({ subject: 'Unselected' }))
+
+    return (await list()).items as Json[]
+  }
+
+  it('updates only selected threads, deduplicates IDs and changes counts together', async () => {
+    const [untouched, first, second] = await pair()
+    const result = await bulk([first!.id, second!.id, first!.id.toUpperCase()], 'mark-read')
+
+    expect(result.status, JSON.stringify(result.body)).toBe(200)
+    expect(result.response.headers.get('cache-control')).toContain('no-store')
+    expect(result.body.data.conversationIds).toHaveLength(2)
+    expect((await open(untouched!.id)).conversation.isRead).toBe(false)
+    expect((await open(first!.id)).conversation.isRead).toBe(true)
+    expect((await open(second!.id)).conversation.isRead).toBe(true)
+    expect((await call('GET', '/owner/inbox/counts')).body.data.inboxUnread).toBe(1)
+    expect(sent).toHaveLength(0)
+  })
+
+  it('supports unread, star and unstar on the selection', async () => {
+    const [untouched, first, second] = await pair()
+    const ids = [first!.id, second!.id]
+
+    for (const action of ['mark-read', 'star', 'mark-unread']) expect((await bulk(ids, action)).status).toBe(200)
+    expect((await open(first!.id)).conversation).toMatchObject({ isRead: false, isStarred: true })
+    expect((await open(second!.id)).conversation).toMatchObject({ isRead: false, isStarred: true })
+    expect((await open(untouched!.id)).conversation.isStarred).toBe(false)
+    expect((await bulk(ids, 'unstar')).status).toBe(200)
+    expect((await open(first!.id)).conversation.isStarred).toBe(false)
+  })
+
+  it('archives and returns selected conversations to Inbox without changing their contents', async () => {
+    const [, first, second] = await pair()
+    const ids = [first!.id, second!.id]
+    const before = await open(first!.id)
+
+    expect((await bulk(ids, 'archive')).status).toBe(200)
+    expect((await list('?view=archived')).total).toBe(2)
+    expect((await list()).total).toBe(1)
+    expect((await bulk(ids, 'unarchive')).status).toBe(200)
+    expect((await list()).total).toBe(3)
+    expect((await open(first!.id)).messages).toEqual(before.messages)
+  })
+
+  it('repeated Trash and Restore retain each original folder and existing drafts/files', async () => {
+    const [, first, second] = await pair()
+    await bulk([second!.id], 'archive')
+    const reply = await newDraft({ conversationId: first!.id })
+    const original = await open(first!.id)
+    const ids = [first!.id, second!.id]
+
+    expect((await bulk(ids, 'trash')).status).toBe(200)
+    const trashedAt = (await open(first!.id)).conversation.trashedAt
+    expect((await bulk(ids, 'trash')).status).toBe(200)
+    expect((await open(first!.id)).conversation.trashedAt).toBe(trashedAt)
+    expect((await call('GET', '/owner/inbox/counts')).body.data).toMatchObject({ inbox: 1, archived: 0, trash: 2, drafts: 1 })
+    expect((await bulk(ids, 'restore')).status).toBe(200)
+    expect((await bulk(ids, 'restore')).status).toBe(200)
+    expect((await open(first!.id)).conversation).toMatchObject({ folder: 'inbox', trashedAt: null })
+    expect((await open(second!.id)).conversation).toMatchObject({ folder: 'archived', trashedAt: null })
+    expect((await open(first!.id)).messages).toEqual(original.messages)
+    expect((await call('GET', `/owner/inbox/drafts/${reply.id}`)).status).toBe(200)
+  })
+
+  it('rolls back every selected change if any conversation disappeared', async () => {
+    const [, first] = await pair()
+    const missing = crypto.randomUUID()
+
+    expect((await bulk([first!.id, missing], 'mark-read')).status).toBe(404)
+    expect((await open(first!.id)).conversation.isRead).toBe(false)
+  })
+
+  it('refuses an archive action including Trash, without moving other selected threads', async () => {
+    const [, first, second] = await pair()
+    await bulk([second!.id], 'trash')
+
+    for (const action of ['archive', 'unarchive']) {
+      expect((await bulk([first!.id, second!.id], action)).status).toBe(409)
+      expect((await open(first!.id)).conversation.folder).toBe('inbox')
+      expect((await open(second!.id)).conversation.folder).toBe('trash')
+    }
+  })
+
+  it('refuses empty, excessive, malformed and destructive/send operations', async () => {
+    for (const [ids, action] of [
+      [[], 'mark-read'],
+      [Array.from({ length: 101 }, () => crypto.randomUUID()), 'trash'],
+      [['not-an-id'], 'star'],
+      [[crypto.randomUUID()], 'delete'],
+      [[crypto.randomUUID()], 'send'],
+    ] as const) expect((await bulk([...ids], action)).status).toBe(422)
+  })
+
+  it('requires an owner session before a bulk mutation', async () => {
+    const [first] = await pair()
+    process.env.BACKEND2_OWNER_AUTH = 'required'
+
+    expect((await bulk([first!.id], 'trash')).status).toBe(401)
+    delete process.env.BACKEND2_OWNER_AUTH
+    expect((await open(first!.id)).conversation.folder).toBe('inbox')
+  })
+})
+
 describe('receiving mail', () => {
   it('files a first incoming email as a new unread conversation', async () => {
     const result = await deliver(letter())

@@ -1,27 +1,25 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Loader2, PenSquare, Search, Settings2, Star, Trash2 } from 'lucide-react'
-import type { ConversationSummary } from '#/backend2/contracts/inbox.contract'
-import { PageHead, StatusChip } from '#/frontend/dashboard/primitives'
+import { INBOX_LIMITS, type BulkConversationAction, type ConversationSummary } from '#/backend2/contracts/inbox.contract'
+import { StatusChip } from '#/frontend/dashboard/primitives'
 import { BlogDialog, DialogActions, DialogAlert, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
 import { createDraft } from '#/frontend/features/inbox-v2/api'
-import { useConversations, useDrafts, useEmptyTrash, useInboxCounts, useRememberDraft } from '#/frontend/features/inbox-v2/queries'
+import { useBulkConversations, useConversations, useDrafts, useEmptyTrash, useInboxCounts, usePrefetchInbox, useRefreshInbox, useRememberDraft } from '#/frontend/features/inbox-v2/queries'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { cn } from '#/frontend/lib/utils'
 import type { InboxSearch } from '#/frontend/routes/dashboard.inbox'
 import { CountBadge, EmptyState, LoadFailure, Pager } from '../blog/blog-parts'
-import { Composer } from './Composer'
-import { ConversationPane } from './ConversationPane'
-import { InboxSettingsDialog } from './InboxSettingsDialog'
+import { InboxBulkBar } from './InboxBulkBar'
 import { listTime } from './inbox-parts'
 
-/**
- * The owner's mailbox at `/dashboard/inbox` (`docs/v2/inbox.md`, approved
- * Design Lab 1A–7A): the list and the conversation side by side on a wide
- * screen, one after the other on a phone. Folders are tabs above the list —
- * Archived and Trash are always visible. Everything the screen shows lives in
- * the address, so Back, reload and a shared link all land in the same place.
- */
+const loadReader = () => import('./ConversationPane')
+const warmReader = () => { void loadReader().catch(() => {}) }
+const Composer = lazy(() => import('./Composer').then((module) => ({ default: module.Composer })))
+const ConversationPane = lazy(() => loadReader().then((module) => ({ default: module.ConversationPane })))
+const InboxSettingsDialog = lazy(() => import('./InboxSettingsDialog').then((module) => ({ default: module.InboxSettingsDialog })))
+
+/** The owner's approved Compact workspace; the URL owns navigation. */
 
 const FOLDERS = [
   ['inbox', 'Inbox'],
@@ -38,25 +36,32 @@ const EMPTY: Record<string, [string, string]> = {
   trash: ['Trash is empty', 'Conversations stay in Trash until you delete them. Nothing is removed automatically.'],
 }
 
-function Row({ item, active, sent, onOpen }: { item: ConversationSummary; active: boolean; sent: boolean; onOpen: () => void }) {
+function Row({ item, active, sent, onOpen, prefetch, selected, disabled, onSelect }: { item: ConversationSummary; active: boolean; sent: boolean; onOpen: () => void; selected: boolean; disabled: boolean; onSelect: () => void; prefetch: ReturnType<typeof usePrefetchInbox> }) {
   const unread = !item.isRead
 
   return (
-    <li>
+    <li className={cn('flex border-b border-[var(--dash-line)]', (active || selected) && 'bg-[var(--dash-blue-tint)]')}>
+      <label className="flex w-10 shrink-0 cursor-pointer items-start justify-center pt-3.5">
+        <input type="checkbox" className="size-4 accent-[var(--dash-brand)]" checked={selected} disabled={disabled} onChange={onSelect} aria-label={`Select ${item.subject || '(no subject)'}`} />
+      </label>
       <button
         type="button"
+        disabled={disabled}
         onClick={onOpen}
+        onMouseEnter={() => prefetch.hoverConversation(item.id)}
+        onMouseLeave={prefetch.cancel}
+        onFocus={() => prefetch.conversation(item.id)}
+        onBlur={prefetch.cancel}
+        onTouchStart={() => prefetch.conversation(item.id)}
         aria-current={active ? 'true' : undefined}
         className={cn(
-          'grid w-full grid-cols-[16px_minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 border-b border-[var(--dash-line)] px-3.5 py-2.5 text-start hover:bg-[var(--dash-hover)]',
+          'grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 pe-3 py-2.5 text-start hover:bg-[var(--dash-hover)]',
           active && 'bg-[var(--dash-blue-tint)] hover:bg-[var(--dash-blue-tint)]',
         )}
       >
-        <span className="row-span-3 pt-1">
-          {item.isStarred ? <Star className="size-3 fill-[#d99a00] text-[#d99a00]" aria-label="Starred" /> : null}
-        </span>
         <span className={cn('min-w-0 truncate text-[13.5px]', unread && 'font-semibold')}>
           {unread ? <span className="me-1.5 inline-block size-[7px] rounded-full bg-[var(--dash-brand)] align-middle" aria-hidden="true" /> : null}
+          {item.isStarred ? <Star className="me-1 inline size-3 fill-[#d99a00] text-[#d99a00]" aria-label="Starred" /> : null}
           {sent ? 'To: ' : ''}
           {item.counterpartName || item.counterpartEmail}
           {unread ? <span className="sr-only">, unread</span> : null}
@@ -146,6 +151,15 @@ export function InboxPage() {
   const [emptying, setEmptying] = useState(false)
   const [creating, setCreating] = useState(false)
   const rememberDraft = useRememberDraft()
+  const prefetch = usePrefetchInbox(warmReader)
+  const bulk = useBulkConversations()
+  const refresh = useRefreshInbox()
+  const [selection, setSelection] = useState<{ scope: string; ids: string[] }>({ scope: '', ids: [] })
+  const [bulkFailure, setBulkFailure] = useState<{ scope: string; message: string } | null>(null)
+  const selectAll = useRef<HTMLInputElement>(null)
+  const currentSearch = useRef(search)
+  currentSearch.current = search
+  const ownQuery = useRef<string | undefined>(undefined)
 
   const go = (patch: Partial<InboxSearch>, replace = false) =>
     void navigate({ search: (previous: InboxSearch) => ({ ...previous, ...patch }), replace })
@@ -153,12 +167,21 @@ export function InboxPage() {
   // The search box writes to the address a moment after typing stops.
   useEffect(() => {
     const handle = window.setTimeout(() => {
-      if ((search.q ?? '') !== query.trim()) go({ q: query.trim() || undefined, page: undefined }, true)
+      if ((search.q ?? '') !== query.trim()) {
+        ownQuery.current = query.trim()
+        go({ q: query.trim() || undefined, page: undefined }, true)
+      }
     }, 350)
 
     return () => window.clearTimeout(handle)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
+
+  useEffect(() => {
+    const value = search.q ?? ''
+    if (ownQuery.current === value) ownQuery.current = undefined
+    else setQuery(value)
+  }, [search.q])
 
   const counts = useInboxCounts()
   const list = useConversations(
@@ -167,9 +190,61 @@ export function InboxPage() {
   )
   const drafts = useDrafts(page, view === 'drafts')
 
+  const scope = JSON.stringify([view, page, search.q ?? '', search.filter ?? 'all'])
+  const freshList = view !== 'drafts' && list.isSuccess && !list.isPlaceholderData
+  const pageIds = freshList ? list.data.items.map((item) => item.id) : []
+  const selected = selection.scope === scope ? selection.ids.filter((id) => pageIds.includes(id)) : []
+  const selectionDisabled = !freshList || bulk.isPending
+  const allSelected = pageIds.length > 0 && selected.length === pageIds.length
+
+  useEffect(() => {
+    if (selectAll.current) selectAll.current.indeterminate = selected.length > 0 && !allSelected
+  }, [selected.length, allSelected])
+
+  // Remove disappearing rows after a refresh. A URL change clears selection
+  // immediately, including when React Query temporarily shows the old page.
+  useEffect(() => {
+    setSelection((previous) => {
+      if (previous.scope !== scope) return { scope, ids: [] }
+      if (!freshList) return previous
+      const ids = previous.ids.filter((id) => list.data.items.some((item) => item.id === id))
+      return ids.length === previous.ids.length ? previous : { scope, ids }
+    })
+  }, [scope, freshList, list.data])
+
+  useEffect(() => {
+    const data = view === 'drafts' ? (drafts.isPlaceholderData ? undefined : drafts.data) : freshList ? list.data : undefined
+    if (data && page > Math.max(1, data.pageCount)) go({ page: data.pageCount > 1 ? data.pageCount : undefined }, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, page, freshList, list.data, drafts.data, drafts.isPlaceholderData])
+
+  const runBulk = async (action: BulkConversationAction) => {
+    if (selectionDisabled || selected.length === 0) return
+    const ids = [...selected]
+    const startedScope = scope
+    setBulkFailure(null)
+    try {
+      await bulk.mutateAsync({ action, conversationIds: ids })
+      setSelection((previous) => previous.scope === startedScope ? { scope: startedScope, ids: [] } : previous)
+      const labels: Record<BulkConversationAction, string> = {
+        'mark-read': 'Marked read', 'mark-unread': 'Marked unread', star: 'Starred', unstar: 'Stars removed',
+        archive: 'Archived', unarchive: 'Moved to Inbox', trash: 'Moved to Trash', restore: 'Restored',
+      }
+      notify.success(`${labels[action]} · ${ids.length} conversation${ids.length === 1 ? '' : 's'}`)
+      const current = currentSearch.current
+      if (ids.includes(current.c ?? '') && ['archive', 'unarchive', 'trash', 'restore', 'mark-unread'].includes(action)) {
+        go({ c: undefined, draft: undefined })
+      }
+    } catch (error) {
+      setBulkFailure({ scope: startedScope, message: `${messageFromError(error)} Refresh the list or try again to confirm the update.` })
+    }
+  }
+
   const reading = Boolean(search.c || search.draft)
 
   const startNew = async () => {
+    if (creating) return
+    void import('./Composer').catch(() => {})
     setCreating(true)
 
     try {
@@ -189,6 +264,7 @@ export function InboxPage() {
 
     if (!data) return { quiet: true, label: '' }
     if (key === 'inbox') return { n: data.inboxUnread || undefined, quiet: false, label: 'unread' }
+    if (key === 'sent') return { n: data.sent || undefined, quiet: true, label: 'sent' }
     if (key === 'drafts') return { n: data.drafts || undefined, quiet: true, label: 'drafts' }
     if (key === 'archived') return { n: data.archived || undefined, quiet: true, label: 'archived' }
     if (key === 'trash') return { n: data.trash || undefined, quiet: true, label: 'in Trash' }
@@ -199,35 +275,13 @@ export function InboxPage() {
   const folderLabel = FOLDERS.find(([key]) => key === view)?.[1] ?? 'Inbox'
 
   const listPane = (
-    <section aria-label={`${folderLabel} list`} className={cn('flex min-h-0 min-w-0 flex-1 flex-col border-[var(--dash-line)] xl:w-[380px] xl:flex-none xl:shrink-0 xl:border-e', reading && 'hidden xl:flex')}>
-      <nav aria-label="Inbox folders" className="flex gap-0.5 overflow-x-auto border-b border-[var(--dash-line)] px-2 [scrollbar-width:none]">
-        {FOLDERS.map(([key, label]) => {
-          const count = countFor(key)
-
-          return (
-            <button
-              key={key}
-              type="button"
-              aria-current={view === key ? 'page' : undefined}
-              onClick={() => go({ view: key === 'inbox' ? undefined : key, page: undefined, c: undefined, draft: undefined, filter: undefined })}
-              className={cn(
-                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-[13px] font-semibold whitespace-nowrap',
-                view === key ? 'border-[var(--dash-brand)] text-[var(--dash-brand)]' : 'border-transparent text-[var(--dash-quiet)] hover:text-[var(--dash-ink)]',
-              )}
-            >
-              {label}
-              {count.n ? <CountBadge count={count.n} quiet={count.quiet} label={count.label} /> : null}
-            </button>
-          )
-        })}
-      </nav>
-
+    <section aria-label={`${folderLabel} list`} className="dash-inbox-list">
       {view !== 'drafts' ? (
         <div className="flex flex-col gap-2 border-b border-[var(--dash-line)] px-3 py-2.5">
           <label className="relative block">
             <span className="sr-only">Search mail</span>
             <Search className="pointer-events-none absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--dash-quiet)]" aria-hidden="true" />
-            <input className="dash-field h-9 w-full ps-8 pe-2 text-[13px]" placeholder="Search people, subjects, text" value={query} onChange={(event) => setQuery(event.target.value)} />
+            <input className="dash-field h-9 w-full ps-8 pe-2 text-[13px]" placeholder="Search people, subjects, text" maxLength={INBOX_LIMITS.searchQuery} value={query} onChange={(event) => setQuery(event.target.value)} />
           </label>
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter">
             {view !== 'trash'
@@ -259,7 +313,14 @@ export function InboxPage() {
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      {view !== 'drafts' ? (
+        <div className="flex min-h-10 items-center gap-2 border-b border-[var(--dash-line)] px-3 text-[12px] text-[var(--dash-quiet)]">
+          <input ref={selectAll} type="checkbox" className="size-4 accent-[var(--dash-brand)]" aria-label="Select all conversations on this page" checked={allSelected} disabled={selectionDisabled || !pageIds.length} onChange={(event) => setSelection({ scope, ids: event.target.checked ? pageIds : [] })} />
+          <span>Select this page</span>
+          {list.isFetching ? <Loader2 className="ms-auto size-3.5 animate-spin" aria-label="Updating list" /> : null}
+        </div>
+      ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto" aria-busy={list.isPlaceholderData || drafts.isPlaceholderData}>
         {view === 'drafts' ? (
           drafts.isPending ? (
             <ListSkeleton />
@@ -273,6 +334,9 @@ export function InboxPage() {
                 <li key={draft.id}>
                   <button
                     type="button"
+                    disabled={drafts.isPlaceholderData}
+                    onMouseEnter={() => { void import('./Composer').catch(() => {}) }}
+                    onFocus={() => { void import('./Composer').catch(() => {}) }}
                     onClick={() => go({ draft: draft.id, c: draft.conversationId ?? undefined })}
                     aria-current={search.draft === draft.id ? 'true' : undefined}
                     className={cn(
@@ -301,9 +365,9 @@ export function InboxPage() {
             {search.q || search.filter ? 'Try another filter or search.' : EMPTY[view]![1]}
           </EmptyState>
         ) : (
-          <ul aria-label={folderLabel}>
+          <ul aria-label={folderLabel} className={list.isPlaceholderData ? 'opacity-50' : undefined}>
             {list.data.items.map((item) => (
-              <Row key={item.id} item={item} sent={view === 'sent'} active={search.c === item.id} onOpen={() => go({ c: item.id, draft: undefined })} />
+              <Row key={item.id} item={item} sent={view === 'sent'} active={search.c === item.id} onOpen={() => go({ c: item.id, draft: undefined })} prefetch={prefetch} selected={selected.includes(item.id)} disabled={selectionDisabled} onSelect={() => setSelection({ scope, ids: selected.includes(item.id) ? selected.filter((id) => id !== item.id) : [...selected, item.id] })} />
             ))}
           </ul>
         )}
@@ -352,7 +416,7 @@ export function InboxPage() {
     )
   } else {
     readingPane = (
-      <div className="hidden flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-[13px] text-[var(--dash-quiet)] xl:flex">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-[13px] text-[var(--dash-quiet)]">
         <p className="text-sm font-semibold text-[var(--dash-ink)]">No conversation open</p>
         <p>Choose one from the list, or start a new message.</p>
       </div>
@@ -361,29 +425,59 @@ export function InboxPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-4.5rem)] w-full max-w-[96rem] flex-col gap-4 p-4 sm:p-6">
-      <PageHead
-        eyebrow="INBOX"
-        title="Inbox"
-        description="info@yamanwarda.de — every email to it, one conversation per first email."
-        actions={
-          <>
-            <button type="button" className="dash-btn dash-btn-ghost" aria-label="Signatures & replies" onClick={() => go({ settings: true })}>
-              <Settings2 className="size-4" aria-hidden="true" /> <span className="hidden sm:inline">Signatures &amp; replies</span>
-            </button>
-            <button type="button" className="dash-btn dash-btn-primary" onClick={() => void startNew()} disabled={creating}>
-              {creating ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <PenSquare className="size-4" aria-hidden="true" />}
-              New message
-            </button>
-          </>
-        }
-      />
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="dash-title text-[26px] leading-tight">Inbox</h1>
+          <p className="mt-1 text-[12.5px] text-[var(--dash-quiet)]" dir="ltr">info@yamanwarda.de</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button type="button" className="dash-btn dash-btn-ghost" aria-label="Signatures & replies" onClick={() => go({ settings: true })}>
+            <Settings2 className="size-4" aria-hidden="true" /> <span className="hidden sm:inline">Signatures &amp; replies</span>
+          </button>
+          <button type="button" className="dash-btn dash-btn-primary" onClick={() => void startNew()} disabled={creating}>
+            {creating ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <PenSquare className="size-4" aria-hidden="true" />} New message
+          </button>
+        </div>
+      </header>
 
-      <div className="dash-panel flex min-h-0 flex-1 overflow-hidden">
-        {listPane}
-        <div className={cn('min-h-0 min-w-0 flex-1 flex-col', reading ? 'flex' : 'hidden xl:flex')}>{readingPane}</div>
+      <div className="dash-panel dash-inbox-panel flex min-h-0 flex-1 flex-col overflow-hidden">
+        <InboxBulkBar count={selected.length} view={view} disabled={selectionDisabled} busy={bulk.isPending} refreshing={view === 'drafts' ? drafts.isFetching : list.isFetching} failure={bulkFailure?.scope === scope ? bulkFailure.message : null} onAction={(action) => void runBulk(action)} onClear={() => { setSelection({ scope, ids: [] }); setBulkFailure(null) }} onRefresh={() => void refresh()} />
+      <nav aria-label="Inbox folders" className="flex flex-wrap gap-0.5 border-b border-[var(--dash-line)] px-2">
+        {FOLDERS.map(([key, label]) => {
+          const count = countFor(key)
+
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-current={view === key ? 'page' : undefined}
+              onClick={() => go({ view: key === 'inbox' ? undefined : key, page: undefined, c: undefined, draft: undefined, filter: undefined })}
+              onMouseEnter={() => { if (key !== 'drafts') prefetch.hoverFolder(key) }}
+              onMouseLeave={prefetch.cancel}
+              onFocus={() => { if (key !== 'drafts') prefetch.folder(key) }}
+              onBlur={prefetch.cancel}
+              className={cn(
+                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-[13px] font-semibold whitespace-nowrap',
+                view === key ? 'border-[var(--dash-brand)] text-[var(--dash-brand)]' : 'border-transparent text-[var(--dash-quiet)] hover:text-[var(--dash-ink)]',
+              )}
+            >
+              {label}
+              {count.n ? <CountBadge count={count.n} quiet={count.quiet} label={count.label} /> : null}
+            </button>
+          )
+        })}
+      </nav>
+        <div className="dash-inbox-body" data-reading={reading}>
+          {listPane}
+          <div className="dash-inbox-reader">
+            <Suspense fallback={<div role="status" className="flex flex-1 flex-col items-start gap-3 p-5"><button type="button" className="dash-btn dash-btn-ghost" onClick={back}>Back to {folderLabel}</button>Opening mail…</div>}>
+              {readingPane}
+            </Suspense>
+          </div>
+        </div>
       </div>
 
-      {search.settings ? <InboxSettingsDialog onClose={() => go({ settings: undefined }, true)} /> : null}
+      {search.settings ? <Suspense fallback={<div role="status">Opening settings…</div>}><InboxSettingsDialog onClose={() => go({ settings: undefined }, true)} /></Suspense> : null}
       {emptying ? <EmptyTrashDialog count={counts.data?.trash ?? 0} onClose={() => setEmptying(false)} /> : null}
     </div>
   )

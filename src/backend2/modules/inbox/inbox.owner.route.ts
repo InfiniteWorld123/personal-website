@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia'
 import * as v from 'valibot'
 import {
+  BulkConversationSchema,
   ConversationDeleteSchema,
   ConversationDetailQuerySchema,
   ConversationListQuerySchema,
@@ -23,6 +24,7 @@ import { ownerGuard } from '../../security/owner-guard'
 import { ownerJson } from '../media/media.http'
 import { openIncomingAttachment, saveAttachmentToMedia } from './attachment.service'
 import {
+  bulkConversations,
   countInbox,
   deleteConversation,
   emptyTrash,
@@ -63,6 +65,13 @@ export const ownerInboxRoutes = new Elysia({ prefix: '/inbox' })
     ownerJson({
       data: await listConversations(parseInput(ConversationListQuerySchema, query)),
       message: 'Conversations loaded',
+    }),
+  )
+
+  .post('/conversations/bulk', async ({ request }) =>
+    ownerJson({
+      data: await bulkConversations(parseInput(BulkConversationSchema, await readJsonBody(request))),
+      message: 'Selected conversations updated',
     }),
   )
 
@@ -247,6 +256,7 @@ const SAMPLE = '11111111-1111-4111-8111-111111111111'
 export const ownerInboxPaths = [
   { method: 'GET', path: '/api/v2/owner/inbox/counts' },
   { method: 'GET', path: '/api/v2/owner/inbox/conversations' },
+  { method: 'POST', path: '/api/v2/owner/inbox/conversations/bulk' },
   { method: 'GET', path: `/api/v2/owner/inbox/conversations/${SAMPLE}` },
   { method: 'PATCH', path: `/api/v2/owner/inbox/conversations/${SAMPLE}` },
   { method: 'POST', path: `/api/v2/owner/inbox/conversations/${SAMPLE}/trash` },

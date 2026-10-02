@@ -1,10 +1,11 @@
-import { useCallback } from 'react'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo } from 'react'
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import type { ConversationDetail, InboxDraft, InboxLanguage } from '#/backend2/contracts/inbox.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import {
   type ConversationsQuery,
   type SnippetInput,
+  bulkConversations,
   createSnippet,
   deleteConversation,
   deleteSnippet,
@@ -25,11 +26,7 @@ import {
   updateSnippet,
 } from './api'
 
-/**
- * What the Inbox reads, and what is re-read after each write. One prefix,
- * invalidated whole: an archive changes a count, a folder and a row at once,
- * and a stale "3 unread" is the label that must never be wrong.
- */
+/** Shared keys let hover and opening consume the same deduplicated request. */
 export const inboxKeys = {
   all: ['backend2', 'inbox'] as const,
   counts: () => [...inboxKeys.all, 'counts'] as const,
@@ -44,16 +41,25 @@ export const inboxKeys = {
 const retry = (attempt: number, error: unknown) =>
   !(error instanceof ApiRequestError && error.status < 500) && attempt < 2
 
-export const useConversations = (query: ConversationsQuery, enabled = true) =>
-  useQuery({
+export const conversationListOptions = (input: ConversationsQuery) => {
+  const query = {
+    ...input, unread: input.unread || undefined, starred: input.starred || undefined,
+    q: input.q?.trim() || undefined, pageSize: input.pageSize ?? 25,
+  }
+
+  return queryOptions({
     queryKey: inboxKeys.list(query),
-    queryFn: () => listConversations(query),
+    queryFn: ({ signal }) => listConversations(query, signal),
     placeholderData: (previous) => previous,
-    enabled,
+    staleTime: 20_000,
     retry,
     // New mail arrives on its own; the list notices within a minute.
     refetchInterval: 60_000,
   })
+}
+
+export const useConversations = (query: ConversationsQuery, enabled = true) =>
+  useQuery({ ...conversationListOptions(query), enabled })
 
 /**
  * The unread count beside Inbox in the sidebar (approved choice 6A). Quiet
@@ -72,13 +78,13 @@ export const useInboxCounts = () =>
  * One conversation, newest page first. "Show earlier messages" fetches the
  * next page back rather than the whole history.
  */
-export const useConversation = (id: string | null) =>
-  useInfiniteQuery<ConversationDetail>({
-    queryKey: inboxKeys.conversation(id ?? ''),
-    queryFn: ({ pageParam }) => readConversation(id!, pageParam as number),
+export const conversationOptions = (id: string) =>
+  infiniteQueryOptions({
+    queryKey: inboxKeys.conversation(id),
+    queryFn: ({ pageParam, signal }) => readConversation(id, pageParam, signal),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.messages.hasMore ? last.messages.page + 1 : undefined),
-    enabled: id !== null,
+    staleTime: 20_000,
     retry,
     // An interrupted request becomes recoverable after two minutes. Keep
     // checking while it is pending, then stop once its outcome is visible.
@@ -86,6 +92,48 @@ export const useConversation = (id: string | null) =>
       page.messages.items.some((message) => message.delivery?.status === 'sending'),
     ) ? 5_000 : false,
   })
+
+export const useConversation = (id: string | null) =>
+  useInfiniteQuery({ ...conversationOptions(id ?? ''), enabled: id !== null })
+
+/** Read-only intent loading. A quick mouse crossing starts no request. */
+export const createInboxPrefetcher = (client: QueryClient, warmReader?: () => void) => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const cancel = () => { clearTimeout(timer); timer = undefined }
+  const allowed = () => {
+    const connection = typeof navigator === 'undefined' ? undefined
+      : (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+
+    return !connection?.saveData && !['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
+  }
+  const conversation = (id: string) => {
+    if (id && allowed()) {
+      warmReader?.()
+      void client.prefetchInfiniteQuery(conversationOptions(id))
+    }
+  }
+  const folder = (view: ConversationsQuery['view']) => {
+    if (allowed()) void client.prefetchQuery(conversationListOptions({ view, page: 1 }))
+  }
+  const schedule = (load: () => void) => {
+    cancel()
+    timer = setTimeout(() => { timer = undefined; load() }, 120)
+  }
+
+  return {
+    conversation, folder, cancel,
+    hoverConversation: (id: string) => schedule(() => conversation(id)),
+    hoverFolder: (view: ConversationsQuery['view']) => schedule(() => folder(view)),
+  }
+}
+
+export const usePrefetchInbox = (warmReader?: () => void) => {
+  const client = useQueryClient()
+  const prefetch = useMemo(() => createInboxPrefetcher(client, warmReader), [client, warmReader])
+  useEffect(() => prefetch.cancel, [prefetch])
+
+  return prefetch
+}
 
 export const useDrafts = (page: number, enabled = true) =>
   useQuery({
@@ -132,10 +180,43 @@ const useInboxMutation = <TInput, TResult>(fn: (input: TInput) => Promise<TResul
   return useMutation({ mutationFn: fn, onSettled: () => refresh() })
 }
 
-export const usePatchConversation = () =>
-  useInboxMutation((input: { id: string; isRead?: boolean; isStarred?: boolean; archived?: boolean }) =>
-    patchConversation(input.id, { isRead: input.isRead, isStarred: input.isStarred, archived: input.archived }),
-  )
+export const usePatchConversation = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { id: string; isRead?: boolean; isStarred?: boolean; archived?: boolean }) =>
+      patchConversation(input.id, { isRead: input.isRead, isStarred: input.isStarred, archived: input.archived }),
+    onSuccess: (summary) => {
+      client.setQueryData<InfiniteData<ConversationDetail>>(inboxKeys.conversation(summary.id), (cached) => cached ? {
+        ...cached, pages: cached.pages.map((page) => ({
+          ...page, conversation: { ...page.conversation, ...summary },
+        })),
+      } : undefined)
+    },
+    onSettled: async (_data, error, input) => {
+      // A read/star/folder flag does not change message bodies or draft text.
+      // Do not reload every cached history page just to mark the open mail read.
+      await Promise.all([
+        client.invalidateQueries({ queryKey: inboxKeys.counts() }),
+        client.invalidateQueries({ queryKey: [...inboxKeys.all, 'list'] }),
+        ...(error ? [client.invalidateQueries({ queryKey: inboxKeys.conversation(input.id) })] : []),
+      ])
+    },
+  })
+}
+
+export const useBulkConversations = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    mutationFn: bulkConversations,
+    onSettled: (_result, _error, input) => client.invalidateQueries({
+      queryKey: inboxKeys.all,
+      predicate: (query) => ['counts', 'list', 'drafts'].includes(String(query.queryKey[2]))
+        || (query.queryKey[2] === 'conversation' && input.conversationIds.includes(String(query.queryKey[3]))),
+    }),
+  })
+}
 
 export const useTrashConversation = () => useInboxMutation(trashConversation)
 export const useRestoreConversation = () => useInboxMutation(restoreConversation)

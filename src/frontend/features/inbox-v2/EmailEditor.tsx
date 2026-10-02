@@ -49,6 +49,7 @@ export function EmailEditor({
   labelledBy,
   invalid,
   describedBy,
+  disabled = false,
 }: {
   value: RichTextDoc
   onChange: (doc: RichTextDoc) => void
@@ -57,6 +58,7 @@ export function EmailEditor({
   labelledBy: string
   invalid?: boolean
   describedBy?: string
+  disabled?: boolean
 }) {
   const [link, setLink] = useState<{ from: number; to: number; text: string; href: string } | null>(null)
   const editor = useEditor({
@@ -87,6 +89,11 @@ export function EmailEditor({
     if (editor) onReady?.(editor)
   }, [editor, onReady])
 
+  useEffect(() => {
+    editor?.setEditable(!disabled)
+    editor?.view.dom.setAttribute('aria-disabled', String(disabled))
+  }, [editor, disabled])
+
   // The invalid state is set after the editor exists, so it follows the form.
   useEffect(() => {
     const element = editor?.view.dom
@@ -108,9 +115,9 @@ export function EmailEditor({
   }
 
   return (
-    <div className={cn('dash-email-editor overflow-hidden rounded-[10px] border bg-[var(--dash-input)]', invalid ? 'border-[var(--dash-red)]' : 'border-[var(--dash-line)]')}>
+    <div className={cn('dash-email-editor overflow-hidden rounded-[6px] border bg-[var(--dash-input)]', invalid ? 'border-[var(--dash-red)]' : 'border-[var(--dash-line)]')}>
       {editor ? (
-        <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 border-b border-[var(--dash-line)] p-1">
+        <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 border-b border-[var(--dash-line)] bg-[var(--dash-furniture)] p-1">
           <ToolbarButton label="Bold" icon={<Bold className="size-4" />} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
           <ToolbarButton label="Italic" icon={<Italic className="size-4" />} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} />
           <ToolbarButton label="Underline" icon={<UnderlineIcon className="size-4" />} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} />

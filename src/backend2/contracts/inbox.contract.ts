@@ -46,6 +46,8 @@ export const INBOX_LIMITS = {
   maxAttachmentBytes: 25 * 1024 * 1024,
   /** Messages per page when a long conversation is opened. */
   messagePage: 20,
+  /** One explicitly selected, bounded page of conversations. */
+  bulkConversations: 100,
 } as const
 
 /* ------------------------------------------------------------------- shapes */
@@ -276,6 +278,28 @@ export const ConversationPatchSchema = v.pipe(
     'Nothing to change',
   ),
 )
+
+export const BULK_CONVERSATION_ACTIONS = [
+  'mark-read', 'mark-unread', 'star', 'unstar', 'archive', 'unarchive', 'trash', 'restore',
+] as const
+
+/** Reversible management only; this endpoint cannot send or permanently delete. */
+export const BulkConversationSchema = v.object({
+  action: v.picklist(BULK_CONVERSATION_ACTIONS, 'Choose a mailbox action'),
+  conversationIds: v.pipe(
+    v.array(Uuid),
+    v.minLength(1, 'Select at least one conversation'),
+    v.maxLength(INBOX_LIMITS.bulkConversations, `Select at most ${INBOX_LIMITS.bulkConversations} conversations`),
+    v.transform((ids) => [...new Set(ids.map((id) => id.toLowerCase()))].sort()),
+  ),
+})
+
+export type BulkConversationInput = v.InferOutput<typeof BulkConversationSchema>
+export type BulkConversationAction = BulkConversationInput['action']
+export type BulkConversationResult = {
+  action: BulkConversationAction
+  conversationIds: string[]
+}
 
 /** Permanent deletion asks for the conversation's own id back. */
 export const ConversationDeleteSchema = v.object({ confirm: Uuid })

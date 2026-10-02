@@ -481,6 +481,46 @@
     outline-offset: 2px;
   }
 
+  /* Mailbox space is measured after the dashboard sidebar takes its share. */
+  [data-dashboard] .dash-inbox-panel {
+    container: mailbox / inline-size;
+  }
+
+  [data-dashboard] .dash-inbox-body,
+  [data-dashboard] .dash-inbox-list,
+  [data-dashboard] .dash-inbox-reader {
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    flex: 1;
+  }
+
+  [data-dashboard] .dash-inbox-list,
+  [data-dashboard] .dash-inbox-reader {
+    flex-direction: column;
+  }
+
+  [data-dashboard] .dash-inbox-body[data-reading='false'] .dash-inbox-reader,
+  [data-dashboard] .dash-inbox-body[data-reading='true'] .dash-inbox-list {
+    display: none;
+  }
+
+  @container mailbox (min-width: 800px) {
+    [data-dashboard] .dash-inbox-body[data-reading] .dash-inbox-list {
+      display: flex;
+      flex: 0 0 320px;
+      border-inline-end: 1px solid var(--dash-line);
+    }
+
+    [data-dashboard] .dash-inbox-body[data-reading] .dash-inbox-reader {
+      display: flex;
+    }
+
+    [data-dashboard] .dash-inbox-back {
+      display: none;
+    }
+  }
+
   /* ── Form controls ────────────────────────────────────────────
      One class for every input, select and textarea on this surface. Stated
      here rather than as utilities beside each field because the border and

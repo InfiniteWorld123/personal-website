@@ -12,8 +12,8 @@ vi.mock('#/frontend/features/inbox-v2/api', async (original) => ({ ...(await ori
 vi.mock('#/frontend/features/media/MediaPicker', () => ({ MediaPicker: () => null }))
 vi.mock('#/frontend/features/inbox-v2/EmailEditor', () => ({
   textToParagraphs: (text: string) => [{ type: 'paragraph', content: [{ type: 'text', text }] }],
-  EmailEditor: ({ value, onChange }: { value: RichTextDoc; onChange: (doc: RichTextDoc) => void }) => (
-    <textarea aria-label="Message" value={richTextToPlainText(value)} onChange={(event) => onChange(doc(event.target.value))} />
+  EmailEditor: ({ value, onChange, disabled }: { value: RichTextDoc; onChange: (doc: RichTextDoc) => void; disabled?: boolean }) => (
+    <textarea aria-label="Message" disabled={disabled} value={richTextToPlainText(value)} onChange={(event) => onChange(doc(event.target.value))} />
   ),
 }))
 
@@ -95,4 +95,23 @@ describe('draft persistence in the composer', () => {
     expect(localDraft.read<InboxDraft>('qa-draft')?.bodyDoc).toEqual(doc('Newer unsaved edit'))
     expect(client.getQueryData<InboxDraft>(inboxKeys.draft('qa-draft'))?.bodyDoc).toEqual(doc('First edit'))
   })
+  it('locks the whole draft while confirmed blank-subject sending is pending', async () => {
+    let finish!: (value: unknown) => void
+    api.sendDraft.mockImplementation(() => new Promise((resolve) => { finish = resolve }))
+    mount()
+    fireEvent.change(await screen.findByLabelText('To'), { target: { value: 'qa@example.com' } })
+    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Send anyway' }))
+    await waitFor(() => expect(api.sendDraft).toHaveBeenCalledTimes(1))
+    const pending = screen.getByRole('button', { name: 'Sending…' }) as HTMLButtonElement
+    expect(pending.disabled).toBe(true)
+    expect((screen.getByLabelText('Message') as HTMLTextAreaElement).disabled).toBe(true)
+    expect((screen.getByLabelText('To') as HTMLInputElement).closest('fieldset')?.disabled).toBe(true)
+    fireEvent.click(pending)
+    expect(api.sendDraft).toHaveBeenCalledTimes(1)
+    await act(async () => finish({ conversationId: 'qa-conversation', message: { delivery: { status: 'accepted', provider: 'fake' } } }))
+    await waitFor(() => expect(screen.queryByLabelText('Subject')).toBeNull())
+  })
+
 })

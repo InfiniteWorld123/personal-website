@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -30,8 +30,10 @@ import {
 } from '#/frontend/features/inbox-v2/queries'
 import { messageFromError, notify } from '#/frontend/lib/notify'
 import { cn } from '#/frontend/lib/utils'
-import { Composer } from './Composer'
 import { fileBadge, fileSize, fullTime } from './inbox-parts'
+
+const loadComposer = () => import('./Composer')
+const Composer = lazy(() => loadComposer().then((module) => ({ default: module.Composer })))
 
 /**
  * One conversation, read like a letter exchange: oldest at the top, newest at
@@ -130,13 +132,12 @@ function MessageCard({ message, counterpartName }: { message: InboxMessage; coun
     <article
       aria-label={`${outgoing ? 'You wrote' : `${message.fromName || counterpartName || message.fromEmail} wrote`}, ${fullTime(message.occurredAt)}`}
       className={cn(
-        'flex w-full max-w-[760px] flex-col gap-2 rounded-[12px] border bg-[var(--dash-surface)] px-4 py-3',
-        outgoing ? 'self-end border-[color-mix(in_srgb,var(--dash-brand)_28%,var(--dash-line))]' : 'self-start border-[var(--dash-line)]',
+        'flex w-full flex-col gap-3 border-b border-[var(--dash-line)] bg-[var(--dash-surface)] px-5 py-5',
       )}
     >
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12px]">
         <span className="text-[13px] font-semibold">{outgoing ? 'You' : message.fromName || message.fromEmail}</span>
-        <span className="text-[var(--dash-quiet)]" dir="ltr">{outgoing ? `to ${message.toEmail}` : message.fromEmail}</span>
+        {outgoing || message.fromName ? <span className="text-[var(--dash-quiet)]" dir="ltr">{outgoing ? `to ${message.toEmail}` : message.fromEmail}</span> : null}
         <time className="dash-num ms-auto text-[var(--dash-quiet)]" dateTime={message.occurredAt}>{fullTime(message.occurredAt)}</time>
       </header>
 
@@ -252,11 +253,12 @@ export function ConversationPane({
   const first = detail.data?.pages[0]
   const conversation = first?.conversation
 
-  // Opening an unread conversation marks it read, once.
+  // Automatic read belongs to the first load. An explicit unread command
+  // later must not be undone when its confirmed result enters the cache.
   useEffect(() => {
-    if (conversation && !conversation.isRead && markedRead.current !== conversation.id) {
+    if (conversation && markedRead.current !== conversation.id) {
       markedRead.current = conversation.id
-      patch.mutate({ id: conversation.id, isRead: true })
+      if (!conversation.isRead) patch.mutate({ id: conversation.id, isRead: true })
     }
   }, [conversation, patch])
 
@@ -286,6 +288,7 @@ export function ConversationPane({
   if (detail.isPending) {
     return (
       <div className="flex flex-1 flex-col gap-3 p-5" aria-busy="true">
+        {onBack ? <button type="button" className="dash-btn dash-btn-ghost dash-inbox-back self-start" onClick={onBack}>Back to {backLabel}</button> : null}
         <span className="dash-skeleton h-6 w-2/3 rounded" />
         <span className="dash-skeleton h-4 w-1/3 rounded" />
         <span className="dash-skeleton h-32 w-full rounded-[12px]" />
@@ -311,10 +314,14 @@ export function ConversationPane({
   const total = first!.messages.total
   const trashed = conversation.folder === 'trash'
   const name = conversation.counterpartName || conversation.counterpartEmail
+  const flagsBusy = patch.isPending || trash.isPending || restore.isPending || remove.isPending
 
   const openReply = async () => {
     if (replyDraft) return
 
+    // Start editor loading beside draft creation; reading mail itself should
+    // not download the editor or Media picker.
+    void loadComposer().catch(() => {})
     setOpeningReply(true)
 
     try {
@@ -330,6 +337,7 @@ export function ConversationPane({
   }
 
   const act = async (run: () => Promise<unknown>, message: string, leaves: boolean) => {
+    if (flagsBusy) return
     try {
       await run()
       notify.success(message)
@@ -344,11 +352,11 @@ export function ConversationPane({
     <section aria-labelledby="conversation-title" className="flex min-h-0 flex-1 flex-col">
       <header className="flex flex-col gap-2 border-b border-[var(--dash-line)] px-5 py-3.5">
         {onBack ? (
-          <button type="button" className="dash-btn dash-btn-ghost h-7 self-start px-1 text-[12px] xl:hidden" onClick={onBack}>
+          <button type="button" className="dash-btn dash-btn-ghost h-7 self-start px-1 text-[12px] dash-inbox-back" onClick={onBack}>
             <ArrowLeft className="size-3.5 rtl:-scale-x-100" aria-hidden="true" /> {backLabel}
           </button>
         ) : null}
-        <h2 id="conversation-title" ref={heading} tabIndex={-1} className="dash-title text-[20px] leading-tight outline-none" dir="auto">
+        <h2 id="conversation-title" ref={heading} tabIndex={-1} className="text-[18px] font-semibold leading-tight outline-none" dir="auto">
           {conversation.subject || '(no subject)'}
         </h2>
         <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-[var(--dash-quiet)]">
@@ -376,28 +384,28 @@ export function ConversationPane({
         <div className="flex flex-wrap gap-1">
           {trashed ? (
             <>
-              <button type="button" className="dash-btn dash-btn-quiet h-8 text-[12px]" onClick={() => void act(() => restore.mutateAsync(conversation.id), 'Restored', true)}>
+              <button type="button" className="dash-btn dash-btn-quiet h-8 text-[12px]" disabled={flagsBusy} onClick={() => void act(() => restore.mutateAsync(conversation.id), 'Restored', true)}>
                 <ArchiveRestore className="size-3.5" aria-hidden="true" /> Restore
               </button>
-              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px] text-[var(--dash-red-ink)]" onClick={() => setConfirmDelete(true)}>
+              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px] text-[var(--dash-red-ink)]" disabled={flagsBusy} onClick={() => setConfirmDelete(true)}>
                 <Trash2 className="size-3.5" aria-hidden="true" /> Delete forever…
               </button>
             </>
           ) : (
             <>
-              <button type="button" className="dash-btn dash-btn-quiet h-8 text-[12px]" onClick={() => void openReply()} disabled={openingReply}>
+              <button type="button" className="dash-btn dash-btn-quiet h-8 text-[12px]" onClick={() => void openReply()} disabled={openingReply || flagsBusy || Boolean(replyDraft)}>
                 <Reply className="size-3.5" aria-hidden="true" /> Reply
               </button>
-              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, isRead: false }), 'Marked unread', true)}>
+              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" disabled={flagsBusy} onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, isRead: false }), 'Marked unread', true)}>
                 <MailOpen className="size-3.5" aria-hidden="true" /> Mark unread
               </button>
-              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" aria-pressed={conversation.isStarred} onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, isStarred: !conversation.isStarred }), conversation.isStarred ? 'Star removed' : 'Starred', false)}>
+              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" aria-pressed={conversation.isStarred} disabled={flagsBusy} onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, isStarred: !conversation.isStarred }), conversation.isStarred ? 'Star removed' : 'Starred', false)}>
                 <Star className={cn('size-3.5', conversation.isStarred && 'fill-[#d99a00] text-[#d99a00]')} aria-hidden="true" /> {conversation.isStarred ? 'Starred' : 'Star'}
               </button>
-              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, archived: conversation.folder !== 'archived' }), conversation.folder === 'archived' ? 'Moved to Inbox' : 'Archived — it comes back if they reply', true)}>
+              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px]" disabled={flagsBusy} onClick={() => void act(() => patch.mutateAsync({ id: conversation.id, archived: conversation.folder !== 'archived' }), conversation.folder === 'archived' ? 'Moved to Inbox' : 'Archived — it comes back if they reply', true)}>
                 <Archive className="size-3.5" aria-hidden="true" /> {conversation.folder === 'archived' ? 'Move to Inbox' : 'Archive'}
               </button>
-              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px] text-[var(--dash-red-ink)]" onClick={() => void act(() => trash.mutateAsync(conversation.id), 'Moved to Trash · the whole conversation', true)}>
+              <button type="button" className="dash-btn dash-btn-ghost h-8 text-[12px] text-[var(--dash-red-ink)]" disabled={flagsBusy} onClick={() => void act(() => trash.mutateAsync(conversation.id), 'Moved to Trash · the whole conversation', true)}>
                 <Trash2 className="size-3.5" aria-hidden="true" /> Move to Trash
               </button>
             </>
@@ -405,9 +413,9 @@ export function ConversationPane({
         </div>
       </header>
 
-      <div ref={thread} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-[var(--dash-furniture)] px-5 py-4">
+      <div ref={thread} className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--dash-surface)]">
         {detail.hasNextPage ? (
-          <button type="button" className="dash-btn dash-btn-quiet h-8 self-center text-[12px]" disabled={detail.isFetchingNextPage} onClick={() => void detail.fetchNextPage()}>
+          <button type="button" className="dash-btn dash-btn-quiet my-3 h-8 self-center text-[12px]" disabled={detail.isFetchingNextPage} onClick={() => void detail.fetchNextPage()}>
             {detail.isFetchingNextPage ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : null}
             Show earlier messages ({total - messages.length})
           </button>
@@ -421,6 +429,7 @@ export function ConversationPane({
 
       {!trashed ? (
         replyDraft ? (
+          <Suspense fallback={<p role="status" className="border-t border-[var(--dash-line)] p-4 text-[13px]">Opening your reply…</p>}>
           <Composer
             draftId={replyDraft}
             mode="reply"
@@ -431,9 +440,10 @@ export function ConversationPane({
               onOpenConversation(conversationId)
             }}
           />
+          </Suspense>
         ) : (
           <div className="border-t border-[var(--dash-line)] p-3">
-            <button type="button" className="dash-btn dash-btn-quiet w-full justify-start text-[13px] text-[var(--dash-quiet)]" onClick={() => void openReply()} disabled={openingReply}>
+            <button type="button" className="dash-btn dash-btn-quiet w-full justify-start text-[13px] text-[var(--dash-quiet)]" onClick={() => void openReply()} disabled={openingReply || flagsBusy || Boolean(replyDraft)}>
               {openingReply ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Reply className="size-4" aria-hidden="true" />}
               Reply to {name}…
               {conversation.hasDraft ? <StatusChip tone="outline" className="ms-auto h-5 px-2 text-[10.5px]">Draft saved</StatusChip> : null}

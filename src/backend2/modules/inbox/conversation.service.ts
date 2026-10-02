@@ -1,4 +1,6 @@
 import type {
+  BulkConversationInput,
+  BulkConversationResult,
   ConversationDetail,
   ConversationListQuery,
   ConversationSummary,
@@ -27,6 +29,31 @@ export const listConversations = async (
 }
 
 export const countInbox = (): Promise<InboxCounts> => repo.countFolders()
+
+/** All selected conversations change together, or none of them change. */
+export const bulkConversations = async (input: BulkConversationInput): Promise<BulkConversationResult> => {
+  await withTransaction(async () => {
+    const rows = await repo.lockConversations(input.conversationIds)
+
+    if (rows.length !== input.conversationIds.length) {
+      throw notFound('A selected conversation no longer exists. Refresh the list and select again.')
+    }
+
+    if ((input.action === 'archive' || input.action === 'unarchive') && rows.some((row) => row.folder === 'trash')) {
+      throw conflict('A selected conversation is in Trash. Restore it first. Nothing was changed.')
+    }
+
+    await repo.bulkConversationFlags({
+      ids: input.conversationIds,
+      isRead: input.action === 'mark-read' ? true : input.action === 'mark-unread' ? false : undefined,
+      isStarred: input.action === 'star' ? true : input.action === 'unstar' ? false : undefined,
+      folder: input.action === 'archive' ? 'archived' : input.action === 'unarchive' ? 'inbox' : input.action === 'trash' ? 'trash' : undefined,
+      restore: input.action === 'restore',
+    })
+  })
+
+  return { action: input.action, conversationIds: input.conversationIds }
+}
 
 export const getConversation = async (input: {
   id: string

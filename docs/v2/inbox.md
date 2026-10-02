@@ -1,6 +1,12 @@
 # Inbox V2 — product, backend, and frontend plan
 
-Status: **Built on 23 Sep 2026 — Backend2 and the Dashboard screens, verified locally. Going live with the public cutover (24 Sep 2026):** the inbound Worker is changed in the repository and not yet deployed — see "Going live" below. The delivery record below is the current state. Everything after it is the planning record the backend was built from; where a dated note corrects it, the note wins. The documented public-form change is for the approved V2 integration; this document alone does not authorize changing the live site, email routing, deployment, or unrelated modules ahead of that cutover.
+Status: **Inbox V2 has been live since the owner-approved cutover on 24 Sep
+2026. Reliability repairs, Compact workspace, bulk management and intent
+prefetch are approved and implemented on 2 Oct 2026.** Dated delivery records
+below own current behavior. Older implementation and planning notes are retained
+as history; where they conflict, the later dated decision wins. This document
+does not authorize unrelated changes to public pages, authentication or email
+routing.
 
 ## What is built — Backend2, 23 Sep 2026
 
@@ -8,7 +14,8 @@ Status: **Built on 23 Sep 2026 — Backend2 and the Dashboard screens, verified 
 
 The owner requested implementation, testing, GitHub publication and Cloudflare
 deployment of the Inbox review findings. This is a bounded repair of the current
-mailbox; bulk management and an Outlook-style redesign are separate future scope.
+mailbox. The later owner request below extends it with bulk management and an
+Outlook-style redesign.
 
 - Draft saves publish the returned revision to the query cache and refresh the
   paginated draft list/counts. Closed drafts are read fresh when reopened. Closing
@@ -40,6 +47,137 @@ mocked provider HTTP outcomes, draft save/close/reopen and offline recovery, key
 button activation, link validation, and unknown/expired delivery UI. Actual sending
 and external recipient delivery require a separately identified test recipient;
 this repair does not prove a real email round trip.
+
+### Bulk management and Outlook-style experience — owner request, 2 Oct 2026
+
+The owner explicitly requested completion of the previously excluded real-send
+test, bulk management and redesign, plus GitHub publication and deployment.
+
+- Bulk management acts on explicitly selected conversations, with Select all
+  limited to the current server-paginated page. It never silently selects other
+  pages or every search result. Selection clears on folder/filter/search/page
+  change; background refresh retains only IDs still present on that page.
+- Reversible actions: read/unread, star/unstar, archive/move to Inbox, Trash and
+  Restore. Trash moves the whole thread and keeps its original folder; restore
+  returns each thread to its own previous folder. Existing explicit permanent
+  deletion confirmations remain. Bulk sending is outside this request.
+- `POST /api/v2/owner/inbox/conversations/bulk` is owner-authenticated and
+  no-store, accepts 1–100 UUIDs and one allowlisted action, deduplicates IDs and
+  locks in deterministic order. It changes all selected threads in one
+  transaction, or changes nothing if any ID is missing or an archive action
+  includes Trash. Repeated actions are idempotent and do not send mail, delete
+  attachments or change message contents. No database migration is needed.
+- Backend is implemented and tested before frontend work. An isolated interactive
+  Design Lab uses labelled fictional mail, desktop/mobile views, clear selection,
+  compact command bar, calm editor and an Outlook-like folder/list/reading flow
+  within the existing dashboard brand. The owner explicitly approved the rendered
+  **Compact workspace** on 2 Oct 2026; the approval and implementation are recorded below.
+- The owner supplied a recipient in the private conversation. One short
+  labelled real test message is authorized. Provider
+  acceptance and observed recipient delivery are recorded separately. No real
+  address or private message content belongs in this specification or fixtures.
+- Additional owner request: improve perceived speed with conversation/folder data
+  prefetch on hover and keyboard focus, plus editor code loading on intent, bounded fresh-cache reuse, cancellation
+  and deduplication of unnecessary requests, while preserving fresh saves,
+  delivery polling, failure feedback and accurate unread counts. Prefetch only
+  reads; it must never mark mail read, create drafts or send anything.
+- Handoff: inspect this scope and current code; verify the bounded authenticated
+  atomic backend with fake sends and throwaway PostgreSQL; present and verify the
+  interactive lab on desktop/mobile; obtain visual approval; connect and test the
+  approved frontend; complete the identified real-email test; run typecheck,
+  relevant tests, build and browser QA; commit only this scope on `main`, push and
+  await the exact GitHub Deploy workflow, then verify the published UI.
+
+#### Local backend and lab checkpoint — 2 Oct 2026, before visual approval
+
+- The bulk backend is implemented. Its eight new integration cases passed with
+  the existing Inbox cases (71), covering exact selection, duplicate IDs,
+  folder restoration, repeat actions, untouched messages/drafts, rollback,
+  bounded validation and session/non-local denial. All mail transport is fake.
+- Conversation and folder hover/focus prefetch uses the same query options as
+  opening. Mouse intent waits 120 ms; leaving cancels the pending timer. Fresh
+  data is reused for 20 seconds, in-flight requests are deduplicated, abort
+  signals reach fetch, and data-saver/2G disables speculative reads. Prefetch
+  never marks a conversation read. Opening still does so explicitly.
+- Read/star/archive flag updates merge the server-confirmed summary into cached
+  history and refresh list/counts, instead of downloading all message pages
+  again. Draft reads stay fresh on reopening; no speculative draft snapshot
+  replaces that reliability rule. The composer shows its saved check only when
+  current text is actually saved.
+- The isolated lab compares **Mailbox** (recommended: folder column, list,
+  reading pane and contextual bulk command bar) with **Compact workspace**
+  (folder tabs leave more reading space). Both retain dashboard blue, dark/light
+  surfaces and Space Grotesk/Fraunces typography. On phones both use a list-to-
+  message flow, wrapping folder choices and commands. Borders separate structure;
+  the editor is calm and does not display a blue frame while idle.
+- The lab contains fictional example.com mail only, no auth/API/provider calls.
+  Browser verification covered two selected threads moving to Archived,
+  paginated lists, mobile compose/link validation, a saved mock draft appearing
+  in Drafts and desktop/mobile rendering. It is a prototype, not proof of
+  connected production frontend or actual email delivery.
+- At this checkpoint the visual choice, connected frontend and recipient were
+  pending. The subsequent approval and connected verification below resolve
+  these; independent external receipt remains separate from provider acceptance.
+- Final local checks: typecheck, Cloudflare build, 81 test files / 1479 tests
+  passed. An unrelated Calendar form wait timed out while build and tests were
+  competing for resources; the isolated 14 Calendar form cases and the full
+  suite then passed with the build completed. No Calendar code was changed.
+- Actual runtime: the same owner bulk routes were exercised over HTTP and the
+  real `pg` socket protocol against new in-memory PostgreSQL: selected archive,
+  Trash/restore to original folders, missing-ID rollback, unread counts and
+  unauthenticated denial passed. The temporary fixture server/database were
+  stopped afterwards; the owner's database and real mail provider were unused.
+
+#### Visual approval — 2 Oct 2026
+
+The owner explicitly chose **Compact workspace** and supplied a recipient for
+the real email test. Implement the approved folder tabs across the mailbox,
+compact command bar, paginated selectable list beside the reading pane on wide
+screens, navigable list/message flow on phones, flat chronological letters and
+calm writing surface. Preserve the existing validated compose/reply/draft,
+attachment and delivery-recovery behavior. One clearly labelled real test email
+is authorized. Keep the recipient address in the private conversation only.
+Publication and deployment were already requested; no further Git approval is
+required once connected checks pass.
+
+#### Connected Compact workspace verification — 2 Oct 2026
+
+- The approved full-width folder tabs and contextual command bar surround a
+  320 px selectable list and flat chronological reading pane. A container query
+  keeps both panes visible when the mailbox itself has at least 800 px; phones
+  navigate between list and message. Checkbox selection never opens a message,
+  is explicitly page-limited and cannot act on a placeholder page, an error or
+  an in-flight bulk command. Refresh prunes missing IDs; page removal returns
+  to the last valid page. Search follows address/Back navigation.
+- Bulk errors retain available selection and explain an unconfirmed update.
+  Selected open mail closes after folder moves or an unread command. Automatic
+  read happens once on first load, so an explicit unread command stays unread.
+  Confirmed summary patches reuse history; bulk invalidation is limited to
+  lists/counts/drafts and the selected histories, never unsaved draft revisions.
+- The Inbox route, reader, composer and settings have separate production
+  chunks. Intent loads reader code and paginated history together; opening a
+  reply loads editor code alongside draft creation. Reading without a reply
+  does not require the editor or Media picker. Drafts still load their current
+  server revision when opened, rather than trusting a speculative snapshot.
+- Composer submission disables its controls and editing while pending, including
+  the confirmed blank-subject path, and blocks repeated sends. The saved check
+  appears only when current text is saved. Link validation and the single
+  accessible editor focus ring remain intact.
+- The owner's Chrome verified the connected app against a new throwaway
+  PostgreSQL with 28 fictional letters and fake transport: selecting two,
+  archive, Trash, restoring both to Archived, second-page selection and marking
+  read, preserving an explicit unread command, invalid/safe link entry, draft
+  close/reopen and fake send, reply save/close/reopen. Desktop 1440 px and phone
+  390 px rendering passed; no horizontal page overflow. Temporary servers and
+  their browser tab were closed after testing. No owner mail was changed.
+- Full automated suite: 83 files / 1490 tests passed. The added UI cases cover
+  exact selected IDs, scope changes, stale pages, refresh, pending and uncertain
+  bulk updates, restore, explicit unread and blank-subject pending protection.
+  Typecheck, relevant UI tests and the Cloudflare build verify the final chunks.
+- GitHub publication and Cloudflare rollout are explicitly requested. Verify
+  the Deploy workflow for the exact pushed commit, then test the published
+  mailbox and send the one labelled real email. Record actual provider outcome
+  and independent recipient receipt separately in the private handoff.
 
 Verified with `src/tests/backend2-inbox.test.ts` (44 tests against a real in-process PostgreSQL) and a runtime check over a real `pg` socket to a throwaway database. Nothing was sent by email, nothing touched the owner's Neon database, and no routing or Worker changed.
 
