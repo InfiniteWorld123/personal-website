@@ -129,7 +129,12 @@ export function EmailEditor({
       <EditorContent editor={editor} dir={rtl ? 'rtl' : 'auto'} className={cn(RICH_TEXT_CONTENT_CLASS, 'dash-email-content min-h-0 p-0')} />
       {link && editor ? (
         <EmailLinkDialog text={link.text} href={link.href} onClose={() => setLink(null)} onApply={(value) => {
-          editor.chain().focus().setTextSelection({ from: link.from, to: link.to }).insertContent({ type: 'text', text: value.text, marks: [{ type: 'link', attrs: { href: value.href } }] }).run()
+          const command = editor.chain().focus().setTextSelection({ from: link.from, to: link.to })
+          if (link.from !== link.to && value.text === link.text) {
+            command.setLink({ href: value.href }).run()
+          } else {
+            command.insertContent({ type: 'text', text: value.text, marks: [{ type: 'link', attrs: { href: value.href } }] }).run()
+          }
           setLink(null)
         }} />
       ) : null}

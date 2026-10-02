@@ -1,12 +1,36 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { Editor } from '@tiptap/react'
 import { EmailLinkDialog, emailLinkHref } from '#/frontend/features/inbox-v2/EmailLinkDialog'
+import { EmailEditor } from '#/frontend/features/inbox-v2/EmailEditor'
 import { ToolbarButton } from '#/frontend/features/projects/CaseStudyEditor'
 
 afterEach(() => cleanup())
 
 describe('email editor controls', () => {
+  it('adds and edits a link on selected formatted text without discarding its marks', async () => {
+    let editor!: Editor
+    render(<><span id="editor-label">Message</span><EmailEditor
+      value={{ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello bold', marks: [{ type: 'bold' }, { type: 'italic' }] }] }] }}
+      onChange={() => {}} onReady={(instance) => { editor = instance }} rtl={false} labelledBy="editor-label"
+    /></>)
+    await screen.findByRole('button', { name: 'Link' })
+    act(() => { editor.commands.setTextSelection({ from: 1, to: 11 }) })
+    fireEvent.click(screen.getByRole('button', { name: 'Link' }))
+    fireEvent.change(screen.getByLabelText('Link address'), { target: { value: 'example.com/first' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Insert link' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(editor.getJSON().content?.[0].content?.[0]).toMatchObject({ text: 'Hello bold', marks: expect.arrayContaining([{ type: 'bold' }, { type: 'italic' }, expect.objectContaining({ type: 'link', attrs: expect.objectContaining({ href: 'https://example.com/first' }) })]) })
+
+    act(() => { editor.commands.setTextSelection(4) })
+    fireEvent.click(screen.getByRole('button', { name: 'Link' }))
+    fireEvent.change(screen.getByLabelText('Link address'), { target: { value: 'https://example.com/second' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save link' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(editor.getJSON().content?.[0].content?.[0]).toMatchObject({ text: 'Hello bold', marks: expect.arrayContaining([{ type: 'bold' }, { type: 'italic' }, expect.objectContaining({ type: 'link', attrs: expect.objectContaining({ href: 'https://example.com/second' }) })]) })
+  })
+
   it('activates formatting through a keyboard click, preserving selection on mouse press', () => {
     const command = vi.fn()
     render(<ToolbarButton label="Bold" icon="B" onClick={command} />)
