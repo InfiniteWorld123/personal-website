@@ -848,8 +848,55 @@ describe('the owner’s appointments', () => {
     const moved = await call('PATCH', `/owner/calendar/appointments/${detail.id}`, { revision: detail.revision, startsAt: target })
 
     expect(moved.body.data.startsAt).toBe(target)
+    expect(moved.body.data.emailDelivery).toBe('accepted')
     expect(sent.at(-1)!.subject).toMatch(/^Appointment rescheduled/u)
     expect(booked.status).toBe(201)
+  })
+
+  it.each([false, true])('reports the current move and cancellation email outcome when failure is %s', async (failure) => {
+    await setup()
+    await book({ startsAt: (await firstSlot()).startsAt })
+    const detail = (await call('GET', '/owner/calendar/appointments')).body.data.items[0]
+    const target = new Date(Date.parse(detail.startsAt) + 3 * 3_600_000).toISOString()
+    const current = (await call('GET', `/owner/calendar/appointments/${detail.id}`)).body.data
+    failSends = failure
+
+    const moved = await call('PATCH', `/owner/calendar/appointments/${detail.id}`, { revision: current.revision, startsAt: target, notify: true })
+    expect(moved.status).toBe(200)
+    expect(moved.body.data).toMatchObject({ startsAt: target, status: 'confirmed', emailDelivery: failure ? 'failed' : 'accepted' })
+    const cancelled = await call('POST', `/owner/calendar/appointments/${detail.id}/cancel`, { reason: 'Plans changed', notify: true })
+    expect(cancelled.status).toBe(200)
+    expect(cancelled.body.data).toMatchObject({ status: 'cancelled', emailDelivery: failure ? 'failed' : 'accepted' })
+    expect(sent).toHaveLength(failure ? 1 : 3)
+    expect(cancelled.body.data.history.filter((entry: Json) => entry.kind === 'email_failed')).toHaveLength(failure ? 2 : 0)
+  })
+
+  it('reports no email for changes to a never-invited manual appointment', async () => {
+    await setup()
+    const type = (await call('GET', '/owner/calendar/types')).body.data.items[0]
+    const startsAt = (await firstSlot()).startsAt
+    const saved = await call('POST', '/owner/calendar/appointments', { typeId: type.id, method: 'video', startsAt, language: 'en', name: 'Daniel', email: 'daniel@example.com', sendInvitation: false })
+    const moved = await call('PATCH', `/owner/calendar/appointments/${saved.body.data.id}`, { revision: saved.body.data.revision, startsAt: new Date(Date.parse(startsAt) + 3 * 3_600_000).toISOString(), notify: true })
+    expect(moved.body.data.emailDelivery).toBe('not_sent')
+    const cancelled = await call('POST', `/owner/calendar/appointments/${saved.body.data.id}/cancel`, { reason: 'Plans changed', notify: true })
+    expect(cancelled.body.data.emailDelivery).toBe('not_sent')
+    expect(sent).toHaveLength(0)
+  })
+
+  it('returns failed for an invitation while keeping the appointment and not sending twice', async () => {
+    await setup()
+    const type = (await call('GET', '/owner/calendar/types')).body.data.items[0]
+    const saved = await call('POST', '/owner/calendar/appointments', { typeId: type.id, method: 'video', startsAt: (await firstSlot()).startsAt, language: 'en', name: 'Daniel', email: 'daniel@example.com', sendInvitation: false })
+    failSends = true
+    const first = await call('POST', `/owner/calendar/appointments/${saved.body.data.id}/send-invitation`)
+    expect(first.body.data).toMatchObject({ alreadySent: false, delivery: 'failed' })
+    const second = await call('POST', `/owner/calendar/appointments/${saved.body.data.id}/send-invitation`)
+    expect(second.body.data).toMatchObject({ alreadySent: true, delivery: 'not_sent' })
+    const detail = (await call('GET', `/owner/calendar/appointments/${saved.body.data.id}`)).body.data
+    expect(detail.status).toBe('confirmed')
+    expect(detail.inboxConversationId).toBeTruthy()
+    expect(detail.history.filter((entry: Json) => entry.kind === 'email_failed')).toHaveLength(1)
+    expect(sent).toHaveLength(0)
   })
 
   it('marks completed or no-show only once it has started', async () => {

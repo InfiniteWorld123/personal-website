@@ -145,15 +145,46 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
   }, [type, values.method, form])
 
   useEffect(() => {
+    const opener = document.activeElement
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') requestClose.current()
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        requestClose.current()
+        return
+      }
+
+      if (event.key !== 'Tab' || !panel.current) return
+
+      const items = [...panel.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => element.offsetParent !== null || element === document.activeElement)
+      const first = items[0]
+      const last = items.at(-1)
+
+      if (!first || !last) {
+        event.preventDefault()
+        panel.current.focus()
+      } else if (!panel.current.contains(document.activeElement) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault()
+        first.focus()
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      }
     }
 
-    window.addEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey)
     panel.current?.querySelector<HTMLElement>('select, input')?.focus()
 
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = overflow
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus()
+    }
+  }, [])
 
   const outsideHours = useMemo(() => {
     const start = textMinute(values.time)
@@ -172,7 +203,7 @@ export function ManualAppointmentDrawer({ onClose, onCreated, initialDate }: { o
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-[rgba(10,14,26,0.35)]" onMouseDown={(event) => event.target === event.currentTarget && requestClose.current()}>
-      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby="manual-title" className="flex h-full w-full max-w-[460px] flex-col bg-[var(--dash-surface)] shadow-[var(--dash-shadow)]">
+      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby="manual-title" tabIndex={-1} className="flex h-full w-full max-w-[460px] flex-col bg-[var(--dash-surface)] shadow-[var(--dash-shadow)]">
         <header className="flex items-center gap-2 border-b border-[var(--dash-line)] px-4 py-3">
           <h2 id="manual-title" className="dash-title text-[19px]">New appointment</h2>
           <button type="button" className="dash-btn dash-btn-ghost ms-auto h-8 px-2" onClick={() => requestClose.current()} aria-label="Close">

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AppointmentDetail, AppointmentSummary, BookingType } from '#/backend2/contracts/booking.contract'
 
@@ -186,6 +186,38 @@ describe('a new appointment', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(/^Time \(Berlin\)/u)))
     expect(bookingApi.createAppointment).not.toHaveBeenCalled()
   })
+
+  it('keeps Tab inside the drawer and restores focus and scrolling when closed', async () => {
+    const visible = vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body)
+    const originalOverflow = document.body.style.overflow
+    function Harness() {
+      const [open, setOpen] = useState(false)
+      return <><button onClick={() => setOpen(true)}>New appointment</button>{open ? <ManualAppointmentDrawer onClose={() => setOpen(false)} onCreated={() => {}} /> : null}</>
+    }
+
+    try {
+      wrap(<Harness />)
+      const opener = screen.getByRole('button', { name: 'New appointment' })
+      opener.focus()
+      fireEvent.click(opener)
+      const dialog = await screen.findByRole('dialog', { name: 'New appointment' })
+      await screen.findByRole('option', { name: /Intro call/u })
+      const first = within(dialog).getByRole('button', { name: 'Close' })
+      const last = within(dialog).getByRole('button', { name: 'Save & send invitation' })
+      first.focus()
+      fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })
+      expect(document.activeElement).toBe(last)
+      fireEvent.keyDown(last, { key: 'Tab' })
+      expect(document.activeElement).toBe(first)
+      expect(document.body.style.overflow).toBe('hidden')
+      fireEvent.keyDown(first, { key: 'Escape' })
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(document.activeElement).toBe(opener)
+      expect(document.body.style.overflow).toBe(originalOverflow)
+    } finally {
+      visible.mockRestore()
+    }
+  })
 })
 
 /* ------------------------------------------------------------ move/cancel */
@@ -193,7 +225,7 @@ describe('a new appointment', () => {
 describe('moving and cancelling', () => {
   const openMove = async (over: Partial<AppointmentDetail> = {}) => {
     bookingApi.readAppointment.mockResolvedValue(appointment(over))
-    bookingApi.patchAppointment.mockResolvedValue(appointment(over))
+    bookingApi.patchAppointment.mockResolvedValue({ ...appointment(over), emailDelivery: over.source === 'manual' && !over.invitationSentAt ? 'not_sent' : 'accepted' })
     wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
     fireEvent.click(await screen.findByRole('button', { name: 'Move…' }))
 
@@ -240,7 +272,7 @@ describe('moving and cancelling', () => {
     fireEvent.change(within(dialog).getByLabelText(/^Day/u), { target: { value: '2099-10-07' } })
     await move()
 
-    await waitFor(() => expect(lastNotice()).toBe('Moved. Daniel has been emailed the new time.'))
+    await waitFor(() => expect(lastNotice()).toBe('Moved. The email service accepted the message.'))
     expect(bookingApi.patchAppointment).toHaveBeenCalledWith('a1', { revision: 1, startsAt: '2099-10-07T08:00:00.000Z', notify: true })
   })
 
@@ -257,7 +289,7 @@ describe('moving and cancelling', () => {
 
   it('cancels a manual appointment never invited without claiming an email', async () => {
     bookingApi.readAppointment.mockResolvedValue(appointment({ source: 'manual', invitationSentAt: null }))
-    bookingApi.cancelAppointment.mockResolvedValue(appointment({ status: 'cancelled' }))
+    bookingApi.cancelAppointment.mockResolvedValue({ ...appointment({ status: 'cancelled' }), emailDelivery: 'not_sent' })
     wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel…' }))
@@ -273,7 +305,7 @@ describe('moving and cancelling', () => {
 
   it('still offers the email and says it went out for an invited manual appointment', async () => {
     bookingApi.readAppointment.mockResolvedValue(appointment({ source: 'manual', invitationSentAt: '2026-09-23T10:00:00Z' }))
-    bookingApi.cancelAppointment.mockResolvedValue(appointment({ status: 'cancelled' }))
+    bookingApi.cancelAppointment.mockResolvedValue({ ...appointment({ status: 'cancelled' }), emailDelivery: 'accepted' })
     wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel…' }))
@@ -281,7 +313,51 @@ describe('moving and cancelling', () => {
     fireEvent.change(document.getElementById('cancel-reason')!, { target: { value: 'Plans changed' } })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Cancel appointment' })))
 
-    await waitFor(() => expect(lastNotice()).toBe('Cancelled. Daniel has been emailed.'))
+    await waitFor(() => expect(lastNotice()).toBe('Cancelled. The email service accepted the message.'))
+  })
+
+  it.each(['failed', 'not_sent'] as const)('reports a saved move with email %s without claiming it was sent', async (delivery) => {
+    const dialog = await openMove()
+    bookingApi.patchAppointment.mockResolvedValue({ ...appointment(), emailDelivery: delivery })
+    fireEvent.change(within(dialog).getByLabelText(/^Day/u), { target: { value: '2099-10-07' } })
+    await move()
+    await waitFor(() => expect(lastNotice()).toBe(delivery === 'failed'
+      ? 'Moved, but the email could not be sent. Retry it from the Inbox conversation.'
+      : 'Moved. No email was sent.'))
+    expect(getNotices().at(-1)?.tone).toBe(delivery === 'failed' ? 'error' : 'success')
+    expect(screen.queryByRole('dialog', { name: 'Move to another time' })).toBeNull()
+  })
+
+  it('reports a saved cancellation with a failed email and points to Retry', async () => {
+    bookingApi.readAppointment.mockResolvedValue(appointment())
+    bookingApi.cancelAppointment.mockResolvedValue({ ...appointment({ status: 'cancelled' }), emailDelivery: 'failed' })
+    wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel…' }))
+    fireEvent.change(document.getElementById('cancel-reason')!, { target: { value: 'Plans changed' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Cancel appointment' })))
+    await waitFor(() => expect(lastNotice()).toBe('Cancelled, but the email could not be sent. Retry it from the Inbox conversation.'))
+    expect(getNotices().at(-1)?.tone).toBe('error')
+  })
+
+  it.each(['accepted', 'failed', 'not_sent'] as const)('reports the invitation result: %s', async (delivery) => {
+    bookingApi.readAppointment.mockResolvedValue(appointment({ source: 'manual', invitationSentAt: null }))
+    bookingApi.sendInvitation.mockResolvedValue({ alreadySent: delivery === 'not_sent', delivery })
+    wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Send invitation' }))
+    await waitFor(() => expect(lastNotice()).toBe(delivery === 'accepted'
+      ? 'The email service accepted the invitation.'
+      : delivery === 'failed'
+        ? 'The invitation could not be sent. Retry it from the Inbox conversation.'
+        : 'An invitation was already attempted. Check its status in the Inbox conversation.'))
+    expect(getNotices().at(-1)?.tone).toBe(delivery === 'failed' ? 'error' : 'success')
+  })
+
+  it('does not confuse a missing conversation with never having sent an email', async () => {
+    bookingApi.readAppointment.mockResolvedValue(appointment({ inboxConversationId: null, history: [{ at: '2026-09-23T10:00:00Z', actor: 'system', kind: 'confirmation_sent', details: {} }] }))
+    wrap(<AppointmentDetailPanel id="a1" onBack={() => {}} />)
+    expect(await screen.findByText('Confirmation sent')).toBeTruthy()
+    expect(screen.getByText('No linked Inbox conversation is available. Check the history below for earlier emails.')).toBeTruthy()
+    expect(screen.queryByText('No email yet, so there is no conversation.')).toBeNull()
   })
 })
 

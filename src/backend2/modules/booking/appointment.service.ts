@@ -1,6 +1,7 @@
 import {
   type AppointmentDetail,
   type AppointmentSummary,
+  type BookingEmailDelivery,
   BUDGET_LABELS,
   type BookingLanguage,
   type BookingMethod,
@@ -8,6 +9,7 @@ import {
   type CancelReason,
   METHOD_LABELS,
   OWNER_TIME_ZONE,
+  type OwnerAppointmentChange,
   SUBJECT_LABELS,
   type Slot,
   type SlotsResult,
@@ -846,7 +848,7 @@ export const patchAppointment = async (
     notify: boolean
   },
   now: Date = new Date(),
-): Promise<AppointmentDetail> => {
+): Promise<OwnerAppointmentChange> => {
   let rescheduled = false
 
   await withTransaction(async () => {
@@ -914,18 +916,21 @@ export const patchAppointment = async (
   const row = (await repo.findAppointment(id))!
 
   // A manual appointment the visitor has not been told about gets no change email.
+  let emailDelivery: BookingEmailDelivery = 'not_sent'
+
   if (rescheduled && input.notify && (row.source === 'public' || row.invitation_sent_at)) {
-    await emailVisitor({ appointmentId: id, kind: 'rescheduled' })
+    const result = await emailVisitor({ appointmentId: id, kind: 'rescheduled' })
+    emailDelivery = result === 'skipped' ? 'not_sent' : result
   }
 
-  return getAppointment(id)
+  return { ...(await getAppointment(id)), emailDelivery }
 }
 
 export const cancelByOwner = async (
   id: string,
   input: { reason: string; notify: boolean },
   now: Date = new Date(),
-): Promise<AppointmentDetail> => {
+): Promise<OwnerAppointmentChange> => {
   const row = await withTransaction(async () => {
     const found = await repo.lockAppointment(id)
 
@@ -945,11 +950,14 @@ export const cancelByOwner = async (
     return found
   })
 
+  let emailDelivery: BookingEmailDelivery = 'not_sent'
+
   if (input.notify && (row.source === 'public' || row.invitation_sent_at)) {
-    await emailVisitor({ appointmentId: id, kind: 'cancelled', cancelledBy: 'owner', reason: input.reason })
+    const result = await emailVisitor({ appointmentId: id, kind: 'cancelled', cancelledBy: 'owner', reason: input.reason })
+    emailDelivery = result === 'skipped' ? 'not_sent' : result
   }
 
-  return getAppointment(id)
+  return { ...(await getAppointment(id)), emailDelivery }
 }
 
 export const setOutcome = async (

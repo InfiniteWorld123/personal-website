@@ -200,6 +200,10 @@ export type AppointmentDetail = AppointmentSummary & {
   history: AppointmentHistoryEntry[]
 }
 
+/** The result of this owner action's email, separate from saving the appointment. */
+export type BookingEmailDelivery = 'accepted' | 'failed' | 'not_sent'
+export type OwnerAppointmentChange = AppointmentDetail & { emailDelivery: BookingEmailDelivery }
+
 /** What a visitor sees through their private link. Nothing else about the owner's calendar. */
 export type VisitorAppointment = {
   reference: string

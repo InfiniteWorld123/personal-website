@@ -6,6 +6,7 @@ import type {
   BookingMethod,
   BookingSettings,
   BookingType,
+  OwnerAppointmentChange,
   TypeTexts,
 } from '#/backend2/contracts/booking.contract'
 import type { Page } from '#/backend2/contracts/pagination.contract'
@@ -104,13 +105,13 @@ export const createAppointment = (input: ManualInput) =>
 export const patchAppointment = (
   id: string,
   input: { revision: number; startsAt?: string; name?: string; email?: string; phone?: string; company?: string; note?: string; notify: boolean },
-) => send<AppointmentDetail>('PATCH', `${OWNER}/appointments/${id}`, input)
+) => send<OwnerAppointmentChange>('PATCH', `${OWNER}/appointments/${id}`, input)
 
 export const sendInvitation = (id: string) =>
   send<{ alreadySent: boolean; delivery: 'accepted' | 'failed' | 'not_sent' }>('POST', `${OWNER}/appointments/${id}/send-invitation`)
 
 export const cancelAppointment = (id: string, input: { reason: string; notify: boolean }) =>
-  send<AppointmentDetail>('POST', `${OWNER}/appointments/${id}/cancel`, input)
+  send<OwnerAppointmentChange>('POST', `${OWNER}/appointments/${id}/cancel`, input)
 
 export const setOutcome = (id: string, status: 'completed' | 'no_show') =>
   send<AppointmentDetail>('POST', `${OWNER}/appointments/${id}/status`, { status })

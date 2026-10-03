@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { ArrowLeft, Loader2, Mail, Video } from 'lucide-react'
-import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail } from '#/backend2/contracts/booking.contract'
+import { BUDGET_LABELS, SUBJECT_LABELS, type AppointmentDetail, type BookingEmailDelivery } from '#/backend2/contracts/booking.contract'
 import { ApiRequestError } from '#/frontend/api/response'
 import { Panel, StatusChip } from '#/frontend/dashboard/primitives'
 import { BlogDialog, DialogActions, DialogAlert, DialogTitle } from '#/frontend/features/blog-v2/BlogDialog'
@@ -54,6 +54,16 @@ const neverInvited = (appointment: AppointmentDetail) => appointment.source === 
 
 const NEVER_INVITED_NOTE = 'No email was sent — they were never invited.'
 
+function notifyAppointmentChange(action: 'Moved' | 'Cancelled', delivery: BookingEmailDelivery, neverInvited: boolean) {
+  if (delivery === 'failed') {
+    notify.error(`${action}, but the email could not be sent. Retry it from the Inbox conversation.`)
+  } else {
+    notify.success(
+      `${action}. ${delivery === 'accepted' ? 'The email service accepted the message.' : neverInvited ? NEVER_INVITED_NOTE : 'No email was sent.'}`,
+    )
+  }
+}
+
 const unchanged = (instant: string, appointment: AppointmentDetail) => Date.parse(instant) === Date.parse(appointment.startsAt)
 
 function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; onClose: () => void }) {
@@ -98,14 +108,8 @@ function MoveDialog({ appointment, onClose }: { appointment: AppointmentDetail; 
       }
 
       try {
-        await patch.mutateAsync({ id: appointment.id, revision: appointment.revision, startsAt, notify: canEmail && value.notify })
-        notify.success(
-          !canEmail
-            ? `Moved. ${NEVER_INVITED_NOTE}`
-            : value.notify
-              ? `Moved. ${appointment.visitorName} has been emailed the new time.`
-              : 'Moved. No email was sent.',
-        )
+        const result = await patch.mutateAsync({ id: appointment.id, revision: appointment.revision, startsAt, notify: canEmail && value.notify })
+        notifyAppointmentChange('Moved', result.emailDelivery, !canEmail)
         onClose()
       } catch (error) {
         setFailure(
@@ -193,14 +197,8 @@ function CancelDialog({ appointment, onClose }: { appointment: AppointmentDetail
       setFailure(null)
 
       try {
-        await cancel.mutateAsync({ id: appointment.id, reason: value.reason.trim(), notify: canEmail && value.notify })
-        notify.success(
-          !canEmail
-            ? `Cancelled. ${NEVER_INVITED_NOTE}`
-            : value.notify
-              ? `Cancelled. ${appointment.visitorName} has been emailed.`
-              : 'Cancelled. No email was sent.',
-        )
+        const result = await cancel.mutateAsync({ id: appointment.id, reason: value.reason.trim(), notify: canEmail && value.notify })
+        notifyAppointmentChange('Cancelled', result.emailDelivery, !canEmail)
         onClose()
       } catch (error) {
         setFailure(messageFromError(error))
@@ -297,6 +295,22 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
     }
   }
 
+  const sendInvite = async () => {
+    try {
+      const result = await invite.mutateAsync(a.id)
+
+      if (result.delivery === 'failed') {
+        notify.error('The invitation could not be sent. Retry it from the Inbox conversation.')
+      } else if (result.delivery === 'accepted') {
+        notify.success('The email service accepted the invitation.')
+      } else {
+        notify.success(result.alreadySent ? 'An invitation was already attempted. Check its status in the Inbox conversation.' : 'No invitation email was sent.')
+      }
+    } catch (error) {
+      notify.error(messageFromError(error))
+    }
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <Panel className="gap-3 p-5">
@@ -346,7 +360,7 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
             <button type="button" className="dash-btn dash-btn-quiet h-9" onClick={() => setDialog('move')}>Move…</button>
             <button type="button" className="dash-btn dash-btn-ghost h-9 text-[var(--dash-red-ink)]" onClick={() => setDialog('cancel')}>Cancel…</button>
             {a.source === 'manual' && !a.invitationSentAt ? (
-              <button type="button" className="dash-btn dash-btn-quiet h-9" disabled={invite.isPending} onClick={() => void run(() => invite.mutateAsync(a.id), `Invitation sent to ${a.visitorEmail}`)}>
+              <button type="button" className="dash-btn dash-btn-quiet h-9" disabled={invite.isPending} onClick={() => void sendInvite()}>
                 <Mail className="size-4" aria-hidden="true" /> Send invitation
               </button>
             ) : null}
@@ -374,7 +388,7 @@ export function AppointmentDetailPanel({ id, onBack }: { id: string; onBack: () 
             Open conversation in Inbox →
           </Link>
         ) : (
-          <p className="text-[12.5px] text-[var(--dash-quiet)]">No email yet, so there is no conversation.</p>
+          <p className="text-[12.5px] text-[var(--dash-quiet)]">No linked Inbox conversation is available. Check the history below for earlier emails.</p>
         )}
 
         <h3 className="mt-2 text-sm font-semibold">History</h3>
