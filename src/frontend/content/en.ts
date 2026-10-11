@@ -172,7 +172,7 @@ export const en: SiteContent = {
     meta: {
       title: 'Services · Websites, online stores, custom software',
       description:
-        'Website packages from €790, online stores from €2,490, and custom software priced to your project. Together, we work out the right first step for your project.',
+        'Website packages from €999, online stores from €2,490, and custom software priced to your project. Together, we work out the right first step for your project.',
     },
     eyebrow: 'Services',
     title: 'The right digital solution for your project.',
@@ -200,7 +200,7 @@ export const en: SiteContent = {
           'support to organise your content and publish the site.',
         ],
         priceTitle: 'Starting price',
-        price: 'from €790',
+        price: 'from €999',
         priceNote:
           'The starting price fits a small, clearly defined website project. We will assess page scope, bespoke design, additional languages, and functionality together before you receive a written proposal.',
       },

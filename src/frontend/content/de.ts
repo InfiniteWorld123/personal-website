@@ -172,7 +172,7 @@ export const de: SiteContent = {
     meta: {
       title: 'Leistungen · Websites, Online-Shops, individuelle Software',
       description:
-        'Website-Pakete ab 790 €, Online-Shops ab 2.490 € und individuelle Software nach Absprache. Gemeinsam klären wir, was für dein Vorhaben der richtige erste Schritt ist.',
+        'Website-Pakete ab 999 €, Online-Shops ab 2.490 € und individuelle Software nach Absprache. Gemeinsam klären wir, was für dein Vorhaben der richtige erste Schritt ist.',
     },
     eyebrow: 'Leistungen',
     title: 'Die richtige digitale Lösung für dein Vorhaben.',
@@ -200,7 +200,7 @@ export const de: SiteContent = {
           'Unterstützung beim Sortieren deiner Inhalte und bei der Veröffentlichung.',
         ],
         priceTitle: 'Startpreis',
-        price: 'ab 790 €',
+        price: 'ab 999 €',
         priceNote:
           'Der Startpreis passt zu einem kleinen, klaren Website-Projekt. Seitenumfang, eigene Gestaltung, zusätzliche Sprachen und Funktionen ordnen wir gemeinsam ein, bevor du ein schriftliches Angebot bekommst.',
       },
