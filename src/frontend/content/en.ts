@@ -288,6 +288,11 @@ export const en: SiteContent = {
       title: 'Not what you need?',
       sub: 'For an online store or custom software, you get a proposal that fits your project.',
     },
+    pricing: {
+      rentIncludes: 'Hosting and maintenance included',
+      changeFee: 'Small changes after launch: €16 per change',
+      taxNote: '',
+    },
     cta: {
       title: 'Not sure what you need yet?',
       body: 'That is completely fine. Briefly tell me what you want to show, sell, or make easier — I will help you identify the right first step.',

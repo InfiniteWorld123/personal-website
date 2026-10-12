@@ -8,13 +8,23 @@ import type { Language } from '#/frontend/i18n/language'
 import { useLanguage } from '#/frontend/i18n/language-provider'
 import type { ServicesPageData } from '#/frontend/features/services-public/server/services-source'
 import { ServicesListV2 } from '#/frontend/features/services-public/ServicesListV2'
+import type { PlanValue } from '#/frontend/features/services-public/service-page'
 import { SplitWords, useReveal } from '#/frontend/motion'
 
 /**
  * The services page: the header, Backend2's approved list
  * (`docs/v2/public-cutover.md` step 2), the shared rules and the call to action.
  */
-export function ServicesPage({ data, page = 1 }: { data: ServicesPageData; page?: number }) {
+export function ServicesPage({
+  data,
+  page = 1,
+  plan = 'kaufen',
+}: {
+  data: ServicesPageData
+  page?: number
+  /** The payment model on screen: `?plan=` on the address. */
+  plan?: PlanValue
+}) {
   const { language } = useLanguage()
   const { services } = getContent(language)
   const header = useReveal<HTMLElement>()
@@ -33,7 +43,7 @@ export function ServicesPage({ data, page = 1 }: { data: ServicesPageData; page?
         </Container>
       </section>
 
-      <ServicesListV2 data={data} page={page} language={language} />
+      <ServicesListV2 data={data} page={page} plan={plan} language={language} />
 
       <SharedRules copy={services.shared} language={language} />
 

@@ -273,7 +273,7 @@ describe('the price card on a service page', () => {
       />,
     )
 
-    expect(document.querySelector('del')?.textContent).toBe('السعر العادي 49,90 €')
+    expect(document.querySelector('del')?.textContent).toBe('السعر العادي 49,90 يورو')
     expect(screen.getByText('شهرياً')).toBeTruthy()
     expect(screen.getByText('عرض')).toBeTruthy()
   })

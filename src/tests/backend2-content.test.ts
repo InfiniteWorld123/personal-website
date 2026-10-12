@@ -118,6 +118,37 @@ describe('the contract', () => {
     expect(contract.checkContentValue(text, ['a']).ok).toBe(false)
   })
 
+  it('lets the tax note be empty — and nothing else on the pricing notes', () => {
+    const taxNote = registry.findContentField('services.pricing.taxNote')!
+    const rentIncludes = registry.findContentField('services.pricing.rentIncludes')!
+    const changeFee = registry.findContentField('services.pricing.changeFee')!
+
+    expect(taxNote.optional).toBe(true)
+    expect(contract.checkContentValue(taxNote, '')).toEqual({ ok: true, value: '' })
+    expect(contract.checkContentValue(taxNote, '   ')).toEqual({ ok: true, value: '' })
+    expect(contract.checkContentValue(taxNote, 'Alle Preise zzgl. MwSt.')).toEqual({
+      ok: true,
+      value: 'Alle Preise zzgl. MwSt.',
+    })
+
+    for (const field of [rentIncludes, changeFee]) {
+      expect(field.optional, field.key).toBe(false)
+      expect(contract.checkContentValue(field, '').ok, field.key).toBe(false)
+    }
+  })
+
+  it('ships the pricing notes in all three languages, the tax note empty', () => {
+    for (const language of ['de', 'en', 'ar'] as const) {
+      expect(registry.originalValue(registry.findContentField('services.pricing.rentIncludes')!, language)).not.toBe('')
+      expect(registry.originalValue(registry.findContentField('services.pricing.changeFee')!, language)).not.toBe('')
+      expect(registry.originalValue(registry.findContentField('services.pricing.taxNote')!, language)).toBe('')
+    }
+
+    expect(registry.originalValue(registry.findContentField('services.pricing.changeFee')!, 'de')).toBe(
+      'Kleine Änderungen nach dem Launch: 16 € pro Änderung',
+    )
+  })
+
   it('enforces the hard limits', () => {
     expect(contract.checkContentValue(text, 'x'.repeat(contract.CONTENT_LIMITS.text)).ok).toBe(true)
     expect(contract.checkContentValue(text, 'x'.repeat(contract.CONTENT_LIMITS.text + 1)).ok).toBe(false)
@@ -248,8 +279,10 @@ describe('the release registry', () => {
   it('is a written list: a string added to the content tree is not editable by itself', () => {
     // Pinned. Changing it means somebody chose to change what is editable.
     // 330 since 29 Sep 2026: the /webdesign-erfurt landing pages (74 fields)
-    // and the services page's link to them.
-    expect(registry.contentRegistry).toHaveLength(330)
+    // and the services page's link to them. 333 since 12 Oct 2026: the three
+    // notes under the package cards (what rent includes, the fee for small
+    // changes, the tax note).
+    expect(registry.contentRegistry).toHaveLength(333)
     expect(new Set(keys).size).toBe(keys.length)
   })
 
@@ -382,6 +415,34 @@ describe('saving a field', () => {
       const { rows } = await database.db.query(`SELECT count(*)::int AS total FROM ${table}`)
       expect(rows[0].total, table).toBe(0)
     }
+  })
+
+  it('takes a tax note live and takes it down again — the one note that may be empty', async () => {
+    const TAX = 'services.pricing.taxNote'
+
+    // Ships empty: the public copy says nothing.
+    expect((await publicCopy('de')).fields[TAX] ?? '').toBe('')
+
+    const written = await save(TAX, 'de', 'Alle Preise zzgl. MwSt.', 0)
+
+    expect(written.status, JSON.stringify(written.body)).toBe(200)
+    expect((await publicCopy('de')).fields[TAX]).toBe('Alle Preise zzgl. MwSt.')
+    expect((await publicCopy('en')).fields[TAX] ?? '').toBe('')
+
+    // Emptied again, the page shows nothing — an empty note is a value, not an error.
+    const cleared = await save(TAX, 'de', '', 1)
+
+    expect(cleared.status, JSON.stringify(cleared.body)).toBe(200)
+    expect((await publicCopy('de')).fields[TAX] ?? '').toBe('')
+  })
+
+  it('still refuses to empty the other pricing notes', async () => {
+    const refused = await save('services.pricing.changeFee', 'de', '', 0)
+
+    expect(refused.status).toBe(422)
+    expect((await publicCopy('de')).fields['services.pricing.changeFee'] ?? de.services.pricing.changeFee).toBe(
+      de.services.pricing.changeFee,
+    )
   })
 
   it('flags the other two languages for review, without changing their wording or revision', async () => {

@@ -28,6 +28,11 @@ export type ServiceFormValues = {
   period: PricePeriod | ''
   promoOn: boolean
   promo: string
+  /** Instalments and rent, as typed. Empty means "not offered this way". */
+  instalmentMonthly: string
+  instalmentMonths: string
+  rentMonthly: string
+  rentMinTermMonths: string
   texts: Record<Language, ServiceTexts>
 }
 
@@ -57,6 +62,17 @@ export const parseAmount = (text: string): { cents: number | null; error?: strin
   return { cents }
 }
 
+/**
+ * A whole number of months as typed. Empty or unreadable is `null`, which the
+ * caller turns into the default (12) or into an error, depending on whether
+ * the monthly amount beside it is filled in.
+ */
+export const parseMonths = (text: string): number | null => {
+  const value = text.trim()
+
+  return /^\d{1,3}$/.test(value) ? Number(value) : null
+}
+
 const copyTexts = (texts: ServiceTexts): ServiceTexts => ({ ...texts, included: [...texts.included] })
 
 export const toFormValues = (draft: ServiceDraftInput): ServiceFormValues => ({
@@ -67,6 +83,10 @@ export const toFormValues = (draft: ServiceDraftInput): ServiceFormValues => ({
   period: draft.price.period ?? '',
   promoOn: draft.price.promotion.active,
   promo: centsToText(draft.price.promotion.amountCents),
+  instalmentMonthly: centsToText(draft.price.instalment.monthlyCents),
+  instalmentMonths: String(draft.price.instalment.months),
+  rentMonthly: centsToText(draft.price.rent.monthlyCents),
+  rentMinTermMonths: String(draft.price.rent.minTermMonths),
   texts: { de: copyTexts(draft.texts.de), en: copyTexts(draft.texts.en), ar: copyTexts(draft.texts.ar) },
 })
 
@@ -81,8 +101,25 @@ export const emptyFormValues = (): ServiceFormValues => {
     seoDescription: '',
   })
 
-  return { slug: '', featured: false, mode: '', amount: '', period: '', promoOn: false, promo: '', texts: { de: blank(), en: blank(), ar: blank() } }
+  return {
+    slug: '',
+    featured: false,
+    mode: '',
+    amount: '',
+    period: '',
+    promoOn: false,
+    promo: '',
+    instalmentMonthly: '',
+    instalmentMonths: String(SERVICE_LIMITS.instalmentMonths.default),
+    rentMonthly: '',
+    rentMinTermMonths: String(SERVICE_LIMITS.rentTermMonths.default),
+    texts: { de: blank(), en: blank(), ar: blank() },
+  }
 }
+
+/** A month count inside its limits, or the default when it is empty or out of range. */
+const withinLimits = (months: number | null, limits: { min: number; max: number; default: number }): number =>
+  months !== null && months >= limits.min && months <= limits.max ? months : limits.default
 
 /** The values as the draft the server will store — trimmed and normalised the same way. */
 export const toDraft = (values: ServiceFormValues): ServiceDraftInput => {
@@ -107,6 +144,14 @@ export const toDraft = (values: ServiceFormValues): ServiceDraftInput => {
     amountCents: parseAmount(values.amount).cents,
     period: values.period === '' ? null : values.period,
     promotion: { active: values.promoOn, amountCents: parseAmount(values.promo).cents },
+    instalment: {
+      monthlyCents: parseAmount(values.instalmentMonthly).cents,
+      months: withinLimits(parseMonths(values.instalmentMonths), SERVICE_LIMITS.instalmentMonths),
+    },
+    rent: {
+      monthlyCents: parseAmount(values.rentMonthly).cents,
+      minTermMonths: withinLimits(parseMonths(values.rentMinTermMonths), SERVICE_LIMITS.rentTermMonths),
+    },
   }
 
   return normalizeServiceDraft({ slug: values.slug.trim(), featured: values.featured, price, texts })
@@ -133,6 +178,33 @@ export const fieldErrors = (values: ServiceFormValues): Record<string, string> =
       const promo = parseAmount(values.promo)
 
       if (promo.error) errors.promo = promo.error
+    }
+  }
+
+  if (values.mode === 'fixed') {
+    const instalment = parseAmount(values.instalmentMonthly)
+    const rent = parseAmount(values.rentMonthly)
+
+    if (instalment.error) errors.instalmentMonthly = instalment.error
+    if (rent.error) errors.rentMonthly = rent.error
+
+    // A count only matters once there is a monthly amount beside it.
+    if (instalment.cents !== null) {
+      const months = parseMonths(values.instalmentMonths)
+      const { min, max } = SERVICE_LIMITS.instalmentMonths
+
+      if (months === null || months < min || months > max) {
+        errors.instalmentMonths = `Use a whole number from ${min} to ${max}`
+      }
+    }
+
+    if (rent.cents !== null) {
+      const months = parseMonths(values.rentMinTermMonths)
+      const { min, max } = SERVICE_LIMITS.rentTermMonths
+
+      if (months === null || months < min || months > max) {
+        errors.rentMinTermMonths = `Use a whole number from ${min} to ${max}`
+      }
     }
   }
 
@@ -173,6 +245,17 @@ export const priceSummary = (price: ServicePrice): string => {
 
   if (price.promotion.active) {
     text += ` · offer ${price.promotion.amountCents === null ? 'not set' : euros(price.promotion.amountCents)}`
+  }
+
+  // Only a fixed price paid once can be paid in instalments or rented.
+  if (price.mode === 'fixed' && price.period === 'one_time') {
+    if (price.instalment.monthlyCents !== null) {
+      text += ` · ${price.instalment.months} × ${euros(price.instalment.monthlyCents)}`
+    }
+
+    if (price.rent.monthlyCents !== null) {
+      text += ` · rent ${euros(price.rent.monthlyCents)}/month`
+    }
   }
 
   return text

@@ -66,6 +66,10 @@ export const SERVICE_LIMITS = {
   seoDescription: 200,
   /** Euro cents: 0.01 € to 999,999.99 €. Zero is not a price. */
   amountCents: { min: 1, max: 99_999_999 },
+  /** How many monthly payments a price may be split into. One payment is just buying. */
+  instalmentMonths: { min: 2, max: 60, default: 12 },
+  /** The minimum rental term. One month means "cancel monthly" from the start. */
+  rentTermMonths: { min: 1, max: 60, default: 12 },
 } as const
 
 /** The Dashboard list, as Projects: pages of 20, at most 50. */
@@ -101,12 +105,32 @@ export type ServicePromotion = {
   amountCents: number | null
 }
 
+/**
+ * Paying a fixed price in monthly instalments. `monthlyCents` empty means the
+ * package is not offered this way. The total is `instalmentTotalCents`, always
+ * computed — a stored total could disagree with the two numbers it comes from.
+ */
+export type ServiceInstalment = {
+  monthlyCents: number | null
+  months: number
+}
+
+/** Renting instead of buying. `monthlyCents` empty means not offered. */
+export type ServiceRent = {
+  monthlyCents: number | null
+  /** After this many months the rental can be cancelled monthly. */
+  minTermMonths: number
+}
+
 export type ServicePrice = {
   /** `null` while the owner has not chosen — allowed in a draft, never live. */
   mode: PriceMode | null
   amountCents: number | null
   period: PricePeriod | null
   promotion: ServicePromotion
+  /** Catalogue presentation only, like the rest of the price: nothing is billed. */
+  instalment: ServiceInstalment
+  rent: ServiceRent
 }
 
 /** One version of a service: everything a visitor could ever see of it. */
@@ -133,6 +157,8 @@ export type ServiceDraftPatch = {
     amountCents?: number | null
     period?: PricePeriod | null
     promotion?: { active?: boolean; amountCents?: number | null }
+    instalment?: { monthlyCents?: number | null; months?: number }
+    rent?: { monthlyCents?: number | null; minTermMonths?: number }
   }
   texts?: Partial<Record<Language, Partial<ServiceTexts>>>
 }
@@ -147,10 +173,19 @@ export const emptyServiceTexts = (): ServiceTexts => ({
   seoDescription: '',
 })
 
+export const emptyServicePrice = (): ServicePrice => ({
+  mode: null,
+  amountCents: null,
+  period: null,
+  promotion: { active: false, amountCents: null },
+  instalment: { monthlyCents: null, months: SERVICE_LIMITS.instalmentMonths.default },
+  rent: { monthlyCents: null, minTermMonths: SERVICE_LIMITS.rentTermMonths.default },
+})
+
 export const emptyServiceDraft = (): ServiceDraftInput => ({
   slug: '',
   featured: false,
-  price: { mode: null, amountCents: null, period: null, promotion: { active: false, amountCents: null } },
+  price: emptyServicePrice(),
   texts: { de: emptyServiceTexts(), en: emptyServiceTexts(), ar: emptyServiceTexts() },
 })
 
@@ -242,6 +277,17 @@ const TextsPatchSchema = v.object({
 const ModeSchema = v.nullable(v.picklist(PRICE_MODES, 'Choose fixed, starting from or on request'))
 const PeriodSchema = v.nullable(v.picklist(PRICE_PERIODS, 'Choose one-time, monthly or yearly'))
 
+const countOf = (limits: { min: number; max: number }, what: string) =>
+  v.pipe(
+    v.number(`${what} must be a number`),
+    v.integer(`${what} must be a whole number`),
+    v.minValue(limits.min, `${what} must be at least ${limits.min}`),
+    v.maxValue(limits.max, `${what} can be at most ${limits.max}`),
+  )
+
+const InstalmentMonthsSchema = countOf(SERVICE_LIMITS.instalmentMonths, 'The number of instalments')
+const RentTermSchema = countOf(SERVICE_LIMITS.rentTermMonths, 'The minimum rental term')
+
 /**
  * A whole version. Used for the stored shape and for the merged result of a
  * patch. Shape and limits only: an unfinished service must stay saveable, so
@@ -263,6 +309,20 @@ export const ServiceDraftSchema = v.pipe(
             amountCents: v.optional(AmountSchema, null),
           }),
           () => ({ active: false, amountCents: null }),
+        ),
+        instalment: v.optional(
+          v.object({
+            monthlyCents: v.optional(AmountSchema, null),
+            months: v.optional(InstalmentMonthsSchema, SERVICE_LIMITS.instalmentMonths.default),
+          }),
+          () => emptyServicePrice().instalment,
+        ),
+        rent: v.optional(
+          v.object({
+            monthlyCents: v.optional(AmountSchema, null),
+            minTermMonths: v.optional(RentTermSchema, SERVICE_LIMITS.rentTermMonths.default),
+          }),
+          () => emptyServicePrice().rent,
         ),
       }),
       () => emptyServiceDraft().price,
@@ -297,6 +357,12 @@ export const ServicePatchSchema = v.object({
       period: v.optional(PeriodSchema),
       promotion: v.optional(
         v.object({ active: v.optional(v.boolean()), amountCents: v.optional(AmountSchema) }),
+      ),
+      instalment: v.optional(
+        v.object({ monthlyCents: v.optional(AmountSchema), months: v.optional(InstalmentMonthsSchema) }),
+      ),
+      rent: v.optional(
+        v.object({ monthlyCents: v.optional(AmountSchema), minTermMonths: v.optional(RentTermSchema) }),
       ),
     }),
   ),
@@ -346,6 +412,10 @@ export const normalizeServiceDraft = (draft: ServiceDraftInput): ServiceDraftInp
   return {
     ...draft,
     price: {
+      // The instalment and rent plans are kept, like the promotion's label:
+      // the public projection offers them for a fixed, one-time price only, and
+      // an owner who switches back should not have to retype them.
+      ...draft.price,
       mode: 'quote',
       amountCents: null,
       period: null,
@@ -400,6 +470,14 @@ export const mergeServiceDraft = (
         active: pick(price?.promotion?.active, current.price.promotion.active),
         amountCents: pick(price?.promotion?.amountCents, current.price.promotion.amountCents),
       },
+      instalment: {
+        monthlyCents: pick(price?.instalment?.monthlyCents, current.price.instalment.monthlyCents),
+        months: pick(price?.instalment?.months, current.price.instalment.months),
+      },
+      rent: {
+        monthlyCents: pick(price?.rent?.monthlyCents, current.price.rent.monthlyCents),
+        minTermMonths: pick(price?.rent?.minTermMonths, current.price.rent.minTermMonths),
+      },
     },
     texts,
   })
@@ -423,6 +501,14 @@ export const canonicalServiceDraft = (draft: ServiceDraftInput): string =>
       promotion: {
         active: draft.price.promotion.active,
         amountCents: draft.price.promotion.amountCents,
+      },
+      instalment: {
+        monthlyCents: draft.price.instalment.monthlyCents,
+        months: draft.price.instalment.months,
+      },
+      rent: {
+        monthlyCents: draft.price.rent.monthlyCents,
+        minTermMonths: draft.price.rent.minTermMonths,
       },
     },
     texts: LANGUAGES.map((language) => {
@@ -556,6 +642,18 @@ export type OwnerServiceListItem = {
 
 /* --------------------------------------------- the shapes visitors get */
 
+/**
+ * What the two other payment models add to a fixed, one-time price.
+ *
+ * Either may be null: "not offered this way". `totalCents` is computed here,
+ * once, so the Dashboard preview and the public page cannot add it up
+ * differently.
+ */
+export type PublicServicePlans = {
+  instalment: { monthlyCents: number; months: number; totalCents: number } | null
+  rent: { monthlyCents: number; minTermMonths: number } | null
+}
+
 export type PublicServicePrice =
   | { mode: 'quote' }
   | {
@@ -565,7 +663,44 @@ export type PublicServicePrice =
       period: PricePeriod
       /** Present only while the owner has the offer switched on. */
       promotion: { amountCents: number; label: string } | null
+      /**
+       * Instalments and rent. Present only for a fixed, one-time price that
+       * has at least one of them; a "starting from" price, or a monthly one,
+       * is not something a visitor can pay off or rent.
+       */
+      plans?: PublicServicePlans
     }
+
+/** What the instalments add up to: the monthly payment times the number of them. */
+export const instalmentTotalCents = (monthlyCents: number, months: number): number =>
+  monthlyCents * months
+
+/**
+ * The instalment and rent plans a visitor may be offered, or null.
+ *
+ * Only a fixed price paid once has a "buy" to compare them with. Anything else
+ * keeps whatever the owner typed, stored and ignored, so changing the price
+ * mode back and forth never loses it.
+ */
+export const publicPlansOf = (price: ServicePrice): PublicServicePlans | null => {
+  if (price.mode !== 'fixed' || price.period !== 'one_time') return null
+
+  const instalment =
+    price.instalment.monthlyCents === null
+      ? null
+      : {
+          monthlyCents: price.instalment.monthlyCents,
+          months: price.instalment.months,
+          totalCents: instalmentTotalCents(price.instalment.monthlyCents, price.instalment.months),
+        }
+
+  const rent =
+    price.rent.monthlyCents === null
+      ? null
+      : { monthlyCents: price.rent.monthlyCents, minTermMonths: price.rent.minTermMonths }
+
+  return instalment || rent ? { instalment, rent } : null
+}
 
 /**
  * The price a visitor is shown, or null if there is not a complete one.
@@ -582,6 +717,7 @@ export const publicPriceOf = (price: ServicePrice, promotionLabel: string): Publ
   if (price.amountCents === null || price.period === null) return null
 
   const offer = price.promotion
+  const plans = publicPlansOf(price)
 
   return {
     mode: price.mode,
@@ -592,6 +728,9 @@ export const publicPriceOf = (price: ServicePrice, promotionLabel: string): Publ
       offer.active && offer.amountCents !== null && offer.amountCents < price.amountCents
         ? { amountCents: offer.amountCents, label: promotionLabel }
         : null,
+    // Left out entirely when there is nothing to offer, so a service without
+    // plans is answered exactly as it was before they existed.
+    ...(plans ? { plans } : {}),
   }
 }
 

@@ -136,6 +136,9 @@ const COPY: readonly Entry[] = [
   ['services.packages.details', 'text'],
   ['services.others.title', 'text'],
   ['services.others.sub', 'longText'],
+  ['services.pricing.rentIncludes', 'text'],
+  ['services.pricing.changeFee', 'text'],
+  ['services.pricing.taxNote', 'longText'],
   ['services.cta.title', 'text'],
   ['services.cta.body', 'longText'],
   ['services.cta.button', 'text'],
@@ -399,6 +402,13 @@ const FIXED_LENGTH: Record<string, number> = {
   'home.story.demo.navigation[]': 3,
 }
 
+/**
+ * Copy fields that may be saved empty. `services.pricing.taxNote` ships empty:
+ * the page shows it only once the owner has written one, and clearing it again
+ * is how it is taken down.
+ */
+const OPTIONAL_COPY: ReadonlySet<string> = new Set(['services.pricing.taxNote'])
+
 /** Facts about the owner, held once for all three languages. */
 const FACTS: ReadonlyArray<{ key: string; kind: ContentKind; format: ContentFormat; optional: boolean }> = [
   { key: 'site.email', kind: 'text', format: 'email', optional: false },
@@ -490,7 +500,7 @@ const buildRegistry = (): ContentFieldDefinition[] => {
       scope: key.startsWith('legal.') ? 'legal' : key.includes('.meta.') ? 'seo' : 'copy',
       format: 'plain',
       shared: false,
-      optional: false,
+      optional: OPTIONAL_COPY.has(key),
       guidance: guidanceFor(key, kind),
       minEntries: kind === 'list' ? (fixed ?? 1) : 0,
       maxEntries: kind === 'list' ? (fixed ?? CONTENT_LIMITS.listEntries) : 0,

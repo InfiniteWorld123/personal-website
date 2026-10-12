@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import { emptyServiceDraft, publicPriceOf, publishBlockers } from '#/backend2/contracts/service.contract'
+import { emptyServiceDraft, emptyServicePrice, publicPriceOf, publishBlockers } from '#/backend2/contracts/service.contract'
 import { formatCents, parseServiceBody, priceParts } from '#/frontend/features/services/service-display'
 import {
   blockerTarget,
@@ -44,7 +44,7 @@ describe('the form and the draft', () => {
     const draft = emptyServiceDraft()
 
     draft.slug = 'websites'
-    draft.price = { mode: 'from', amountCents: 4990, period: 'monthly', promotion: { active: true, amountCents: 3990 } }
+    draft.price = { ...emptyServicePrice(), mode: 'from', amountCents: 4990, period: 'monthly', promotion: { active: true, amountCents: 3990 } }
     draft.texts.de = { ...draft.texts.de, name: 'Websites', included: ['Hosting'] }
 
     expect(toDraft(toFormValues(draft))).toEqual(draft)
@@ -63,7 +63,7 @@ describe('the form and the draft', () => {
 
     expect(draft.slug).toBe('websites')
     expect(draft.texts.en.included).toEqual(['Hosting'])
-    expect(draft.price).toEqual({ mode: 'quote', amountCents: null, period: null, promotion: { active: false, amountCents: null } })
+    expect(draft.price).toEqual({ ...emptyServicePrice(), mode: 'quote' })
   })
 
   it('flags shape only — an unfinished draft still saves', () => {
@@ -87,25 +87,25 @@ describe('the form and the draft', () => {
   })
 
   it('summarises a price for the owner in English', () => {
-    expect(priceSummary({ mode: 'from', amountCents: 99000, period: 'one_time', promotion: { active: false, amountCents: null } })).toBe(
+    expect(priceSummary({ ...emptyServicePrice(), mode: 'from', amountCents: 99000, period: 'one_time', promotion: { active: false, amountCents: null } })).toBe(
       'From €990 · one-time',
     )
-    expect(priceSummary({ mode: 'quote', amountCents: null, period: null, promotion: { active: false, amountCents: null } })).toBe('On request')
-    expect(priceSummary({ mode: null, amountCents: null, period: null, promotion: { active: false, amountCents: null } })).toBe('Price not set')
+    expect(priceSummary({ ...emptyServicePrice(), mode: 'quote' })).toBe('On request')
+    expect(priceSummary(emptyServicePrice())).toBe('Price not set')
   })
 })
 
 describe('a price as a visitor reads it', () => {
-  const from = publicPriceOf({ mode: 'from', amountCents: 99000, period: 'one_time', promotion: { active: false, amountCents: null } }, '')!
+  const from = publicPriceOf({ ...emptyServicePrice(), mode: 'from', amountCents: 99000, period: 'one_time' }, '')!
   const monthlyOffer = publicPriceOf(
-    { mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: true, amountCents: 3900 } },
+    { ...emptyServicePrice(), mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: true, amountCents: 3900 } },
     'Startangebot',
   )!
 
   it('writes euros as the site does in each language', () => {
     expect(formatCents(99000, 'de')).toBe('990 €')
     expect(formatCents(99000, 'en')).toBe('€990')
-    expect(formatCents(4990, 'ar')).toBe('49,90 €')
+    expect(formatCents(4990, 'ar')).toBe('49,90\u00a0يورو')
   })
 
   it('uses the approved words', () => {
@@ -131,8 +131,8 @@ describe('a price as a visitor reads it', () => {
   })
 
   it('never shows an offer that is off or not lower', () => {
-    expect(publicPriceOf({ mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: false, amountCents: 3900 } }, 'x')!).toMatchObject({ promotion: null })
-    expect(publicPriceOf({ mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: true, amountCents: 4900 } }, 'x')!).toMatchObject({ promotion: null })
+    expect(publicPriceOf({ ...emptyServicePrice(), mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: false, amountCents: 3900 } }, 'x')!).toMatchObject({ promotion: null })
+    expect(publicPriceOf({ ...emptyServicePrice(), mode: 'fixed', amountCents: 4900, period: 'monthly', promotion: { active: true, amountCents: 4900 } }, 'x')!).toMatchObject({ promotion: null })
   })
 })
 

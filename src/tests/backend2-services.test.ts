@@ -233,6 +233,9 @@ describe('the rules that need no database', () => {
       amountCents: null,
       period: null,
       promotion: { active: false, amountCents: null },
+      // Instalments and rent are not part of this rule: not offered, twelve months.
+      instalment: { monthlyCents: null, months: 12 },
+      rent: { monthlyCents: null, minTermMonths: 12 },
     })
     expect(contract.publishBlockers(parsed)).toEqual([])
   })

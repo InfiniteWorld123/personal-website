@@ -6,13 +6,15 @@ import { Container } from '#/frontend/components/layout/public/Container'
 import { Section, SectionHeading } from '#/frontend/components/layout/public/Section'
 import { Button } from '#/frontend/components/ui/button'
 import { getContent } from '#/frontend/content'
-import { PRICE_WORDS, priceParts } from '#/frontend/features/services/service-display'
+import { PRICE_WORDS, type PlanView, cheapestRentCents, planView } from '#/frontend/features/services/service-display'
 import { cn } from '#/frontend/lib/utils'
 import type { Language } from '#/frontend/i18n/language'
 import { useMoreBatches } from '#/frontend/features/work/use-more-batches'
 import { fetchServicesBatch } from './server/published-services'
 import type { ServicesPageData } from './server/services-source'
+import { PLAN_PANEL_ID, PlanTabs, RentTeaser, planTabId } from './PlanTabs'
 import { PriceLine } from './ServicePrice'
+import { PLAN_VALUES, type PlanValue } from './service-page'
 import { SERVICE_BATCH_SIZE, SERVICE_WORDS } from './service-words'
 
 /**
@@ -27,30 +29,46 @@ import { SERVICE_BATCH_SIZE, SERVICE_WORDS } from './service-words'
 export function ServicesListV2({
   data,
   page,
+  plan = 'kaufen',
   language,
 }: {
   data: Extract<ServicesPageData, { source: 'v2' }>
   page: number
+  /** The payment model on screen: `?plan=` on the address, Buy by default. */
+  plan?: PlanValue
   language: Language
 }) {
   if (data.status === 'error') return <LoadFailure language={language} />
 
-  return <ServiceList items={data.items} total={data.total} page={page} language={language} />
+  return <ServiceList items={data.items} total={data.total} page={page} plan={plan} language={language} />
 }
 
 function ServiceList({
   items,
   total,
   page,
+  plan,
   language,
 }: {
   items: PublicServiceCard[]
   total: number
   page: number
+  plan: PlanValue
   language: Language
 }) {
   const { services, home } = getContent(language)
   const words = SERVICE_WORDS[language]
+  const navigate = useNavigate()
+  // The tab is the address: `?plan=` is replaced rather than added, so Back
+  // leaves the page instead of walking through every tab the visitor tried.
+  const selectPlan = (next: PlanValue) =>
+    void navigate({
+      to: '/$lang/services',
+      params: { lang: language },
+      search: { page: page > 1 ? page : undefined, plan: next === 'kaufen' ? undefined : next },
+      replace: true,
+      resetScroll: false,
+    })
   // The route loads every batch up to `?page=`; "Load more" fetches the next one.
   const more = useMoreBatches({
     items,
@@ -78,7 +96,13 @@ function ServiceList({
   return (
     <>
       {packages.length ? (
-        <PackagesSection items={packages} anchor={packagesAnchor(visible)} language={language} />
+        <PackagesSection
+          items={packages}
+          anchor={packagesAnchor(visible)}
+          plan={plan}
+          onSelectPlan={selectPlan}
+          language={language}
+        />
       ) : null}
       {others.length ? (
         <OthersSection items={others} withHeading={packages.length > 0} language={language} moreLabel={home.services.more} />
@@ -86,6 +110,7 @@ function ServiceList({
       {visible.length < more.total ? (
         <LoadMore
           page={Math.ceil(visible.length / SERVICE_BATCH_SIZE)}
+          plan={plan}
           language={language}
           label={words.loadMore}
           busy={more.loading}
@@ -114,41 +139,104 @@ export const splitServices = (items: PublicServiceCard[]) => ({
 const packagesAnchor = (items: PublicServiceCard[]) =>
   items.some((service) => service.slug === 'websites') ? 'website-pakete' : 'websites'
 
+/** A package that can be paid in instalments or rented as well as bought. */
+const offersPlans = (service: PublicServiceCard): boolean => {
+  const plans = service.price && service.price.mode !== 'quote' ? service.price.plans : undefined
+
+  return Boolean(plans?.instalment || plans?.rent)
+}
+
 function PackagesSection({
   items,
   anchor,
+  plan,
+  onSelectPlan,
   language,
 }: {
   items: PublicServiceCard[]
   anchor: string
+  plan: PlanValue
+  onSelectPlan: (plan: PlanValue) => void
   language: Language
 }) {
-  const copy = getContent(language).services.packages
+  const { packages: copy, pricing } = getContent(language).services
   const count = items.length
   const columns =
     count === 1 ? 'max-w-md' : count === 2 || count === 4 ? 'max-w-xl lg:max-w-none lg:grid-cols-2' : 'max-w-xl lg:max-w-none lg:grid-cols-3'
+  // The tabs appear once at least one package can be paid another way. Until
+  // then the page is the one visitors already know, and a stray `?plan=` shows Buy.
+  const withPlans = items.some(offersPlans)
+  const shown: PlanValue = withPlans ? plan : 'kaufen'
+  const cheapestRent = cheapestRentCents(items)
 
   return (
     <Section id={anchor} className="scroll-mt-20 pt-8 sm:pt-10 lg:pt-12">
       <Container className="flex flex-col gap-10">
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
-        <div className={cn('mx-auto grid w-full gap-5', columns)}>
-          {items.map((service) => (
-            <PackageCard key={service.slug} service={service} language={language} />
-          ))}
+        <div className="flex flex-col gap-10">
+          {withPlans ? (
+            <div data-reveal className="flex flex-col gap-3">
+              <PlanTabs plan={shown} language={language} onSelect={onSelectPlan} />
+              {cheapestRent !== null ? (
+                <RentTeaser
+                  show={shown === 'kaufen'}
+                  cheapestRentCents={cheapestRent}
+                  language={language}
+                  onRent={() => onSelectPlan('mieten')}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          <div
+            id={withPlans ? PLAN_PANEL_ID : undefined}
+            role={withPlans ? 'tabpanel' : undefined}
+            aria-labelledby={withPlans ? planTabId(shown) : undefined}
+            className={cn('mx-auto grid w-full gap-5', columns)}
+          >
+            {items.map((service) => (
+              <PackageCard
+                key={service.slug}
+                service={service}
+                plan={shown}
+                withPlans={withPlans}
+                rentIncludes={pricing.rentIncludes}
+                language={language}
+              />
+            ))}
+          </div>
         </div>
-        <p data-reveal className="max-w-2xl text-sm leading-7 text-foreground/58">
-          {copy.note}
-        </p>
+        <div data-reveal className="flex max-w-2xl flex-col gap-2 text-sm leading-7 text-foreground/58">
+          {pricing.changeFee.trim() ? <p>{pricing.changeFee}</p> : null}
+          {pricing.taxNote.trim() ? <p>{pricing.taxNote}</p> : null}
+          {/*
+            "Einmalige Preise …" is only true of Buy. It comes last and keeps
+            its space on the other tabs, so nothing below the cards moves when
+            the visitor changes tab.
+          */}
+          <p className={cn(shown !== 'kaufen' && 'invisible')} aria-hidden={shown !== 'kaufen' || undefined}>
+            {copy.note}
+          </p>
+        </div>
       </Container>
     </Section>
   )
 }
 
-function PackageCard({ service, language }: { service: PublicServiceCard; language: Language }) {
+function PackageCard({
+  service,
+  plan,
+  withPlans,
+  rentIncludes,
+  language,
+}: {
+  service: PublicServiceCard
+  plan: PlanValue
+  withPlans: boolean
+  rentIncludes: string
+  language: Language
+}) {
   const copy = getContent(language).services.packages
   const words = PRICE_WORDS[language]
-  const parts = service.price ? priceParts(service.price, language) : null
 
   return (
     <article
@@ -163,34 +251,23 @@ function PackageCard({ service, language }: { service: PublicServiceCard; langua
         <p className="text-sm leading-7 text-foreground/58">{service.summary}</p>
       </div>
 
-      <div className="flex flex-col justify-end gap-1.5 px-7 pt-5 pb-6">
-        {parts ? (
-          <>
-          {parts.label ? (
-            <p>
-              <span className="inline-flex h-6 items-center rounded-full bg-primary/12 px-2.5 text-xs font-semibold text-primary">
-                {parts.label}
-              </span>
-            </p>
-          ) : null}
-          <p className="font-heading tabular flex flex-wrap items-baseline gap-x-2.5 text-[2.4rem] leading-[1.05] text-primary rtl:text-[2.1rem]">
-            {parts.regular ? (
-              <del className="text-[0.55em] text-muted-foreground decoration-[1.5px]">
-                <span className="sr-only">{words.regular} </span>
-                {parts.regular}
-              </del>
-            ) : null}
-            <span>
-              {parts.regular ? <span className="sr-only">{words.offer} </span> : null}
-              {parts.amount}
-            </span>
-            {parts.period ? (
-              <span className="font-sans text-base font-medium tracking-normal text-muted-foreground">{parts.period}</span>
-            ) : null}
-          </p>
-          {parts.caption ? <p className="text-[0.8rem] font-medium text-muted-foreground">{parts.caption}</p> : null}
-          </>
-        ) : null}
+      {/*
+        All three payment models are laid in one grid cell and only the chosen
+        one is visible, so the row is as tall as the tallest of them whatever
+        the tab: switching tabs moves nothing below the price. The hidden ones
+        are `invisible`, which also keeps them out of the accessibility tree.
+      */}
+      <div className="grid px-7 pt-5 pb-6">
+        {service.price
+          ? PLAN_VALUES.map((value) => (
+              <PlanPrice
+                key={value}
+                active={value === plan}
+                view={planView(service.price!, value, language, { rentIncludes })}
+                offerWords={words}
+              />
+            ))
+          : null}
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border/40 px-7 pt-5 pb-7">
@@ -207,7 +284,12 @@ function PackageCard({ service, language }: { service: PublicServiceCard; langua
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-b-[1.75rem] border-t border-border/30 bg-muted/25 px-7 py-5">
         <Button asChild className="rounded-full bg-primary px-5 text-primary-foreground">
-          <Link to="/$lang/contact" params={{ lang: language }}>
+          {/* The chosen package and payment model travel with the visitor. */}
+          <Link
+            to="/$lang/contact"
+            params={{ lang: language }}
+            search={{ package: service.slug, ...(withPlans ? { plan } : {}) }}
+          >
             {copy.cta}
             <ArrowRight className="btn-arrow rtl:-scale-x-100" />
           </Link>
@@ -222,6 +304,59 @@ function PackageCard({ service, language }: { service: PublicServiceCard; langua
         </Link>
       </div>
     </article>
+  )
+}
+
+/** One payment model's price block. Hidden ones keep their space (see the card). */
+function PlanPrice({
+  active,
+  view,
+  offerWords,
+}: {
+  active: boolean
+  view: PlanView
+  offerWords: (typeof PRICE_WORDS)[Language]
+}) {
+  return (
+    <div className={cn('col-start-1 row-start-1 flex flex-col gap-1.5', !active && 'invisible')} aria-hidden={!active || undefined}>
+      {view.kind === 'request' ? (
+        <p className="font-heading text-[1.9rem] leading-[1.15] text-primary rtl:text-[1.6rem]">{view.amount}</p>
+      ) : (
+        <>
+          {view.label ? (
+            <p>
+              <span className="inline-flex h-6 items-center rounded-full bg-primary/12 px-2.5 text-xs font-semibold text-primary">
+                {view.label}
+              </span>
+            </p>
+          ) : null}
+          <p className="font-heading tabular flex flex-wrap items-baseline gap-x-2.5 text-[2.4rem] leading-[1.05] text-primary rtl:text-[2.1rem]">
+            {view.regular ? (
+              <del className="text-[0.55em] text-muted-foreground decoration-[1.5px]">
+                <span className="sr-only">{offerWords.regular} </span>
+                {view.regular}
+              </del>
+            ) : null}
+            <span>
+              {view.regular ? <span className="sr-only">{offerWords.offer} </span> : null}
+              {view.amount}
+            </span>
+            {/* Whitespace between flex items is not drawn; it makes the text read "99 € / Monat". */}
+            {view.period ? (
+              <>
+                {' '}
+                <span className="font-sans text-base font-medium tracking-normal text-muted-foreground">{view.period}</span>
+              </>
+            ) : null}
+          </p>
+          {view.lines.map((line) => (
+            <p key={line} className="text-[0.8rem] leading-5 font-medium text-muted-foreground">
+              {line}
+            </p>
+          ))}
+        </>
+      )}
+    </div>
   )
 }
 
@@ -284,6 +419,7 @@ function OthersSection({
 
 function LoadMore({
   page,
+  plan,
   language,
   label,
   busy,
@@ -291,6 +427,8 @@ function LoadMore({
 }: {
   /** The page on screen now; the button asks for the one after it. */
   page: number
+  /** The payment model on screen: more packages must not reset the tab. */
+  plan: PlanValue
   language: Language
   label: string
   busy: boolean
@@ -310,7 +448,7 @@ function LoadMore({
           onRetry ? onRetry() : void navigate({
             to: '/$lang/services',
             params: { lang: language },
-            search: { page: page + 1 },
+            search: { page: page + 1, ...(plan === 'kaufen' ? {} : { plan }) },
             resetScroll: false,
           })
         }

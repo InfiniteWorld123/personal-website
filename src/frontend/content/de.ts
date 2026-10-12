@@ -288,6 +288,11 @@ export const de: SiteContent = {
       title: 'Nicht das Richtige dabei?',
       sub: 'Für einen Online-Shop oder eine eigene Software bekommst du ein Angebot, das zu deinem Vorhaben passt.',
     },
+    pricing: {
+      rentIncludes: 'Hosting und Wartung inklusive',
+      changeFee: 'Kleine Änderungen nach dem Launch: 16 € pro Änderung',
+      taxNote: '',
+    },
     cta: {
       title: 'Noch nicht sicher, was du brauchst?',
       body: 'Das ist in Ordnung. Beschreib mir kurz, was du zeigen, verkaufen oder einfacher machen willst — ich helfe dir, den richtigen ersten Schritt einzuordnen.',

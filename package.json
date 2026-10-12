@@ -20,6 +20,7 @@
     "db2:migrate": "bun src/backend2/db/migrate.ts",
     "db2:owner:create": "bun src/backend2/db/bootstrap-owner.ts",
     "db2:media:sweep": "bun src/backend2/db/sweep-media.ts",
+    "db2:services:seed-plans": "bun src/backend2/db/seed-service-plans.ts",
     "db2:blog:publish-due": "bun src/backend2/db/publish-due-posts.ts",
     "db2:booking:send-reminders": "bun src/backend2/db/send-booking-reminders.ts",
     "db2:invoices:run-billing": "bun src/backend2/db/run-invoice-billing.ts",

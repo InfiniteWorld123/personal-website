@@ -1,4 +1,6 @@
+import type { PublicServiceCard } from '#/backend2/contracts/service.contract'
 import { getContent, getServicePrices, getSite, serviceOrder, site } from '#/frontend/content'
+import { PLAN_WORDS } from '#/frontend/features/services/service-display'
 import { type Language, languages, localeFor } from '#/frontend/i18n/language'
 import { absolute, pageUrl, socialCard } from './url'
 
@@ -45,6 +47,46 @@ export type StructuredLanding = {
   /** The questions shown on the page; empty on the hub. */
   faq: Array<{ question: string; answer: string }>
 }
+
+/**
+ * What the graph needs to know about a fixed-price package on `/services`.
+ * Built from the published cards by `structuredPackagesOf`, so the graph states
+ * the same prices the page shows.
+ */
+export type StructuredPackage = {
+  slug: string
+  name: string
+  summary: string
+  /** What buying costs now, in euro cents: the offer price while an offer is on. */
+  buyCents: number
+  /** The monthly rent in euro cents, when the package can be rented. */
+  rentMonthlyCents: number | null
+}
+
+/**
+ * The fixed-price packages among the published services, for the graph.
+ *
+ * Only fixed one-time prices: "starting from" and "on request" services have
+ * no single price to state. Instalments are left out on purpose — schema.org
+ * has no honest shape for "12 payments of 99 € and then it is yours", and a
+ * misleading monthly price is worse than none.
+ */
+export const structuredPackagesOf = (items: PublicServiceCard[]): StructuredPackage[] =>
+  items.flatMap((item) => {
+    const price = item.price
+
+    if (!price || price.mode !== 'fixed' || price.period !== 'one_time') return []
+
+    return [
+      {
+        slug: item.slug,
+        name: item.name,
+        summary: item.summary,
+        buyCents: price.promotion ? price.promotion.amountCents : price.amountCents,
+        rentMonthlyCents: price.plans?.rent?.monthlyCents ?? null,
+      },
+    ]
+  })
 
 /**
  * The area a local landing page is about: the city and the state, not the
@@ -123,7 +165,56 @@ const offers = (language: Language) => {
   }))
 }
 
-const siteNodes = (language: Language) => {
+/**
+ * One `Offer` per package for buying — the main price — and, when it can be
+ * rented, one more `Offer` with a monthly `UnitPriceSpecification`
+ * (`unitCode` MON is UN/CEFACT "month"). Both point at the same service, and
+ * both at `/services#<slug>`: a payment model is not a page of its own.
+ */
+const packageOffers = (language: Language, packages: StructuredPackage[]) =>
+  packages.flatMap((entry) => {
+    const url = `${pageUrl(language, '/services')}#${entry.slug}`
+    const itemOffered = {
+      '@type': 'Service',
+      name: entry.name,
+      description: entry.summary,
+      serviceType: entry.name,
+      provider: { '@id': BUSINESS },
+      areaServed: AREA_SERVED,
+      availableLanguage: spokenLanguages,
+    }
+
+    return [
+      {
+        '@type': 'Offer',
+        name: entry.name,
+        url,
+        availability: 'https://schema.org/InStock',
+        priceCurrency: 'EUR',
+        price: entry.buyCents / 100,
+        itemOffered,
+      },
+      ...(entry.rentMonthlyCents === null
+        ? []
+        : [
+            {
+              '@type': 'Offer',
+              name: `${entry.name} (${PLAN_WORDS[language].tabs.mieten})`,
+              url,
+              availability: 'https://schema.org/InStock',
+              priceSpecification: {
+                '@type': 'UnitPriceSpecification',
+                price: entry.rentMonthlyCents / 100,
+                priceCurrency: 'EUR',
+                unitCode: 'MON',
+              },
+              itemOffered,
+            },
+          ]),
+    ]
+  })
+
+const siteNodes = (language: Language, packages: StructuredPackage[]) => {
   const { home, shell } = getContent(language)
 
   return [
@@ -158,7 +249,7 @@ const siteNodes = (language: Language) => {
       areaServed: AREA_SERVED,
       availableLanguage: spokenLanguages,
       priceRange: priceRange(),
-      makesOffer: offers(language),
+      makesOffer: [...offers(language), ...packageOffers(language, packages)],
     },
     {
       '@type': 'WebSite',
@@ -327,6 +418,8 @@ type PageInput = {
   article?: StructuredArticle
   /** Set on an industry landing page. */
   landing?: StructuredLanding
+  /** Set on `/services`: the fixed-price packages and their payment models. */
+  packages?: StructuredPackage[]
 }
 
 /** The local service an industry landing page sells, provided by the business node. */
@@ -353,6 +446,7 @@ export function buildStructuredData({
   projects = [],
   article,
   landing,
+  packages = [],
 }: PageInput) {
   const entity = mainEntity(language, path, projects, article, image, landing)
   const trail = breadcrumb(language, path, title, projects, article, landing)
@@ -374,7 +468,7 @@ export function buildStructuredData({
   return {
     '@context': 'https://schema.org',
     '@graph': [
-      ...siteNodes(language),
+      ...siteNodes(language, packages),
       page,
       ...(trail ? [{ ...trail, '@id': `${canonical}#breadcrumb` }] : []),
       ...(landing ? [landingService(canonical, landing)] : []),

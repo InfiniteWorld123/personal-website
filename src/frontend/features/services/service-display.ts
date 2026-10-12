@@ -1,4 +1,5 @@
-import type { Language, PublicServicePrice } from '#/backend2/contracts/service.contract'
+import type { Language, PublicServiceCard, PublicServicePrice } from '#/backend2/contracts/service.contract'
+import { site } from '#/frontend/content/site'
 
 /**
  * How a service's price and longer text read to a visitor.
@@ -69,18 +70,30 @@ export const PRICE_WORDS: Record<
   },
 }
 
+/** Non-breaking, so a number never ends a line while its "€" or "يورو" starts the next. */
+const NBSP = '\u00a0'
+
 /**
- * Euros as the site writes them — `990 €` in German and Arabic, `€990` in
- * English, Western digits throughout — with cents only when there are some.
+ * Euros as the site writes them, with cents only when there are some and
+ * Western digits throughout:
+ *
+ * - German: `34,99 €`, `1.499 €`
+ * - English: `€34.99`, `€1,499`
+ * - Arabic: `34,99 يورو`, `1.499 يورو` — the German number, the word "euro"
+ *   after it (owner's request, 12 Oct 2026; before it the sign was "€").
  */
 export const formatCents = (cents: number, language: Language): string => {
   const hasCents = cents % 100 !== 0
+  const digits = { minimumFractionDigits: hasCents ? 2 : 0, maximumFractionDigits: hasCents ? 2 : 0 }
+
+  if (language === 'ar') {
+    return `${new Intl.NumberFormat('de-DE', digits).format(cents / 100)}${NBSP}يورو`
+  }
 
   return new Intl.NumberFormat(language === 'en' ? 'en-GB' : 'de-DE', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: hasCents ? 2 : 0,
-    maximumFractionDigits: hasCents ? 2 : 0,
+    ...digits,
   }).format(cents / 100)
 }
 
@@ -172,4 +185,191 @@ export const parseServiceBody = (text: string): BodyBlock[] => {
   flushList()
 
   return blocks
+}
+
+/* ------------------------------------------------------- the payment models */
+
+/**
+ * The three ways a fixed-price package can be paid, and the words in the
+ * address (`/services?plan=mieten`) that name them. The same words in every
+ * language, so a link to the rent tab is the same link in German, English and
+ * Arabic. Spelled out in `service-page.ts` for the route, which parses the
+ * address without the copy below.
+ */
+export const PLAN_KEYS = ['kaufen', 'raten', 'mieten'] as const
+export type PlanKey = (typeof PLAN_KEYS)[number]
+
+/**
+ * How many things, in the language's own grammar. Arabic counts two as a dual
+ * ("قسطان"), three to ten as a plural ("أقساط") and eleven or more as a
+ * singular ("قسطاً"); German and English only tell one from many.
+ */
+type Count = (n: number) => string
+
+const arabicCount =
+  (words: { two: string; few: string; many: string }): Count =>
+  (n) =>
+    n === 2 ? words.two : n >= 3 && n <= 10 ? `${n} ${words.few}` : `${n} ${words.many}`
+
+export const PLAN_WORDS: Record<
+  Language,
+  {
+    /** The accessible name of the tab list. */
+    tabsLabel: string
+    tabs: Record<PlanKey, string>
+    /** A package with no price in the chosen model. */
+    onRequest: string
+    instalments: Count
+    instalmentTotal: (total: string) => string
+    instalmentOwnership: string
+    rentTerm: (months: number) => string
+    rentOwnership: (owner: string) => string
+    /** The line under the tabs on "Buy": `price` is the cheapest rent, "34,99 €". */
+    teaser: (price: string) => string
+  }
+> = {
+  de: {
+    tabsLabel: 'Zahlungsmodell',
+    tabs: { kaufen: 'Kaufen', raten: 'In Raten', mieten: 'Mieten' },
+    onRequest: 'Auf Anfrage',
+    instalments: (n) => `${n} Raten`,
+    instalmentTotal: (total) => `insgesamt ${total}`,
+    instalmentOwnership: 'Danach gehört die Website dir',
+    rentTerm: (n) => (n === 1 ? 'Monatlich kündbar' : `Mindestlaufzeit ${n} Monate, danach monatlich kündbar`),
+    rentOwnership: (owner) => `Die Website bleibt Eigentum von ${owner}`,
+    teaser: (price) => `Kein Budget für alles auf einmal? Schon ab ${price}/Monat mieten`,
+  },
+  en: {
+    tabsLabel: 'Payment model',
+    tabs: { kaufen: 'Buy', raten: 'Instalments', mieten: 'Rent' },
+    onRequest: 'On request',
+    instalments: (n) => `${n} instalments`,
+    instalmentTotal: (total) => `${total} in total`,
+    instalmentOwnership: 'After that, the website is yours',
+    rentTerm: (n) => (n === 1 ? 'Cancel monthly' : `Minimum term ${n} months, then cancel monthly`),
+    rentOwnership: (owner) => `The website remains the property of ${owner}`,
+    teaser: (price) => `No budget for everything at once? Rent from ${price}/month`,
+  },
+  ar: {
+    tabsLabel: 'طريقة الدفع',
+    tabs: { kaufen: 'شراء', raten: 'تقسيط', mieten: 'إيجار' },
+    onRequest: 'عند الطلب',
+    instalments: arabicCount({ two: 'قسطان', few: 'أقساط', many: 'قسطاً' }),
+    instalmentTotal: (total) => `المجموع ${total}`,
+    instalmentOwnership: 'وبعدها يصبح الموقع ملكك',
+    rentTerm: (n) =>
+      n === 1
+        ? 'يمكن الإلغاء شهرياً'
+        : `الحد الأدنى للمدة ${arabicCount({ two: 'شهران', few: 'أشهر', many: 'شهراً' })(n)}، وبعدها يمكن الإلغاء شهرياً`,
+    rentOwnership: (owner) => `يبقى الموقع ملكاً لـ ${owner}`,
+    teaser: (price) => `لا تريد دفع كل شيء دفعة واحدة؟ استأجر الموقع من ${price} شهرياً`,
+  },
+}
+
+/**
+ * One package under one tab, ready to lay out.
+ *
+ * `request` is a package that has no price in that model ("Auf Anfrage"); the
+ * page keeps the card, so the three tabs always show the same packages and a
+ * visitor can still ask.
+ */
+export type PlanView =
+  | { kind: 'request'; amount: string }
+  | {
+      kind: 'priced'
+      /** An offer's short label, on "Buy" only. */
+      label: string | null
+      /** The struck-through normal price while an offer is on, on "Buy" only. */
+      regular: string | null
+      amount: string
+      /** "/ Monat" — null for the one-time price. */
+      period: string | null
+      /** The small print under the price. */
+      lines: string[]
+    }
+
+/**
+ * What a package shows under a tab.
+ *
+ * `notes.rentIncludes` is the owner's editable "Hosting und Wartung
+ * inklusive" (Dashboard → Content), added to the rent line when it is not
+ * empty. Everything else is computed from the price, so the total of the
+ * instalments can never disagree with the monthly amount beside it.
+ */
+export const planView = (
+  price: PublicServicePrice,
+  plan: PlanKey,
+  language: Language,
+  notes: { rentIncludes: string },
+): PlanView => {
+  const words = PLAN_WORDS[language]
+
+  if (plan === 'kaufen') {
+    const parts = priceParts(price, language)
+
+    return {
+      kind: 'priced',
+      label: parts.label,
+      regular: parts.regular,
+      amount: parts.amount,
+      period: parts.period,
+      lines: parts.caption ? [parts.caption] : [],
+    }
+  }
+
+  const plans = price.mode === 'quote' ? undefined : price.plans
+  const perMonth = PRICE_WORDS[language].perMonth
+
+  if (plan === 'raten') {
+    const instalment = plans?.instalment
+
+    if (!instalment) return { kind: 'request', amount: words.onRequest }
+
+    return {
+      kind: 'priced',
+      label: null,
+      regular: null,
+      amount: formatCents(instalment.monthlyCents, language),
+      period: perMonth,
+      lines: [
+        `${words.instalments(instalment.months)} · ${words.instalmentTotal(formatCents(instalment.totalCents, language))}`,
+        words.instalmentOwnership,
+      ],
+    }
+  }
+
+  const rent = plans?.rent
+
+  if (!rent) return { kind: 'request', amount: words.onRequest }
+
+  const included = notes.rentIncludes.trim()
+
+  return {
+    kind: 'priced',
+    label: null,
+    regular: null,
+    amount: formatCents(rent.monthlyCents, language),
+    period: perMonth,
+    lines: [
+      included ? `${words.rentTerm(rent.minTermMonths)} · ${included}` : words.rentTerm(rent.minTermMonths),
+      words.rentOwnership(site.name),
+    ],
+  }
+}
+
+/**
+ * The lowest monthly rent among the packages on the page, or null when none is
+ * rented. Computed from the data, never written into a sentence: the teaser
+ * under the tabs follows the owner's prices.
+ */
+export const cheapestRentCents = (items: PublicServiceCard[]): number | null => {
+  let cheapest: number | null = null
+
+  for (const item of items) {
+    const rent = item.price?.mode === 'quote' ? undefined : item.price?.plans?.rent
+
+    if (rent && (cheapest === null || rent.monthlyCents < cheapest)) cheapest = rent.monthlyCents
+  }
+
+  return cheapest
 }

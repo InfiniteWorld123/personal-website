@@ -146,6 +146,18 @@ export type ServicesCopy = {
   packages: { eyebrow: string; title: string; sub: string; note: string; cta: string; details: string }
   /** Everything else, under the packages: "starting from" and "on request" services. */
   others: { title: string; sub: string }
+  /**
+   * The notes under the package cards that apply to every payment model (Buy,
+   * Instalments, Rent). Edited in Dashboard → Content → Services page.
+   */
+  pricing: {
+    /** What a rental covers; shown inside the rent tab's small print. */
+    rentIncludes: string
+    /** What a small change after launch costs. */
+    changeFee: string
+    /** Tax or VAT wording. Empty means nothing is shown. */
+    taxNote: string
+  }
   cta: { title: string; body: string; button: string }
 }
 

@@ -282,7 +282,7 @@ describe('the approved price words on the public pages', () => {
   it('reads "from 990 €, one-time" in each language, the caption for the service page only', () => {
     expect(priceParts(fromOneTime, 'de')).toMatchObject({ lead: 'ab', amount: '990\u00a0€', period: null, caption: 'einmalig' })
     expect(priceParts(fromOneTime, 'en')).toMatchObject({ lead: 'from', amount: '€990', caption: 'one-time' })
-    expect(priceParts(fromOneTime, 'ar')).toMatchObject({ lead: 'من', amount: '990\u00a0€', caption: 'دفعة واحدة' })
+    expect(priceParts(fromOneTime, 'ar')).toMatchObject({ lead: 'من', amount: '990\u00a0يورو', caption: 'دفعة واحدة' })
   })
 
   it('reads a monthly offer with the regular price struck and the label', () => {
@@ -293,7 +293,7 @@ describe('the approved price words on the public pages', () => {
       period: '/ Monat',
       label: 'Angebot',
     })
-    expect(priceParts(monthlyOffer, 'ar')).toMatchObject({ period: 'شهرياً', amount: '39,90\u00a0€' })
+    expect(priceParts(monthlyOffer, 'ar')).toMatchObject({ period: 'شهرياً', amount: '39,90\u00a0يورو' })
     expect(priceParts({ ...monthlyOffer, period: 'yearly' }, 'en')).toMatchObject({ period: '/ year', amount: '€39.90' })
   })
 
@@ -316,6 +316,6 @@ describe('the approved price words on the public pages', () => {
       period: 'monthly',
       promotion: { amountCents: 3_990, label: 'Offer ar' },
     })
-    expect(formatCents(4_990, 'ar')).toBe('49,90\u00a0€')
+    expect(formatCents(4_990, 'ar')).toBe('49,90\u00a0يورو')
   })
 })

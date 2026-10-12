@@ -6,7 +6,7 @@ import {
   type ServiceState,
 } from '#/backend2/contracts/service.contract'
 import { StatusChip, type Tone } from '#/frontend/dashboard/primitives'
-import { parseServiceBody, priceParts, PRICE_WORDS } from '#/frontend/features/services/service-display'
+import { PLAN_WORDS, parseServiceBody, planView, priceParts, PRICE_WORDS } from '#/frontend/features/services/service-display'
 import { cn } from '#/frontend/lib/utils'
 
 /**
@@ -145,6 +145,43 @@ export function PriceText({
         <span className="text-[12px] text-[var(--dash-quiet)]">{parts.caption}</span>
       ) : null}
     </span>
+  )
+}
+
+/**
+ * The instalment and rent lines a visitor reads under the other two tabs, from
+ * the same `planView` the public page uses. Nothing when the package offers
+ * neither. The rent line leaves out the owner's "Hosting und Wartung
+ * inklusive": that note is edited in Content and applies to every package.
+ */
+export function PlansPreview({ price, language }: { price: PublicServicePrice | null; language: Language }) {
+  if (!price || price.mode === 'quote' || !price.plans) return null
+
+  const tabs = PLAN_WORDS[language].tabs
+
+  return (
+    <div className="flex flex-col gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'} lang={language}>
+      {(['raten', 'mieten'] as const).map((plan) => {
+        const view = planView(price, plan, language, { rentIncludes: '' })
+
+        if (view.kind === 'request') return null
+
+        return (
+          <div key={plan} className="flex flex-col gap-0.5">
+            <span className="text-[11.5px] font-semibold text-[var(--dash-quiet)]">{tabs[plan]}</span>
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="dash-num text-[15px] font-semibold text-[var(--dash-brand)]">{view.amount}</span>
+              {view.period ? <span className="text-[12px] text-[var(--dash-quiet)]">{view.period}</span> : null}
+            </span>
+            {view.lines.map((line) => (
+              <span key={line} className="text-[12px] text-[var(--dash-quiet)]">
+                {line}
+              </span>
+            ))}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

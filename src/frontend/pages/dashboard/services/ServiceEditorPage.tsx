@@ -10,6 +10,7 @@ import {
   SERVICE_LIMITS,
   canonicalServiceDraft,
   completeServiceLanguages,
+  instalmentTotalCents,
   publicPriceOf,
   publishBlockers,
   serviceDisplayName,
@@ -32,13 +33,16 @@ import {
   deleteConfirmation,
   emptyFormValues,
   fieldErrors,
+  parseAmount,
+  parseMonths,
   priceSummary,
   toDraft,
   toFormValues,
 } from '#/frontend/features/services/service-form'
+import { formatCents } from '#/frontend/features/services/service-display'
 import { notify } from '#/frontend/lib/notify'
 import { cn } from '#/frontend/lib/utils'
-import { BodyView, LoadFailure, PriceText, StateBadge, stateMeaning } from './service-parts'
+import { BodyView, LoadFailure, PlansPreview, PriceText, StateBadge, stateMeaning } from './service-parts'
 import { ServicePreview } from './ServicePreview'
 
 /**
@@ -863,6 +867,138 @@ export function ServiceEditorPage() {
                       </div>
                     </div>
                   ) : null}
+
+                  {values.mode === 'fixed' ? (
+                    <div id="service-plans" className="flex flex-col gap-3 rounded-[10px] border border-[var(--dash-line)] bg-[var(--dash-furniture)] p-3">
+                      <div>
+                        <p className="text-[12px] font-semibold">Other ways to pay</p>
+                        <p className="mt-0.5 text-[11.5px] text-[var(--dash-quiet)]">
+                          On the Services page visitors can switch between Buy, Instalments and Rent. Leave a monthly price empty and the package is
+                          not offered that way — it shows “Auf Anfrage”. Nothing is billed automatically.
+                          {values.period !== 'one_time' ? ' These only appear when the price above is paid one-time.' : ''}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3.5 sm:grid-cols-2">
+                        <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0">
+                          <legend className="mb-2 p-0 text-[12px] font-semibold">Instalments</legend>
+                          <form.Field name="instalmentMonthly">
+                            {(field) => {
+                              const error = firstError(field.state.meta.errors)
+
+                              return (
+                                <Field id="service-instalment-monthly" label="Per month, in euros" hint="Write 99 or 34,99" error={error}>
+                                  <span className="relative">
+                                    <input
+                                      id="service-instalment-monthly"
+                                      className="dash-field dash-num h-9 w-full ps-3 pe-8 text-[13px]"
+                                      inputMode="decimal"
+                                      placeholder="99"
+                                      value={field.state.value}
+                                      aria-invalid={error ? true : undefined}
+                                      aria-describedby={described('service-instalment-monthly', error, true)}
+                                      onChange={(event) => field.handleChange(event.target.value)}
+                                      onBlur={field.handleBlur}
+                                    />
+                                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--dash-quiet)]" aria-hidden="true">
+                                      €
+                                    </span>
+                                  </span>
+                                </Field>
+                              )
+                            }}
+                          </form.Field>
+                          <form.Field name="instalmentMonths">
+                            {(field) => {
+                              const error = firstError(field.state.meta.errors)
+                              const monthly = parseAmount(values.instalmentMonthly).cents
+                              const months = parseMonths(field.state.value)
+                              const total =
+                                monthly !== null && months !== null && months >= SERVICE_LIMITS.instalmentMonths.min
+                                  ? ` ${months} × ${formatCents(monthly, 'de')} = ${formatCents(instalmentTotalCents(monthly, months), 'de')} in total.`
+                                  : ''
+
+                              return (
+                                <Field id="service-instalment-months" label="Number of instalments" hint={`Usually 12.${total}`} error={error}>
+                                  <input
+                                    id="service-instalment-months"
+                                    className="dash-field dash-num h-9 w-full max-w-[8rem] px-3 text-[13px]"
+                                    inputMode="numeric"
+                                    placeholder="12"
+                                    value={field.state.value}
+                                    aria-invalid={error ? true : undefined}
+                                    aria-describedby={described('service-instalment-months', error, true)}
+                                    onChange={(event) => field.handleChange(event.target.value)}
+                                    onBlur={field.handleBlur}
+                                  />
+                                </Field>
+                              )
+                            }}
+                          </form.Field>
+                        </fieldset>
+
+                        <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0">
+                          <legend className="mb-2 p-0 text-[12px] font-semibold">Rent</legend>
+                          <form.Field name="rentMonthly">
+                            {(field) => {
+                              const error = firstError(field.state.meta.errors)
+
+                              return (
+                                <Field id="service-rent-monthly" label="Per month, in euros" hint="Write 34,99" error={error}>
+                                  <span className="relative">
+                                    <input
+                                      id="service-rent-monthly"
+                                      className="dash-field dash-num h-9 w-full ps-3 pe-8 text-[13px]"
+                                      inputMode="decimal"
+                                      placeholder="34,99"
+                                      value={field.state.value}
+                                      aria-invalid={error ? true : undefined}
+                                      aria-describedby={described('service-rent-monthly', error, true)}
+                                      onChange={(event) => field.handleChange(event.target.value)}
+                                      onBlur={field.handleBlur}
+                                    />
+                                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--dash-quiet)]" aria-hidden="true">
+                                      €
+                                    </span>
+                                  </span>
+                                </Field>
+                              )
+                            }}
+                          </form.Field>
+                          <form.Field name="rentMinTermMonths">
+                            {(field) => {
+                              const error = firstError(field.state.meta.errors)
+
+                              return (
+                                <Field
+                                  id="service-rent-term"
+                                  label="Minimum term, in months"
+                                  hint="Usually 12. After that it can be cancelled monthly."
+                                  error={error}
+                                >
+                                  <input
+                                    id="service-rent-term"
+                                    className="dash-field dash-num h-9 w-full max-w-[8rem] px-3 text-[13px]"
+                                    inputMode="numeric"
+                                    placeholder="12"
+                                    value={field.state.value}
+                                    aria-invalid={error ? true : undefined}
+                                    aria-describedby={described('service-rent-term', error, true)}
+                                    onChange={(event) => field.handleChange(event.target.value)}
+                                    onBlur={field.handleBlur}
+                                  />
+                                </Field>
+                              )
+                            }}
+                          </form.Field>
+                        </fieldset>
+                      </div>
+                      <p className="text-[11.5px] text-[var(--dash-quiet)]">
+                        The notes under the cards (“Hosting und Wartung inklusive”, the fee for small changes, the tax note) are the same for every package. Edit them in
+                        Content → Services page → Payment models.
+                      </p>
+                    </div>
+                  ) : null}
                 </>
               ) : values.mode === 'quote' ? (
                 <p className="text-[12px] text-[var(--dash-quiet)]">
@@ -896,6 +1032,10 @@ export function ServiceEditorPage() {
                   price={publicPriceOf(draft.price, draft.texts[previewLanguage].promotionLabel)}
                   language={previewLanguage}
                   className="text-[17px]"
+                />
+                <PlansPreview
+                  price={publicPriceOf(draft.price, draft.texts[previewLanguage].promotionLabel)}
+                  language={previewLanguage}
                 />
               </div>
             </div>

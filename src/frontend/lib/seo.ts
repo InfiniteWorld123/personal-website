@@ -4,6 +4,7 @@ import {
   buildStructuredData,
   type StructuredArticle,
   type StructuredLanding,
+  type StructuredPackage,
   type StructuredProject,
 } from './structured-data'
 import { SOCIAL_CARD_SIZE, absolute, pageUrl, publicPath, socialCard } from './url'
@@ -52,6 +53,8 @@ type HeadInput = {
   article?: StructuredArticle
   /** Set on an industry landing page: its questions and the service it sells. */
   landing?: StructuredLanding
+  /** Set on `/services`: its fixed-price packages, stated as `Offer`s in the graph. */
+  packages?: StructuredPackage[]
   /**
    * The languages this page is published in, when not all of them are. Only
    * these are named as `hreflang` alternates, and x-default points at the
@@ -94,6 +97,7 @@ export function buildHead({
   projects,
   article,
   landing,
+  packages,
   alternates = languages,
 }: HeadInput) {
   const canonical = pageUrl(language, path)
@@ -180,6 +184,7 @@ export function buildHead({
             projects,
             article,
             landing,
+            packages,
           }),
         ),
       },

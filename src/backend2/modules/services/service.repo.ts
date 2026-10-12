@@ -46,6 +46,10 @@ export type VersionRow = {
   price_period: PricePeriod | null
   promotion_active: boolean
   promotion_amount_cents: number | null
+  instalment_monthly_cents: number | null
+  instalment_months: number
+  rent_monthly_cents: number | null
+  rent_min_term_months: number
 }
 
 type TextRow = {
@@ -87,6 +91,14 @@ export const toVersionInput = (
     promotion: {
       active: version.promotion_active,
       amountCents: version.promotion_amount_cents,
+    },
+    instalment: {
+      monthlyCents: version.instalment_monthly_cents,
+      months: version.instalment_months,
+    },
+    rent: {
+      monthlyCents: version.rent_monthly_cents,
+      minTermMonths: version.rent_min_term_months,
     },
   },
   texts: {
@@ -242,7 +254,9 @@ export const writeVersion = async (versionId: string, draft: ServiceDraftInput):
   await db.query(
     `UPDATE v2_service_versions
         SET slug = $2, featured = $3, price_mode = $4, price_amount_cents = $5,
-            price_period = $6, promotion_active = $7, promotion_amount_cents = $8
+            price_period = $6, promotion_active = $7, promotion_amount_cents = $8,
+            instalment_monthly_cents = $9, instalment_months = $10,
+            rent_monthly_cents = $11, rent_min_term_months = $12
       WHERE id = $1`,
     [
       versionId,
@@ -253,6 +267,10 @@ export const writeVersion = async (versionId: string, draft: ServiceDraftInput):
       draft.price.period,
       draft.price.promotion.active,
       draft.price.promotion.amountCents,
+      draft.price.instalment.monthlyCents,
+      draft.price.instalment.months,
+      draft.price.rent.monthlyCents,
+      draft.price.rent.minTermMonths,
     ],
   )
 
@@ -321,9 +339,11 @@ export const copyToPublished = async (input: {
   const { rows } = await db.query<{ id: string }>(
     `INSERT INTO v2_service_versions
             (service_id, kind, slug, featured, price_mode, price_amount_cents, price_period,
-             promotion_active, promotion_amount_cents)
+             promotion_active, promotion_amount_cents,
+             instalment_monthly_cents, instalment_months, rent_monthly_cents, rent_min_term_months)
      SELECT service_id, 'published', slug, featured, price_mode, price_amount_cents, price_period,
-            promotion_active, promotion_amount_cents
+            promotion_active, promotion_amount_cents,
+            instalment_monthly_cents, instalment_months, rent_monthly_cents, rent_min_term_months
        FROM v2_service_versions WHERE id = $1
      RETURNING id`,
     [input.draftVersionId],
@@ -440,6 +460,10 @@ export type ListRow = ServiceRow & {
   price_period: PricePeriod | null
   promotion_active: boolean
   promotion_amount_cents: number | null
+  instalment_monthly_cents: number | null
+  instalment_months: number
+  rent_monthly_cents: number | null
+  rent_min_term_months: number
   featured_live: boolean | null
   published_slug: string | null
 }
@@ -517,6 +541,8 @@ export const listServices = async (
   const { rows } = await db.query<ListRow>(
     `SELECT s.*, d.slug, d.featured, d.price_mode, d.price_amount_cents, d.price_period,
             d.promotion_active, d.promotion_amount_cents,
+            d.instalment_monthly_cents, d.instalment_months,
+            d.rent_monthly_cents, d.rent_min_term_months,
             p.featured AS featured_live,
             (SELECT c.slug FROM v2_service_slugs c
               WHERE c.service_id = s.id AND c.is_current) AS published_slug

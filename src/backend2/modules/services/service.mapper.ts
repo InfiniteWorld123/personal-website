@@ -94,6 +94,14 @@ export const toListItem = (input: {
         active: input.row.promotion_active,
         amountCents: input.row.promotion_amount_cents,
       },
+      instalment: {
+        monthlyCents: input.row.instalment_monthly_cents,
+        months: input.row.instalment_months,
+      },
+      rent: {
+        monthlyCents: input.row.rent_monthly_cents,
+        minTermMonths: input.row.rent_min_term_months,
+      },
     },
     hasPendingChanges: hasPendingChanges(input.row),
     updatedAt: iso(input.row.updated_at)!,
