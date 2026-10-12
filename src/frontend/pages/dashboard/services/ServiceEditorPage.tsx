@@ -994,7 +994,7 @@ export function ServiceEditorPage() {
                         </fieldset>
                       </div>
                       <p className="text-[11.5px] text-[var(--dash-quiet)]">
-                        The notes under the cards (“Hosting und Wartung inklusive”, the fee for small changes, the tax note) are the same for every package. Edit them in
+                        The notes under the cards (“Hosting und Wartung inklusive”, the tax note) are the same for every package. Edit them in
                         Content → Services page → Payment models.
                       </p>
                     </div>

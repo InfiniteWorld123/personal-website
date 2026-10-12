@@ -129,6 +129,16 @@ describe('the tab control', () => {
     expect(screen.getAllByRole('tab').map((entry) => entry.textContent)).toEqual(['شراء', 'تقسيط', 'إيجار'])
   })
 
+  it('is drawn like the header nav, centred above the cards', () => {
+    draw([FOUND, TRUST])
+
+    const list = screen.getByRole('tablist')
+
+    expect(list.className).toContain('nav-capsule')
+    expect(list.querySelector('.nav-indicator')).not.toBeNull()
+    expect(list.parentElement!.className).toContain('items-center')
+  })
+
   it('selects the tab the address asks for', () => {
     draw([FOUND, TRUST], { plan: 'mieten' })
 
@@ -447,15 +457,14 @@ describe('the teaser under the tabs', () => {
 /* ========================================================== the notes */
 
 describe('the notes under the cards', () => {
-  const FEE = 'Kleine Änderungen nach dem Launch: 16 € pro Änderung'
   const ONE_TIME = 'Einmalige Preise.'
 
-  it('show the fee for small changes under every tab', () => {
-    for (const plan of ['kaufen', 'raten', 'mieten'] as const) {
+  it('say nothing about a fee for small changes — removed at the owner\'s request', () => {
+    for (const language of ['de', 'en', 'ar'] as const) {
       cleanup()
-      draw([FOUND, TRUST], { plan })
+      const { container } = draw([FOUND, TRUST], { language })
 
-      expect(screen.getByText(FEE), plan).toBeTruthy()
+      expect(container.textContent, language).not.toMatch(/16\s?€|€16|16\s?يورو/u)
     }
   })
 
@@ -511,22 +520,14 @@ describe('the notes under the cards', () => {
     }
   })
 
-  it('put the fee before the one-time note, so the empty space is at the very end', () => {
+  it('put the tax note before the one-time note, so the empty space is at the very end', () => {
+    applyContentOverrides({ ...emptyOverrides(), de: { 'services.pricing.taxNote': 'Alle Preise zzgl. MwSt.' } })
     draw([FOUND, TRUST], { plan: 'mieten' })
 
-    const fee = screen.getByText('Kleine Änderungen nach dem Launch: 16 € pro Änderung')
+    const tax = screen.getByText('Alle Preise zzgl. MwSt.')
     const note = screen.getByText(new RegExp(ONE_TIME))
 
-    expect(fee.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  })
-
-  it('are written in English and Arabic', () => {
-    draw([FOUND], { language: 'en' })
-    expect(screen.getByText('Small changes after launch: €16 per change')).toBeTruthy()
-
-    cleanup()
-    draw([FOUND], { language: 'ar' })
-    expect(screen.getByText('التعديلات الصغيرة بعد الإطلاق: 16 يورو للتعديل الواحد')).toBeTruthy()
+    expect(tax.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })
 

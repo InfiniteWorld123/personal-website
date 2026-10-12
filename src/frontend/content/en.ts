@@ -290,7 +290,6 @@ export const en: SiteContent = {
     },
     pricing: {
       rentIncludes: 'Hosting and maintenance included',
-      changeFee: 'Small changes after launch: €16 per change',
       taxNote: '',
     },
     cta: {

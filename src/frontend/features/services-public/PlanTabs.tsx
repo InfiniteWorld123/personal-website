@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import { type KeyboardEvent, useRef } from 'react'
+import { type KeyboardEvent, useLayoutEffect, useRef } from 'react'
 import { PLAN_WORDS, formatCents } from '#/frontend/features/services/service-display'
 import type { Language } from '#/frontend/i18n/language'
 import { cn } from '#/frontend/lib/utils'
@@ -55,13 +55,43 @@ export function PlanTabs({
     tabs.current[target]?.focus()
   }
 
+  // The lifted pill slides to the chosen tab, as the header's nav pill does.
+  // Until it is measured, the chosen tab carries the pill itself (CSS), so
+  // the server-drawn page shows the selection too.
+  const list = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const capsule = list.current
+    const indicator = capsule?.querySelector<HTMLElement>('.nav-indicator')
+    if (!capsule || !indicator) return
+
+    const place = () => {
+      const chosen = tabs.current[plan]
+      if (!chosen) return
+
+      // Layout offsets, not screen rectangles: the capsule rises into view
+      // with a transform, and a rectangle measured mid-animation is skewed.
+      // `offsetLeft` is measured from inside the capsule's border, where the
+      // pill's `left: 0` is.
+      indicator.style.width = `${chosen.offsetWidth}px`
+      indicator.style.transform = `translateX(${chosen.offsetLeft}px)`
+      capsule.dataset.indicator = 'on'
+    }
+
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [plan, language])
+
   return (
     <div
+      ref={list}
       role="tablist"
       aria-label={words.tabsLabel}
       onKeyDown={onKeyDown}
-      className="grid w-full max-w-md grid-cols-3 gap-1 rounded-full border border-border/60 bg-muted/45 p-1"
+      className="nav-capsule plan-tabs inline-grid max-w-full grid-cols-[auto_auto_auto] gap-0.5 rounded-full border border-border/60 bg-muted/45 p-1 shadow-sm"
     >
+      <span className="nav-indicator" aria-hidden="true" />
       {PLAN_VALUES.map((value) => {
         const selected = value === plan
 
@@ -79,11 +109,9 @@ export function PlanTabs({
             tabIndex={selected ? 0 : -1}
             onClick={() => onSelect(value)}
             className={cn(
-              'h-11 min-w-0 rounded-full px-2 text-sm font-medium transition-colors outline-none',
+              'relative h-10 min-w-0 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition-colors outline-none sm:px-6',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-              selected
-                ? 'bg-card text-primary shadow-sm ring-1 ring-border/70'
-                : 'text-foreground/62 hover:text-foreground',
+              selected ? 'text-primary' : 'text-foreground/64 hover:text-primary',
             )}
           >
             {words.tabs[value]}
@@ -116,7 +144,7 @@ export function RentTeaser({
         <button
           type="button"
           onClick={onRent}
-          className="inline-flex items-start gap-1.5 text-start text-sm leading-6 font-medium text-primary underline-offset-4 hover:text-primary/80 hover:underline"
+          className="inline-flex items-start justify-center gap-1.5 text-center text-sm leading-6 font-medium text-primary underline-offset-4 hover:text-primary/80 hover:underline"
         >
           <span>{PLAN_WORDS[language].teaser(formatCents(cheapestRentCents, language))}</span>
           <ArrowRight aria-hidden="true" className="mt-1 size-4 shrink-0 rtl:-scale-x-100" />

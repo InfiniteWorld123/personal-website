@@ -76,7 +76,7 @@ const WORDS: Record<string, string> = {
   locationLabel: 'Location label', languagesLabel: 'Languages label', languages: 'Languages',
   packages: 'Website packages', others: 'Other services', note: 'Small note', details: 'Details link',
   pricing: 'Payment models (Buy, Instalments, Rent)', rentIncludes: 'What rent includes',
-  changeFee: 'Small changes after launch', taxNote: 'Tax note (shown only when filled in)',
+  taxNote: 'Tax note (shown only when filled in)',
   all: 'All-link', phone: 'Phone number', city: 'City',
   hub: 'Hub page', cafes: 'Cafés & restaurants', hairdressers: 'Hairdressers & barbershops',
   practices: 'Practices & therapists', trades: 'Trades', card: 'Card on the hub', needs: 'What customers look for',

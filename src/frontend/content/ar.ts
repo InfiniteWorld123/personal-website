@@ -289,7 +289,6 @@ export const ar: SiteContent = {
     },
     pricing: {
       rentIncludes: 'الاستضافة والصيانة مشمولتان',
-      changeFee: 'التعديلات الصغيرة بعد الإطلاق: 16 يورو للتعديل الواحد',
       taxNote: '',
     },
     cta: {

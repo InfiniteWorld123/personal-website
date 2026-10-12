@@ -153,8 +153,6 @@ export type ServicesCopy = {
   pricing: {
     /** What a rental covers; shown inside the rent tab's small print. */
     rentIncludes: string
-    /** What a small change after launch costs. */
-    changeFee: string
     /** Tax or VAT wording. Empty means nothing is shown. */
     taxNote: string
   }

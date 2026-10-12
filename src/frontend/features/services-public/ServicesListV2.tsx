@@ -175,7 +175,7 @@ function PackagesSection({
         <SectionHeading eyebrow={copy.eyebrow} title={copy.title} sub={copy.sub} />
         <div className="flex flex-col gap-10">
           {withPlans ? (
-            <div data-reveal className="flex flex-col gap-3">
+            <div data-reveal className="flex flex-col items-center gap-3 text-center">
               <PlanTabs plan={shown} language={language} onSelect={onSelectPlan} />
               {cheapestRent !== null ? (
                 <RentTeaser
@@ -206,7 +206,6 @@ function PackagesSection({
           </div>
         </div>
         <div data-reveal className="flex max-w-2xl flex-col gap-2 text-sm leading-7 text-foreground/58">
-          {pricing.changeFee.trim() ? <p>{pricing.changeFee}</p> : null}
           {pricing.taxNote.trim() ? <p>{pricing.taxNote}</p> : null}
           {/*
             "Einmalige Preise …" is only true of Buy. It comes last and keeps

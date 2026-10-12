@@ -121,7 +121,6 @@ describe('the contract', () => {
   it('lets the tax note be empty — and nothing else on the pricing notes', () => {
     const taxNote = registry.findContentField('services.pricing.taxNote')!
     const rentIncludes = registry.findContentField('services.pricing.rentIncludes')!
-    const changeFee = registry.findContentField('services.pricing.changeFee')!
 
     expect(taxNote.optional).toBe(true)
     expect(contract.checkContentValue(taxNote, '')).toEqual({ ok: true, value: '' })
@@ -131,7 +130,7 @@ describe('the contract', () => {
       value: 'Alle Preise zzgl. MwSt.',
     })
 
-    for (const field of [rentIncludes, changeFee]) {
+    for (const field of [rentIncludes]) {
       expect(field.optional, field.key).toBe(false)
       expect(contract.checkContentValue(field, '').ok, field.key).toBe(false)
     }
@@ -140,13 +139,11 @@ describe('the contract', () => {
   it('ships the pricing notes in all three languages, the tax note empty', () => {
     for (const language of ['de', 'en', 'ar'] as const) {
       expect(registry.originalValue(registry.findContentField('services.pricing.rentIncludes')!, language)).not.toBe('')
-      expect(registry.originalValue(registry.findContentField('services.pricing.changeFee')!, language)).not.toBe('')
       expect(registry.originalValue(registry.findContentField('services.pricing.taxNote')!, language)).toBe('')
     }
 
-    expect(registry.originalValue(registry.findContentField('services.pricing.changeFee')!, 'de')).toBe(
-      'Kleine Änderungen nach dem Launch: 16 € pro Änderung',
-    )
+    // The fee for small changes was removed again on 12 Oct 2026 at the owner's request.
+    expect(registry.findContentField('services.pricing.changeFee')).toBeUndefined()
   })
 
   it('enforces the hard limits', () => {
@@ -281,8 +278,8 @@ describe('the release registry', () => {
     // 330 since 29 Sep 2026: the /webdesign-erfurt landing pages (74 fields)
     // and the services page's link to them. 333 since 12 Oct 2026: the three
     // notes under the package cards (what rent includes, the fee for small
-    // changes, the tax note).
-    expect(registry.contentRegistry).toHaveLength(333)
+    // changes, the tax note); 332 the same day, when the fee note was removed.
+    expect(registry.contentRegistry).toHaveLength(332)
     expect(new Set(keys).size).toBe(keys.length)
   })
 
@@ -437,11 +434,11 @@ describe('saving a field', () => {
   })
 
   it('still refuses to empty the other pricing notes', async () => {
-    const refused = await save('services.pricing.changeFee', 'de', '', 0)
+    const refused = await save('services.pricing.rentIncludes', 'de', '', 0)
 
     expect(refused.status).toBe(422)
-    expect((await publicCopy('de')).fields['services.pricing.changeFee'] ?? de.services.pricing.changeFee).toBe(
-      de.services.pricing.changeFee,
+    expect((await publicCopy('de')).fields['services.pricing.rentIncludes'] ?? de.services.pricing.rentIncludes).toBe(
+      de.services.pricing.rentIncludes,
     )
   })
 

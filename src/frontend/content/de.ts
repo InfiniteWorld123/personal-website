@@ -290,7 +290,6 @@ export const de: SiteContent = {
     },
     pricing: {
       rentIncludes: 'Hosting und Wartung inklusive',
-      changeFee: 'Kleine Änderungen nach dem Launch: 16 € pro Änderung',
       taxNote: '',
     },
     cta: {

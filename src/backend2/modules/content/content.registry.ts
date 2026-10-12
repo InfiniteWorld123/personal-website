@@ -137,7 +137,6 @@ const COPY: readonly Entry[] = [
   ['services.others.title', 'text'],
   ['services.others.sub', 'longText'],
   ['services.pricing.rentIncludes', 'text'],
-  ['services.pricing.changeFee', 'text'],
   ['services.pricing.taxNote', 'longText'],
   ['services.cta.title', 'text'],
   ['services.cta.body', 'longText'],
