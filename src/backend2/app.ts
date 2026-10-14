@@ -48,8 +48,18 @@ import { publicAssistantRoutes } from './modules/assistant/assistant.public.rout
  * Elysia compiles its router with `new Function`, which Cloudflare Workers
  * forbid. The capability is probed rather than keyed off a build flag, so one
  * bundle runs on a Worker and on a Node server without a second code path.
+ *
+ * The probe alone is not enough: a Worker allows `new Function` while its
+ * module loads and forbids it once requests arrive, so the probe passes at
+ * startup and Elysia then fails on the first request. A Worker is therefore
+ * recognised by its user agent first and never compiles.
  */
+const isCloudflareWorker =
+  typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers'
+
 const supportsCodeGeneration = (() => {
+  if (isCloudflareWorker) return false
+
   try {
     new Function('')
 
