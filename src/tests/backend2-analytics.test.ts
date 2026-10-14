@@ -1543,7 +1543,10 @@ const fakeCloudflare = (options: { account?: 'missing'; errors?: boolean } = {})
     if (options.errors) return cfReply(null, [{ message: 'not authorized for that account' }])
     if (options.account === 'missing') return cfReply(null)
     if (body.query.includes('OwnerDashboardTotals')) {
-      return cfReply({ current: [{ count: 100, sum: { visits: 40 } }], previous: [{ count: 50, sum: { visits: 20 } }] })
+      // The 30-day period starts on 25 Aug (Berlin); anything earlier is the previous one.
+      const current = body.variables.start >= '2026-08-24T22:00:00.000Z'
+
+      return cfReply({ rows: [current ? { count: 100, sum: { visits: 40 } } : { count: 50, sum: { visits: 20 } }] })
     }
     if (body.query.includes('OwnerDashboardHourly')) {
       return cfReply({
@@ -1643,7 +1646,10 @@ describe('Cloudflare Web Analytics', () => {
       // The period's Berlin midnights, as instants.
       start: '2026-08-24T22:00:00.000Z',
       end: '2026-09-23T22:00:00.000Z',
-      previousStart: '2026-07-25T22:00:00.000Z',
+    })
+    expect(fake.requests[1]!.variables).toMatchObject({
+      start: '2026-07-25T22:00:00.000Z',
+      end: '2026-08-24T22:00:00.000Z',
     })
     expect(JSON.stringify(data)).not.toContain('cf-secret-token')
 
@@ -1652,6 +1658,43 @@ describe('Cloudflare Web Analytics', () => {
 
     await ok('/owner/analytics/overview', { website: source })
     expect(fake.requests.length).toBe(before)
+  })
+
+  it('reads a year in windows Cloudflare accepts, only as far back as it keeps, and says so', async () => {
+    const fake = fakeCloudflare()
+    const source = cfSource(fake)
+    const data = await ok('/owner/analytics/sections/website?period=365d', { website: source })
+    const visits = metric(data, 'website.visitors')
+    const floor = cloudflare.retentionFloor(NOW)
+
+    expect(visits).toMatchObject({ state: 'ready', source: 'cloudflare' })
+    expect(visits.previous).toBeUndefined()
+    expect(visits.notes.join(' ')).toMatch(/about six months/u)
+
+    const day = 86_400_000
+
+    for (const request of fake.requests) {
+      const { start, end } = request.variables
+
+      expect(start >= floor).toBe(true)
+      expect(new Date(end).getTime() - new Date(start).getTime()).toBeLessThanOrEqual(90 * day)
+    }
+
+    // The previous year is gone, so it is never asked for.
+    expect(fake.requests.filter((r) => r.query.includes('OwnerDashboardTotals'))).toHaveLength(3)
+    expect(cloudflare.windowsFor('2026-01-01T00:00:00.000Z', '2026-01-02T00:00:00.000Z', floor)).toEqual([])
+  })
+
+  it('adds up a page across windows', async () => {
+    const source = cfSource(fakeCloudflare())
+    const ranking = await ok('/owner/analytics/rankings/website-pages?period=365d', { website: source })
+
+    // Three windows, each answering 60 / 25 / 15.
+    expect(ranking.items.map((item: Json) => [item.key, item.value])).toEqual([
+      ['/de', 180],
+      ['/en/work', 75],
+      ['/ar', 45],
+    ])
   })
 
   it('pages the most viewed pages', async () => {

@@ -28,14 +28,17 @@ export type WebsiteSnapshot = {
   /** Distinct people PostHog counted on public pages. Not pageviews. */
   visitors: number
   pageviews: number
-  previousVisitors: number
-  previousPageviews: number
+  /** `null` when the provider no longer keeps the whole previous period: no comparison is shown. */
+  previousVisitors: number | null
+  previousPageviews: number | null
   visitorsSeries: SeriesPoint[]
   pageviewsSeries: SeriesPoint[]
   /** When the provider was actually asked; older than now when cached. */
   fetchedAt: string
   /** Where the owner explores further, in the provider's own app. */
   exploreUrl: string
+  /** What the owner must know about the figures, e.g. that older data is gone. */
+  notes?: string[]
 }
 
 /** Visits by Berlin weekday (Monday first) × `HEATMAP_SLOTS`. */

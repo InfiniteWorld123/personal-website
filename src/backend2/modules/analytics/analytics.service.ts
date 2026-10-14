@@ -139,10 +139,10 @@ const websiteSummaryPart = (ctx: Context, metrics: Array<'visitors' | 'pageviews
     build: (snapshot) => ({
       metrics: metrics.map((name) => {
         const isVisitors = name === 'visitors'
-        const note = [`Explore further in ${source.provider}: ${snapshot.exploreUrl}`]
+        const note = [...(snapshot.notes ?? []), `Explore further in ${source.provider}: ${snapshot.exploreUrl}`]
 
         return readyMetric(websiteDef(ctx, name), ctx, isVisitors ? snapshot.visitors : snapshot.pageviews, {
-          previous: isVisitors ? snapshot.previousVisitors : snapshot.previousPageviews,
+          previous: (isVisitors ? snapshot.previousVisitors : snapshot.previousPageviews) ?? undefined,
           series: {
             bucket: ctx.period.bucket,
             points: isVisitors ? snapshot.visitorsSeries : snapshot.pageviewsSeries,

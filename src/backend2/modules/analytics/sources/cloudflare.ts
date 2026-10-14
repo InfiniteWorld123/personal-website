@@ -52,6 +52,15 @@ const HOURLY_LIMIT = 5_000
 const DAILY_LIMIT = 1_000
 /** The most pages the ranking reads; Cloudflare's groups cannot be offset. */
 const PAGE_LIMIT = 1_000
+/**
+ * Cloudflare answers one query for at most 93 days (`maxDuration`) and keeps
+ * page loads for 184 days (`notOlderThan`), as its `settings` report for this
+ * account. A longer period is asked in windows of at most 90 days, and
+ * anything older than 183 days is left out — and said so — instead of failing.
+ */
+const WINDOW_DAYS = 90
+const RETENTION_DAYS = 183
+const DAY_MS = 86_400_000
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>
 
@@ -68,14 +77,10 @@ export type CloudflareConfig = {
 const RANGE_VARIABLES = '$accountTag: string!, $siteTag: string!, $start: Time!, $end: Time!'
 const RANGE_FILTER = '{ siteTag: $siteTag, datetime_geq: $start, datetime_lt: $end }'
 
-export const TOTALS_QUERY = `query OwnerDashboardTotals(${RANGE_VARIABLES}, $previousStart: Time!) {
+export const TOTALS_QUERY = `query OwnerDashboardTotals(${RANGE_VARIABLES}) {
   viewer {
     accounts(filter: { accountTag: $accountTag }) {
-      current: rumPageloadEventsAdaptiveGroups(limit: 1, filter: ${RANGE_FILTER}) {
-        count
-        sum { visits }
-      }
-      previous: rumPageloadEventsAdaptiveGroups(limit: 1, filter: { siteTag: $siteTag, datetime_geq: $previousStart, datetime_lt: $start }) {
+      rows: rumPageloadEventsAdaptiveGroups(limit: 1, filter: ${RANGE_FILTER}) {
         count
         sum { visits }
       }
@@ -257,6 +262,40 @@ export const seriesFromRows = (
   }
 }
 
+/* ------------------------------------------------------------------ windows */
+
+export type CloudflareWindow = { start: string; end: string }
+
+/** The oldest instant Cloudflare still answers for: a UTC midnight, so it is stable all day. */
+export const retentionFloor = (now: Date): string => {
+  const earliest = now.getTime() - RETENTION_DAYS * DAY_MS
+
+  return new Date(Math.ceil(earliest / DAY_MS) * DAY_MS).toISOString()
+}
+
+/** `[start, end)` from the floor on, in windows Cloudflare accepts. Empty when all of it is too old. */
+export const windowsFor = (start: string, end: string, floor: string): CloudflareWindow[] => {
+  const windows: CloudflareWindow[] = []
+  const last = new Date(end).getTime()
+  let from = Math.max(new Date(start).getTime(), new Date(floor).getTime())
+
+  while (from < last) {
+    const to = Math.min(from + WINDOW_DAYS * DAY_MS, last)
+
+    windows.push({ start: new Date(from).toISOString(), end: new Date(to).toISOString() })
+    from = to
+  }
+
+  return windows
+}
+
+const longDate = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Berlin',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
 /* ------------------------------------------------------------------ adapter */
 
 export const createCloudflareWebsiteSource = (config: CloudflareConfig): WebsiteAnalyticsSource => {
@@ -291,7 +330,7 @@ export const createCloudflareWebsiteSource = (config: CloudflareConfig): Website
     const fetchedAt = new Date(moment).toISOString()
 
     // Parsed once here so a bad answer is never cached.
-    parseRows(body, query === TOTALS_QUERY ? 'current' : 'rows')
+    parseRows(body, 'rows')
 
     if (cache.size >= CACHE_ENTRIES) cache.delete(cache.keys().next().value as string)
     cache.set(key, { at: moment, fetchedAt, body })
@@ -299,21 +338,34 @@ export const createCloudflareWebsiteSource = (config: CloudflareConfig): Website
     return { body, fetchedAt }
   }
 
-  const range = (period: AnalyticsPeriod) => ({ start: period.start, end: period.end })
+  const floor = () => retentionFloor(now())
+  const older = (a: string, b: string) => (a < b ? a : b)
 
-  /** Hourly rows for periods up to 92 days, daily ones beyond. */
-  const timeRows = async (period: AnalyticsPeriod) => {
-    const hourly = period.days <= HOURLY_MAX_DAYS
-    const answer = await ask(hourly ? HOURLY_QUERY : DAILY_QUERY, range(period))
+  /** Every window's rows, one request each, in order. */
+  const rowsOver = async (query: string, windows: CloudflareWindow[]) => {
+    const answers = await Promise.all(windows.map((window) => ask(query, window)))
 
     return {
-      rows: parseRows(answer.body, 'rows'),
-      dimension: hourly ? ('datetimeHour' as const) : ('date' as const),
-      fetchedAt: answer.fetchedAt,
+      rows: answers.flatMap((answer) => parseRows(answer.body, 'rows')),
+      fetchedAt: answers.reduce((oldest, answer) => older(oldest, answer.fetchedAt), now().toISOString()),
     }
   }
 
-  const older = (a: string, b: string) => (a < b ? a : b)
+  /** Hourly rows for periods up to 92 days (and always for the weekday grid), daily ones beyond. */
+  const timeRows = async (period: AnalyticsPeriod, hourly = period.days <= HOURLY_MAX_DAYS) => {
+    const answer = await rowsOver(hourly ? HOURLY_QUERY : DAILY_QUERY, windowsFor(period.start, period.end, floor()))
+
+    return { ...answer, dimension: hourly ? ('datetimeHour' as const) : ('date' as const) }
+  }
+
+  /** Said on the figures when part of the period is older than Cloudflare keeps. */
+  const coverageNote = (period: AnalyticsPeriod): string | undefined => {
+    const since = floor()
+
+    if (period.start >= since) return undefined
+
+    return `Cloudflare keeps visits for about six months, so this figure counts only from ${longDate.format(new Date(since))} on. Older visits are no longer available.`
+  }
 
   return {
     id: 'cloudflare',
@@ -323,44 +375,57 @@ export const createCloudflareWebsiteSource = (config: CloudflareConfig): Website
     connected: true,
 
     readSummary: async (period): Promise<WebsiteSnapshot> => {
-      const totals = await ask(TOTALS_QUERY, { ...range(period), previousStart: period.previous.start })
-      const current = sumRows(parseRows(totals.body, 'current'))
-      const previous = sumRows(parseRows(totals.body, 'previous'))
+      const since = floor()
+      const totals = await rowsOver(TOTALS_QUERY, windowsFor(period.start, period.end, since))
+      const current = sumRows(totals.rows)
+      // A comparison against a period Cloudflare no longer fully keeps would be wrong, so none is made.
+      const comparable = period.previous.start >= since
+      const previous = comparable
+        ? await rowsOver(TOTALS_QUERY, windowsFor(period.previous.start, period.start, since))
+        : null
+      const previousSum = previous ? sumRows(previous.rows) : null
       const time = await timeRows(period)
       const series = seriesFromRows(period, time.rows, time.dimension)
+      const note = coverageNote(period)
 
       return {
         visitors: current.visits,
         pageviews: current.pageviews,
-        previousVisitors: previous.visits,
-        previousPageviews: previous.pageviews,
+        previousVisitors: previousSum?.visits ?? null,
+        previousPageviews: previousSum?.pageviews ?? null,
         visitorsSeries: series.visits,
         pageviewsSeries: series.pageviews,
-        fetchedAt: older(totals.fetchedAt, time.fetchedAt),
+        fetchedAt: [totals.fetchedAt, time.fetchedAt, previous?.fetchedAt ?? totals.fetchedAt].reduce(older),
         exploreUrl: `https://dash.cloudflare.com/${encodeURIComponent(config.accountId)}/web-analytics`,
+        ...(note ? { notes: [note] } : {}),
       }
     },
 
     readTopPages: async (period, page) => {
-      const answer = await ask(PAGES_QUERY, range(period))
-      const rows = parseRows(answer.body, 'rows')
-      const start = (page.page - 1) * page.pageSize
-      const items: WebsitePage[] = rows.slice(start, start + page.pageSize).map((row) => {
+      const answer = await rowsOver(PAGES_QUERY, windowsFor(period.start, period.end, floor()))
+      const byPath = new Map<string, number>()
+
+      for (const row of answer.rows) {
         const path = row.dimensions.requestPath
 
         if (typeof path !== 'string') return fail('CF_BAD_PATH')
 
-        return { path, pageviews: row.pageviews }
-      })
+        byPath.set(path, (byPath.get(path) ?? 0) + row.pageviews)
+      }
 
-      return { items, total: rows.length, fetchedAt: answer.fetchedAt }
+      // Most viewed first; equal counts by path, so pages never swap places between requests.
+      const ranked = [...byPath].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+      const start = (page.page - 1) * page.pageSize
+      const items: WebsitePage[] = ranked
+        .slice(start, start + page.pageSize)
+        .map(([path, pageviews]) => ({ path, pageviews }))
+
+      return { items, total: ranked.length, fetchedAt: answer.fetchedAt }
     },
 
     readHeatmap: async (period): Promise<WebsiteHeatmap> => {
-      // Weekday and hour need hourly rows, which are read for up to 92 days.
-      if (period.days > HOURLY_MAX_DAYS) fail('CF_PERIOD_TOO_LONG')
-
-      const time = await timeRows(period)
+      // Always hourly: weekday and hour cannot come from daily rows.
+      const time = await timeRows(period, true)
 
       return { ...heatmapFromHours(time.rows), fetchedAt: time.fetchedAt }
     },
