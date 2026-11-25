@@ -73,6 +73,7 @@ beforeEach(async () => {
 afterEach(() => {
   delete process.env.BACKEND2_OWNER_AUTH
   delete process.env.INVOICES_LIVE_ENABLED
+  delete process.env.INVOICES_LIVE_STRIPE_DISABLED
 })
 
 afterAll(async () => {
@@ -651,6 +652,25 @@ describe('drafts and issuing', () => {
 /* ============================================================ test vs live */
 
 describe('test mode and live mode', () => {
+  it('issues live invoices and records bank transfers with Stripe managed outside the site', async () => {
+    process.env.INVOICES_LIVE_ENABLED = 'true'
+    process.env.INVOICES_LIVE_STRIPE_DISABLED = 'true'
+    await setSeller()
+
+    const real = await issued({ mode: 'live', allowBank: true, allowStripe: true })
+
+    expect(real.number).toBe('2026-0001')
+    expect((await ok('POST', `/owner/invoices/${real.id}/send`, {})).paymentLinkIncluded).toBe(false)
+    expect((await call('POST', `/owner/invoices/${real.id}/payment-link`)).body.message).toContain('Stripe Dashboard')
+    expect(stripe.calls).toHaveLength(0)
+
+    const recorded = await pay(real.id, { method: 'bank', amountMinor: real.money.totalMinor })
+
+    expect(recorded.status).toBe(201)
+    expect(recorded.body.data.payment.method).toBe('bank')
+    expect(recorded.body.data.invoice.money.amountDueMinor).toBe(0)
+  })
+
   it('refuses to issue anything real unless the switch is on and the seller is complete', async () => {
     const live = await createDraft({ mode: 'live' })
 

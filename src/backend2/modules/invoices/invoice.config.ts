@@ -1,5 +1,5 @@
 import type { InvoiceMode } from '../../contracts/invoice.contract'
-import { liveInvoicingDisabled } from '../../http/error'
+import { liveInvoicingDisabled, stripeUnavailable } from '../../http/error'
 
 /**
  * The switch between practising and real invoicing.
@@ -13,6 +13,21 @@ import { liveInvoicingDisabled } from '../../http/error'
 export const liveInvoicingEnabled = (
   environment: Record<string, string | undefined> = process.env,
 ): boolean => environment.INVOICES_LIVE_ENABLED?.trim() === 'true'
+
+/** The owner handles checkout and recurring collection directly in Stripe. */
+export const usesExternalStripe = (
+  mode: InvoiceMode,
+  environment: Record<string, string | undefined> = process.env,
+): boolean => mode === 'live' && environment.INVOICES_LIVE_STRIPE_DISABLED?.trim() === 'true'
+
+export const assertSiteStripeAllowed = (
+  mode: InvoiceMode,
+  environment: Record<string, string | undefined> = process.env,
+): void => {
+  if (usesExternalStripe(mode, environment)) {
+    throw stripeUnavailable('Create live payment links and card subscriptions in your Stripe Dashboard.')
+  }
+}
 
 export const assertModeAllowed = (mode: InvoiceMode): void => {
   if (mode === 'live' && !liveInvoicingEnabled()) {

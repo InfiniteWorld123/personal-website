@@ -1,6 +1,6 @@
 import type { Currency, InvoiceMode } from '../../contracts/invoice.contract'
 import { stripeUnavailable } from '../../http/error'
-import { liveInvoicingEnabled } from './invoice.config'
+import { assertSiteStripeAllowed, liveInvoicingEnabled } from './invoice.config'
 
 /**
  * The thin edge between Invoices and Stripe.
@@ -307,6 +307,8 @@ export const resolveStripeGateway = (
   mode: InvoiceMode,
   environment: Record<string, string | undefined> = process.env,
 ): StripeGateway => {
+  assertSiteStripeAllowed(mode, environment)
+
   if (override) {
     if (override.mode !== mode) {
       throw stripeUnavailable(`Stripe is configured for ${override.mode} mode only`)

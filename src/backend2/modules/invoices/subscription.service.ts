@@ -19,6 +19,7 @@ import { withTransaction } from '../../db/client'
 import { badRequest, clientInTrash, conflict, notFound, subscriptionLocked } from '../../http/error'
 import * as clientRepo from '../clients/client.repo'
 import { today } from './invoice.clock'
+import { assertSiteStripeAllowed } from './invoice.config'
 import { findRate } from './invoice.fx'
 import * as repo from './invoice.repo'
 import { serviceSnapshot } from './invoice.service'
@@ -150,6 +151,8 @@ const fxOf = async (fx: { rateId: string } | null | undefined) => {
 }
 
 export const createSubscription = async (input: CreateSubscriptionInput): Promise<OwnerSubscription> => {
+  if (input.collection === 'automatic_card') assertSiteStripeAllowed(input.mode)
+
   const id = await withTransaction(async () => {
     const client = await clientRepo.findClient(input.clientId)
 

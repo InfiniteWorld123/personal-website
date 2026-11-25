@@ -4,7 +4,7 @@ import { getDb, withTransaction } from '../../db/client'
 import * as clientRepo from '../clients/client.repo'
 import { createDraft, patchDraft } from '../inbox/draft.service'
 import { today } from './invoice.clock'
-import { assertModeAllowed } from './invoice.config'
+import { assertModeAllowed, usesExternalStripe } from './invoice.config'
 import { amountDueMinor } from './invoice.money'
 import { formatDate } from './invoice.pdf'
 import { recordStripePayment } from './invoice.payments'
@@ -65,6 +65,7 @@ export const processSubscription = async (
     const sub = await subs.lockSubscription(subscriptionId)
 
     if (!sub) return
+    if (sub.collection === 'automatic_card' && usesExternalStripe(sub.mode)) return
 
     const day = today()
     /*
@@ -386,7 +387,7 @@ export const processCharge = async (chargeId: string, summary: BillingSummary): 
     const invoice = await repo.lockInvoice(charge.invoice_id)
     const sub = await subs.findSubscription(charge.subscription_id)
 
-    if (!invoice || !sub) return null
+    if (!invoice || !sub || usesExternalStripe(sub.mode)) return null
 
     const due = amountDueMinor({
       kind: invoice.kind,
@@ -520,6 +521,10 @@ export const processNotice = async (noticeId: string, summary: BillingSummary): 
     if (!notice || notice.status !== 'pending') return
 
     const invoice = notice.invoice_id ? await repo.findInvoice(notice.invoice_id) : null
+    const sub = notice.subscription_id ? await subs.findSubscription(notice.subscription_id) : null
+    const mode = invoice?.mode ?? sub?.mode ?? 'test'
+
+    if (usesExternalStripe(mode)) return
 
     if (invoice && notice.kind !== 'first_charge_reminder') {
       const due = amountDueMinor({
@@ -548,11 +553,9 @@ export const processNotice = async (noticeId: string, summary: BillingSummary): 
       return
     }
 
-    const sub = notice.subscription_id ? await subs.findSubscription(notice.subscription_id) : null
     const clientId = invoice?.client_id ?? sub?.client_id
     const client = clientId ? await clientRepo.findClient(clientId) : null
     const settings = await repo.readSettings()
-    const mode = invoice?.mode ?? sub?.mode ?? 'test'
     const language = invoice?.language ?? sub?.language ?? 'de'
     const recipient = (sub?.recipient ?? {}) as Record<string, string>
     const email =

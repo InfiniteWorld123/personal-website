@@ -11,6 +11,7 @@ import * as clientRepo from '../clients/client.repo'
 import { createDraft, getDraft, patchDraft } from '../inbox/draft.service'
 import { sendDraft } from '../inbox/send.service'
 import { now } from './invoice.clock'
+import { assertSiteStripeAllowed, usesExternalStripe } from './invoice.config'
 import { readSnapshot } from './invoice.document'
 import { documentLanguage, ensureDocument } from './invoice.files'
 import { amountDueMinor } from './invoice.money'
@@ -40,6 +41,7 @@ export const ensurePaymentLink = async (invoiceId: string): Promise<{ url: strin
   if (row.kind !== 'invoice' || row.status !== 'issued') {
     throw badRequest('Only an issued, open invoice can have a payment link')
   }
+  assertSiteStripeAllowed(row.mode)
 
   const due = amountDueMinor({
     kind: row.kind,
@@ -159,7 +161,7 @@ export const sendInvoice = async (input: {
   let link: string | null = null
   let linkError: string | null = null
 
-  if (row.kind === 'invoice' && row.status === 'issued' && row.allow_stripe) {
+  if (row.kind === 'invoice' && row.status === 'issued' && row.allow_stripe && !usesExternalStripe(row.mode)) {
     try {
       link = (await ensurePaymentLink(row.id)).url
     } catch (error) {

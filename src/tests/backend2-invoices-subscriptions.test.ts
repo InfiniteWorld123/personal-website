@@ -70,6 +70,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   delete process.env.INVOICES_LIVE_ENABLED
+  delete process.env.INVOICES_LIVE_STRIPE_DISABLED
 })
 
 afterAll(async () => {
@@ -678,6 +679,29 @@ describe('automatic card collection', () => {
     expect(summary.errors[0]?.message).toContain('Real invoicing is switched off')
     expect(await invoicesOf(subscription.id)).toHaveLength(0)
     expect(await count('v2_subscription_periods')).toBe(0)
+  })
+
+  it('leaves live automatic subscriptions to Stripe when real invoices are enabled', async () => {
+    const existing = await createSubscription({ mode: 'live', collection: 'automatic_card', startDate: '2026-01-10' })
+    process.env.INVOICES_LIVE_ENABLED = 'true'
+    process.env.INVOICES_LIVE_STRIPE_DISABLED = 'true'
+
+    const refused = await call('POST', '/owner/invoices/subscriptions', {
+      mode: 'live',
+      clientId: (await createClient()).id,
+      collection: 'automatic_card',
+      interval: 'monthly',
+      startDate: '2026-01-10',
+      currency: 'EUR',
+      description: 'Website care',
+      amountMinor: 4_900,
+      recipient: RECIPIENT,
+    })
+    expect(refused.body.code).toBe('STRIPE_UNAVAILABLE')
+    expect((await bill()).errors).toEqual([])
+    expect(await invoicesOf(existing.id)).toHaveLength(0)
+    expect(await count('v2_subscription_charges')).toBe(0)
+    expect(stripe.calls).toHaveLength(0)
   })
 })
 
