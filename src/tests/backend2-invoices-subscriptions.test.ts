@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryStore, createTestDatabase } from './helpers/backend2-db'
 
 /**
@@ -791,6 +791,49 @@ describe('the Stripe gateway', () => {
     expect(
       formEncode({ mode: 'payment', line_items: [{ quantity: 1, price_data: { currency: 'eur' } }], skip: undefined }),
     ).toEqual(['mode=payment', 'line_items%5B0%5D%5Bquantity%5D=1', 'line_items%5B0%5D%5Bprice_data%5D%5Bcurrency%5D=eur'])
+  })
+
+  it('uses standard Checkout for both invoices and saved cards', async () => {
+    const requests: URLSearchParams[] = []
+    useStripeGatewayForTest(undefined)
+    vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
+      requests.push(new URLSearchParams(String(init.body)))
+      return Response.json({ id: 'cs_test_fixture', url: 'https://checkout.stripe.test/fixture' })
+    })
+
+    try {
+      const gateway = resolveStripeGateway('test', { STRIPE_SECRET_KEY: 'sk_test_fixture' })
+      const returnUrls = {
+        successUrl: 'https://example.test/success',
+        cancelUrl: 'https://example.test/cancel',
+      }
+
+      await gateway.createPaymentCheckout({
+        ...returnUrls,
+        invoiceId: 'invoice-fixture',
+        number: 'TEST-2026-0001',
+        amountMinor: 1000,
+        currency: 'EUR',
+        description: 'Test invoice',
+        customerEmail: null,
+        idempotencyKey: 'payment-fixture',
+      })
+      await gateway.createSetupCheckout({
+        ...returnUrls,
+        customerId: 'cus_fixture',
+        subscriptionId: 'subscription-fixture',
+        currency: 'EUR',
+        idempotencyKey: 'setup-fixture',
+      })
+
+      expect(requests.map((body) => [body.get('mode'), body.get('managed_payments[enabled]')])).toEqual([
+        ['payment', 'false'],
+        ['setup', 'false'],
+      ])
+    } finally {
+      vi.unstubAllGlobals()
+      useStripeGatewayForTest(stripe.gateway)
+    }
   })
 })
 

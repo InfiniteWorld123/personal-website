@@ -173,6 +173,8 @@ const createHttpGateway = (key: string, mode: InvoiceMode): StripeGateway => {
           '/checkout/sessions',
           {
             mode: 'payment',
+            // Keep the business as the seller even on accounts that default to Managed Payments.
+            managed_payments: { enabled: false },
             success_url: input.successUrl,
             cancel_url: input.cancelUrl,
             customer_email: input.customerEmail ?? undefined,
@@ -216,6 +218,7 @@ const createHttpGateway = (key: string, mode: InvoiceMode): StripeGateway => {
           '/checkout/sessions',
           {
             mode: 'setup',
+            managed_payments: { enabled: false },
             customer: input.customerId,
             currency: input.currency.toLowerCase(),
             payment_method_types: ['card'],
