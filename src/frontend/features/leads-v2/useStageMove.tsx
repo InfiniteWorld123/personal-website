@@ -447,6 +447,8 @@ function WonDialog({
   const [choice, setChoice] = useState<string>('')
   const [failure, setFailure] = useState<{ message: string; trash?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
+  // Email is optional on a Lead but required on a Client: a new Client needs it first.
+  const noEmail = lead.email.trim() === ''
   // Read at once by Cancel, Escape, the backdrop and a second click; `busy` lags a render behind.
   const saving = useRef(false)
 
@@ -480,7 +482,7 @@ function WonDialog({
 
   // Which Clients already have this email — asked once there is a choice to make.
   useEffect(() => {
-    if (mode !== 'choose') return
+    if (mode !== 'choose' || noEmail) return
 
     let live = true
 
@@ -504,8 +506,8 @@ function WonDialog({
     }
   }, [mode, lead.email])
 
-  const loading = mode === 'checking' || (mode === 'choose' && matches === null)
-  const ready = !busy && (mode === 'reuse' || (mode === 'choose' && matches !== null && choice !== ''))
+  const loading = mode === 'checking' || (mode === 'choose' && !noEmail && matches === null)
+  const ready = !busy && (mode === 'reuse' || (mode === 'choose' && !noEmail && matches !== null && choice !== ''))
 
   const confirm = async () => {
     if (saving.current || !ready) return
@@ -561,6 +563,10 @@ function WonDialog({
         {mode === 'reuse' ? (
           <p>
             This lead was won before. Its client is used again — nothing new is created and no notes are copied twice.
+          </p>
+        ) : mode === 'choose' && noEmail ? (
+          <p>
+            {lead.name} has no email yet, and a client needs one. Add the email on the lead first, then move it to Won.
           </p>
         ) : loading ? (
           <p className="flex items-center gap-2">

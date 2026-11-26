@@ -87,12 +87,18 @@ const Name = v.pipe(
   v.maxLength(LEAD_LIMITS.name, `Keep the name under ${LEAD_LIMITS.name} characters`),
 )
 
+/**
+ * Optional since 26 Nov 2026 (owner decision): many local businesses have a
+ * phone but no email. Empty is allowed; an email that is given must be valid.
+ */
 const Email = v.pipe(
-  v.string('Enter an email address'),
+  v.optional(v.string(), ''),
   v.trim(),
-  v.nonEmpty('Enter an email address'),
   v.maxLength(LEAD_LIMITS.email, 'That email address is too long'),
-  v.email('Enter a valid email address'),
+  v.check(
+    (value) => value === '' || v.is(v.pipe(v.string(), v.email()), value),
+    'Enter a valid email address',
+  ),
 )
 
 /** Required for a Lead, unlike a Client: the owner's rule for every entry and CSV row. */
@@ -488,7 +494,7 @@ export type ImportPreview = {
   header: string[]
   mapping: ImportMapping
   /** Required fields with no column (and, for country and source, no default). */
-  missing: Array<'name' | 'email' | 'phone' | 'country' | 'source'>
+  missing: Array<'name' | 'phone' | 'country' | 'source'>
   totalRows: number
   accepted: number
   rejected: number

@@ -114,7 +114,6 @@ const missingFields = (input: {
   const missing: ImportPreview['missing'] = []
 
   if (input.mapping.name === null) missing.push('name')
-  if (input.mapping.email === null) missing.push('email')
   if (input.mapping.phone === null) missing.push('phone')
   if (input.mapping.country === null && !isCountryCode(input.countryDefault))
     missing.push('country')
@@ -243,7 +242,7 @@ const judge = async (input: {
   // Duplicates: against Leads already on file, then earlier in this file.
   const candidates = firstPass.filter((verdict) => verdict.fields)
   const existing = await repo.existingKeys(
-    candidates.map((verdict) => emailKey(verdict.fields!.email)),
+    candidates.map((verdict) => emailKey(verdict.fields!.email)).filter((key) => key !== ''),
     candidates.map((verdict) => phoneKey(verdict.fields!.phone)),
   )
   const seenEmail = new Map<string, number>()
@@ -256,12 +255,13 @@ const judge = async (input: {
     const phone = phoneKey(verdict.fields.phone)
     const reject = (reason: string): Verdict => ({ ...verdict, fields: null, reason })
 
-    if (existing.emails.has(email)) return reject('A lead with this email already exists')
+    // An empty email (optional since 26 Nov 2026) never counts as a duplicate.
+    if (email !== '' && existing.emails.has(email)) return reject('A lead with this email already exists')
     if (existing.phones.has(phone)) return reject('A lead with this phone already exists')
-    if (seenEmail.has(email)) return reject(`Same email as row ${seenEmail.get(email)}`)
+    if (email !== '' && seenEmail.has(email)) return reject(`Same email as row ${seenEmail.get(email)}`)
     if (seenPhone.has(phone)) return reject(`Same phone as row ${seenPhone.get(phone)}`)
 
-    seenEmail.set(email, verdict.row)
+    if (email !== '') seenEmail.set(email, verdict.row)
     seenPhone.set(phone, verdict.row)
 
     return verdict

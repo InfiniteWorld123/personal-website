@@ -913,8 +913,14 @@ export function LeadFile({
         <h3 className="dash-eyebrow-quiet mb-2.5">CONTACT</h3>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-0.5 text-[13px] sm:grid-cols-[140px_minmax(0,1fr)] sm:gap-y-2.5">
           <Row label="Email">
-            <span className="min-w-0">{lead.email}</span>
-            <CopyButton value={lead.email} label="Copy email" />
+            {lead.email ? (
+              <>
+                <span className="min-w-0">{lead.email}</span>
+                <CopyButton value={lead.email} label="Copy email" />
+              </>
+            ) : (
+              <span className="text-[var(--dash-quiet)]">Not given</span>
+            )}
           </Row>
           <Row label="Phone">
             {lead.phone ? (

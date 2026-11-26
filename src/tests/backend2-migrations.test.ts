@@ -37,6 +37,7 @@ describe('building a database from nothing', () => {
       '0013_assistant.sql',
       '0014_legacy_import.sql',
       '0015_service_payment_models.sql',
+      '0016_lead_email_optional.sql',
     ])
 
     // The runner sorts by filename, so the names have to sort into the order

@@ -437,6 +437,7 @@ function LeadForm({ lead, prefill = {} }: { lead: OwnerLead | null; prefill?: Le
       <div className="grid grid-cols-1 gap-x-4 gap-y-3.5 md:grid-cols-2">
         {input('name', 'Name')}
         {input('email', 'Email', {
+          optional: true,
           type: 'email',
           onBlur: () => void checkDuplicate('email'),
           onEdit: () => setHints((current) => ({ ...current, email: undefined })),
@@ -622,7 +623,7 @@ export function NewLeadPage({ prefill }: { prefill: LeadPrefill }) {
       <PageHead
         eyebrow="PIPELINE"
         title="New lead"
-        description="Name, email, phone, country and source are required. Company, niche and notes are optional."
+        description="Name, phone, country and source are required. Email, company, niche and notes are optional."
       />
       {/* A second "Create lead" link while this page is open starts a fresh form. */}
       <LeadForm key={JSON.stringify(prefill)} lead={null} prefill={prefill} />

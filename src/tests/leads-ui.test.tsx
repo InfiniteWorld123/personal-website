@@ -42,10 +42,10 @@ describe('the Lead form', () => {
     })
   })
 
-  it('requires name, email, phone, country and source — and says so per field', () => {
+  it('requires name, phone, country and source — and says so per field; email is optional', () => {
     const errors = leadFormErrors(emptyLeadForm())
 
-    expect(Object.keys(errors).sort()).toEqual(['country', 'email', 'name', 'phone', 'sourceId'])
+    expect(Object.keys(errors).sort()).toEqual(['country', 'name', 'phone', 'sourceId'])
     expect(errors.country).toBe('Choose a country from the list')
     expect(errors.sourceId).toContain('Unknown')
   })
@@ -57,6 +57,11 @@ describe('the Lead form', () => {
       company: '',
       nicheId: null,
     })
+  })
+
+  it('accepts a lead with no email, but not a malformed one', () => {
+    expect(leadFormErrors(filled({ email: '' }))).toEqual({})
+    expect(leadFormErrors(filled({ email: 'nope' })).email).toBe('Enter a valid email address')
   })
 
   it('refuses a phone that is not one', () => {

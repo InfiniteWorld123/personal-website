@@ -110,7 +110,7 @@ export function LeadTrashPage() {
                   <span className="min-w-0 flex-1">
                     <strong className="block truncate text-[13.5px]">{lead.name}</strong>
                     <span className="block truncate text-[12px] text-[var(--dash-quiet)]">
-                      {lead.email} · trashed {lead.trashedAt ? formatDay(lead.trashedAt) : ''}
+                      {lead.email || lead.phone} · trashed {lead.trashedAt ? formatDay(lead.trashedAt) : ''}
                     </span>
                   </span>
                   <StageChip kind={lead.stage.kind} name={lead.stage.name} />

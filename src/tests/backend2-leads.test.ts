@@ -369,7 +369,7 @@ describe('stages, sources and lost reasons', () => {
 /* ============================================================ the file */
 
 describe('creating and editing a Lead', () => {
-  it('requires name, email, phone, country and source; company and notes are optional', async () => {
+  it('requires name, phone, country and source; email, company and notes are optional', async () => {
     const minimal = await ok(
       'POST',
       '/owner/leads',
@@ -399,6 +399,25 @@ describe('creating and editing a Lead', () => {
       expect(refused.status, JSON.stringify(over)).toBe(422)
       expect(refused.body.details.issues.map((i: Json) => i.field)).toContain(field)
     }
+  })
+
+  it('saves Leads without an email, and an empty email is never a duplicate', async () => {
+    const first = await ok('POST', '/owner/leads', await leadBody({ email: undefined }), 201)
+    const second = await ok('POST', '/owner/leads', await leadBody({ email: '  ' }), 201)
+
+    expect(first.email).toBe('')
+    expect(second.email).toBe('')
+
+    const duplicates = await ok('GET', '/owner/leads/duplicates?email=&phone=')
+    expect(duplicates.candidates ?? duplicates).toEqual([])
+
+    // Clearing an email on edit is allowed too.
+    const withEmail = await createLead()
+    const cleared = await ok('PATCH', `/owner/leads/${withEmail.id}`, {
+      revision: withEmail.revision,
+      email: '',
+    })
+    expect(cleared.email).toBe('')
   })
 
   it('warns about the same email or phone on create and on edit, and saves when told to', async () => {
@@ -597,6 +616,17 @@ describe('moving to Won', () => {
       notes: 'Asked about a shop.',
       leads: [expect.objectContaining({ leadId: lead.id, how: 'created', leadName: lead.name })],
     })
+  })
+
+  it('refuses a new Client for a Lead without an email, and the Lead stays where it was', async () => {
+    const lead = await ok('POST', '/owner/leads', await leadBody({ email: '' }), 201)
+
+    const refused = await move(lead.id, { stageId: (await stageOf('won')).id, won: { mode: 'create' } })
+
+    expect(refused.status).toBe(422)
+    expect(refused.body.details.issues.map((i: Json) => i.field)).toContain('email')
+    expect((await ok('GET', `/owner/leads/${lead.id}`)).stage.kind).toBe('new')
+    expect(await count('v2_clients')).toBe(0)
   })
 
   it('needs the owner’s choice the first time, and stays where it was if the Client step fails', async () => {
@@ -860,6 +890,34 @@ describe('CSV import', () => {
     await ok('DELETE', `/owner/leads/imports/${result.id}`)
     expect(await count('v2_leads')).toBe(3)
     expect(await count('v2_lead_import_rejections', `WHERE import_id = '${result.id}'`)).toBe(0)
+  })
+
+  it('imports rows without an email, with or without an email column', async () => {
+    const instagram = (await sourceNamed('Instagram')).id
+    const noColumn = 'Name,Phone\nDöner Eins,0361 1111111\nDöner Zwei,0361 2222222\n'
+
+    const preview = await ok('POST', '/owner/leads/imports/preview', {
+      csv: noColumn,
+      countryDefault: 'DE',
+      sourceDefaultId: instagram,
+    })
+    expect(preview).toMatchObject({ missing: [], accepted: 2, rejected: 0 })
+
+    const emptyCells = 'Name,Email,Phone\nDöner Drei,,0361 3333333\nDöner Vier,,0361 4444444\n'
+    const result = await ok(
+      'POST',
+      '/owner/leads/imports',
+      {
+        csv: emptyCells,
+        countryDefault: 'DE',
+        sourceDefaultId: instagram,
+        mapping: { name: 0, email: 1, phone: 2, country: null, source: null, company: null, niche: null, notes: null },
+        idempotencyKey: '9d4f5e9c-1d4a-4c8e-9f00-1234567890ab',
+      },
+      201,
+    )
+    expect(result).toMatchObject({ accepted: 2, rejected: 0 })
+    expect(await count('v2_leads', "WHERE email = ''")).toBe(2)
   })
 
   it('refuses a file that is too long', async () => {

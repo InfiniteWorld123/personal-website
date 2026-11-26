@@ -53,7 +53,7 @@ const FIELD_LABEL: Record<ImportField, string> = {
 }
 
 /** What a lead cannot be saved without. Country and source may instead be one choice for the whole file. */
-const REQUIRED: ReadonlySet<ImportField> = new Set(['name', 'email', 'phone', 'country', 'source'])
+const REQUIRED: ReadonlySet<ImportField> = new Set(['name', 'phone', 'country', 'source'])
 
 const LIMIT_MB = LEAD_IMPORT_LIMITS.bytes / (1024 * 1024)
 
@@ -229,7 +229,6 @@ const mappingErrors = (values: MappingValues): Partial<Record<MappingField, stri
   const errors: Partial<Record<MappingField, string>> = {}
 
   if (values.name === '') errors.name = 'Choose the column with the names'
-  if (values.email === '') errors.email = 'Choose the column with the email addresses'
   if (values.phone === '') errors.phone = 'Choose the column with the phone numbers'
   if (values.country === '' && !isCountryCode(values.countryDefault)) {
     errors.countryDefault = 'Choose the country for every row'
@@ -723,7 +722,7 @@ function MappingStep({
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-[var(--dash-red-ink)]" aria-hidden="true" />
             <span>
               <strong>Still to match: {preview.missing.map((field) => FIELD_LABEL[field]).join(', ')}.</strong> Every
-              lead needs a name, email, phone, country and source.
+              lead needs a name, phone, country and source.
             </span>
           </>
         ) : (
