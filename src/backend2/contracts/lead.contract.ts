@@ -101,14 +101,21 @@ const Email = v.pipe(
   ),
 )
 
-/** Required for a Lead, unlike a Client: the owner's rule for every entry and CSV row. */
+/**
+ * Optional since 26 Nov 2026 (owner decision), like email: some places show
+ * no phone number. A phone that is given must look like one.
+ */
 const Phone = v.pipe(
-  v.string('Enter a phone number'),
+  v.optional(v.string(), ''),
   v.trim(),
-  v.nonEmpty('Enter a phone number'),
   v.maxLength(LEAD_LIMITS.phone, 'That phone number is too long'),
-  v.check((value) => /^\+?[\d\s().\-/]+$/u.test(value), 'Use only digits, spaces and + ( ) - / .'),
+  v.check(
+    (value) => value === '' || /^\+?[\d\s().\-/]+$/u.test(value),
+    'Use only digits, spaces and + ( ) - / .',
+  ),
   v.check((value) => {
+    if (value === '') return true
+
     const digits = value.replace(/\D/gu, '').length
 
     return digits >= 6 && digits <= 17
@@ -494,7 +501,7 @@ export type ImportPreview = {
   header: string[]
   mapping: ImportMapping
   /** Required fields with no column (and, for country and source, no default). */
-  missing: Array<'name' | 'phone' | 'country' | 'source'>
+  missing: Array<'name' | 'country' | 'source'>
   totalRows: number
   accepted: number
   rejected: number

@@ -444,6 +444,7 @@ function LeadForm({ lead, prefill = {} }: { lead: OwnerLead | null; prefill?: Le
           hint: hints.email,
         })}
         {input('phone', 'Phone', {
+          optional: true,
           type: 'tel',
           placeholder: '+49 170 1234567',
           onBlur: () => void checkDuplicate('phone'),
@@ -623,7 +624,7 @@ export function NewLeadPage({ prefill }: { prefill: LeadPrefill }) {
       <PageHead
         eyebrow="PIPELINE"
         title="New lead"
-        description="Name, phone, country and source are required. Email, company, niche and notes are optional."
+        description="Name, country and source are required. Email, phone, company, niche and notes are optional."
       />
       {/* A second "Create lead" link while this page is open starts a fresh form. */}
       <LeadForm key={JSON.stringify(prefill)} lead={null} prefill={prefill} />

@@ -369,7 +369,7 @@ describe('stages, sources and lost reasons', () => {
 /* ============================================================ the file */
 
 describe('creating and editing a Lead', () => {
-  it('requires name, phone, country and source; email, company and notes are optional', async () => {
+  it('requires name, country and source; email, phone, company and notes are optional', async () => {
     const minimal = await ok(
       'POST',
       '/owner/leads',
@@ -388,7 +388,7 @@ describe('creating and editing a Lead', () => {
     const cases: Array<[Json, string]> = [
       [{ name: '' }, 'name'],
       [{ email: 'nope' }, 'email'],
-      [{ phone: '' }, 'phone'],
+      [{ phone: '12' }, 'phone'],
       [{ country: 'Germany' }, 'country'],
       [{ sourceId: undefined }, 'sourceId'],
     ]
@@ -399,6 +399,14 @@ describe('creating and editing a Lead', () => {
       expect(refused.status, JSON.stringify(over)).toBe(422)
       expect(refused.body.details.issues.map((i: Json) => i.field)).toContain(field)
     }
+  })
+
+  it('saves a Lead with neither email nor phone, and empty ones are never duplicates', async () => {
+    const first = await ok('POST', '/owner/leads', await leadBody({ email: '', phone: '' }), 201)
+    const second = await ok('POST', '/owner/leads', await leadBody({ email: undefined, phone: undefined }), 201)
+
+    expect(first).toMatchObject({ email: '', phone: '' })
+    expect(second).toMatchObject({ email: '', phone: '' })
   })
 
   it('saves Leads without an email, and an empty email is never a duplicate', async () => {
@@ -789,7 +797,7 @@ const FILE = [
   'Name;E-Mail;Telefon;Land;Quelle;Firma;Notizen',
   'Anna Beispiel;anna@example.de;+49 170 0000001;Deutschland;Instagram;Anna GmbH;Hi',
   'Ben Muster;ben@example.at;+43 1 0000002;Austria;SEO;;',
-  'No Phone;nophone@example.de;;DE;SEO;;',
+  'Bad Phone;badphone@example.de;12;DE;SEO;;',
   'Bad Country;bad@example.de;+49 170 0000004;Atlantis;SEO;;',
   'Anna Again;ANNA@example.de;+49 170 0000005;DE;SEO;;',
   'Unknown Src;src@example.de;+49 170 0000006;DE;TikTok;;',
@@ -812,7 +820,7 @@ describe('CSV import', () => {
     expect(preview.missing).toEqual([])
     expect(preview).toMatchObject({ totalRows: 7, accepted: 3, rejected: 4 })
     expect(preview.rejections).toEqual([
-      { row: 4, reason: 'Phone: Enter a phone number' },
+      { row: 4, reason: 'Phone: Enter a complete phone number' },
       { row: 5, reason: 'Country “Atlantis” is not recognised' },
       { row: 6, reason: 'Same email as row 2' },
       { row: 7, reason: 'Source “TikTok” is not in your list' },
@@ -872,7 +880,7 @@ describe('CSV import', () => {
     expect(detail.rejections).toMatchObject({ total: 4, pageCount: 2 })
     expect(detail.rejections.items[0]).toMatchObject({
       row: 4,
-      reason: 'Phone: Enter a phone number',
+      reason: 'Phone: Enter a complete phone number',
     })
 
     const report = await call('GET', `/owner/leads/imports/${result.id}/rejections.csv`)
@@ -892,7 +900,7 @@ describe('CSV import', () => {
     expect(await count('v2_lead_import_rejections', `WHERE import_id = '${result.id}'`)).toBe(0)
   })
 
-  it('imports rows without an email, with or without an email column', async () => {
+  it('imports rows without an email or phone, with or without those columns', async () => {
     const instagram = (await sourceNamed('Instagram')).id
     const noColumn = 'Name,Phone\nDöner Eins,0361 1111111\nDöner Zwei,0361 2222222\n'
 
@@ -903,7 +911,7 @@ describe('CSV import', () => {
     })
     expect(preview).toMatchObject({ missing: [], accepted: 2, rejected: 0 })
 
-    const emptyCells = 'Name,Email,Phone\nDöner Drei,,0361 3333333\nDöner Vier,,0361 4444444\n'
+    const emptyCells = 'Name,Email,Phone\nDöner Drei,,0361 3333333\nDöner Vier,,\nDöner Fünf,,\n'
     const result = await ok(
       'POST',
       '/owner/leads/imports',
@@ -916,8 +924,9 @@ describe('CSV import', () => {
       },
       201,
     )
-    expect(result).toMatchObject({ accepted: 2, rejected: 0 })
-    expect(await count('v2_leads', "WHERE email = ''")).toBe(2)
+    expect(result).toMatchObject({ accepted: 3, rejected: 0 })
+    expect(await count('v2_leads', "WHERE email = ''")).toBe(3)
+    expect(await count('v2_leads', "WHERE phone = ''")).toBe(2)
   })
 
   it('refuses a file that is too long', async () => {

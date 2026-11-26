@@ -39,11 +39,11 @@ data and are not imported into V2; do not delete legacy data during this work.
 
 ## Lead file and reference data
 
-- Creating one Lead requires name, phone, country, and source. Email, company
+- Creating one Lead requires name, country, and source. Email, phone, company
   and free-form owner notes are optional. Owner decisions: a person without a
-  company leaves it empty; since 26 Nov 2026 a Lead may also have no email
-  (local businesses from Google Maps often have a phone but no email). An
-  email that is given must be valid. `New` is the initial stage.
+  company leaves it empty; since 26 Nov 2026 a Lead may also have no email and
+  no phone (local businesses from Google Maps often lack one of them). An
+  email or phone that is given must be valid. `New` is the initial stage.
 - Country uses one searchable, normalized worldwide country list with stable
   codes, not user-created spelling variants such as `Germany` and
   `Deutschland`. Show readable country names. If country is missing or cannot
@@ -56,9 +56,9 @@ data and are not imported into V2; do not delete legacy data during this work.
   origin is not known, and hide sources from new selection. Hiding an in-use
   source never changes its meaning on existing Leads. Only an unused source
   may be deleted. A source name alone causes no automation.
-- Reject blank or malformed required fields with field-level messages. Phone
-  is required for manual entry and CSV rows; email is optional (owner change,
-  26 Nov 2026), and an empty email never counts as a duplicate. A Client still
+- Reject blank or malformed required fields with field-level messages. Email
+  and phone are optional (owner change, 26 Nov 2026), and an empty email or
+  phone never counts as a duplicate. A Client still
   requires an email, so a Lead without one must get its email before it is
   won as a new Client. An incomplete row is reported as rejected.
   Normalize fields for matching and search without altering the owner's notes.
